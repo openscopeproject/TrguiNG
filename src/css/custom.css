@@ -1,0 +1,79 @@
+/**
+ * transgui-ng - next gen remote GUI for transmission torrent daemon
+ * Copyright (C) 2022  qu1ck (mail at qu1ck.org)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+html, body {
+    width: 100%;
+    height: 100%;
+    font-size: 0.9rem;
+}
+
+.split-horizontal {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+}
+
+.split-vertical {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.gutter {
+    background-color: #eee;
+    background-repeat: no-repeat;
+    background-position: 50%;
+}
+
+.gutter.gutter-horizontal {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
+    cursor: col-resize;
+}
+
+.gutter.gutter-vertical {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=');
+    cursor: row-resize;
+}
+
+.scrollable {
+    position: relative;
+    overflow: auto;
+    height: 100%;
+    width: 100%;
+}
+
+.scrollable>* {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+}
+
+.resizer {
+    display: inline-block;
+    background: blue;
+    width: 0.2em;
+    height: 100%;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transform: translateX(50%);
+    z-index: 1;
+    /* prevents from scrolling while dragging on touch devices */
+    touch-action: none;
+}

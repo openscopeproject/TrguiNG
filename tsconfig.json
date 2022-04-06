@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "alwaysStrict": true,
+        "outDir": "./dist/",
+        "sourceMap": true,
+        "strict": true,
+        "module": "CommonJS",
+        "target": "ES2016",
+        "jsx": "react",
+        "allowJs": false,
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "types": []
+    }
+}
