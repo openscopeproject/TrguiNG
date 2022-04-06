@@ -60,7 +60,7 @@
       },
       "fs": {
         "scope": [
-          "$CONFIG/traumission.json"
+          "$CONFIG/transgui-ng.json"
         ],
         "readFile": true,
         "writeFile": true

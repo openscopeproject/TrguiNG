@@ -16,13 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { ProgressBar, Table } from 'react-bootstrap';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
+import { ProgressBar } from 'react-bootstrap';
 import { TorrentFilter } from './filters';
 import { Torrent } from '../rpc/torrent';
 import '../css/torrenttable.css';
 import { StatusStrings } from '../rpc/transmission';
-import { useTable, useBlockLayout, useResizeColumns, useRowSelect, Column, CellProps } from 'react-table';
+import { useTable, useBlockLayout, useResizeColumns, useRowSelect, Column, CellProps, useColumnOrder, TableState } from 'react-table';
+import { ConfigContext, TableFieldConfig } from '../config';
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -37,7 +38,7 @@ interface TableField {
     component: React.FunctionComponent<TableFieldProps>,
 }
 
-const fields: TableField[] = [
+const allFields: TableField[] = [
     { name: "name", label: "Name", component: StringField },
     { name: "sizeWhenDone", label: "Size", component: ByteSizeField },
     { name: "haveValid", label: "Downloaded", component: ByteSizeField },
@@ -115,7 +116,7 @@ interface TorrentTableProps {
     setCurrentTorrent: (t: Torrent) => void;
 }
 
-const defaultColumns = fields.map((f): Column<Torrent> => {
+const defaultColumns = allFields.map((f): Column<Torrent> => {
     return {
         Header: f.label,
         accessor: f.name,
@@ -127,16 +128,53 @@ const defaultColumns = fields.map((f): Column<Torrent> => {
 });
 
 export function TorrentTable(props: TorrentTableProps) {
-    const defaultColumn = useMemo(
-        () => ({
-            minWidth: 30,
-            width: 150,
-            maxWidth: 400,
-        }),
-        []
-    );
+    const config = useContext(ConfigContext);
 
-    const getRowId = useCallback((t, i) => String(t.id), []);
+    const defaultColumn = useMemo(() => ({
+        minWidth: 30,
+        width: 150,
+        maxWidth: 2000,
+    }), []);
+
+    const columns = useMemo(() => {
+        const fields = config.getTableFields("torrents");
+
+        return defaultColumns.map((column) => {
+            Object.assign(column, defaultColumn);
+            var f = fields.find((f) => f.name == column.accessor);
+            if (f) column.width = f.width;
+            return column;
+        });
+    }, [config]);
+
+    const getRowId = useCallback((t: Torrent, i: number) => String(t.id), []);
+
+    const hiddenColumns = useMemo(() => {
+        const fields = allFields.map((f) => f.name);
+        const visibleFields = config.getTableFields("torrents").map((f) => f.name);
+        return fields.filter((f) => !visibleFields.includes(f));
+    }, [config]);
+
+    const columnOrder = useMemo(() => {
+        return config.getTableFields("torrents").map((f) => f.name);
+    }, [config]);
+
+    const stateChange = useCallback((state: TableState<Torrent>) => {
+        const order = state.columnOrder.length ? state.columnOrder : allFields.map((f) => f.name);
+        const visible = order.filter(
+            (f) => state.hiddenColumns ? !state.hiddenColumns.includes(f) : true);
+        const fields: TableFieldConfig[] = visible.map((f) => {
+            const widths = state.columnResizing.columnWidths;
+            return {
+                name: f,
+                width: (f in widths) ? widths[f] : defaultColumn.width
+            }
+        });
+        config.setTableFields("torrents", fields);
+
+        return state;
+    }, []);
+
 
     const data = useMemo(() => props.torrents.filter(props.currentFilter.filter), [props]);
 
@@ -146,15 +184,20 @@ export function TorrentTable(props: TorrentTableProps) {
         headerGroups,
         rows,
         prepareRow,
-        state,
     } = useTable<Torrent>(
         {
-            columns: defaultColumns,
+            columns,
             data,
             defaultColumn,
             getRowId,
             autoResetSelectedRows: false,
+            stateReducer: stateChange,
+            initialState: {
+                hiddenColumns,
+                columnOrder
+            }
         },
+        useColumnOrder,
         useBlockLayout,
         useResizeColumns,
         useRowSelect

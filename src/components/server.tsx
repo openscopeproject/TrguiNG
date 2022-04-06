@@ -26,7 +26,7 @@ import { Torrent } from "../rpc/torrent";
 import '../css/custom.css';
 
 interface ServerProps {
-    client: TransmissionClient
+    client: TransmissionClient,
 }
 
 export function Server(props: ServerProps) {

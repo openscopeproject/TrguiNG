@@ -20,14 +20,16 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { appWindow } from '@tauri-apps/api/window';
 
 import { TransmissionClient } from './rpc/client';
-import { Config } from './config';
+import { Config, ConfigContext } from './config';
 import ReactDOM from 'react-dom';
-import React, { useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { Server } from './components/server';
 
-function App(props: { config: Config }) {
+function App(props: {}) {
+    const config = useContext(ConfigContext);
+
     var client = useMemo(() => {
-        return new TransmissionClient(props.config.getServers()[0].connection);
+        return new TransmissionClient(config.getServers()[0].connection);
     }, []);
     return <Server client={client} />;
 }
@@ -37,13 +39,16 @@ async function run() {
     await config.read();
 
     appWindow.listen('tauri://close-requested', (event) => {
-        console.log("App is closing");
         config.save().then(() => {
             appWindow.close();
         });
     });
 
-    ReactDOM.render(<App config={config} />, document.getElementById("app"));
+    ReactDOM.render(
+        <ConfigContext.Provider value={config}>
+            <App />
+        </ConfigContext.Provider>,
+        document.getElementById("app"));
 }
 
 window.onload = (event) => {

@@ -17,6 +17,7 @@
  */
 
 import * as fs from "@tauri-apps/api/fs";
+import React from "react";
 
 export interface ServerConnection {
     url: string,
@@ -37,13 +38,28 @@ export interface Server {
 
 interface Settings {
     servers: Server[],
+    app: {
+        tables: Record<string, TableFieldConfig[]>
+    }
+}
+
+export interface TableFieldConfig {
+    name: string
+    width: number
+}
+
+const DefaultSettings: Settings =  {
+    servers: [],
+    app: {
+        tables: {
+            "torrent": [],
+        }
+    }
 }
 
 export class Config {
-    fileName = "traumission.json";
-    values: Settings = {
-        servers: []
-    }
+    fileName = "transgui-ng.json";
+    values = DefaultSettings;
 
     async read() {
         return fs.readTextFile(
@@ -71,4 +87,14 @@ export class Config {
         var server = this.values.servers.find((c) => c.name == serverName);
         return server ? server.connection : null;
     }
+
+    setTableFields(table: "torrents", fields: TableFieldConfig[]) {
+        this.values.app.tables[table] = fields;
+    }
+
+    getTableFields(table: "torrents"): TableFieldConfig[] {
+        return this.values.app.tables[table];
+    }
 }
+
+export const ConfigContext = React.createContext(new Config());
