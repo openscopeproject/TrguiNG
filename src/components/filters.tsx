@@ -16,19 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Container, Row } from 'react-bootstrap';
 import '../css/filters.css';
 import { getTorrentError, Torrent } from '../rpc/torrent';
 import { Status } from '../rpc/transmission';
 
 export interface TorrentFilter {
-    label: string;
+    id: string;
     filter: (t: Torrent) => boolean;
-    element?: HTMLElement;
 }
 
-const statusFilters: TorrentFilter[] = [
+interface LabeledFilter {
+    label: string;
+    filter: (t: Torrent) => boolean;
+}
+
+const statusFilters: LabeledFilter[] = [
     { label: "All Torrents", filter: (t: Torrent) => true },
     { label: "Downloading", filter: (t: Torrent) => t.status == Status.downloading },
     {
@@ -56,7 +60,12 @@ const statusFilters: TorrentFilter[] = [
     },
 ]
 
-export const DefaultFilter = statusFilters[0];
+const noLabelsFilter: LabeledFilter = {
+    label: "<No labels>",
+    filter: (t: Torrent) => t.labels.length == 0,
+}
+
+export const DefaultFilter = statusFilters[0].filter;
 
 interface FiltersProps {
     torrents: Torrent[];
@@ -64,23 +73,55 @@ interface FiltersProps {
     setCurrentFilter: (filter: TorrentFilter) => void;
 }
 
+interface AllFilters {
+    statusFilters: LabeledFilter[],
+    labelFilters: LabeledFilter[],
+}
+
+function FilterRow(props: FiltersProps & { id: string, filter: LabeledFilter }) {
+    var count = 0;
+
+    for (var torrent of props.torrents) {
+        if (props.filter.filter(torrent)) count++;
+    }
+
+    return <Row
+        className={`p-1${props.currentFilter.id === props.id ? ' bg-primary text-white' : ''}`}
+        onClick={() => props.setCurrentFilter({ id: props.id, filter: props.filter.filter })}>
+        {`${props.filter.label} (${count})`}
+    </Row>;
+}
+
 export function Filters(props: FiltersProps) {
+    var allFilters = useMemo<AllFilters>(() => {
+        var labelCounter: Map<string, number> = new Map();
+        for (var torrent of props.torrents) {
+            for (var label of torrent.labels) {
+                labelCounter.set(label, labelCounter.has(label) ? labelCounter.get(label)! + 1 : 1);
+            }
+        }
+        var labelFilters: LabeledFilter[] = [
+            noLabelsFilter
+        ];
+        labelCounter.forEach((count, label) => {
+            labelFilters.push({
+                label,
+                filter: (t: Torrent) => t.labels.includes(label)
+            });
+        });
+        return {
+            statusFilters,
+            labelFilters,
+        };
+    }, [props.torrents]);
+
     return (
         <Container fluid className='w-100'>
-            {statusFilters.map((f) => {
-                var count = 0;
-
-                for (var torrent of props.torrents) {
-                    if (f.filter(torrent)) count++;
-                }
-
-                return <Row
-                    key={`status-${f.label}`}
-                    className={`p-1${props.currentFilter === f ? ' bg-primary text-white' : ''}`}
-                    onClick={() => props.setCurrentFilter(f)}>
-                    {`${f.label} (${count})`}
-                </Row>;
-            })}
+            {allFilters.statusFilters.map((f) =>
+                <FilterRow key={`status-${f.label}`} id={`status-${f.label}`} filter={f} {...props} />)}
+            <hr />
+            {allFilters.labelFilters.map((f) =>
+                <FilterRow key={`labels-${f.label}`} id={`labels-${f.label}`} filter={f} {...props} />)}
         </Container>
     );
 }

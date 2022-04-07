@@ -32,7 +32,7 @@ interface ServerProps {
 export function Server(props: ServerProps) {
     const [torrents, setTorrents] = useState<Torrent[]>([]);
     const [currentTorrent, setCurrentTorrent] = useState<Torrent>();
-    const [currentFilter, setCurrentFilter] = useState(DefaultFilter);
+    const [currentFilter, setCurrentFilter] = useState({id: "", filter: DefaultFilter});
     const [timer, setTimer] = useState(0);
 
     const loadTorrentDetails = useMemo(() => (t: Torrent) => {

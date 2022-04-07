@@ -22,7 +22,7 @@ import { Badge, ProgressBar } from 'react-bootstrap';
 import { TorrentFilter } from './filters';
 import { Torrent } from '../rpc/torrent';
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentFieldsType } from '../rpc/transmission';
-import { useTable, useBlockLayout, useResizeColumns, useRowSelect, Column, CellProps, useColumnOrder, TableState, Accessor } from 'react-table';
+import { useTable, useBlockLayout, useResizeColumns, useRowSelect, Column, CellProps, useColumnOrder, TableState, Accessor, useSortBy } from 'react-table';
 import { ConfigContext, TableFieldConfig } from '../config';
 import { Duration } from 'luxon';
 
@@ -218,7 +218,7 @@ export function TorrentTable(props: TorrentTableProps) {
 
         return defaultColumns.map((column) => {
             Object.assign(column, defaultColumn);
-            var f = fields.find((f) => f.name == column.accessor);
+            var f = fields.find((f) => f.name == column.accessor || f.name == column.id);
             if (f) column.width = f.width;
             return column;
         });
@@ -237,18 +237,30 @@ export function TorrentTable(props: TorrentTableProps) {
         return config.getTableFields("torrents").map((f) => f.name);
     }, [config]);
 
+    const sortBy = useMemo(() => {
+        return config.getTableSortBy("torrents");
+    }, [config]);
+
     const stateChange = useCallback((state: TableState<Torrent>) => {
         const order = state.columnOrder.length ? state.columnOrder : allFields.map((f) => f.name);
         const visible = order.filter(
             (f) => state.hiddenColumns ? !state.hiddenColumns.includes(f) : true);
+        const oldFields = config.getTableFields("torrents");
         const fields: TableFieldConfig[] = visible.map((f) => {
-            const widths = state.columnResizing.columnWidths;
+            const newWidths = state.columnResizing.columnWidths;
+            var width = defaultColumn.width;
+            var oldField = oldFields.find((oldfield) => oldfield.name == f);
+            if (oldField) width = oldField.width;
+            if (f in newWidths) width = newWidths[f];
             return {
                 name: f,
-                width: (f in widths) ? widths[f] : defaultColumn.width
+                width
             }
         });
         config.setTableFields("torrents", fields);
+        config.setTableSortBy("torrents", state.sortBy.map((r) => {
+            return {id: r.id, desc: r.desc || false};
+        }));
 
         return state;
     }, []);
@@ -269,13 +281,16 @@ export function TorrentTable(props: TorrentTableProps) {
             defaultColumn,
             getRowId,
             autoResetSelectedRows: false,
+            autoResetSortBy: false,
             stateReducer: stateChange,
             initialState: {
                 hiddenColumns,
-                columnOrder
+                columnOrder,
+                sortBy,
             }
         },
         useColumnOrder,
+        useSortBy,
         useBlockLayout,
         useResizeColumns,
         useRowSelect
@@ -288,7 +303,14 @@ export function TorrentTable(props: TorrentTableProps) {
                     {headerGroups.map(headerGroup => (
                         <div {...headerGroup.getHeaderGroupProps()} className="tr">
                             {headerGroup.headers.map(column => (
-                                <div {...column.getHeaderProps()} className="th">
+                                <div {...column.getHeaderProps(column.getSortByToggleProps())} className="th">
+                                    <span>
+                                        {column.isSorted
+                                            ? column.isSortedDesc
+                                                ? '▼ '
+                                                : '▲ '
+                                            : ''}
+                                    </span>
                                     {column.render('Header')}
                                     {/* Use column.getResizerProps to hook up the events correctly */}
                                     <div {...column.getResizerProps()} className="resizer" />

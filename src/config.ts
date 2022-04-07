@@ -36,23 +36,36 @@ export interface Server {
     ]
 }
 
-interface Settings {
-    servers: Server[],
-    app: {
-        tables: Record<string, TableFieldConfig[]>
-    }
-}
-
 export interface TableFieldConfig {
     name: string
     width: number
 }
 
-const DefaultSettings: Settings =  {
+export interface SortByConfig {
+    id: string,
+    desc: boolean,
+}
+
+interface TableSettings {
+    fields: TableFieldConfig[],
+    sortBy: SortByConfig[],
+}
+
+interface Settings {
+    servers: Server[],
+    app: {
+        tables: Record<string, TableSettings>
+    }
+}
+
+const DefaultSettings: Settings = {
     servers: [],
     app: {
         tables: {
-            "torrent": [],
+            "torrent": {
+                fields: [],
+                sortBy: [],
+            },
         }
     }
 }
@@ -89,11 +102,19 @@ export class Config {
     }
 
     setTableFields(table: "torrents", fields: TableFieldConfig[]) {
-        this.values.app.tables[table] = fields;
+        this.values.app.tables[table].fields = fields;
     }
 
     getTableFields(table: "torrents"): TableFieldConfig[] {
-        return this.values.app.tables[table];
+        return this.values.app.tables[table].fields;
+    }
+
+    setTableSortBy(table: "torrents", sortBy: SortByConfig[]) {
+        this.values.app.tables[table].sortBy = sortBy;
+    }
+
+    getTableSortBy(table: "torrents"): SortByConfig[] {
+        return this.values.app.tables[table].sortBy;
     }
 }
 
