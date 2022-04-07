@@ -40,11 +40,6 @@ export function getTorrentError(t: Torrent): string {
             trackerError = `Tracker: ${err}`;
         }
     }
-    // if (t.name == "Koroshi Ai") {
-    //     console.log(t.trackerStats.map(
-    //         (s: any) => { return [s.hasAnnounced, s.lastAnnounceSucceeded, s.lastAnnounceResult] }));
-    //     console.log(`${noTrackerError} ${torrentError} ${trackerError}`)
-    // }
 
     if (noTrackerError || t.status == Status.stopped)
         return torrentError;

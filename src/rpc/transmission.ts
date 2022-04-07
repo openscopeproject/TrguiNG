@@ -27,7 +27,7 @@ export const Status = {
     downloading: 4,
     queuedToSeed: 5,
     seeding: 6,
-}
+};
 
 export const StatusStrings = [
     "Stopped",
@@ -38,6 +38,24 @@ export const StatusStrings = [
     "Waiting",
     "Seeding",
 ];
+
+export const Priority = {
+    low: -1,
+    normal: 0,
+    high: 1,
+};
+
+export const PriorityStrings = new Map<number, string>([
+    [-1, "Low"],
+    [0, "Normal"],
+    [1, "High"],
+]);
+
+export const PriorityColors = new Map<number, string>([
+    [-1, "warning"],
+    [0, "success"],
+    [1, "danger"],
+]);
 
 export const TorrentFields = [
     "activityDate", //number tr_stat
@@ -100,9 +118,12 @@ export const TorrentFields = [
     "uploadLimited", //boolean tr_torrent
     "uploadRatio", //double tr_stat
     "webseedsSendingToUs", //number tr_stat
-]
+] as const;
 
-export const TorrentAllFields = TorrentFields.concat(
+export type TorrentFieldsType = typeof TorrentFields[number];
+
+export const TorrentAllFields = [
+    ...TorrentFields,
     "comment", //string tr_torrent_view
     "creator", //string tr_torrent_view
     "files", //array (see below)", //n/a
@@ -118,5 +139,6 @@ export const TorrentAllFields = TorrentFields.concat(
     "trackerList", //strings of announce URLs, one per line, with a blank line between tiers
     "wanted", //array (see below)", //n/a
     "webseeds", //array of strings tr_tracker_view
+] as const;
 
-);
+export type TorrentAllFieldsType = typeof TorrentAllFields[number];
