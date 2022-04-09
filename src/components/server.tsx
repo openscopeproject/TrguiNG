@@ -21,7 +21,7 @@ import Split from "react-split";
 import { TransmissionClient } from "../rpc/client";
 import { Details } from "./details";
 import { DefaultFilter, Filters } from "./filters";
-import { TorrentTable } from "./table";
+import { TorrentTable } from "./torrenttable";
 import { Torrent } from "../rpc/torrent";
 import '../css/custom.css';
 

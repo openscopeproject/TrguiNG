@@ -25,6 +25,7 @@ import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentFieldsTy
 import { useTable, useBlockLayout, useResizeColumns, useRowSelect, Column, CellProps, useColumnOrder, TableState, Accessor, useSortBy } from 'react-table';
 import { ConfigContext, TableFieldConfig } from '../config';
 import { Duration } from 'luxon';
+import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from '../util';
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -55,7 +56,10 @@ const allFields: TableField[] = [
     { name: "eta", label: "ETA", component: EtaField },
     { name: "uploadRatio", label: "Ratio", component: StringField },
     { name: "trackerStats", label: "Tracker", component: TrackerField },
-    { name: "trackerStats", label: "Tracker status", component: TrackerStatusField, columnId: "trackerStatus", accessor: getTrackerStatus },
+    {
+        name: "trackerStats", label: "Tracker status", component: TrackerStatusField,
+        columnId: "trackerStatus", accessor: getTrackerStatus
+    },
     { name: "doneDate", label: "Completed on", component: DateField },
     { name: "activityDate", label: "Last active", component: DateField },
     { name: "downloadDir", label: "Path", component: StringField },
@@ -77,23 +81,19 @@ function StringField(props: TableFieldProps) {
 }
 
 function TimeField(props: TableFieldProps) {
-    var duration = Duration.fromMillis(props.torrent[props.fieldName] * 1000);
-
-    return <>
-        {duration.toHuman({ listStyle: "short", unitDisplay: "short" })}
-    </>;
+    return <>{secondsToHumanReadableStr(props.torrent[props.fieldName])}</>;
 }
 
-function EtaField(props: TableFieldProps) {
+export function EtaField(props: TableFieldProps) {
     var seconds = props.torrent[props.fieldName];
-    if (seconds >= 0) return <TimeField {...props} />
-    else if (seconds == -1) return <>N/A</>;
+    if (seconds >= 0) return <TimeField {...props} />;
+    else if (seconds == -1) return <></>;
     else return <>Unknown</>;
 }
 
-function TrackerField(props: TableFieldProps) {
-    var trackers = props.torrent.trackerStats;
-    return <>{trackers.length ? trackers[0].announce : "No tracker"}</>;
+export function TrackerField(props: TableFieldProps) {
+    const trackers = props.torrent.trackerStats;
+    return <>{trackers.length ? trackers[0].host : "No tracker"}</>;
 }
 
 function getTrackerStatus(torrent: Torrent): string {
@@ -125,32 +125,14 @@ function LabelsField(props: TableFieldProps) {
     </>;
 }
 
-function StatusField(props: TableFieldProps) {
+export function StatusField(props: TableFieldProps) {
     const status = StatusStrings[props.torrent.status];
     return <div className={props.className}>{status}</div>;
 }
 
-function DateField(props: TableFieldProps) {
-    const date = new Date(props.torrent[props.fieldName] * 1000).toLocaleString();
+export function DateField(props: TableFieldProps) {
+    const date = timestampToDateString(props.torrent[props.fieldName]);
     return <div className={props.className}>{date}</div>;
-}
-
-const SISuffixes = ["B", "KB", "MB", "GB", "TB"];
-
-function bytesToHumanReadableStr(value: number): string {
-    var unit = "";
-    var divisor = 1.0;
-
-    for (var i in SISuffixes) {
-        unit = SISuffixes[i];
-        if (value < 1024 * divisor) break;
-        divisor *= 1024;
-    }
-
-    var tmp = String(value / divisor);
-    var result = tmp.includes(".") ? tmp.substring(0, 4) : tmp.substring(0, 3);
-
-    return `${result} ${unit}`;
 }
 
 function ByteSizeField(props: TableFieldProps) {
@@ -176,7 +158,7 @@ function PercentBarField(props: TableFieldProps) {
         now={now}
         className={props.className}
         label={`${now}%`}
-        {...(props.active ? ["striped", "animated"] : [])}
+        {...(props.active ? { striped: true, animated: true } : {})}
     />
 }
 
@@ -259,7 +241,7 @@ export function TorrentTable(props: TorrentTableProps) {
         });
         config.setTableFields("torrents", fields);
         config.setTableSortBy("torrents", state.sortBy.map((r) => {
-            return {id: r.id, desc: r.desc || false};
+            return { id: r.id, desc: r.desc || false };
         }));
 
         return state;
@@ -304,13 +286,7 @@ export function TorrentTable(props: TorrentTableProps) {
                         <div {...headerGroup.getHeaderGroupProps()} className="tr">
                             {headerGroup.headers.map(column => (
                                 <div {...column.getHeaderProps(column.getSortByToggleProps())} className="th">
-                                    <span>
-                                        {column.isSorted
-                                            ? column.isSortedDesc
-                                                ? '▼ '
-                                                : '▲ '
-                                            : ''}
-                                    </span>
+                                    <span>{column.isSorted ? column.isSortedDesc ? '▼ ' : '▲ ' : ''}</span>
                                     {column.render('Header')}
                                     {/* Use column.getResizerProps to hook up the events correctly */}
                                     <div {...column.getResizerProps()} className="resizer" />
