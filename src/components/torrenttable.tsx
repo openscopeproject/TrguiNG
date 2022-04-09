@@ -118,21 +118,21 @@ function PriorityField(props: TableFieldProps) {
     return <Badge pill bg={PriorityColors.get(priority)!}>{PriorityStrings.get(priority)}</Badge>;
 }
 
-function LabelsField(props: TableFieldProps) {
+export function LabelsField(props: TableFieldProps) {
     const labels: string[] = props.torrent.labels;
     return <>
-        {labels.map((label) => <Badge key={label} bg="primary">{label}</Badge>)}
+        {labels.map((label) => <Badge key={label} bg="primary" className="torrent-label white-outline">{label}</Badge>)}
     </>;
 }
 
 export function StatusField(props: TableFieldProps) {
     const status = StatusStrings[props.torrent.status];
-    return <div className={props.className}>{status}</div>;
+    return <>{status}</>;
 }
 
 export function DateField(props: TableFieldProps) {
     const date = timestampToDateString(props.torrent[props.fieldName]);
-    return <div className={props.className}>{date}</div>;
+    return <span className={props.className}>{date}</span>;
 }
 
 function ByteSizeField(props: TableFieldProps) {
@@ -156,7 +156,7 @@ function PercentBarField(props: TableFieldProps) {
 
     return <ProgressBar
         now={now}
-        className={props.className}
+        className="white-outline"
         label={`${now}%`}
         {...(props.active ? { striped: true, animated: true } : {})}
     />

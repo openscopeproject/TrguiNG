@@ -69,7 +69,7 @@
         "all": true
       },
       "shell": {
-        "open": "^file://"
+        "open": "^(file:|https?:)//"
       },
       "window": {
         "setTitle": true,

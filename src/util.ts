@@ -23,7 +23,7 @@ export function bytesToHumanReadableStr(value: number): string {
     }
 
     var tmp = String(value / divisor);
-    var result = tmp.includes(".") ? tmp.substring(0, 4) : tmp.substring(0, 3);
+    var result = tmp.includes(".") ? tmp.substring(0, 5) : tmp.substring(0, 3);
 
     return `${result} ${unit}`;
 }
@@ -44,4 +44,13 @@ export function secondsToHumanReadableStr(value: number): string {
 
 export function timestampToDateString(value: number): string {
     return new Date(value * 1000).toLocaleString();
+}
+
+export function ensurePathDelimiter(path: string): string {
+    if (path.length == 0) return "";
+    var delimiter = '/';
+    if (path.indexOf('\\') >= 0) delimiter = '\\';
+    if (path.charAt(path.length - 1) != delimiter)
+        return path + delimiter;
+    return path;
 }

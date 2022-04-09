@@ -17,10 +17,10 @@
  */
 
 import React from "react";
-import { Col, Container, Nav, ProgressBar, Row, Tab, Table, Tabs } from "react-bootstrap";
+import { Col, Container, Form, Nav, ProgressBar, Row, Tab, Table, Tabs } from "react-bootstrap";
 import { getTorrentError, Torrent } from "../rpc/torrent";
-import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from "../util";
-import { DateField, EtaField, StatusField, TrackerField } from "./torrenttable";
+import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr, timestampToDateString } from "../util";
+import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./torrenttable";
 
 interface DetailsProps {
     torrent?: Torrent;
@@ -126,29 +126,60 @@ function TransferTable(props: { torrent: Torrent }) {
     );
 }
 
+function TotalSize(props: { torrent: Torrent }) {
+    if (props.torrent.totalSize <= 0) return <>?</>;
+    const size = bytesToHumanReadableStr(props.torrent.totalSize);
+    const done = bytesToHumanReadableStr(props.torrent.sizeWhenDone - props.torrent.leftUntilDone);
+    return <>{`${size} (${done} done)`}</>;
+}
+
+function Pieces(props: { torrent: Torrent }) {
+    if (props.torrent.totalSize <= 0) return <>?</>;
+    const pieceSize = bytesToHumanReadableStr(props.torrent.pieceSize);
+    var have = 0;
+    if (props.torrent.totalSize == props.torrent.haveValid)
+        have = props.torrent.pieceCount;
+    else
+        have = props.torrent.haveValid / (props.torrent.pieceSize ? props.torrent.pieceSize : 1);
+
+    return <>{`${props.torrent.pieceCount} x ${pieceSize} (have ${Math.round(have)})`}</>;
+}
+
+const httpRe = /https?:\/\//;
+const urlRe = /(https?:\/\/[^\s]+)/;
+
+function Urlize(props: { text: string }) {
+    if (!httpRe.test(props.text)) return <>text</>;
+    const matches = props.text.split(urlRe).filter((match) => match.length > 0);
+    return <>{matches.map((match, index) => {
+        if (!httpRe.test(match)) return <span key={index}>{match}</span>;
+        return <a key={index} href={match} target="_blank">{match}</a>;
+    })}</>;
+}
+
 function TorrentTable(props: { torrent: Torrent }) {
     return (
         <Table size="sm">
             <tbody>
                 <tr>
-                    <td>Name:</td><td></td>
-                    <td>Created on:</td><td></td>
+                    <td>Full path:</td><td>{ensurePathDelimiter(props.torrent.downloadDir) + props.torrent.name}</td>
+                    <td>Created on:</td><td><DateField {...props} fieldName="dateCreated" /><span>{` by ${props.torrent.creator}`}</span></td>
                 </tr>
                 <tr>
-                    <td>Total size:</td><td></td>
-                    <td>Pieces:</td><td></td>
+                    <td>Total size:</td><td><TotalSize {...props} /></td>
+                    <td>Pieces:</td><td><Pieces {...props} /></td>
                 </tr>
                 <tr>
-                    <td>Hash:</td><td></td>
-                    <td>Comment:</td><td></td>
+                    <td>Hash:</td><td><Form.Control size="sm" plaintext readOnly defaultValue={props.torrent.hashString} style={{ "padding": 0 }} /></td>
+                    <td>Comment:</td><td><Urlize text={props.torrent.comment} /></td>
                 </tr>
                 <tr>
-                    <td>Added on:</td><td></td>
-                    <td>Completed on:</td><td></td>
+                    <td>Added on:</td><td><DateField {...props} fieldName="addedDate" /></td>
+                    <td>Completed on:</td><td><DateField {...props} fieldName="doneDate" /></td>
                 </tr>
                 <tr>
-                    <td>Magnet link:</td><td></td>
-                    <td>Labels:</td><td></td>
+                    <td>Magnet link:</td><td><Form.Control size="sm" plaintext readOnly defaultValue={props.torrent.magnetLink} style={{ "padding": 0 }} /></td>
+                    <td>Labels:</td><td><LabelsField {...props} fieldName="labels" /></td>
                 </tr>
             </tbody>
         </Table>
@@ -162,9 +193,9 @@ function GeneralPane(props: { torrent: Torrent }) {
             <div className="flex-grow-1">
                 <div className="scrollable">
                     <Container fluid>
-                        <Row className="bg-light">Transfer</Row>
+                        <Row><h5 className="bg-light">Transfer</h5></Row>
                         <TransferTable {...props} />
-                        <Row className="bg-light">Torrent</Row>
+                        <Row><h5 className="bg-light">Torrent</h5></Row>
                         <TorrentTable {...props} />
                     </Container>
                 </div>

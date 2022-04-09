@@ -24,4 +24,17 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    padding: 0.2rem 0.3rem;
+}
+
+.torrent-label {
+    margin-inline: 0.1rem;
+}
+
+.white-outline {
+    box-shadow: 0 0 3px 1px white;
+}
+
+.torrent-table .progress, .torrent-table .progress-bar {
+    height: 100%;
 }
