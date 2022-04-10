@@ -18,7 +18,7 @@
 
 import '../css/torrenttable.css';
 import React, { useCallback, useContext, useMemo } from 'react';
-import { Badge, ProgressBar } from 'react-bootstrap';
+import { Badge } from 'react-bootstrap';
 import { TorrentFilter } from './filters';
 import { Torrent } from '../rpc/torrent';
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentFieldsType } from '../rpc/transmission';
@@ -26,6 +26,7 @@ import { useTable, useBlockLayout, useResizeColumns, useRowSelect, Column, CellP
 import { ConfigContext, TableFieldConfig } from '../config';
 import { Duration } from 'luxon';
 import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from '../util';
+import { ProgressBar } from './progressbar';
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -152,13 +153,12 @@ function ByteRateField(props: TableFieldProps) {
 }
 
 function PercentBarField(props: TableFieldProps) {
-    const now = Math.round(props.torrent[props.fieldName] * 100);
+    const now = props.torrent[props.fieldName] * 100;
 
     return <ProgressBar
         now={now}
         className="white-outline"
-        label={`${now}%`}
-        {...(props.active ? { striped: true, animated: true } : {})}
+        {...(props.active ? { animate: true } : {})}
     />
 }
 
