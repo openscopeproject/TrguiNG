@@ -27,6 +27,7 @@ import { ConfigContext, TableFieldConfig } from '../config';
 import { Duration } from 'luxon';
 import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from '../util';
 import { ProgressBar } from './progressbar';
+import { useVirtual } from 'react-virtual';
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -256,6 +257,7 @@ export function TorrentTable(props: TorrentTableProps) {
         headerGroups,
         rows,
         prepareRow,
+        totalColumnsWidth,
     } = useTable<Torrent>(
         {
             columns,
@@ -278,10 +280,26 @@ export function TorrentTable(props: TorrentTableProps) {
         useRowSelect
     );
 
+    const parentRef = React.useRef(null);
+    const rowHeight = React.useMemo(() => {
+        const lineHeight = getComputedStyle(document.body).lineHeight.match(/[\d\.]+/);
+        return Math.ceil(Number(lineHeight) * 1.1);
+    }, []);
+
+    const rowVirtualizer = useVirtual({
+        size: data.length,
+        parentRef,
+        paddingStart: rowHeight,
+        overscan: 3,
+        estimateSize: React.useCallback(() => rowHeight, []),
+    });
+
     return (
-        <div>
-            <div {...getTableProps()} className="torrent-table table table-striped table-bordered table-  hover">
-                <div className="sticky-top bg-light">
+        <div ref={parentRef} className="torrent-table-container">
+            <div {...getTableProps()}
+                className="torrent-table"
+                style={{ height: `${rowVirtualizer.totalSize}px`, width: `${totalColumnsWidth}px` }}>
+                <div className="sticky-top bg-light" style={{ height: `${rowHeight}px` }}>
                     {headerGroups.map(headerGroup => (
                         <div {...headerGroup.getHeaderGroupProps()} className="tr">
                             {headerGroup.headers.map(column => (
@@ -297,10 +315,13 @@ export function TorrentTable(props: TorrentTableProps) {
                 </div>
 
                 <div {...getTableBodyProps()}>
-                    {rows.map((row, i) => {
-                        prepareRow(row)
+                    {rowVirtualizer.virtualItems.map((virtualRow) => {
+                        const row = rows[virtualRow.index];
+                        prepareRow(row);
                         return (
-                            <div {...row.getRowProps()} className={`tr ${row.isSelected ? " bg-primary text-white" : ""}`}
+                            <div {...row.getRowProps()}
+                                className={`tr ${row.isSelected ? " bg-primary text-white" : virtualRow.index % 2 ? "bg-light" : ""}`}
+                                style={{ height: `${rowHeight}px`, transform: `translateY(${virtualRow.start}px)` }}
                                 onClick={() => { row.toggleRowSelected(true); props.setCurrentTorrent(row.original); }}
                             >
                                 {row.cells.map(cell => {

@@ -32,7 +32,7 @@ interface ServerProps {
 export function Server(props: ServerProps) {
     const [torrents, setTorrents] = useState<Torrent[]>([]);
     const [currentTorrent, setCurrentTorrent] = useState<Torrent>();
-    const [currentFilter, setCurrentFilter] = useState({id: "", filter: DefaultFilter});
+    const [currentFilter, setCurrentFilter] = useState({ id: "", filter: DefaultFilter });
     const [timer, setTimer] = useState(0);
 
     const loadTorrentDetails = useMemo(() => (t: Torrent) => {
@@ -77,12 +77,10 @@ export function Server(props: ServerProps) {
                                 currentFilter={currentFilter}
                                 setCurrentFilter={setCurrentFilter} />
                         </div>
-                        <div className="scrollable">
-                            <TorrentTable
-                                torrents={torrents}
-                                currentFilter={currentFilter}
-                                setCurrentTorrent={loadTorrentDetails} />
-                        </div>
+                        <TorrentTable
+                            torrents={torrents}
+                            currentFilter={currentFilter}
+                            setCurrentTorrent={loadTorrentDetails} />
                     </Split>
                     <div className="w-100">
                         <Details torrent={currentTorrent} />
