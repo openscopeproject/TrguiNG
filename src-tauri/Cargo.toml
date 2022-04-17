@@ -1,23 +1,25 @@
 [package]
-name = "app"
+name = "transgui-ng"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
+description = "Transmission Remote GUI - next gen client for transmission torrent daemon"
+authors = ["qu1ck"]
+license = "GNU-AGPL-3.0"
 repository = ""
-default-run = "app"
+default-run = "transgui-ng"
 edition = "2021"
 rust-version = "1.57"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { git = "https://github.com/tauri-apps/tauri.git", features = [] }
+tauri-build = { version = "1.0.0-rc.5", features = [] }
 
 [dependencies]
 serde_json = "1.0"
+hyper = { version = "0.14", features = ["full"] }
+tokio = { version = "1.17", features = ["net"] }
 serde = { version = "1.0", features = ["derive"] }
-tauri = { git = "https://github.com/tauri-apps/tauri.git", features = ["fs-read-file", "fs-write-file", "http-all", "path-all", "shell-open", "window-close", "window-set-title"] }
+tauri = { version = "1.0.0-rc.6", features = ["cli", "fs-read-file", "fs-write-file", "http-all", "path-all", "shell-open", "window-close", "window-set-title"] }
 
 [features]
 # by default Tauri runs in production mode

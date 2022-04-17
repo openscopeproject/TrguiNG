@@ -28,13 +28,11 @@
       "shortDescription": "",
       "longDescription": "",
       "deb": {
-        "depends": [],
-        "useBootstrapper": false
+        "depends": []
       },
       "macOS": {
         "frameworks": [],
         "minimumSystemVersion": "",
-        "useBootstrapper": false,
         "exceptionDomain": "",
         "signingIdentity": null,
         "providerShortName": null,
@@ -82,11 +80,24 @@
         "width": 1024,
         "height": 800,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "visible": false
       }
     ],
     "security": {
       "csp": null
+    },
+    "cli": {
+      "description": "Next gen remote GUI for transmission torrent daemon",
+      "args": [
+        {
+          "name": "torrent",
+          "index": 1,
+          "multiple": true,
+          "takesValue": true,
+          "description": "torrent file or magnet link url"
+        }
+      ]
     }
   }
 }

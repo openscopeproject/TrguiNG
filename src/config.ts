@@ -79,7 +79,7 @@ export class Config {
             this.fileName,
             { dir: fs.BaseDirectory.Config }
         ).then((text) => {
-            console.log(`Read ${text}`);
+            // console.log(`Read ${text}`);
             this.values = JSON.parse(text);
         }).catch((e) => console.log(e));
     }

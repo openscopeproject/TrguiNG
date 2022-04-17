@@ -24,6 +24,7 @@ import { Config, ConfigContext } from './config';
 import ReactDOM from 'react-dom';
 import React, { useContext, useMemo } from 'react';
 import { Server } from './components/server';
+import { EventListener } from './event';
 
 function App(props: {}) {
     const config = useContext(ConfigContext);
@@ -37,6 +38,9 @@ function App(props: {}) {
 async function run() {
     var config = new Config();
     await config.read();
+
+    var eventListener = new EventListener();
+    eventListener.add("app-arg", (payload) => console.log(`Got app-arg: ${payload}`));
 
     appWindow.listen('tauri://close-requested', (event) => {
         config.save().then(() => {
