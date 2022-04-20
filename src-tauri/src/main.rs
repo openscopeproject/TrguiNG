@@ -28,6 +28,7 @@ use tauri::{
 };
 
 mod ipc;
+mod commands;
 
 struct ListenerHandle(Arc<Mutex<ipc::Ipc>>);
 
@@ -35,6 +36,7 @@ fn main() {
     let context = tauri::generate_context!();
 
     tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![commands::read_file])
         .manage(ListenerHandle(Default::default()))
         .setup(|app| {
             let args = get_matches(app.config().tauri.cli.as_ref().unwrap(), app.package_info())

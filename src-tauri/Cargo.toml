@@ -14,8 +14,11 @@ rust-version = "1.57"
 [build-dependencies]
 tauri-build = { version = "1.0.0-rc.5", features = [] }
 
+
 [dependencies]
 serde_json = "1.0"
+base64 = "0.13.0"
+lava_torrent = "0.7.0"
 hyper = { version = "0.14", features = ["full"] }
 tokio = { version = "1.17", features = ["net"] }
 serde = { version = "1.0", features = ["derive"] }

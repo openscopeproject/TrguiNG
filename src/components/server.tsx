@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Split from "react-split";
 import { TransmissionClient } from "../rpc/client";
 import { Details } from "./details";
@@ -24,6 +24,8 @@ import { DefaultFilter, Filters } from "./filters";
 import { TorrentTable } from "./torrenttable";
 import { Torrent } from "../rpc/torrent";
 import '../css/custom.css';
+import { Button, Col, Row } from "react-bootstrap";
+import { invoke } from "@tauri-apps/api";
 
 interface ServerProps {
     client: TransmissionClient,
@@ -51,10 +53,19 @@ export function Server(props: ServerProps) {
         return () => clearInterval(timer);
     }, [props.client]);
 
+    var readFile = useCallback((e) => {
+        invoke("read_file", { path: "D:\\Downloads\\1.torrent" }).then((result) => {
+            console.log("Invoke result:\n", result);
+        })
+    }, []);
+
     return (
         <div className="d-flex flex-column h-100 w-100">
             <div className="border-bottom border-dark">
-                <h1>Toolbar placeholder</h1>
+                <Row>
+                    <Col><h1>Toolbar placeholder</h1></Col>
+                    <Col><Button onClick={readFile}>Invoke</Button></Col>
+                </Row>
             </div>
             <div className="flex-grow-1">
                 <Split
