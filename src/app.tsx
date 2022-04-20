@@ -41,6 +41,7 @@ async function run() {
 
     var eventListener = new EventListener();
     eventListener.add("app-arg", (payload) => console.log(`Got app-arg: ${payload}`));
+    eventListener.finalize();
 
     appWindow.listen('tauri://close-requested', (event) => {
         config.save().then(() => {

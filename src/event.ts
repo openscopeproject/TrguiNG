@@ -1,4 +1,4 @@
-import { listen, UnlistenFn } from "@tauri-apps/api/event";
+import { emit, listen, UnlistenFn } from "@tauri-apps/api/event";
 
 export class EventListener {
     unlistenMap: Map<string, UnlistenFn> = new Map();
@@ -12,5 +12,9 @@ export class EventListener {
         var unlisten = this.unlistenMap.get(event);
         if (unlisten) unlisten();
         this.unlistenMap.delete(event);
+    }
+
+    finalize() {
+        emit("listener-start", {}).then(() => {});
     }
 }

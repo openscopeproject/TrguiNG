@@ -59,22 +59,31 @@ fn main() {
             }
 
             let listener_state: State<ListenerHandle> = app.state();
-            let mutex_clone = listener_state.0.clone();
+            let listener_mutex = listener_state.0.clone();
             let app: Arc<AppHandle> = app.handle().into();
             async_runtime::spawn(async move {
-                let mut listener = mutex_clone.lock().await;
-                let mut started = true;
-                if let Err(_) = listener.listen(app.clone()).await {
-                    listener.stop();
-                    started = false;
+                let mut listening = true;
+                {
+                    let mut listener = listener_mutex.lock().await;
+                    if let Err(_) = listener.listen(app.clone()).await {
+                        listener.start();
+                        listener.stop();
+                        listening = false;
+                    }
+                    if let Err(e) = listener.send(&torrents).await {
+                        println!("Unable to send args to listener: {:?}", e);
+                    }
                 }
-                if let Err(e) = listener.send(&torrents).await {
-                    println!("Unable to send args to listener: {:?}", e);
-                }
-
                 let main_window = app.get_window("main").unwrap();
 
-                if started {
+                if listening {
+                    let _ = app.listen_global("listener-start", move |_| {
+                        let listener_mutex = listener_mutex.clone();
+                        async_runtime::spawn(async move {
+                            let listener = listener_mutex.lock().await;
+                            listener.start();
+                        });
+                    });
                     main_window.show().ok();
                 } else {
                     main_window.close().ok();
