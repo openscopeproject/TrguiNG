@@ -98,6 +98,10 @@
           "description": "torrent file or magnet link url"
         }
       ]
+    },
+    "systemTray": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
     }
   }
 }
