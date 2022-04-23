@@ -142,3 +142,71 @@ export const TorrentAllFields = [
 ] as const;
 
 export type TorrentAllFieldsType = typeof TorrentAllFields[number];
+
+// These fields are polled regularlly with torrent list
+export const SessionFields = [
+    "alt-speed-down", // number: max global download speed (KBps)
+    "alt-speed-enabled", // boolean: true means use the alt speeds
+    "alt-speed-up", // number: max global upload speed (KBps)
+    "download-dir-free-space", // number: DEPRECATED Use the free-space method instead.
+    "speed-limit-down-enabled", // boolean: true means enabled
+    "speed-limit-down", // number: max global download speed (KBps)
+    "speed-limit-up-enabled", // boolean: true means enabled
+    "speed-limit-up", // number: max global upload speed (KBps)
+];
+
+export type SessionFieldsType = typeof SessionFields[number];
+
+// These fields are polled once per session or when config is updated
+export const SessionAllFields = [
+    ...SessionFields,
+    "alt-speed-time-begin", // number: when to turn on alt speeds (units: minutes after midnight)
+    "alt-speed-time-day", // number: what day(s) to turn on alt speeds (look at tr_sched_day)
+    "alt-speed-time-enabled", // boolean: true means the scheduled on/off times are used
+    "alt-speed-time-end", // number: when to turn off alt speeds (units: same)
+    "blocklist-enabled", // boolean: true means enabled
+    "blocklist-size", // number: number of rules in the blocklist
+    "blocklist-url", // string: location of the blocklist to use for blocklist-update
+    "cache-size-mb", // number: maximum size of the disk cache (MB)
+    "config-dir", // string: location of transmission's configuration directory
+    "default-trackers", // list of default trackers to use on public torrents
+    "dht-enabled", // boolean: true means allow dht in public torrents
+    "download-dir", // string: default path to download torrents
+    "download-queue-enabled", // boolean: if true, limit how many torrents can be downloaded at once
+    "download-queue-size", // number: max number of torrents to download at once (see download-queue-enabled)
+    "encryption", // string: required, preferred, tolerated
+    "idle-seeding-limit-enabled", // boolean: true if the seeding inactivity limit is honored by default
+    "idle-seeding-limit", // number: torrents we're seeding will be stopped if they're idle for this long
+    "incomplete-dir-enabled", // boolean: true means keep torrents in incomplete-dir until done
+    "incomplete-dir", // string: path for incomplete torrents, when enabled
+    "lpd-enabled", // boolean: true means allow Local Peer Discovery in public torrents
+    "peer-limit-global", // number: maximum global number of peers
+    "peer-limit-per-torrent", // number: maximum global number of peers
+    "peer-port-random-on-start", // boolean: true means pick a random peer port on launch
+    "peer-port", // number: port number
+    "pex-enabled", // boolean: true means allow pex in public torrents
+    "port-forwarding-enabled", // boolean: true means ask upstream router to forward the configured peer port to transmission using UPnP or NAT-PMP
+    "queue-stalled-enabled", // boolean: whether or not to consider idle torrents as stalled
+    "queue-stalled-minutes", // number: torrents that are idle for N minuets aren't counted toward seed-queue-size or download-queue-size
+    "rename-partial-files", // boolean: true means append .part to incomplete files
+    "rpc-version-minimum", // number: the minimum RPC API version supported
+    "rpc-version-semver", // number: the current RPC API version in a semver-compatible string
+    "rpc-version", // number: the current RPC API version
+    "script-torrent-added-enabled", // boolean: whether or not to call the added script
+    "script-torrent-added-filename", // string: filename of the script to run
+    "script-torrent-done-enabled", // boolean: whether or not to call the done script
+    "script-torrent-done-filename", // string: filename of the script to run
+    "script-torrent-done-seeding-enabled", // boolean: whether or not to call the seeding-done script
+    "script-torrent-done-seeding-filename", // string: filename of the script to run
+    "seed-queue-enabled", // boolean: if true, limit how many torrents can be uploaded at once
+    "seed-queue-size", // number: max number of torrents to uploaded at once (see seed-queue-enabled)
+    "seedRatioLimit", // double: the default seed ratio for torrents to use
+    "seedRatioLimited", // boolean: true if seedRatioLimit is honored by default
+    "start-added-torrents", // boolean: true means added torrents will be started right away
+    "trash-original-torrent-files", // boolean: true means the .torrent file of added torrents will be deleted
+    "units", // object: see below
+    "utp-enabled", // boolean: true means allow utp
+    "version", // string: long version string $version ($revision)
+];
+
+export type SessionAllFieldsType = typeof SessionAllFields[number];

@@ -165,7 +165,6 @@ function PercentBarField(props: TableFieldProps) {
 
 interface TorrentTableProps {
     torrents: Torrent[];
-    currentFilter: TorrentFilter;
     setCurrentTorrent: (t: Torrent) => void;
 }
 
@@ -249,8 +248,6 @@ export function TorrentTable(props: TorrentTableProps) {
     }, []);
 
 
-    const data = useMemo(() => props.torrents.filter(props.currentFilter.filter), [props]);
-
     const {
         getTableProps,
         getTableBodyProps,
@@ -261,7 +258,7 @@ export function TorrentTable(props: TorrentTableProps) {
     } = useTable<Torrent>(
         {
             columns,
-            data,
+            data: props.torrents,
             defaultColumn,
             getRowId,
             autoResetSelectedRows: false,
@@ -287,7 +284,7 @@ export function TorrentTable(props: TorrentTableProps) {
     }, []);
 
     const rowVirtualizer = useVirtual({
-        size: data.length,
+        size: props.torrents.length,
         parentRef,
         paddingStart: rowHeight,
         overscan: 3,

@@ -19,9 +19,10 @@
 import { Buffer } from 'buffer';
 
 import * as http from '@tauri-apps/api/http';
-import { TorrentAllFields, TorrentFields } from './transmission';
+import { SessionAllFields, SessionFields, TorrentAllFields, TorrentFields } from './transmission';
 import { ServerConnection } from '../config';
 import { Torrent } from './torrent';
+import { merge } from 'lodash';
 
 class ApiError extends Error {
 
@@ -33,23 +34,31 @@ class ApiResponse {
     tag?: number;
 }
 
+export interface SessionInfo extends Record<string, any> {
+
+}
+
 function isApiResponse(response: any): response is ApiResponse {
     return "result" in response && typeof response.result == "string";
 }
 
 export class TransmissionClient {
     url: string;
+    hostname: string;
     auth: string;
     headers: Record<string, string>;
     timeout: number;
     client: http.Client | null;
+    session_info: SessionInfo;
 
     constructor(connection: ServerConnection, timeout = 15) {
         this.url = connection.url;
+        this.hostname = new URL(this.url).hostname;
         this.auth = "Basic " + Buffer.from(connection.username + ":" + connection.password, 'utf-8').toString('base64');
         this.headers = { "Authorization": this.auth };
         this.timeout = timeout;
         this.client = null;
+        this.session_info = {};
     }
 
     getHeader(headers: Record<string, string>, header: string) {
@@ -129,5 +138,32 @@ export class TransmissionClient {
         }
 
         return torrent;
+    }
+
+    async _getSession(fields: string[]): Promise<SessionInfo> {
+        var request = {
+            method: "session-get",
+            arguments: { fields: fields }
+        };
+
+        var response = await this.sendRpc(request);
+
+        if (!isApiResponse(response)) {
+            throw new ApiError('session-get response is not a session');
+        }
+
+        return response.arguments;
+    }
+
+    async getSession(): Promise<SessionInfo> {
+        const session = await this._getSession(SessionFields);
+        merge(this.session_info, session);
+        return this.session_info;
+    }
+
+    async getSessionFull(): Promise<SessionInfo> {
+        const session = await this._getSession(SessionAllFields);
+        merge(this.session_info, session);
+        return this.session_info;
     }
 }

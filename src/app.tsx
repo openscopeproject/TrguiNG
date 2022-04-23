@@ -30,7 +30,9 @@ function App(props: {}) {
     const config = useContext(ConfigContext);
 
     var client = useMemo(() => {
-        return new TransmissionClient(config.getServers()[0].connection);
+        const client = new TransmissionClient(config.getServers()[0].connection);
+        client.getSessionFull().catch(console.log);
+        return client;
     }, []);
     return <Server client={client} />;
 }

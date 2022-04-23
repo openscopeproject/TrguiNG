@@ -28,6 +28,11 @@ export function bytesToHumanReadableStr(value: number): string {
     return `${result} ${unit}`;
 }
 
+export function byteRateToHumanReadableStr(value: number): string {
+    if (value < 0) return "∞";
+    else return `${bytesToHumanReadableStr(value)}/s`;
+}
+
 export function secondsToHumanReadableStr(value: number): string {
     var duration = Duration.fromMillis(value * 1000).shiftTo("days", "hours", "minutes", "seconds");
     // Make it coarse

@@ -18,6 +18,7 @@
 
 import * as fs from "@tauri-apps/api/fs";
 import React from "react";
+import { merge } from "lodash";
 
 export interface ServerConnection {
     url: string,
@@ -80,7 +81,7 @@ export class Config {
             { dir: fs.BaseDirectory.Config }
         ).then((text) => {
             // console.log(`Read ${text}`);
-            this.values = JSON.parse(text);
+            this.values = merge(JSON.parse(text));
         }).catch((e) => console.log(e));
     }
 
