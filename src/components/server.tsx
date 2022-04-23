@@ -26,6 +26,7 @@ import { Torrent } from "../rpc/torrent";
 import '../css/custom.css';
 import { Button, Col, Row } from "react-bootstrap";
 import { invoke } from "@tauri-apps/api";
+import { Toolbar } from "./toolbar";
 
 interface ServerProps {
     client: TransmissionClient,
@@ -61,11 +62,8 @@ export function Server(props: ServerProps) {
 
     return (
         <div className="d-flex flex-column h-100 w-100">
-            <div className="border-bottom border-dark">
-                <Row>
-                    <Col><h1>Toolbar placeholder</h1></Col>
-                    <Col><Button onClick={readFile}>Invoke</Button></Col>
-                </Row>
+            <div className="border-bottom border-dark p-2">
+                <Toolbar />
             </div>
             <div className="flex-grow-1">
                 <Split

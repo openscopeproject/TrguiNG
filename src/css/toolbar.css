@@ -16,46 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-.torrent-table .th, .torrent-table .td {
-    /* border-width: 0px 1px 1px 0px;
-    border-style: solid;
-    border-color: #444; */
-    max-width: 400px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0.05em 0.2em;
+ .btn-light {
+    min-width: 2.5rem;
+    border-color: #d8ebff;
 }
 
-.torrent-label {
-    margin-inline: 0.1em;
-}
-
-.white-outline {
-    box-shadow: 0 0 3px 1px white;
-}
-
-.torrent-table-container {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    overflow: auto;
-}
-
-.torrent-table {
-    position: absolute;
-    left: 0;
-    top: 0;
-}
-
-.torrent-table .tr {
-    display: flex;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-}
-
-.sticky-top {
-    z-index: 500;
+.btn-light:hover {
+    background-color: #ebebeb;
 }
