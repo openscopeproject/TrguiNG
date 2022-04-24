@@ -207,12 +207,7 @@ function GeneralPane(props: { torrent: Torrent }) {
     );
 }
 
-interface PiecesProps {
-    count: number,
-    pieces: string,
-}
-
-function PiecesCanvas(props: PiecesProps) {
+function PiecesCanvas(props: { torrent: Torrent }) {
     const { width, height, ref } = useResizeDetector({
         refreshMode: "throttle",
         refreshRate: 1000,
@@ -221,12 +216,37 @@ function PiecesCanvas(props: PiecesProps) {
     const piecesRef = useRef<HTMLCanvasElement>(null);
     const gridRef = useRef<HTMLCanvasElement>(null);
 
+    const wantedPieces = useMemo(() => {
+        var result: Array<boolean> = new Array(props.torrent.pieceCount);
+
+        const pieceSize = props.torrent.pieceSize;
+        const lengths = props.torrent.files.map((f: any) => f.length);
+        const wanted = props.torrent.fileStats.map((f: any) => f.wanted);
+
+        var fileIndex = 0;
+        var pieceIndex = 0;
+        var totalLength = 0;
+
+        while (totalLength < props.torrent.totalSize) {
+            totalLength += lengths[fileIndex];
+            while ((pieceIndex + 1) * pieceSize < totalLength) {
+                result[pieceIndex] = result[pieceIndex] || wanted[fileIndex];
+                pieceIndex++;
+            }
+            result[pieceIndex] = result[pieceIndex] || wanted[fileIndex];
+            if ((pieceIndex + 1) * pieceSize == totalLength) pieceIndex++;
+            fileIndex++;
+        }
+
+        return result;
+    }, [props.torrent]);
+
     const [pieceSize, rows, cols] = useMemo(() => {
         if (width === undefined || height === undefined) return [5, 1, 1];
 
         const check = (size: number) => {
             var cols = Math.floor(width / size);
-            var rows = Math.ceil(props.count / cols);
+            var rows = Math.ceil(props.torrent.pieceCount / cols);
             if (rows * size < height) return [rows, cols];
             else return [-1, -1];
         }
@@ -243,10 +263,10 @@ function PiecesCanvas(props: PiecesProps) {
             mid = (right + left) * 0.5;
         }
         return [left, ...check(left)];
-    }, [props.count, width, height]);
+    }, [props.torrent.pieceCount, width, height]);
 
     const pieces = useMemo(() => {
-        const bstr = window.atob(props.pieces);
+        const bstr = window.atob(props.torrent.pieces);
         var bytes = new Uint8Array(bstr.length);
         for (var i = 0; i < bstr.length; i++) {
             bytes[i] = bstr.charCodeAt(i);
@@ -258,7 +278,7 @@ function PiecesCanvas(props: PiecesProps) {
         var canvas = gridRef.current!;
         var ctx = canvas.getContext("2d")!;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const remainder = rows * cols - props.count;
+        const remainder = rows * cols - props.torrent.pieceCount;
 
         ctx.beginPath();
         ctx.lineWidth = pieceSize > 5 ? 1 : 0.5;
@@ -289,15 +309,15 @@ function PiecesCanvas(props: PiecesProps) {
             var index = 0;
             for (var c = 0; c < cols; c++) {
                 index = r * cols + c;
-                if (index >= props.count) break;
+                if (index >= props.torrent.pieceCount) break;
                 var have = pieces[Math.floor(index / 8)] & (0b10000000 >> (index % 8));
-                ctx.fillStyle = have ? "steelblue" : "azure";
+                ctx.fillStyle = have ? "steelblue" : wantedPieces[index] ? "paleturquoise" : "silver";
                 ctx.fillRect(c * pieceSize, r * pieceSize, pieceSize, pieceSize);
             }
-            if (index >= props.count) break;
+            if (index >= props.torrent.pieceCount) break;
         }
 
-    }, [piecesRef, rows, cols, pieceSize, pieces]);
+    }, [piecesRef, rows, cols, pieceSize, pieces, wantedPieces]);
 
     const dw = Math.floor(window.devicePixelRatio * (width || 1));
     const dh = Math.floor(window.devicePixelRatio * (height || 1));
@@ -339,7 +359,7 @@ export function Details(props: DetailsProps) {
                         </Row>
                     </Tab.Pane>
                     <Tab.Pane eventKey="pieces" className="h-100">
-                        <PiecesCanvas count={props.torrent.pieceCount} pieces={props.torrent.pieces} />
+                        <PiecesCanvas torrent={props.torrent} />
                     </Tab.Pane>
                     <Tab.Pane eventKey="peers">
                         todo peers
