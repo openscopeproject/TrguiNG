@@ -52,9 +52,11 @@ async function run() {
     });
 
     ReactDOM.render(
-        <ConfigContext.Provider value={config}>
-            <App />
-        </ConfigContext.Provider>,
+        <React.StrictMode>
+            <ConfigContext.Provider value={config}>
+                <App />
+            </ConfigContext.Provider>
+        </React.StrictMode>,
         document.getElementById("app"));
 }
 
