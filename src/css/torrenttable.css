@@ -59,3 +59,12 @@
 .sticky-top {
     z-index: 500;
 }
+
+.torrent-table .tr.selected {
+    background-color: royalblue;
+    color: white;
+}
+
+.torrent-table .tr.odd {
+    box-shadow: inset 0 0 0 9999px rgba(0, 0, 0, 0.07);
+}

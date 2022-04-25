@@ -17,14 +17,12 @@
  */
 
 import '../css/torrenttable.css';
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { Badge } from 'react-bootstrap';
-import { TorrentFilter } from './filters';
 import { Torrent } from '../rpc/torrent';
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentFieldsType } from '../rpc/transmission';
 import { useTable, useBlockLayout, useResizeColumns, useRowSelect, Column, CellProps, useColumnOrder, TableState, Accessor, useSortBy } from 'react-table';
 import { ConfigContext, TableFieldConfig } from '../config';
-import { Duration } from 'luxon';
 import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from '../util';
 import { ProgressBar } from './progressbar';
 import { useVirtual } from 'react-virtual';
@@ -165,7 +163,9 @@ function PercentBarField(props: TableFieldProps) {
 
 interface TorrentTableProps {
     torrents: Torrent[];
-    setCurrentTorrent: (t: Torrent) => void;
+    setCurrentTorrent: (id: number) => void;
+    selectedTorrents: Set<number>,
+    selectedReducer: React.Dispatch<{ verb: string; ids: number[]; }>
 }
 
 const defaultColumns = allFields.map((f): Column<Torrent> => {
@@ -247,6 +247,13 @@ export function TorrentTable(props: TorrentTableProps) {
         return state;
     }, []);
 
+    const [lastIndex, setLastIndex] = useState(-1);
+
+    const data = useMemo(() => {
+        return props.torrents.map((t) => {
+            return { ...t, isSelected: props.selectedTorrents.has(t.id) };
+        });
+    }, [props.torrents, props.selectedTorrents]);
 
     const {
         getTableProps,
@@ -258,10 +265,9 @@ export function TorrentTable(props: TorrentTableProps) {
     } = useTable<Torrent>(
         {
             columns,
-            data: props.torrents,
+            data,
             defaultColumn,
             getRowId,
-            autoResetSelectedRows: false,
             autoResetSortBy: false,
             stateReducer: stateChange,
             initialState: {
@@ -276,6 +282,39 @@ export function TorrentTable(props: TorrentTableProps) {
         useResizeColumns,
         useRowSelect
     );
+
+
+    const rowClick = useCallback((event: React.MouseEvent<Element>, index: number, lastIndex: number) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        function genIds() {
+            var minIndex = Math.min(index, lastIndex);
+            var maxIndex = Math.max(index, lastIndex);
+            var ids = [];
+            for (var i = minIndex; i <= maxIndex; i++)
+                ids.push(rows[i].original.id);
+            return ids;
+        }
+
+        if (event.shiftKey && event.ctrlKey && lastIndex != -1) {
+            var ids = genIds();
+            props.selectedReducer({ verb: "add", ids });
+        } else if (event.shiftKey && lastIndex != -1) {
+            var ids = genIds();
+            props.selectedReducer({ verb: "set", ids });
+        } else if (event.ctrlKey) {
+            props.selectedReducer({ verb: "add", ids: [rows[index].original.id] });
+        } else {
+            props.selectedReducer({ verb: "set", ids: [rows[index].original.id] });
+        }
+
+        if (event.shiftKey) {
+            document.getSelection()?.removeAllRanges();
+        } else {
+            setLastIndex(index);
+        }
+    }, [props.selectedReducer, setLastIndex, rows]);
 
     const parentRef = React.useRef(null);
     const rowHeight = React.useMemo(() => {
@@ -317,9 +356,12 @@ export function TorrentTable(props: TorrentTableProps) {
                         prepareRow(row);
                         return (
                             <div {...row.getRowProps()}
-                                className={`tr ${row.isSelected ? " bg-primary text-white" : virtualRow.index % 2 ? "bg-light" : ""}`}
+                                className={`tr ${row.original.isSelected ? " selected" : ""} ${virtualRow.index % 2 ? " odd" : ""}`}
                                 style={{ height: `${rowHeight}px`, transform: `translateY(${virtualRow.start}px)` }}
-                                onClick={() => { row.toggleRowSelected(true); props.setCurrentTorrent(row.original); }}
+                                onClick={(e) => {
+                                    rowClick(e, virtualRow.index, lastIndex);
+                                    props.setCurrentTorrent(row.original.id);
+                                }}
                             >
                                 {row.cells.map(cell => {
                                     return (

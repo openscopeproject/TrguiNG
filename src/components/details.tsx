@@ -16,17 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { join } from "lodash";
-import React, { CSSProperties, useEffect, useMemo, useRef } from "react";
+import React, { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { Container, Form, Nav, Row, Tab, Table } from "react-bootstrap";
 import { useResizeDetector } from "react-resize-detector";
+import { TransmissionClient } from "../rpc/client";
 import { getTorrentError, Torrent } from "../rpc/torrent";
 import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr, timestampToDateString } from "../util";
 import { ProgressBar } from "./progressbar";
 import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./torrenttable";
 
 interface DetailsProps {
-    torrent?: Torrent;
+    torrentId?: number;
+    client: TransmissionClient;
 }
 
 function DownloadBar(props: { torrent: Torrent }) {
@@ -325,7 +326,7 @@ function PiecesCanvas(props: { torrent: Torrent }) {
         width: width || 1, height: height || 1, position: "absolute", top: 0, left: 0
     };
     return (
-        <div ref={ref} className="w-100 h-100 position-relative">
+        <div ref={ref} className="w-100 h-100 position-relative" style={{overflow: "hidden"}}>
             <canvas ref={piecesRef} width={dw} height={dh} style={style} />
             <canvas ref={gridRef} width={dw} height={dh} style={style} />
         </div>
@@ -333,33 +334,47 @@ function PiecesCanvas(props: { torrent: Torrent }) {
 }
 
 export function Details(props: DetailsProps) {
-    if (!props.torrent) return <div className="p-3">Select a torrent to view it's details</div>;
+    const [torrent, setTorrent] = useState<Torrent>();
+
+    useEffect(() => {
+        if (!props.torrentId) return () => {};
+
+        props.client.getTorrentDetails(props.torrentId).then(setTorrent).catch(console.log);
+
+        var timer = setInterval(() => {
+            props.client.getTorrentDetails(props.torrentId!).then(setTorrent).catch(console.log);
+        }, 5000);
+
+        return () => clearInterval(timer);
+    }, [props]);
+
+    if (!torrent) return <div className="p-3">Select a torrent to view it's details</div>;
 
     return (
         <Container fluid className="d-flex flex-column h-100">
             <Tab.Container id="details-tabs" defaultActiveKey="general">
                 <Nav variant="tabs">
                     <Nav.Link eventKey="general">General</Nav.Link>
-                    <Nav.Link eventKey="files">{`Files (${props.torrent.files.length})`}</Nav.Link>
-                    <Nav.Link eventKey="pieces">{`Pieces (${props.torrent.pieceCount})`}</Nav.Link>
+                    <Nav.Link eventKey="files">{`Files (${torrent.files.length})`}</Nav.Link>
+                    <Nav.Link eventKey="pieces">{`Pieces (${torrent.pieceCount})`}</Nav.Link>
                     <Nav.Link eventKey="peers">Peers</Nav.Link>
                     <Nav.Link eventKey="trackers">Trackers</Nav.Link>
                     <Nav.Link eventKey="stats">Stats</Nav.Link>
                 </Nav>
                 <Tab.Content className="flex-grow-1">
                     <Tab.Pane eventKey="general" className="h-100">
-                        <GeneralPane torrent={props.torrent} />
+                        <GeneralPane torrent={torrent} />
                     </Tab.Pane>
                     <Tab.Pane eventKey="files" className="h-100">
                         <Row className="h-100 scrollable">
                             <Container fluid>
-                                {props.torrent.files.map(
+                                {torrent.files.map(
                                     (file: any) => <Row key={file.name}>{file.name}</Row>)}
                             </Container>
                         </Row>
                     </Tab.Pane>
                     <Tab.Pane eventKey="pieces" className="h-100">
-                        <PiecesCanvas torrent={props.torrent} />
+                        <PiecesCanvas torrent={torrent} />
                     </Tab.Pane>
                     <Tab.Pane eventKey="peers">
                         todo peers

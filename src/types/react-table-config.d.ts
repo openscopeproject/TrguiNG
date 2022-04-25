@@ -76,7 +76,7 @@ declare module 'react-table' {
         // UseGroupByOptions<D>,
         // UsePaginationOptions<D>,
         UseResizeColumnsOptions<D>,
-        UseRowSelectOptions<D>,
+        // UseRowSelectOptions<D>,
         // UseRowStateOptions<D>,
         UseSortByOptions<D>
     // note that having Record here allows you to add anything to the options, this matches the spirit of the
@@ -88,7 +88,7 @@ declare module 'react-table' {
     export interface Hooks<D extends object = {}>
         extends UseExpandedHooks<D>,
         // UseGroupByHooks<D>,
-        UseRowSelectHooks<D>,
+        // UseRowSelectHooks<D>,
         UseSortByHooks<D> { }
 
     export interface TableInstance<D extends object = {}>
@@ -98,7 +98,7 @@ declare module 'react-table' {
         UseGlobalFiltersInstanceProps<D>,
         // UseGroupByInstanceProps<D>,
         // UsePaginationInstanceProps<D>,
-        UseRowSelectInstanceProps<D>,
+        // UseRowSelectInstanceProps<D>,
         // UseRowStateInstanceProps<D>,
         UseSortByInstanceProps<D> { }
 
@@ -110,7 +110,7 @@ declare module 'react-table' {
         // UseGroupByState<D>,
         // UsePaginationState<D>,
         UseResizeColumnsState<D>,
-        UseRowSelectState<D>,
+        // UseRowSelectState<D>,
         // UseRowStateState<D>,
         UseSortByState<D> { }
 
@@ -129,13 +129,13 @@ declare module 'react-table' {
 
     export interface Cell<D extends object = {}, V = any>
         extends UseGroupByCellProps<D>
-    // UseRowStateCellProps<D> { }
+        // UseRowStateCellProps<D> { }
     { }
 
     export interface Row<D extends object = {}>
-        extends UseExpandedRowProps<D>,
+        extends UseExpandedRowProps<D>
         // UseGroupByRowProps<D>,
-        UseRowSelectRowProps<D>
-    // UseRowStateRowProps<D> { }
+        // UseRowSelectRowProps<D>
+        // UseRowStateRowProps<D> { }
     { }
 }

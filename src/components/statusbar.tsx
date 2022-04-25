@@ -38,8 +38,8 @@ export interface StatusbarProps {
 export function Statusbar(props: StatusbarProps) {
     return (
         <Container fluid>
-            <Row>
-                <Col sm={3}>{`${props.daemon_version} at ${props.hostname}`}</Col>
+            <Row className="statusbar">
+                <Col sm={3}><Icon.Diagram2 className="me-2" /><span>{`${props.daemon_version} at ${props.hostname}`}</span></Col>
                 <Col>
                     <Icon.ArrowDown className="me-2" />
                     <span>{`${bytesToHumanReadableStr(props.down_rate)}/s (${byteRateToHumanReadableStr(props.down_rate_limit * 1024)})`}</span>

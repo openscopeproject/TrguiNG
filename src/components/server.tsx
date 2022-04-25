@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import Split from "react-split";
 import { SessionInfo, TransmissionClient } from "../rpc/client";
 import { Details } from "./details";
@@ -35,27 +35,41 @@ interface ServerProps {
 export function Server(props: ServerProps) {
     const [torrents, setTorrents] = useState<Torrent[]>([]);
     const [session, setSession] = useState<SessionInfo>({});
-    const [currentTorrent, setCurrentTorrent] = useState<Torrent>();
+    const [currentTorrent, setCurrentTorrent] = useState<number>();
     const [currentFilter, setCurrentFilter] = useState({ id: "", filter: DefaultFilter });
-    const [timer, setTimer] = useState(0);
+    const [selectedTorrents, selectedReducer] = useReducer(
+        (selected: Set<number>, action: { verb: string, ids: number[] }) => {
+            var selected = new Set(selected);
+            if (action.verb == "set") {
+                selected.clear();
+                for(var id of action.ids) selected.add(id);
+            } else if (action.verb == "add") {
+                for(var id of action.ids) selected.add(id);
+            } else if (action.verb == "remove") {
+                for(var id of action.ids) selected.delete(id);
+            } else if (action.verb == "toggle") {
+                if (!selected.delete(action.ids[0]))
+                    selected.add(action.ids[0]);
+            }
+            return selected;
+        }, new Set<number>());
+
+    useEffect(() => {
+        const ids: number[] = torrents.filter((t) => !currentFilter.filter(t)).map((t) => t.id);
+        selectedReducer({verb: "remove", ids});
+    }, [torrents, currentFilter]);
 
     const filteredTorrents = useMemo(
         () => torrents.filter(currentFilter.filter), [torrents, currentFilter]);
-
-    const loadTorrentDetails = useCallback((t: Torrent) => {
-        props.client.getTorrentDetails(t.id)
-            .then(setCurrentTorrent)
-            .catch(console.log);
-    }, [props.client]);
 
     useEffect(() => {
         props.client.getTorrents().then(setTorrents).catch(console.log);
         props.client.getSession().then(setSession).catch(console.log);
 
-        setTimer(setInterval(() => {
+        var timer = setInterval(() => {
             props.client.getTorrents().then(setTorrents).catch(console.log);
             props.client.getSession().then(setSession).catch(console.log);
-        }, 5000));
+        }, 5000);
 
         return () => clearInterval(timer);
     }, [props.client]);
@@ -67,6 +81,7 @@ export function Server(props: ServerProps) {
     }, []);
 
     const statusbarProps = useMemo<StatusbarProps>(() => {
+        const selected = filteredTorrents.filter((t) => selectedTorrents.has(t.id));
         return {
             daemon_version: session.version,
             hostname: props.client.hostname,
@@ -80,11 +95,11 @@ export function Server(props: ServerProps) {
                 : -1,
             free: session["download-dir-free-space"],
             size_total: filteredTorrents.reduce((p, t) => p + t.sizeWhenDone, 0),
-            size_selected: filteredTorrents.reduce((p, t) => p + t.sizeWhenDone, 0),
-            size_done: filteredTorrents.reduce((p, t) => p + t.haveValid, 0),
-            size_left: filteredTorrents.reduce((p, t) => p + t.leftUntilDone, 0),
+            size_selected: selected.reduce((p, t) => p + t.sizeWhenDone, 0),
+            size_done: selected.reduce((p, t) => p + t.haveValid, 0),
+            size_left: selected.reduce((p, t) => p + t.leftUntilDone, 0),
         }
-    }, [session, filteredTorrents]);
+    }, [session, filteredTorrents, selectedTorrents]);
 
     return (
         <div className="d-flex flex-column h-100 w-100">
@@ -114,15 +129,17 @@ export function Server(props: ServerProps) {
                         </div>
                         <TorrentTable
                             torrents={filteredTorrents}
-                            setCurrentTorrent={loadTorrentDetails} />
+                            setCurrentTorrent={setCurrentTorrent}
+                            selectedTorrents={selectedTorrents}
+                            selectedReducer={selectedReducer} />
                     </Split>
                     <div className="w-100">
-                        <Details torrent={currentTorrent} />
+                        <Details torrentId={currentTorrent} client={props.client} />
                     </div>
                 </Split>
             </div>
             <div className="border-top border-dark py-1">
-                <Statusbar {...statusbarProps}/>
+                <Statusbar {...statusbarProps} />
             </div>
         </div>
     );

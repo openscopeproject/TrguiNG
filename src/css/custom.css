@@ -77,3 +77,9 @@ html, body {
     /* prevents from scrolling while dragging on touch devices */
     touch-action: none;
 }
+
+.statusbar>* {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
