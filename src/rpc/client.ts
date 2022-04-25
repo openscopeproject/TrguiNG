@@ -140,7 +140,7 @@ export class TransmissionClient {
         return torrent;
     }
 
-    async _getSession(fields: string[]): Promise<SessionInfo> {
+    async _getSession(fields: Readonly<string[]>): Promise<SessionInfo> {
         var request = {
             method: "session-get",
             arguments: { fields: fields }
@@ -165,5 +165,14 @@ export class TransmissionClient {
         const session = await this._getSession(SessionAllFields);
         merge(this.session_info, session);
         return this.session_info;
+    }
+
+    async setSession(fields: Record<string, any>) {
+        var request = {
+            method: "session-set",
+            arguments: fields,
+        };
+
+        await this.sendRpc(request);
     }
 }

@@ -24,3 +24,8 @@
 .btn-light:hover {
     background-color: #ebebeb;
 }
+
+.btn-light.alt {
+    background-color: lightblue;
+    transform: scale(-1, 1);
+}

@@ -27,6 +27,7 @@ import '../css/custom.css';
 import { invoke } from "@tauri-apps/api";
 import { Toolbar } from "./toolbar";
 import { Statusbar, StatusbarProps } from "./statusbar";
+import { ActionController } from "../actions";
 
 interface ServerProps {
     client: TransmissionClient,
@@ -37,16 +38,19 @@ export function Server(props: ServerProps) {
     const [session, setSession] = useState<SessionInfo>({});
     const [currentTorrent, setCurrentTorrent] = useState<number>();
     const [currentFilter, setCurrentFilter] = useState({ id: "", filter: DefaultFilter });
+    const [searchTerms, setSearchTerms] = useState<string[]>([]);
+    const actionController = useMemo(() => new ActionController(props.client), [props.client]);
+
     const [selectedTorrents, selectedReducer] = useReducer(
         (selected: Set<number>, action: { verb: string, ids: number[] }) => {
             var selected = new Set(selected);
             if (action.verb == "set") {
                 selected.clear();
-                for(var id of action.ids) selected.add(id);
+                for (var id of action.ids) selected.add(id);
             } else if (action.verb == "add") {
-                for(var id of action.ids) selected.add(id);
+                for (var id of action.ids) selected.add(id);
             } else if (action.verb == "remove") {
-                for(var id of action.ids) selected.delete(id);
+                for (var id of action.ids) selected.delete(id);
             } else if (action.verb == "toggle") {
                 if (!selected.delete(action.ids[0]))
                     selected.add(action.ids[0]);
@@ -56,11 +60,19 @@ export function Server(props: ServerProps) {
 
     useEffect(() => {
         const ids: number[] = torrents.filter((t) => !currentFilter.filter(t)).map((t) => t.id);
-        selectedReducer({verb: "remove", ids});
+        selectedReducer({ verb: "remove", ids });
     }, [torrents, currentFilter]);
 
+    const searchFilter = useCallback((t: Torrent) => {
+        const name = t.name.toLowerCase();
+        for (var term of searchTerms)
+            if (!name.includes(term)) return false;
+        return true;
+    }, [searchTerms]);
+
     const filteredTorrents = useMemo(
-        () => torrents.filter(currentFilter.filter), [torrents, currentFilter]);
+        () => torrents.filter(currentFilter.filter).filter(searchFilter),
+        [torrents, currentFilter, searchFilter]);
 
     useEffect(() => {
         props.client.getTorrents().then(setTorrents).catch(console.log);
@@ -104,7 +116,11 @@ export function Server(props: ServerProps) {
     return (
         <div className="d-flex flex-column h-100 w-100">
             <div className="border-bottom border-dark p-2">
-                <Toolbar />
+                <Toolbar
+                    setSearchTerms={setSearchTerms}
+                    actionController={actionController}
+                    altSpeedMode={session["alt-speed-enabled"]}
+                />
             </div>
             <div className="flex-grow-1">
                 <Split

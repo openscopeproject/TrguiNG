@@ -153,7 +153,7 @@ export const SessionFields = [
     "speed-limit-down", // number: max global download speed (KBps)
     "speed-limit-up-enabled", // boolean: true means enabled
     "speed-limit-up", // number: max global upload speed (KBps)
-];
+] as const;
 
 export type SessionFieldsType = typeof SessionFields[number];
 
@@ -207,6 +207,6 @@ export const SessionAllFields = [
     "units", // object: see below
     "utp-enabled", // boolean: true means allow utp
     "version", // string: long version string $version ($revision)
-];
+] as const;
 
 export type SessionAllFieldsType = typeof SessionAllFields[number];

@@ -16,16 +16,48 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from "react";
+import { debounce } from "lodash";
+import React, { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import { ButtonToolbar, ButtonGroup, Button, FormControl, InputGroup, Dropdown } from "react-bootstrap";
 import * as Icon from "react-bootstrap-icons";
+import { ActionController } from "../actions";
 import "../css/toolbar.css";
 
 interface ToolbarProps {
-
+    setSearchTerms: (terms: string[]) => void,
+    actionController: ActionController,
+    altSpeedMode: boolean,
 }
 
 export function Toolbar(props: ToolbarProps) {
+    const debouncedSetSearchTerms = useMemo(
+        () => debounce(props.setSearchTerms, 500, { trailing: true, leading: false }),
+        [props.setSearchTerms]);
+
+    const [altSpeedMode, altSpeedModeChange] = useReducer(
+        (state: boolean, action: { set?: boolean }) => {
+            var newState = action.set !== undefined ? action.set : !state;
+            if (action.set === undefined) {
+                setTimeout(() => props.actionController.run("setAltSpeedMode", newState).catch((e) => {
+                    console.log("Can't set alt speed mode", e);
+                    return newState;
+                }));
+            }
+            return newState;
+        }, props.altSpeedMode);
+
+    useEffect(() => {
+        altSpeedModeChange({ set: props.altSpeedMode });
+    }, [props.altSpeedMode]);
+
+    const onSearchInput = useCallback((e: React.FormEvent) => {
+        debouncedSetSearchTerms(
+            (e.target as HTMLInputElement).value
+                .split(" ")
+                .map((s) => s.trim().toLowerCase())
+                .filter((s) => s != ""));
+    }, [debouncedSetSearchTerms]);
+
     return (
         <ButtonToolbar>
             <ButtonGroup className="me-2">
@@ -56,12 +88,20 @@ export function Toolbar(props: ToolbarProps) {
                     </Dropdown.Menu>
                 </Dropdown>
             </ButtonGroup>
-            <Button variant="light" className="me-2 p-1"><Icon.Speedometer2 size={24} /></Button>
+            <Button
+                variant="light"
+                title={`Turn alternative bandwidth mode ${altSpeedMode ? "off": "on"}`}
+                className={`me-2 p-1 ${altSpeedMode ? "alt" : ""}`}
+                onClick={() => altSpeedModeChange({})}
+            >
+                <Icon.Speedometer2 size={24} />
+            </Button>
             <InputGroup className="flex-grow-1 me-2">
                 <InputGroup.Text><Icon.Search size={16} /></InputGroup.Text>
                 <FormControl
                     type="text"
                     placeholder="search"
+                    onInput={onSearchInput}
                 />
             </InputGroup>
             <Button variant="light" className="p-1"><Icon.Tools size={24} /></Button>
