@@ -83,3 +83,56 @@ html, body {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.labels {
+    position: relative;
+}
+
+.labels .input {
+    display: inline-flex;
+}
+
+.labels .tag {
+    background-color: royalblue;
+    color: white;
+    border-radius: 10px;
+    height: 3em;
+    padding: 0.3em;
+    margin-inline-end: 0.2em;
+}
+
+.labels .tag .remove {
+    border-color: transparent;
+    background-color: transparent;
+    color: white;
+}
+
+.labels .suggestions {
+    position: absolute;
+}
+
+.labels .suggestions ul {
+    list-style-type: none;
+    box-shadow: 0.05em 0.01em 0.5em rgba(0, 0, 0, 0.2);
+    background: white;
+    width: 200px;
+    padding: 0;
+}
+
+.labels .suggestions li {
+    border-bottom: 1px solid #ddd;
+    padding: 5px 10px;
+    margin: 0;
+}
+
+.labels .suggestions li mark {
+    text-decoration: underline;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.labels .suggestions ul li.active {
+    background: #bcd8ec;
+    cursor: pointer;
+}

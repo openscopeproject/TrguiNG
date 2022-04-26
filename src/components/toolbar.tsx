@@ -27,6 +27,7 @@ interface ToolbarProps {
     setSearchTerms: (terms: string[]) => void,
     actionController: ActionController,
     altSpeedMode: boolean,
+    setShowLabelsModal: (show: boolean) => void,
 }
 
 export function Toolbar(props: ToolbarProps) {
@@ -75,7 +76,9 @@ export function Toolbar(props: ToolbarProps) {
             </ButtonGroup>
             <ButtonGroup className="me-2">
                 <Button variant="light" className="p-1"><Icon.FolderFill size={24} color="gold" /></Button>
-                <Button variant="light" className="p-1"><Icon.TagsFill size={24} color="steelblue" /></Button>
+                <Button variant="light" className="p-1">
+                    <Icon.TagsFill size={24} color="steelblue" onClick={() => props.setShowLabelsModal(true)} />
+                </Button>
                 <Dropdown>
                     <Dropdown.Toggle variant="light">
                         <Icon.ExclamationDiamondFill size={24} color="gold" />
@@ -90,7 +93,7 @@ export function Toolbar(props: ToolbarProps) {
             </ButtonGroup>
             <Button
                 variant="light"
-                title={`Turn alternative bandwidth mode ${altSpeedMode ? "off": "on"}`}
+                title={`Turn alternative bandwidth mode ${altSpeedMode ? "off" : "on"}`}
                 className={`me-2 p-1 ${altSpeedMode ? "alt" : ""}`}
                 onClick={() => altSpeedModeChange({})}
             >

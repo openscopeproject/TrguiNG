@@ -20,6 +20,7 @@ import { TransmissionClient } from "./rpc/client";
 
 const ActionMethods = [
     "setAltSpeedMode",
+    "setLabels",
 ] as const;
 
 type ActionMethodsType = typeof ActionMethods[number];
@@ -33,8 +34,15 @@ interface Action {
 const actions: Action[] = [
     {
         name: "setAltSpeedMode",
-        method: async (ac: ActionController, alt_mode: boolean) => {
-            await ac.client.setSession({"alt-speed-enabled": alt_mode});
+        method: async (ac: ActionController, altMode: boolean) => {
+            await ac.client.setSession({"alt-speed-enabled": altMode});
+        },
+        defaultShortcut: "",
+    },
+    {
+        name: "setLabels",
+        method: async (ac: ActionController, torrentIds: number[], labels: string[]) => {
+            await ac.client.setTorrents(torrentIds, {labels: labels});
         },
         defaultShortcut: "",
     }

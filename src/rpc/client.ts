@@ -175,4 +175,14 @@ export class TransmissionClient {
 
         await this.sendRpc(request);
     }
+
+    async setTorrents(torrentIds: number[], fields: Record<string, any>) {
+        console.log("setting", torrentIds, fields);
+        var request = {
+            method: "torrent-set",
+            arguments: {...fields, ids: torrentIds},
+        }
+
+        await this.sendRpc(request);
+    }
 }

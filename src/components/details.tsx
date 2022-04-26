@@ -32,11 +32,12 @@ interface DetailsProps {
 
 function DownloadBar(props: { torrent: Torrent }) {
     // temporarily just a progress bar
-    const now = Math.round(props.torrent.percentDone * 1000);
+    const percent = props.torrent.status == 2 ? props.torrent.recheckProgress : props.torrent.percentDone;
+    const now = Math.round(percent * 1000);
     const nowStr = `${Math.floor(now / 10.0)}.${now % 10}%`;
     return (
         <div className="d-flex py-1 align-items-center">
-            <div className="me-2">Downloaded:</div>
+            <div className="me-2">{props.torrent.status == 2 ? "Verified:" : "Downloaded:"}</div>
             <ProgressBar now={now} max={1000} label={nowStr} className="flex-grow-1" />
         </div>
     );
@@ -326,7 +327,7 @@ function PiecesCanvas(props: { torrent: Torrent }) {
         width: width || 1, height: height || 1, position: "absolute", top: 0, left: 0
     };
     return (
-        <div ref={ref} className="w-100 h-100 position-relative" style={{overflow: "hidden"}}>
+        <div ref={ref} className="w-100 h-100 position-relative" style={{ overflow: "hidden" }}>
             <canvas ref={piecesRef} width={dw} height={dh} style={style} />
             <canvas ref={gridRef} width={dw} height={dh} style={style} />
         </div>
@@ -337,7 +338,7 @@ export function Details(props: DetailsProps) {
     const [torrent, setTorrent] = useState<Torrent>();
 
     useEffect(() => {
-        if (!props.torrentId) return () => {};
+        if (!props.torrentId) return () => { };
 
         props.client.getTorrentDetails(props.torrentId).then(setTorrent).catch(console.log);
 

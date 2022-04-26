@@ -28,14 +28,63 @@ import { invoke } from "@tauri-apps/api";
 import { Toolbar } from "./toolbar";
 import { Statusbar, StatusbarProps } from "./statusbar";
 import { ActionController } from "../actions";
+import { EditLabelsModal } from "./modals";
 
 interface ServerProps {
     client: TransmissionClient,
 }
 
+function usePausingModalState(setRunUpdates: React.Dispatch<boolean>): [boolean, (b: boolean) => void] {
+    const [show, setShow] = useState(false);
+
+    const setShowWrapped = useCallback((show: boolean) => {
+        setRunUpdates(!show);
+        setShow(show);
+    }, [setRunUpdates, setShow]);
+
+    return [show, setShowWrapped];
+}
+
 export function Server(props: ServerProps) {
     const [torrents, setTorrents] = useState<Torrent[]>([]);
     const [session, setSession] = useState<SessionInfo>({});
+
+    const [updateTimer, setUpdateTimer] = useState(0);
+
+    const pause = useMemo(() => {
+        return {paused: false};
+    }, []);
+
+    const update = useCallback(() => {
+        props.client.getTorrents().then((torrents) => {
+            if (!pause.paused) setTorrents(torrents)
+        }).catch(console.log);
+        props.client.getSession().then((session) => {
+            if (!pause.paused) setSession(session);
+        }).catch(console.log);
+    }, [props.client]);
+
+    const [runUpdates, setRunUpdates] = useReducer((state: boolean, run: boolean) => {
+        if (state && !run) {
+            pause.paused = true;
+            clearInterval(updateTimer);
+        }
+        if (!state && run) {
+            pause.paused = false;
+            update();
+            setUpdateTimer(setInterval(update, 5000));
+        }
+        return run;
+    }, false);
+
+    useEffect(() => {
+        setRunUpdates(true);
+    }, [props.client]);
+
+    useEffect(() => {
+        return () => clearInterval(updateTimer);
+    }, [updateTimer]);
+
     const [currentTorrent, setCurrentTorrent] = useState<number>();
     const [currentFilter, setCurrentFilter] = useState({ id: "", filter: DefaultFilter });
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
@@ -74,18 +123,6 @@ export function Server(props: ServerProps) {
         () => torrents.filter(currentFilter.filter).filter(searchFilter),
         [torrents, currentFilter, searchFilter]);
 
-    useEffect(() => {
-        props.client.getTorrents().then(setTorrents).catch(console.log);
-        props.client.getSession().then(setSession).catch(console.log);
-
-        var timer = setInterval(() => {
-            props.client.getTorrents().then(setTorrents).catch(console.log);
-            props.client.getSession().then(setSession).catch(console.log);
-        }, 5000);
-
-        return () => clearInterval(timer);
-    }, [props.client]);
-
     var readFile = useCallback((e) => {
         invoke("read_file", { path: "D:\\Downloads\\1.torrent" }).then((result) => {
             console.log("Invoke result:\n", result);
@@ -113,13 +150,38 @@ export function Server(props: ServerProps) {
         }
     }, [session, filteredTorrents, selectedTorrents]);
 
-    return (
+    const [showLabelsModal, setShowLabelsModal] = usePausingModalState(setRunUpdates);
+
+    const allLabels = useMemo(() => {
+        var labels = new Set<string>();
+        torrents.forEach((t) => t.labels.forEach((l: string) => labels.add(l)));
+        return Array.from(labels).sort();
+    }, [torrents]);
+
+    const selectedLabels = useMemo(() => {
+        const selected = filteredTorrents.filter((t) => selectedTorrents.has(t.id));
+        var labels: string[] = [];
+        selected.forEach((t) => t.labels.forEach((l: string) => {
+            if (!labels.includes(l)) labels.push(l);
+        }));
+        return labels;
+    }, [filteredTorrents, selectedTorrents]);
+
+    const setLabels = useCallback((labels: string[]) => {
+        actionController.run("setLabels", Array.from(selectedTorrents), labels).catch(console.log);
+    }, [selectedTorrents, actionController]);
+
+    return (<>
+        <EditLabelsModal
+            allLabels={allLabels} labels={selectedLabels}
+            show={showLabelsModal} setShow={setShowLabelsModal} onSave={setLabels} />
         <div className="d-flex flex-column h-100 w-100">
             <div className="border-bottom border-dark p-2">
                 <Toolbar
                     setSearchTerms={setSearchTerms}
                     actionController={actionController}
                     altSpeedMode={session["alt-speed-enabled"]}
+                    setShowLabelsModal={setShowLabelsModal}
                 />
             </div>
             <div className="flex-grow-1">
@@ -140,6 +202,7 @@ export function Server(props: ServerProps) {
                         <div className="scrollable">
                             <Filters
                                 torrents={torrents}
+                                allLabels={allLabels}
                                 currentFilter={currentFilter}
                                 setCurrentFilter={setCurrentFilter} />
                         </div>
@@ -158,5 +221,5 @@ export function Server(props: ServerProps) {
                 <Statusbar {...statusbarProps} />
             </div>
         </div>
-    );
+    </>);
 }
