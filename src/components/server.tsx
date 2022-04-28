@@ -109,11 +109,6 @@ export function Server(props: ServerProps) {
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
     const actionController = useMemo(() => new ActionController(props.client), [props.client]);
 
-    useEffect(() => {
-        const ids: number[] = filteredTorrents.map((t) => t.id);
-        selectedReducer({ verb: "filter", ids });
-    }, [torrents, currentFilter]);
-
     const searchFilter = useCallback((t: Torrent) => {
         const name = t.name.toLowerCase();
         for (var term of searchTerms)
@@ -121,14 +116,23 @@ export function Server(props: ServerProps) {
         return true;
     }, [searchTerms]);
 
-    const filteredTorrents = useMemo(
-        () => torrents.filter(currentFilter.filter).filter(searchFilter),
-        [torrents, currentFilter, searchFilter]);
-
     const [selectedTorrents, selectedReducer] = useReducer(useCallback(
         (selected: Set<number>, action: { verb: string, ids: number[] }) =>
             selectedTorrentsReducer(selected, action), []),
         new Set<number>());
+
+    const filteredTorrents = useMemo(
+        () => {
+            var filtered = torrents.filter(currentFilter.filter).filter(searchFilter);
+            const ids: number[] = filtered.map((t) => t.id);
+            selectedReducer({ verb: "filter", ids });
+            return filtered;
+        },
+        [torrents, currentFilter, searchFilter]);
+
+    useEffect(() => {
+
+    }, [torrents, currentFilter]);
 
     // var readFile = useCallback((e) => {
     //     invoke("read_file", { path: "D:\\Downloads\\1.torrent" }).then((result) => {

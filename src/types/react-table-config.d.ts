@@ -76,7 +76,7 @@ declare module 'react-table' {
         // UseGroupByOptions<D>,
         // UsePaginationOptions<D>,
         UseResizeColumnsOptions<D>,
-        // UseRowSelectOptions<D>,
+        UseRowSelectOptions<D>,
         // UseRowStateOptions<D>,
         UseSortByOptions<D>
     // note that having Record here allows you to add anything to the options, this matches the spirit of the
