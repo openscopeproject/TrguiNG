@@ -5,7 +5,8 @@
     "webpack serve": "webpack serve",
     "build": "tauri build",
     "webpack": "webpack build",
-    "info": "tauri info"
+    "info": "tauri info",
+    "react-devtools": "npx react-devtools"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.0.0-rc.8",

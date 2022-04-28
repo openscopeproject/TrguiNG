@@ -16,11 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { TransmissionClient } from "./rpc/client";
+import { TorrentActionMethodsType, TransmissionClient } from "./rpc/client";
 
 const ActionMethods = [
     "setAltSpeedMode",
     "setLabels",
+    "resumeTorrents",
+    "pauseTorrents",
 ] as const;
 
 type ActionMethodsType = typeof ActionMethods[number];
@@ -31,21 +33,33 @@ interface Action {
     defaultShortcut: string,
 }
 
+function makeTorrentAction(name: ActionMethodsType, method: TorrentActionMethodsType, shortcut: string): Action {
+    return {
+        name,
+        method: async (ac: ActionController, torrentIds: number[]) => {
+            await ac.client.torrentAction(method, torrentIds);
+        },
+        defaultShortcut: shortcut
+    }
+}
+
 const actions: Action[] = [
     {
         name: "setAltSpeedMode",
         method: async (ac: ActionController, altMode: boolean) => {
-            await ac.client.setSession({"alt-speed-enabled": altMode});
+            await ac.client.setSession({ "alt-speed-enabled": altMode });
         },
         defaultShortcut: "",
     },
     {
         name: "setLabels",
         method: async (ac: ActionController, torrentIds: number[], labels: string[]) => {
-            await ac.client.setTorrents(torrentIds, {labels: labels});
+            await ac.client.setTorrents(torrentIds, { labels: labels });
         },
         defaultShortcut: "",
-    }
+    },
+    makeTorrentAction("resumeTorrents", "torrent-start", ""),
+    makeTorrentAction("pauseTorrents", "torrent-stop", ""),
 ];
 
 export class ActionController {

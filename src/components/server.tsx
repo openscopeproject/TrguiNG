@@ -52,7 +52,7 @@ export function Server(props: ServerProps) {
     const [updateTimer, setUpdateTimer] = useState(0);
 
     const pause = useMemo(() => {
-        return {paused: false};
+        return { paused: false };
     }, []);
 
     const update = useCallback(() => {
@@ -182,6 +182,7 @@ export function Server(props: ServerProps) {
                     actionController={actionController}
                     altSpeedMode={session["alt-speed-enabled"]}
                     setShowLabelsModal={setShowLabelsModal}
+                    selectedTorrents={selectedTorrents}
                 />
             </div>
             <div className="flex-grow-1">

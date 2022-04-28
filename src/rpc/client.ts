@@ -42,6 +42,16 @@ function isApiResponse(response: any): response is ApiResponse {
     return "result" in response && typeof response.result == "string";
 }
 
+const TorrentActionMethods = [
+    "torrent-start",
+    "torrent-start-now",
+    "torrent-stop",
+    "torrent-verify",
+    "torrent-reannounce",
+] as const;
+
+export type TorrentActionMethodsType = typeof TorrentActionMethods[number];
+
 export class TransmissionClient {
     url: string;
     hostname: string;
@@ -102,6 +112,7 @@ export class TransmissionClient {
     }
 
     async getTorrents(): Promise<Torrent[]> {
+        console.log("Running torrent-get");
         var request = {
             method: "torrent-get",
             arguments: { fields: TorrentFields }
@@ -180,7 +191,16 @@ export class TransmissionClient {
         console.log("setting", torrentIds, fields);
         var request = {
             method: "torrent-set",
-            arguments: {...fields, ids: torrentIds},
+            arguments: { ...fields, ids: torrentIds },
+        }
+
+        await this.sendRpc(request);
+    }
+
+    async torrentAction(method: TorrentActionMethodsType, torrentIds: number[]) {
+        var request = {
+            method,
+            arguments: { ids: torrentIds },
         }
 
         await this.sendRpc(request);

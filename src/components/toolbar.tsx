@@ -28,6 +28,7 @@ interface ToolbarProps {
     actionController: ActionController,
     altSpeedMode: boolean,
     setShowLabelsModal: (show: boolean) => void,
+    selectedTorrents: Set<number>,
 }
 
 export function Toolbar(props: ToolbarProps) {
@@ -59,6 +60,18 @@ export function Toolbar(props: ToolbarProps) {
                 .filter((s) => s != ""));
     }, [debouncedSetSearchTerms]);
 
+    const onResume = useCallback(() => {
+        props.actionController.run("resumeTorrents", Array.from(props.selectedTorrents)).catch((e) => {
+            console.log("Can't resume torrents", e);
+        });
+    }, [props.actionController, props.selectedTorrents]);
+
+    const onPause = useCallback(() => {
+        props.actionController.run("pauseTorrents", Array.from(props.selectedTorrents)).catch((e) => {
+            console.log("Can't resume torrents", e);
+        });
+    }, [props.actionController, props.selectedTorrents]);
+
     return (
         <ButtonToolbar>
             <ButtonGroup className="me-2">
@@ -66,8 +79,8 @@ export function Toolbar(props: ToolbarProps) {
                 <Button variant="light" className="p-1"><Icon.MagnetFill size={24} color="seagreen" /></Button>
             </ButtonGroup>
             <ButtonGroup className="me-2">
-                <Button variant="light" className="p-1"><Icon.PlayCircleFill size={24} color="steelblue" /></Button>
-                <Button variant="light" className="p-1"><Icon.PauseCircleFill size={24} color="steelblue" /></Button>
+                <Button variant="light" className="p-1"><Icon.PlayCircleFill size={24} color="steelblue" onClick={onResume} /></Button>
+                <Button variant="light" className="p-1"><Icon.PauseCircleFill size={24} color="steelblue" onClick={onPause} /></Button>
                 <Button variant="light" className="p-1"><Icon.XCircleFill size={24} color="tomato" /></Button>
             </ButtonGroup>
             <ButtonGroup className="me-2">
