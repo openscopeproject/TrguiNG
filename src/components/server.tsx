@@ -20,7 +20,7 @@ import React, { useCallback, useEffect, useMemo, useReducer, useState } from "re
 import Split from "react-split";
 import { SessionInfo, TransmissionClient } from "../rpc/client";
 import { Details } from "./details";
-import { DefaultFilter, Filters } from "./filters";
+import { DefaultFilter, Filters, TorrentFilter } from "./filters";
 import { TorrentTable } from "./torrenttable";
 import { Torrent } from "../rpc/torrent";
 import '../css/custom.css';
@@ -45,71 +45,73 @@ function usePausingModalState(setRunUpdates: React.Dispatch<boolean>): [boolean,
     return [show, setShowWrapped];
 }
 
+function selectedTorrentsReducer(selected: Set<number>, action: { verb: string, ids: number[] }) {
+    var selected = new Set(selected);
+    if (action.verb == "set") {
+        selected.clear();
+        for (var id of action.ids) selected.add(id);
+    } else if (action.verb == "add") {
+        for (var id of action.ids) selected.add(id);
+    } else if (action.verb == "filter") {
+        selected = new Set(Array.from(selected).filter((t) => action.ids.includes(t)));
+    } else if (action.verb == "toggle") {
+        if (!selected.delete(action.ids[0]))
+            selected.add(action.ids[0]);
+    }
+    return selected;
+}
+
 export function Server(props: ServerProps) {
     const [torrents, setTorrents] = useState<Torrent[]>([]);
     const [session, setSession] = useState<SessionInfo>({});
 
-    const [updateTimer, setUpdateTimer] = useState(0);
-
-    const pause = useMemo(() => {
-        return { paused: false };
+    const updateTimers = useMemo(() => {
+        return {
+            torrents: -1,
+            detais: -1,
+            paused: true,
+        }
     }, []);
 
     const update = useCallback(() => {
         props.client.getTorrents().then((torrents) => {
-            if (!pause.paused) setTorrents(torrents)
+            if (!updateTimers.paused) setTorrents(torrents)
         }).catch(console.log);
         props.client.getSession().then((session) => {
-            if (!pause.paused) setSession(session);
+            if (!updateTimers.paused) setSession(session);
         }).catch(console.log);
     }, [props.client]);
 
-    const [runUpdates, setRunUpdates] = useReducer((state: boolean, run: boolean) => {
+    const [runUpdates, setRunUpdates] = useReducer(useCallback((state: boolean, run: boolean) => {
+        console.log("runReducer run with", state, run);
         if (state && !run) {
-            pause.paused = true;
-            clearInterval(updateTimer);
+            updateTimers.paused = true;
+            clearInterval(updateTimers.torrents);
         }
         if (!state && run) {
-            pause.paused = false;
+            updateTimers.paused = false;
             update();
-            setUpdateTimer(setInterval(update, 5000));
+            updateTimers.torrents = setInterval(update, 5000);
         }
         return run;
-    }, false);
+    }, []), false);
 
     useEffect(() => {
         setRunUpdates(true);
     }, [props.client]);
 
     useEffect(() => {
-        return () => clearInterval(updateTimer);
-    }, [updateTimer]);
+        return () => clearInterval(updateTimers.detais);
+    }, []);
 
     const [currentTorrent, setCurrentTorrent] = useState<number>();
     const [currentFilter, setCurrentFilter] = useState({ id: "", filter: DefaultFilter });
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
     const actionController = useMemo(() => new ActionController(props.client), [props.client]);
 
-    const [selectedTorrents, selectedReducer] = useReducer(
-        (selected: Set<number>, action: { verb: string, ids: number[] }) => {
-            var selected = new Set(selected);
-            if (action.verb == "set") {
-                selected.clear();
-                for (var id of action.ids) selected.add(id);
-            } else if (action.verb == "add") {
-                for (var id of action.ids) selected.add(id);
-            } else if (action.verb == "remove") {
-                for (var id of action.ids) selected.delete(id);
-            } else if (action.verb == "toggle") {
-                if (!selected.delete(action.ids[0]))
-                    selected.add(action.ids[0]);
-            }
-            return selected;
-        }, new Set<number>());
-
     useEffect(() => {
-        const ids: number[] = torrents.filter((t) => !currentFilter.filter(t)).map((t) => t.id);
-        selectedReducer({ verb: "remove", ids });
+        const ids: number[] = filteredTorrents.map((t) => t.id);
+        selectedReducer({ verb: "filter", ids });
     }, [torrents, currentFilter]);
 
     const searchFilter = useCallback((t: Torrent) => {
@@ -123,11 +125,16 @@ export function Server(props: ServerProps) {
         () => torrents.filter(currentFilter.filter).filter(searchFilter),
         [torrents, currentFilter, searchFilter]);
 
-    var readFile = useCallback((e) => {
-        invoke("read_file", { path: "D:\\Downloads\\1.torrent" }).then((result) => {
-            console.log("Invoke result:\n", result);
-        })
-    }, []);
+    const [selectedTorrents, selectedReducer] = useReducer(useCallback(
+        (selected: Set<number>, action: { verb: string, ids: number[] }) =>
+            selectedTorrentsReducer(selected, action), []),
+        new Set<number>());
+
+    // var readFile = useCallback((e) => {
+    //     invoke("read_file", { path: "D:\\Downloads\\1.torrent" }).then((result) => {
+    //         console.log("Invoke result:\n", result);
+    //     })
+    // }, []);
 
     const statusbarProps = useMemo<StatusbarProps>(() => {
         const selected = filteredTorrents.filter((t) => selectedTorrents.has(t.id));
