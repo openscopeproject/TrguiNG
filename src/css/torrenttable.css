@@ -17,10 +17,6 @@
  */
 
 .torrent-table .th, .torrent-table .td {
-    /* border-width: 0px 1px 1px 0px;
-    border-style: solid;
-    border-color: #444; */
-    max-width: 400px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

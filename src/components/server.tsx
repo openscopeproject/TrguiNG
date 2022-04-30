@@ -83,7 +83,6 @@ export function Server(props: ServerProps) {
     }, [props.client]);
 
     const [runUpdates, setRunUpdates] = useReducer(useCallback((state: boolean, run: boolean) => {
-        console.log("runReducer run with", state, run);
         if (state && !run) {
             updateTimers.paused = true;
             clearInterval(updateTimers.torrents);

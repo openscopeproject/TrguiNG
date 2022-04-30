@@ -22,6 +22,8 @@ import { useResizeDetector } from "react-resize-detector";
 import { TransmissionClient } from "../rpc/client";
 import { getTorrentError, Torrent } from "../rpc/torrent";
 import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr, timestampToDateString } from "../util";
+import { FileTreeTable, TorrentFileEntry } from "./filetreetable";
+import { PiecesCanvas } from "./piecescanvas";
 import { ProgressBar } from "./progressbar";
 import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./torrenttable";
 
@@ -209,131 +211,6 @@ function GeneralPane(props: { torrent: Torrent }) {
     );
 }
 
-function PiecesCanvas(props: { torrent: Torrent }) {
-    const { width, height, ref } = useResizeDetector({
-        refreshMode: "throttle",
-        refreshRate: 1000,
-    });
-
-    const piecesRef = useRef<HTMLCanvasElement>(null);
-    const gridRef = useRef<HTMLCanvasElement>(null);
-
-    const wantedPieces = useMemo(() => {
-        var result: Array<boolean> = new Array(props.torrent.pieceCount);
-
-        const pieceSize = props.torrent.pieceSize;
-        const lengths = props.torrent.files.map((f: any) => f.length);
-        const wanted = props.torrent.fileStats.map((f: any) => f.wanted);
-
-        var fileIndex = 0;
-        var pieceIndex = 0;
-        var totalLength = 0;
-
-        while (totalLength < props.torrent.totalSize) {
-            totalLength += lengths[fileIndex];
-            while ((pieceIndex + 1) * pieceSize < totalLength) {
-                result[pieceIndex] = result[pieceIndex] || wanted[fileIndex];
-                pieceIndex++;
-            }
-            result[pieceIndex] = result[pieceIndex] || wanted[fileIndex];
-            if ((pieceIndex + 1) * pieceSize == totalLength) pieceIndex++;
-            fileIndex++;
-        }
-
-        return result;
-    }, [props.torrent]);
-
-    const [pieceSize, rows, cols] = useMemo(() => {
-        if (width === undefined || height === undefined) return [5, 1, 1];
-
-        const check = (size: number) => {
-            var cols = Math.floor(width / size);
-            var rows = Math.ceil(props.torrent.pieceCount / cols);
-            if (rows * size < height) return [rows, cols];
-            else return [-1, -1];
-        }
-        var right = 20;
-        var left = 0.0;
-        var mid = 10;
-        var rows = 1;
-        var cols = 1;
-
-        while (right - left > 0.2) {
-            [rows, cols] = check(mid);
-            if (rows < 0) right = mid;
-            else left = mid;
-            mid = (right + left) * 0.5;
-        }
-        return [left, ...check(left)];
-    }, [props.torrent.pieceCount, width, height]);
-
-    const pieces = useMemo(() => {
-        const bstr = window.atob(props.torrent.pieces);
-        var bytes = new Uint8Array(bstr.length);
-        for (var i = 0; i < bstr.length; i++) {
-            bytes[i] = bstr.charCodeAt(i);
-        }
-        return bytes;
-    }, [props]);
-
-    useEffect(() => {
-        var canvas = gridRef.current!;
-        var ctx = canvas.getContext("2d")!;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const remainder = rows * cols - props.torrent.pieceCount;
-
-        ctx.beginPath();
-        ctx.lineWidth = pieceSize > 5 ? 1 : 0.5;
-        ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
-        for (var i = 0; i < rows; i++) {
-            ctx.moveTo(0, i * pieceSize);
-            ctx.lineTo(cols * pieceSize, i * pieceSize);
-        }
-        ctx.moveTo(0, rows * pieceSize);
-        ctx.lineTo((cols - remainder) * pieceSize, i * pieceSize);
-        for (var i = 0; i <= cols - remainder; i++) {
-            ctx.moveTo(i * pieceSize, 0);
-            ctx.lineTo(i * pieceSize, rows * pieceSize);
-        }
-        for (var i = cols - remainder + 1; i <= cols; i++) {
-            ctx.moveTo(i * pieceSize, 0);
-            ctx.lineTo(i * pieceSize, (rows - 1) * pieceSize);
-        }
-        ctx.stroke();
-    }, [gridRef, rows, cols, width, height]);
-
-    useEffect(() => {
-        const canvas = piecesRef.current!;
-        const ctx = canvas.getContext("2d")!;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        for (var r = 0; r < rows; r++) {
-            var index = 0;
-            for (var c = 0; c < cols; c++) {
-                index = r * cols + c;
-                if (index >= props.torrent.pieceCount) break;
-                var have = pieces[Math.floor(index / 8)] & (0b10000000 >> (index % 8));
-                ctx.fillStyle = have ? "steelblue" : wantedPieces[index] ? "paleturquoise" : "silver";
-                ctx.fillRect(c * pieceSize, r * pieceSize, pieceSize, pieceSize);
-            }
-            if (index >= props.torrent.pieceCount) break;
-        }
-
-    }, [piecesRef, rows, cols, pieceSize, pieces, wantedPieces]);
-
-    const dw = Math.floor(window.devicePixelRatio * (width || 1));
-    const dh = Math.floor(window.devicePixelRatio * (height || 1));
-    const style: CSSProperties = {
-        width: width || 1, height: height || 1, position: "absolute", top: 0, left: 0
-    };
-    return (
-        <div ref={ref} className="w-100 h-100 position-relative" style={{ overflow: "hidden" }}>
-            <canvas ref={piecesRef} width={dw} height={dh} style={style} />
-            <canvas ref={gridRef} width={dw} height={dh} style={style} />
-        </div>
-    )
-}
-
 export function Details(props: DetailsProps) {
     const [torrent, setTorrent] = useState<Torrent>();
 
@@ -348,6 +225,21 @@ export function Details(props: DetailsProps) {
 
         return () => clearInterval(timer);
     }, [props]);
+
+    const fileEntries: TorrentFileEntry[] = useMemo(() => {
+        if (!torrent) return [];
+        return torrent.files.map((entry: any, index: number) => {
+            return {
+                name: entry.name,
+                size: entry.length,
+                want: torrent.fileStats[index].wanted,
+                partial: false,
+                done: torrent.fileStats[index].bytesCompleted,
+                percent: torrent.fileStats[index].bytesCompleted * 100 / entry.length,
+                priority: torrent.fileStats[index].priority,
+            }
+        });
+    }, [torrent]);
 
     if (!torrent) return <div className="p-3">Select a torrent to view it's details</div>;
 
@@ -367,12 +259,7 @@ export function Details(props: DetailsProps) {
                         <GeneralPane torrent={torrent} />
                     </Tab.Pane>
                     <Tab.Pane eventKey="files" className="h-100">
-                        <Row className="h-100 scrollable">
-                            <Container fluid>
-                                {torrent.files.map(
-                                    (file: any) => <Row key={file.name}>{file.name}</Row>)}
-                            </Container>
-                        </Row>
+                        <FileTreeTable files={fileEntries} />
                     </Tab.Pane>
                     <Tab.Pane eventKey="pieces" className="h-100">
                         <PiecesCanvas torrent={torrent} />

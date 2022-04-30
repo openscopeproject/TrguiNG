@@ -27,7 +27,7 @@ export const Status = {
     downloading: 4,
     queuedToSeed: 5,
     seeding: 6,
-};
+} as const;
 
 export const StatusStrings = [
     "Stopped",
@@ -37,13 +37,13 @@ export const StatusStrings = [
     "Downloading",
     "Waiting",
     "Seeding",
-];
+] as const;
 
 export const Priority = {
     low: -1,
     normal: 0,
     high: 1,
-};
+} as const;
 
 export const PriorityStrings = new Map<number, string>([
     [-1, "Low"],

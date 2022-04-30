@@ -19,6 +19,7 @@
 import * as fs from "@tauri-apps/api/fs";
 import React from "react";
 import { merge } from "lodash";
+import { ActionType, TableState } from "react-table";
 
 export interface ServerConnection {
     url: string,
@@ -52,10 +53,12 @@ interface TableSettings {
     sortBy: SortByConfig[],
 }
 
+type TableName = "torrents" | "filetree";
+
 interface Settings {
     servers: Server[],
     app: {
-        tables: Record<string, TableSettings>
+        tables: Record<TableName, TableSettings>
     }
 }
 
@@ -63,10 +66,14 @@ const DefaultSettings: Settings = {
     servers: [],
     app: {
         tables: {
-            "torrent": {
+            "torrents": {
                 fields: [],
                 sortBy: [],
             },
+            "filetree": {
+                fields: [],
+                sortBy: [],
+            }
         }
     }
 }
@@ -80,8 +87,8 @@ export class Config {
             this.fileName,
             { dir: fs.BaseDirectory.Config }
         ).then((text) => {
-            // console.log(`Read ${text}`);
-            this.values = merge(JSON.parse(text));
+            merge(this.values, JSON.parse(text));
+            console.log(`Read config`, this.values);
         }).catch((e) => console.log(e));
     }
 
@@ -102,20 +109,52 @@ export class Config {
         return server ? server.connection : null;
     }
 
-    setTableFields(table: "torrents", fields: TableFieldConfig[]) {
+    setTableFields(table: TableName, fields: TableFieldConfig[]) {
         this.values.app.tables[table].fields = fields;
     }
 
-    getTableFields(table: "torrents"): TableFieldConfig[] {
+    getTableFields(table: TableName): TableFieldConfig[] {
         return this.values.app.tables[table].fields;
     }
 
-    setTableSortBy(table: "torrents", sortBy: SortByConfig[]) {
+    setTableSortBy(table: TableName, sortBy: SortByConfig[]) {
         this.values.app.tables[table].sortBy = sortBy;
     }
 
-    getTableSortBy(table: "torrents"): SortByConfig[] {
+    getTableSortBy(table: TableName): SortByConfig[] {
         return this.values.app.tables[table].sortBy;
+    }
+
+    processTableStateChange<T extends object>(
+        table: TableName, defaultOrder: string[], state: TableState<T>, action: ActionType
+    ) {
+        // console.log("Table state reducer", action);
+        if (action.type == "columnDoneResizing") {
+            const order =
+                (state.columnOrder !== undefined && state.columnOrder.length > 0)
+                    ? state.columnOrder : defaultOrder;
+            const visible = order.filter(
+                (f) => state.hiddenColumns ? !state.hiddenColumns.includes(f) : true);
+            const oldFields = this.getTableFields(table);
+            const fields: TableFieldConfig[] = visible.map((f) => {
+                const newWidths = state.columnResizing.columnWidths;
+                var width = 150;
+                var oldField = oldFields.find((oldfield) => oldfield.name == f);
+                if (oldField) width = oldField.width;
+                if (f in newWidths) width = newWidths[f];
+                return {
+                    name: f,
+                    width
+                }
+            });
+            this.setTableFields(table, fields);
+        }
+
+        if (action.type == "toggleSortBy") {
+            this.setTableSortBy(table, state.sortBy.map((r) => {
+                return { id: r.id, desc: r.desc || false };
+            }));
+        }
     }
 }
 

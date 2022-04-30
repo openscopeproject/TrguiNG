@@ -22,7 +22,7 @@ import { Badge } from 'react-bootstrap';
 import { Torrent } from '../rpc/torrent';
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentFieldsType } from '../rpc/transmission';
 import { useTable, useBlockLayout, useResizeColumns, useRowSelect, Column, CellProps, useColumnOrder, TableState, Accessor, useSortBy, Row, ActionType } from 'react-table';
-import { ConfigContext, TableFieldConfig } from '../config';
+import { ConfigContext } from '../config';
 import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from '../util';
 import { ProgressBar } from './progressbar';
 import { useVirtual } from 'react-virtual';
@@ -42,7 +42,7 @@ interface TableField {
     accessor?: Accessor<Torrent>,
 }
 
-const allFields: TableField[] = [
+const AllFields: readonly TableField[] = [
     { name: "name", label: "Name", component: StringField },
     { name: "totalSize", label: "Size", component: ByteSizeField },
     { name: "haveValid", label: "Downloaded", component: ByteSizeField },
@@ -72,7 +72,7 @@ const allFields: TableField[] = [
     { name: "isPrivate", label: "Private", component: StringField }, //
     { name: "labels", label: "Labels", component: LabelsField },
     { name: "group", label: "Bandwidth group", component: StringField }, //
-];
+] as const;
 
 function StringField(props: TableFieldProps) {
     return <>
@@ -168,7 +168,7 @@ interface TorrentTableProps {
     selectedReducer: React.Dispatch<{ verb: string; ids: number[]; }>
 }
 
-const defaultColumns = allFields.map((f): Column<Torrent> => {
+const defaultColumns = AllFields.map((f): Column<Torrent> => {
     const cell = (props: CellProps<Torrent>) => {
         const active = props.row.original.rateDownload > 0 || props.row.original.rateUpload > 0;
         return <f.component fieldName={f.name} torrent={props.row.original} active={active} />
@@ -235,43 +235,18 @@ export function TorrentTable(props: TorrentTableProps) {
 
     const getRowId = useCallback((t: Torrent, i: number) => String(t.id), []);
 
-    const hiddenColumns = useMemo(() => {
-        const fields = allFields.map((f) => f.name);
+    const [hiddenColumns, columnOrder, sortBy] = useMemo(() => {
+        const fields = AllFields.map((f) => f.name);
         const visibleFields = config.getTableFields("torrents").map((f) => f.name);
-        if (visibleFields.length == 0) return [];
-        return fields.filter((f) => !visibleFields.includes(f));
-    }, [config]);
-
-    const columnOrder = useMemo(() => {
-        return config.getTableFields("torrents").map((f) => f.name);
-    }, [config]);
-
-    const sortBy = useMemo(() => {
-        return config.getTableSortBy("torrents");
+        return [
+            fields.filter((f) => !visibleFields.includes(f)),
+            visibleFields,
+            config.getTableSortBy("torrents")
+        ];
     }, [config]);
 
     const stateChange = useCallback((state: TableState<Torrent>, action: ActionType) => {
-        console.log("Table state reducer", action);
-        const order = state.columnOrder.length ? state.columnOrder : allFields.map((f) => f.name);
-        const visible = order.filter(
-            (f) => state.hiddenColumns ? !state.hiddenColumns.includes(f) : true);
-        const oldFields = config.getTableFields("torrents");
-        const fields: TableFieldConfig[] = visible.map((f) => {
-            const newWidths = state.columnResizing.columnWidths;
-            var width = defaultColumn.width;
-            var oldField = oldFields.find((oldfield) => oldfield.name == f);
-            if (oldField) width = oldField.width;
-            if (f in newWidths) width = newWidths[f];
-            return {
-                name: f,
-                width
-            }
-        });
-        config.setTableFields("torrents", fields);
-        config.setTableSortBy("torrents", state.sortBy.map((r) => {
-            return { id: r.id, desc: r.desc || false };
-        }));
-
+        config.processTableStateChange("torrents", AllFields.map((f) => f.name), state, action);
         return state;
     }, [config]);
 
@@ -312,7 +287,6 @@ export function TorrentTable(props: TorrentTableProps) {
         useResizeColumns,
         useRowSelect
     );
-
 
     const rowClick = useCallback((event: React.MouseEvent<Element>, index: number, lastIndex: number) => {
         event.preventDefault();

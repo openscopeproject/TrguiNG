@@ -112,7 +112,7 @@ export class TransmissionClient {
     }
 
     async getTorrents(): Promise<Torrent[]> {
-        console.log("Running torrent-get");
+        // console.log("Running torrent-get");
         var request = {
             method: "torrent-get",
             arguments: { fields: TorrentFields }
