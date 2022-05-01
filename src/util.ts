@@ -17,6 +17,7 @@
  */
 
 import { Duration } from "luxon"
+import { useReducer } from "react";
 
 const SISuffixes = ["B", "KB", "MB", "GB", "TB"];
 
@@ -66,4 +67,9 @@ export function ensurePathDelimiter(path: string): string {
     if (path.charAt(path.length - 1) != delimiter)
         return path + delimiter;
     return path;
+}
+
+export function useForceRender() {
+    const [, forceRender] = useReducer((oldVal) => oldVal + 1, 0);
+    return forceRender;
 }

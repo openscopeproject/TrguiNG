@@ -128,7 +128,7 @@ export class Config {
     processTableStateChange<T extends object>(
         table: TableName, defaultOrder: string[], state: TableState<T>, action: ActionType
     ) {
-        // console.log("Table state reducer", action);
+        console.log("Table state reducer", action);
         if (action.type == "columnDoneResizing") {
             const order =
                 (state.columnOrder !== undefined && state.columnOrder.length > 0)

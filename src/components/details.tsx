@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useReducer } from "react";
 import { Container, Form, Nav, Row, Tab, Table } from "react-bootstrap";
-import { useResizeDetector } from "react-resize-detector";
+import { CachedFileTree } from "../cachedfiletree";
 import { TransmissionClient } from "../rpc/client";
 import { getTorrentError, Torrent } from "../rpc/torrent";
 import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr, timestampToDateString } from "../util";
-import { FileTreeTable, TorrentFileEntry } from "./filetreetable";
+import { FileTreeTable } from "./filetreetable";
 import { PiecesCanvas } from "./piecescanvas";
 import { ProgressBar } from "./progressbar";
 import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./torrenttable";
@@ -212,7 +212,13 @@ function GeneralPane(props: { torrent: Torrent }) {
 }
 
 export function Details(props: DetailsProps) {
-    const [torrent, setTorrent] = useState<Torrent>();
+    const fileTree = useMemo(() => new CachedFileTree(), []);
+
+    const [torrent, setTorrent] = useReducer(useCallback(
+        (_oldtorrent: Torrent | undefined, torrent: Torrent | undefined) => {
+            if (torrent) fileTree.update(torrent)
+            return torrent;
+        }, []), undefined);
 
     useEffect(() => {
         if (!props.torrentId) return () => { };
@@ -225,21 +231,6 @@ export function Details(props: DetailsProps) {
 
         return () => clearInterval(timer);
     }, [props]);
-
-    const fileEntries: TorrentFileEntry[] = useMemo(() => {
-        if (!torrent) return [];
-        return torrent.files.map((entry: any, index: number) => {
-            return {
-                name: entry.name,
-                size: entry.length,
-                want: torrent.fileStats[index].wanted,
-                partial: false,
-                done: torrent.fileStats[index].bytesCompleted,
-                percent: torrent.fileStats[index].bytesCompleted * 100 / entry.length,
-                priority: torrent.fileStats[index].priority,
-            }
-        });
-    }, [torrent]);
 
     if (!torrent) return <div className="p-3">Select a torrent to view it's details</div>;
 
@@ -259,7 +250,7 @@ export function Details(props: DetailsProps) {
                         <GeneralPane torrent={torrent} />
                     </Tab.Pane>
                     <Tab.Pane eventKey="files" className="h-100">
-                        <FileTreeTable files={fileEntries} />
+                        <FileTreeTable tree={fileTree} />
                     </Tab.Pane>
                     <Tab.Pane eventKey="pieces" className="h-100">
                         <PiecesCanvas torrent={torrent} />

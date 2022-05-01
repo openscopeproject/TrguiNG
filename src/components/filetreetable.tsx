@@ -20,26 +20,20 @@ import React, { useCallback, useContext, useMemo, useState } from "react";
 import { Badge } from "react-bootstrap";
 import { useTable, useColumnOrder, useSortBy, useBlockLayout, useResizeColumns, useRowSelect, Accessor, Column, CellProps, TableState, ActionType, Row } from "react-table";
 import { useVirtual } from "react-virtual";
+import { CachedFileTree, DirEntry, FileDirEntry, isDirEntry } from "../cachedfiletree";
 import { ConfigContext } from "../config";
 import { PriorityColors, PriorityStrings } from "../rpc/transmission";
-import { bytesToHumanReadableStr } from "../util";
+import { bytesToHumanReadableStr, useForceRender } from "../util";
 import { ProgressBar } from "./progressbar";
+import * as Icon from "react-bootstrap-icons";
 
-export interface TorrentFileEntry {
-    name: string,
-    size: number,
-    want: boolean,
-    partial?: boolean,
-    done?: number,
-    percent?: number,
-    priority?: number,
-}
 
-type TorrentFileEntryKey = keyof TorrentFileEntry;
+type FileDirEntryKey = keyof FileDirEntry;
 
 interface TableFieldProps {
-    entry: TorrentFileEntry,
-    fieldName: TorrentFileEntryKey,
+    entry: FileDirEntry,
+    fieldName: FileDirEntryKey,
+    forceRender: () => void,
 }
 
 interface TableField {
@@ -61,10 +55,26 @@ const AllFields: readonly TableField[] = [
 ] as const;
 
 function NameField(props: TableFieldProps) {
+    const isDir = isDirEntry(props.entry);
+    const onExpand = useCallback(() => {
+        if (isDirEntry(props.entry)) props.entry.expanded = true;
+        props.forceRender();
+    }, [props.entry]);
+    const onCollapse = useCallback(() => {
+        if (isDirEntry(props.entry)) props.entry.expanded = false;
+        props.forceRender();
+    }, [props.entry]);
+
     return (
-        <div>
-            <input type="checkbox" checked={props.entry.want} className={"me-2"} />
-            <span>{props.entry[props.fieldName]}</span>
+        <div style={{ paddingLeft: `${props.entry.level * 2}em`, cursor: "default" }}>
+            <input type="checkbox" checked={props.entry.want} className={"me-2"} readOnly />
+            {isDir ?
+                (props.entry as DirEntry).expanded ?
+                    <Icon.DashSquare size={16} onClick={onCollapse} style={{ cursor: "pointer" }} />
+                    : <Icon.PlusSquare size={16} onClick={onExpand} style={{ cursor: "pointer" }} />
+                : <Icon.FileEarmark size={16} />
+            }
+            <span className="ms-2">{props.entry.name}</span>
         </div>
     );
 }
@@ -89,11 +99,11 @@ function PriorityField(props: TableFieldProps) {
 }
 
 interface FileTreeTableProps {
-    files: TorrentFileEntry[],
+    tree: CachedFileTree,
 }
 
 function FileTableRow(props: {
-    row: Row<TorrentFileEntry>,
+    row: Row<FileDirEntry>,
     index: number,
     start: number,
     lastIndex: number,
@@ -119,18 +129,31 @@ function FileTableRow(props: {
     );
 }
 
-
 export function FileTreeTable(props: FileTreeTableProps) {
     const config = useContext(ConfigContext);
+    const forceRender = useForceRender();
+
+    const nameSortFunc = useCallback(
+        (rowa: Row<FileDirEntry>, rowb: Row<FileDirEntry>) => {
+            const [a, b] = [rowa.original, rowb.original];
+            // if (isDirEntry(a) && !isDirEntry(b))
+            //     return -1;
+            // if (!isDirEntry(a) && isDirEntry(b))
+            //     return 1;
+            return a.fullpath < b.fullpath ? -1 : 1;
+        }, []);
 
     const columns = useMemo(() => {
         const fields = config.getTableFields("filetree");
 
-        return AllFields.map((field): Column<TorrentFileEntry> => {
-            const cell = (props: CellProps<TorrentFileEntry>) => {
-                return <field.component fieldName={field.name} entry={props.row.original} />
+        return AllFields.map((field): Column<FileDirEntry> => {
+            const cell = (props: CellProps<FileDirEntry>) => {
+                return <field.component
+                    fieldName={field.name}
+                    entry={props.row.original}
+                    forceRender={forceRender} />
             }
-            var column: Column<TorrentFileEntry> = {
+            var column: Column<FileDirEntry> = {
                 Header: field.label,
                 accessor: field.name,
                 Cell: cell,
@@ -140,6 +163,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
             }
             var f = fields.find((f) => f.name == column.accessor || f.name == column.id);
             if (f) column.width = f.width;
+            if (f?.name == "name") column.sortType = nameSortFunc;
             return column;
         });
     }, [config]);
@@ -154,14 +178,12 @@ export function FileTreeTable(props: FileTreeTableProps) {
         ];
     }, [config]);
 
-    const stateChange = useCallback((state: TableState<TorrentFileEntry>, action: ActionType) => {
+    const stateChange = useCallback((state: TableState<FileDirEntry>, action: ActionType) => {
         config.processTableStateChange("filetree", AllFields.map((f) => f.name), state, action);
         return state;
     }, [config]);
 
-    const data = useMemo(() => {
-        return props.files;
-    }, [props.files])
+    const data = props.tree.flatten();
 
     const {
         getTableProps,
@@ -170,7 +192,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
         rows,
         prepareRow,
         totalColumnsWidth,
-    } = useTable<TorrentFileEntry>(
+    } = useTable<FileDirEntry>(
         {
             columns,
             data,
@@ -205,7 +227,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
         [rows]);
 
     const rowVirtualizer = useVirtual({
-        size: props.files.length,
+        size: data.length,
         parentRef,
         paddingStart: rowHeight,
         overscan: 3,
