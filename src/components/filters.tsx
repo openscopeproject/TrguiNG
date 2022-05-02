@@ -16,10 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import '../css/filters.css';
 import { getTorrentError, Torrent } from '../rpc/torrent';
 import { Status } from '../rpc/transmission';
+import * as Icon from "react-bootstrap-icons";
+import { useForceRender } from '../util';
 
 export interface TorrentFilter {
     id: string;
@@ -92,7 +94,123 @@ function FilterRow(props: FiltersProps & { id: string, filter: LabeledFilter }) 
     </div>;
 }
 
+interface DirFilterRowProps extends FiltersProps {
+    id: string,
+    dir: Directory,
+    forceRender: () => void,
+}
+
+function DirFilterRow(props: DirFilterRowProps) {
+    const filter = useCallback((t: Torrent) => {
+        var path = t.downloadDir as string;
+        if (path.length + 1 == props.dir.path.length)
+            return props.dir.path.startsWith(path);
+        return path.startsWith(props.dir.path);
+    }, []);
+
+    const onExpand = useCallback(() => {
+        props.dir.expanded = true;
+        props.forceRender();
+    }, [props.dir]);
+    const onCollapse = useCallback(() => {
+        props.dir.expanded = false;
+        props.forceRender();
+    }, [props.dir]);
+
+    const expandable = props.dir.subdirs.size > 0;
+
+    return (
+        <div className="d-flex flex-row align-items-center"
+            style={{ paddingLeft: `${props.dir.level * 1.4 + 0.25}em`, cursor: "default" }}>
+            <div className="flex-shrink-0">
+                {expandable ?
+                    props.dir.expanded ?
+                        <Icon.DashSquare size={16} onClick={onCollapse} style={{ cursor: "pointer" }} />
+                        : <Icon.PlusSquare size={16} onClick={onExpand} style={{ cursor: "pointer" }} />
+                    : <Icon.Folder size={16} />
+                }
+            </div>
+            <div
+                className={`ms-1 ps-1 flex-grow-1 ${props.currentFilter.id === props.id ? ' bg-primary text-white' : ''}`}
+                onClick={() => props.setCurrentFilter({ id: props.id, filter })}>
+                {`${props.dir.name} (${props.dir.count})`}
+            </div>
+        </div>
+    );
+}
+
+interface Directory {
+    name: string,
+    path: string,
+    subdirs: Map<string, Directory>,
+    expanded: boolean,
+    count: number,
+    level: number,
+}
+
+const DefaultRoot: Directory = {
+    name: "",
+    path: "",
+    subdirs: new Map(),
+    expanded: true,
+    count: 0,
+    level: -1,
+}
+
+function buildDirTree(torrents: Torrent[], oldtree?: Directory): Directory {
+    var root: Directory = { ...DefaultRoot, subdirs: new Map() };
+
+    var paths = torrents.map((t) => t.downloadDir as string).sort();
+
+    paths.forEach((path) => {
+        var parts = path.split("/");
+        var dir = root;
+        var olddir = oldtree;
+        var currentPath = "/";
+        for (var part of parts) {
+            if (part == "") continue;
+            currentPath = currentPath + part + "/";
+            if (!dir.subdirs.has(part))
+                dir.subdirs.set(part, {
+                    name: part,
+                    path: currentPath,
+                    subdirs: new Map(),
+                    expanded: false,
+                    count: 0,
+                    level: dir.level + 1,
+                });
+            olddir = olddir?.subdirs.get(part);
+            dir = dir.subdirs.get(part)!;
+            if (olddir?.expanded) dir.expanded = true;
+            dir.count++;
+        }
+    });
+
+    return root;
+}
+
+function flattenTree(root: Directory): Directory[] {
+    var result: Directory[] = [];
+    const append = (dir: Directory) => {
+        dir.subdirs.forEach((d) => {
+            result.push(d);
+            if (d.expanded) append(d);
+        })
+    }
+    append(root);
+    return result;
+}
+
 export function Filters(props: FiltersProps) {
+    const forceRender = useForceRender();
+    const [treeState,] = useState<{ tree: Directory }>({ tree: DefaultRoot });
+
+    useMemo(() => {
+        treeState.tree = buildDirTree(props.torrents, treeState.tree);
+    }, [treeState, props.torrents]);
+
+    const dirs = flattenTree(treeState.tree!);
+
     var allFilters = useMemo<AllFilters>(() => {
         var labelFilters: LabeledFilter[] = [
             noLabelsFilter
@@ -110,12 +228,20 @@ export function Filters(props: FiltersProps) {
     }, [props.allLabels]);
 
     return (
-        <div className='w-100'>
+        <div className='w-100 filter-container'>
+            <div className="strike"><span>Status</span></div>
             {allFilters.statusFilters.map((f) =>
-                <FilterRow key={`status-${f.label}`} id={`status-${f.label}`} filter={f} {...props} />)}
-            <hr className="my-2 mx-1" />
+                <FilterRow key={`status-${f.label}`} id={`status-${f.label}`}
+                    filter={f} {...props} />)}
+            <div className="strike"><span>Directories</span></div>
+            {dirs.map((d) =>
+                <DirFilterRow key={`dir-${d.path}`} id={`dir-${d.path}`}
+                    dir={d} forceRender={forceRender} {...props} />
+            )}
+            <div className="strike"><span>Labels</span></div>
             {allFilters.labelFilters.map((f) =>
-                <FilterRow key={`labels-${f.label}`} id={`labels-${f.label}`} filter={f} {...props} />)}
+                <FilterRow key={`labels-${f.label}`} id={`labels-${f.label}`}
+                    filter={f} {...props} />)}
         </div>
     );
 }

@@ -18,7 +18,7 @@
 
 import React, { useCallback, useContext, useMemo, useState } from "react";
 import { Badge } from "react-bootstrap";
-import { useTable, useColumnOrder, useSortBy, useBlockLayout, useResizeColumns, useRowSelect, Accessor, Column, CellProps, TableState, ActionType, Row } from "react-table";
+import { useTable, useColumnOrder, useSortBy, useBlockLayout, useResizeColumns, useRowSelect, Column, CellProps, TableState, ActionType, Row } from "react-table";
 import { useVirtual } from "react-virtual";
 import { CachedFileTree, DirEntry, FileDirEntry, isDirEntry } from "../cachedfiletree";
 import { ConfigContext } from "../config";
