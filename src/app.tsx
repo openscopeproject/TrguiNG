@@ -20,7 +20,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { appWindow } from '@tauri-apps/api/window';
 
 import { TransmissionClient } from './rpc/client';
-import { Config, ConfigContext } from './config';
+import { Config, ConfigContext, ServerConfigContext } from './config';
 import ReactDOM from 'react-dom';
 import React, { useContext, useMemo } from 'react';
 import { Server } from './components/server';
@@ -28,13 +28,18 @@ import { EventListener } from './event';
 
 function App(props: {}) {
     const config = useContext(ConfigContext);
+    const server = config.getServers()[0];
 
     var client = useMemo(() => {
-        const client = new TransmissionClient(config.getServers()[0].connection);
+        const client = new TransmissionClient(server.connection);
         client.getSessionFull().catch(console.log);
         return client;
     }, []);
-    return <Server client={client} />;
+    return (
+        <ServerConfigContext.Provider value={server}>
+            <Server client={client} />
+        </ServerConfigContext.Provider>
+    );
 }
 
 async function run() {
@@ -44,8 +49,10 @@ async function run() {
     var eventListener = new EventListener();
     eventListener.add("app-arg", (payload) => console.log(`Got app-arg: ${payload}`));
     eventListener.finalize();
+    var appnode = document.getElementById("app")!;
 
     appWindow.listen('tauri://close-requested', (event) => {
+        ReactDOM.unmountComponentAtNode(appnode);
         config.save().then(() => {
             appWindow.close();
         });
@@ -57,10 +64,9 @@ async function run() {
                 <App />
             </ConfigContext.Provider>
         </React.StrictMode>,
-        document.getElementById("app"));
+        appnode);
 }
 
 window.onload = (event) => {
     run();
 }
-

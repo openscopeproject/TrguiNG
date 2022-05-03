@@ -30,12 +30,12 @@ export interface ServerConnection {
 export interface Server {
     name: string,
     connection: ServerConnection,
-    pathMappings: [
-        {
-            from: string,
-            to: string,
-        }
-    ]
+    pathMappings:
+    {
+        from: string,
+        to: string,
+    }[],
+    expandedDirFilters: string[],
 }
 
 export interface TableFieldConfig {
@@ -128,7 +128,7 @@ export class Config {
     processTableStateChange<T extends object>(
         table: TableName, defaultOrder: string[], state: TableState<T>, action: ActionType
     ) {
-        console.log("Table state reducer", action);
+        // console.log("Table state reducer", action);
         if (action.type == "columnDoneResizing") {
             const order =
                 (state.columnOrder !== undefined && state.columnOrder.length > 0)
@@ -159,3 +159,9 @@ export class Config {
 }
 
 export const ConfigContext = React.createContext(new Config());
+export const ServerConfigContext = React.createContext<Server>(
+    {
+        connection: { url: "", username: "", password: "" },
+        name: "", pathMappings: [], expandedDirFilters: []
+    }
+);

@@ -16,12 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import '../css/filters.css';
 import { getTorrentError, Torrent } from '../rpc/torrent';
 import { Status } from '../rpc/transmission';
 import * as Icon from "react-bootstrap-icons";
 import { useForceRender } from '../util';
+import { ConfigContext, ServerConfigContext } from '../config';
 
 export interface TorrentFilter {
     id: string;
@@ -157,10 +158,8 @@ const DefaultRoot: Directory = {
     level: -1,
 }
 
-function buildDirTree(torrents: Torrent[], oldtree?: Directory): Directory {
+function buildDirTree(paths: string[], oldtree: Directory | undefined, expanded: boolean): Directory {
     var root: Directory = { ...DefaultRoot, subdirs: new Map() };
-
-    var paths = torrents.map((t) => t.downloadDir as string).sort();
 
     paths.forEach((path) => {
         var parts = path.split("/");
@@ -175,7 +174,7 @@ function buildDirTree(torrents: Torrent[], oldtree?: Directory): Directory {
                     name: part,
                     path: currentPath,
                     subdirs: new Map(),
-                    expanded: false,
+                    expanded,
                     count: 0,
                     level: dir.level + 1,
                 });
@@ -202,12 +201,23 @@ function flattenTree(root: Directory): Directory[] {
 }
 
 export function Filters(props: FiltersProps) {
+    const serverConfig = useContext(ServerConfigContext);
     const forceRender = useForceRender();
-    const [treeState,] = useState<{ tree: Directory }>({ tree: DefaultRoot });
+
+    const defaultTree = useMemo(() => {
+        return buildDirTree(serverConfig.expandedDirFilters, undefined, true)
+    }, [serverConfig]);
+
+    const [treeState,] = useState<{ tree: Directory }>({ tree: defaultTree });
+
+    const paths = useMemo(
+        () => props.torrents.map((t) => t.downloadDir as string).sort(),
+        [props.torrents]);
 
     useMemo(() => {
-        treeState.tree = buildDirTree(props.torrents, treeState.tree);
-    }, [treeState, props.torrents]);
+        if (paths.length)
+            treeState.tree = buildDirTree(paths, treeState.tree, false);
+    }, [treeState, paths]);
 
     const dirs = flattenTree(treeState.tree!);
 
@@ -227,6 +237,12 @@ export function Filters(props: FiltersProps) {
         };
     }, [props.allLabels]);
 
+    useEffect(() => {
+        return () => {
+            serverConfig.expandedDirFilters = dirs.filter((d) => d.expanded).map((d) => d.path);
+        }
+    }, [dirs]);
+
     return (
         <div className='w-100 filter-container'>
             <div className="strike"><span>Status</span></div>
@@ -234,10 +250,12 @@ export function Filters(props: FiltersProps) {
                 <FilterRow key={`status-${f.label}`} id={`status-${f.label}`}
                     filter={f} {...props} />)}
             <div className="strike"><span>Directories</span></div>
-            {dirs.map((d) =>
-                <DirFilterRow key={`dir-${d.path}`} id={`dir-${d.path}`}
-                    dir={d} forceRender={forceRender} {...props} />
-            )}
+            {paths.length > 0 ?
+                dirs.map((d) =>
+                    <DirFilterRow key={`dir-${d.path}`} id={`dir-${d.path}`}
+                        dir={d} forceRender={forceRender} {...props} />
+                ) : <></>
+            }
             <div className="strike"><span>Labels</span></div>
             {allFilters.labelFilters.map((f) =>
                 <FilterRow key={`labels-${f.label}`} id={`labels-${f.label}`}
