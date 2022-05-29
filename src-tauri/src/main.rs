@@ -36,9 +36,7 @@ struct ListenerHandle(Arc<Mutex<ipc::Ipc>>);
 fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let config = app.config();
     let cli_config = &config.tauri.cli.as_ref().unwrap();
-    let args = get_matches(cli_config, app.package_info())
-        .unwrap()
-        .args;
+    let args = get_matches(cli_config, app.package_info()).unwrap().args;
 
     if args.contains_key("help") {
         println!("{}", args["help"].value.as_str().unwrap());
@@ -61,21 +59,18 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let listener_mutex = listener_state.0.clone();
     let app: Arc<AppHandle> = app.handle().into();
     async_runtime::spawn(async move {
-        let mut listening = true;
-        {
-            let mut listener = listener_mutex.lock().await;
-            if let Err(_) = listener.listen(app.clone()).await {
-                listener.start();
-                listener.stop();
-                listening = false;
-            }
-            if let Err(e) = listener.send(&torrents).await {
-                println!("Unable to send args to listener: {:?}", e);
-            }
+        let mut listener = listener_mutex.lock().await;
+        if let Err(_) = listener.listen(app.clone()).await {
+            listener.start();
+            listener.stop();
+        }
+        if let Err(e) = listener.send(&torrents).await {
+            println!("Unable to send args to listener: {:?}", e);
         }
         let main_window = app.get_window("main").unwrap();
 
-        if listening {
+        if listener.listening {
+            drop(listener);
             let _ = app.listen_global("listener-start", move |_| {
                 let listener_mutex = listener_mutex.clone();
                 async_runtime::spawn(async move {
@@ -102,11 +97,14 @@ fn on_main_close(event: &GlobalWindowEvent) {
 }
 
 fn main() {
+    let mut ipc = ipc::Ipc::new();
+    ipc.try_bind();
+
     let context = tauri::generate_context!();
 
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![commands::read_file])
-        .manage(ListenerHandle(Default::default()))
+        .manage(ListenerHandle(Arc::new(Mutex::new(ipc))))
         .manage(tray::HideStateHandle(Default::default()))
         .system_tray(tray::create_tray())
         .on_system_tray_event(tray::on_tray_event)

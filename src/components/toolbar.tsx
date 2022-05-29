@@ -40,10 +40,11 @@ export function Toolbar(props: ToolbarProps) {
         (state: boolean, action: { set?: boolean }) => {
             var newState = action.set !== undefined ? action.set : !state;
             if (action.set === undefined) {
-                setTimeout(() => props.actionController.run("setAltSpeedMode", newState).catch((e) => {
-                    console.log("Can't set alt speed mode", e);
-                    return newState;
-                }));
+                // FIXME this runs on page load for some reason
+                props.actionController.run("setAltSpeedMode", newState)
+                    .catch((e) => {
+                        console.log("Can't set alt speed mode", e);
+                    });
             }
             return newState;
         }, props.altSpeedMode);

@@ -18,7 +18,6 @@
 
 import { Buffer } from 'buffer';
 
-import * as http from '@tauri-apps/api/http';
 import { SessionAllFields, SessionFields, TorrentAllFields, TorrentFields } from './transmission';
 import { ServerConnection } from '../config';
 import { Torrent } from './torrent';
@@ -58,16 +57,14 @@ export class TransmissionClient {
     auth: string;
     headers: Record<string, string>;
     timeout: number;
-    client: http.Client | null;
     session_info: SessionInfo;
 
     constructor(connection: ServerConnection, timeout = 15) {
-        this.url = connection.url;
+        this.url = "http://127.123.45.67:8080/post?url=" + encodeURIComponent(connection.url);
         this.hostname = new URL(this.url).hostname;
         this.auth = "Basic " + Buffer.from(connection.username + ":" + connection.password, 'utf-8').toString('base64');
         this.headers = { "Authorization": this.auth };
         this.timeout = timeout;
-        this.client = null;
         this.session_info = {};
     }
 
@@ -80,31 +77,23 @@ export class TransmissionClient {
     }
 
     async sendRpc(data: Object) {
-        if (!this.client) {
-            this.client = await http.getClient(
-                { connectTimeout: this.timeout, maxRedirections: 3 });
-        }
-
-        var response = await this.client.post(
-            this.url,
-            { type: "Json", payload: data },
-            { headers: this.headers });
+        var data_str = JSON.stringify(data);
+        var response = await fetch(
+            this.url, { method: "POST", headers: this.headers, body: data_str });
 
         if (response.status == 409) {
-            var sid = this.getHeader(response.headers, "X-Transmission-Session-Id");
+            var sid = response.headers.get("X-Transmission-Session-Id");
             if (!sid) {
                 throw new ApiError('Got 409 response without session id header');
             }
             this.headers["X-Transmission-Session-Id"] = sid;
 
-            response = await this.client.post(
-                this.url,
-                { type: "Json", payload: data },
-                { headers: this.headers });
+            response = await await fetch(
+                this.url, { method: "POST", headers: this.headers, body: data_str });
         }
 
         if (response.ok) {
-            return response.data;
+            return await response.json();
         } else {
             console.log(response);
             throw new Error("Server returned error");
