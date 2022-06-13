@@ -56,7 +56,7 @@
     z-index: 500;
 }
 
-.torrent-table .tr.selected {
+.selected {
     background-color: royalblue;
     color: white;
 }

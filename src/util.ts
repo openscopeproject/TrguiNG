@@ -73,3 +73,8 @@ export function useForceRender() {
     const [, forceRender] = useReducer((oldVal) => oldVal + 1, 0);
     return forceRender;
 }
+
+export function swapElements(a: Array<Object>, i: number, j: number) {
+    if (i >= 0 && i < a.length && j >= 0 && j < a.length && i != j)
+        [a[i], a[j]] = [a[j], a[i]];
+}

@@ -174,3 +174,29 @@ html, body {
     overflow: hidden;
     white-space: nowrap;
 }
+
+.app-tab-row {
+    background-color: #ddd;
+}
+
+.app-tab-row>* {
+    padding: 0.4rem;
+    border-bottom: 1px solid gray;
+}
+
+.app-tab {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: center;
+    width: 12rem;
+    flex-shrink: 1;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+}
+
+.app-tab-row .active {
+    background-color: white;
+    border-bottom: none;
+}

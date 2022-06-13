@@ -19,28 +19,12 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { appWindow } from '@tauri-apps/api/window';
 
-import { TransmissionClient } from './rpc/client';
-import { Config, ConfigContext, ServerConfigContext } from './config';
+import { Config, ConfigContext } from './config';
 import ReactDOM from 'react-dom';
-import React, { useContext, useMemo } from 'react';
-import { Server } from './components/server';
+import React from 'react';
 import { EventListener } from './event';
+import { App } from './components/app';
 
-function App(props: {}) {
-    const config = useContext(ConfigContext);
-    const server = config.getServers()[0];
-
-    var client = useMemo(() => {
-        const client = new TransmissionClient(server.connection);
-        client.getSessionFull().catch(console.log);
-        return client;
-    }, []);
-    return (
-        <ServerConfigContext.Provider value={server}>
-            <Server client={client} />
-        </ServerConfigContext.Provider>
-    );
-}
 
 async function run() {
     var config = new Config();

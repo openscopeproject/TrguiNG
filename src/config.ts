@@ -23,6 +23,7 @@ import { ActionType, TableState } from "react-table";
 
 export interface ServerConnection {
     url: string,
+    useAuth: boolean,
     username: string,
     password: string,
 }
@@ -36,6 +37,7 @@ export interface Server {
         to: string,
     }[],
     expandedDirFilters: string[],
+    lastSaveDirs: string[],
 }
 
 export interface TableFieldConfig {
@@ -161,7 +163,7 @@ export class Config {
 export const ConfigContext = React.createContext(new Config());
 export const ServerConfigContext = React.createContext<Server>(
     {
-        connection: { url: "", username: "", password: "" },
-        name: "", pathMappings: [], expandedDirFilters: []
+        connection: { url: "", useAuth: false, username: "", password: "" },
+        name: "", pathMappings: [], expandedDirFilters: [], lastSaveDirs: []
     }
 );
