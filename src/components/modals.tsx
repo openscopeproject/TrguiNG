@@ -20,9 +20,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import * as Icon from "react-bootstrap-icons";
 import { Button, ButtonGroup, Form, Modal } from "react-bootstrap";
 import { Tag, WithContext as ReactTags } from 'react-tag-input';
-import { Server } from "../config";
+import { ServerConfig } from "../config";
 import { cloneDeep } from "lodash";
-import { swapElements } from "../util";
+import { swapElements, useForceRender } from "../util";
 
 interface ModalProps {
     show: boolean,
@@ -117,8 +117,8 @@ interface ServerListPanelProps {
 
 function ServerListPanel(props: ServerListPanelProps) {
     return (
-        <div className="d-flex flex-row p-3">
-            <div className="border border-secondary flex-grow-1">
+        <div className="d-flex flex-column pe-3">
+            <div className="border border-secondary flex-grow-1" style={{ minHeight: "20rem" }}>
                 {props.servers.map((s, i) => {
                     return <div key={i} className={("p-1 " + (i == props.current ? "selected" : ""))} onClick={() => { props.onSelect(i) }}>{s}</div>;
                 })}
@@ -136,36 +136,44 @@ function ServerListPanel(props: ServerListPanelProps) {
 }
 
 interface ServerPanelProps {
-    server: Server,
+    server: ServerConfig,
     onNameChange: (name: string) => void,
 }
 
 function ServerPanel(props: ServerPanelProps) {
+    const forceRender = useForceRender();
+
     return (
         <div className="flex-grow-1">
             <Form.Group className="mb-3">
                 <Form.Label>Name</Form.Label>
-                <Form.Control type="text" onBlur={(e) => {
-                    props.server.name = e.target.value;
-                    props.onNameChange(e.target.value);
-                }} value={props.server.name} />
+                <Form.Control
+                    type="text"
+                    onChange={(e) => {
+                        props.onNameChange(e.target.value);
+                        forceRender();
+                    }}
+                    value={props.server.name} />
             </Form.Group>
             <Form.Group className="mb-3">
                 <Form.Label>Server url</Form.Label>
                 <Form.Control type="text" placeholder="http://1.2.3.4:9091/transmission/rpc" onChange={(e) => {
                     props.server.connection.url = e.target.value;
+                    forceRender();
                 }} value={props.server.connection.url} />
             </Form.Group>
             <Form.Group className="mb-3">
                 <Form.Label>User name</Form.Label>
                 <Form.Control type="text" onChange={(e) => {
                     props.server.connection.username = e.target.value;
+                    forceRender();
                 }} value={props.server.connection.username} />
             </Form.Group>
             <Form.Group className="mb-3">
                 <Form.Label>Password</Form.Label>
                 <Form.Control type="password" onChange={(e) => {
                     props.server.connection.password = e.target.value;
+                    forceRender();
                 }} value={props.server.connection.password} />
             </Form.Group>
         </div>
@@ -174,20 +182,26 @@ function ServerPanel(props: ServerPanelProps) {
 
 
 interface ManageServerModalProps extends ModalProps {
-    servers: Server[],
-    onSave: (servers: Server[]) => void,
+    servers: ServerConfig[],
+    onSave: (servers: ServerConfig[]) => void,
 }
 
 export function ManageServersModal(props: ManageServerModalProps) {
     const handleClose = useCallback(() => props.setShow(false), [props.setShow]);
-    const servers = useMemo(() => cloneDeep(props.servers), [props.servers]);
+    const [servers, setServers] = useState(cloneDeep(props.servers));
     const [currentServerIndex, setCurrentServerIndex] = useState(0);
-    const serverNames = useRef<string[]>(servers.map((s) => s.name));
+
+    useEffect(() => {
+        setServers(cloneDeep(props.servers));
+        if (currentServerIndex >= props.servers.length)
+            setCurrentServerIndex(props.servers.length > 0 ? props.servers.length - 1 : 0);
+    }, [props.servers, props.show]);
+
 
     const onRenameCurrent = useCallback((name: string) => {
-        servers[currentServerIndex].name = name;
-        serverNames.current = servers.map((s) => s.name);
-    }, []);
+        servers[currentServerIndex] = { ...servers[currentServerIndex], name: name };
+        setServers(servers.slice());
+    }, [servers, currentServerIndex]);
 
     const onAdd = useCallback(() => {
         servers.push(
@@ -196,38 +210,40 @@ export function ManageServersModal(props: ManageServerModalProps) {
                 name: "new", pathMappings: [], expandedDirFilters: [], lastSaveDirs: []
             }
         );
-        serverNames.current.push("new");
+        setServers(servers.slice());
         setCurrentServerIndex(servers.length - 1);
-    }, []);
+    }, [servers]);
 
     const onRemove = useCallback(() => {
         if (currentServerIndex < servers.length) {
             servers.splice(currentServerIndex, 1);
-            serverNames.current.splice(currentServerIndex, 1);
+            setServers(servers.slice());
+            if (currentServerIndex == servers.length && currentServerIndex > 0)
+                setCurrentServerIndex(currentServerIndex - 1);
         }
-    }, []);
+    }, [servers, currentServerIndex]);
 
     const onUp = useCallback(() => {
         if (currentServerIndex > 0) {
             swapElements(servers, currentServerIndex, currentServerIndex - 1);
-            swapElements(serverNames.current, currentServerIndex, currentServerIndex - 1);
+            setServers(servers.slice());
             setCurrentServerIndex(currentServerIndex - 1);
         }
-    }, []);
+    }, [servers, currentServerIndex]);
 
     const onDown = useCallback(() => {
-        if (currentServerIndex < servers.length) {
+        if (currentServerIndex < servers.length - 1) {
             swapElements(servers, currentServerIndex, currentServerIndex + 1);
-            swapElements(serverNames.current, currentServerIndex, currentServerIndex + 1);
+            setServers(servers.slice());
             setCurrentServerIndex(currentServerIndex + 1);
         }
-    }, []);
+    }, [servers, currentServerIndex]);
 
 
     const onSave = useCallback(() => {
         props.onSave(servers);
         handleClose();
-    }, [props.onSave]);
+    }, [props.onSave, servers]);
 
     return (
         <Modal
@@ -237,12 +253,12 @@ export function ManageServersModal(props: ManageServerModalProps) {
             centered
         >
             <Modal.Header closeButton>
-                <Modal.Title>Edit transmission server connections</Modal.Title>
+                <Modal.Title>Edit Server Connections</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <div className="d-flex w-100">
                     <ServerListPanel
-                        servers={serverNames.current}
+                        servers={servers.map((s) => s.name)}
                         current={currentServerIndex}
                         onSelect={setCurrentServerIndex}
                         onAdd={onAdd}

@@ -19,14 +19,25 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import { TransmissionClient } from '../rpc/client';
-import { Config, ConfigContext, ServerConfigContext } from '../config';
-import React, { useContext, useMemo } from 'react';
+import { Config, ConfigContext, ServerConfig, ServerConfigContext } from '../config';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { Server } from '../components/server';
 import * as Icon from "react-bootstrap-icons";
 import { Button } from 'react-bootstrap';
+import { ManageServersModal } from './modals';
 
-function Tabs(props: {}) {
-    return (
+interface TabsProps {
+    servers: ServerConfig[],
+    onServersSave: (servers: ServerConfig[]) => void,
+}
+
+function Tabs(props: TabsProps) {
+    const [showServerConfig, setShowServerConfig] = useState(false);
+
+    return (<>
+        <ManageServersModal
+            servers={props.servers} onSave={props.onServersSave}
+            show={showServerConfig} setShow={setShowServerConfig} />
         <div className="d-flex app-tab-row">
             <div className="app-tab active">
                 <div className="d-flex">
@@ -42,26 +53,31 @@ function Tabs(props: {}) {
                 <Icon.PlusLg size={16} />
             </Button>
             <div className="w-100 flex-shrink-1" />
-            <Button variant="light">
+            <Button variant="light" onClick={() => setShowServerConfig(true)}>
                 <Icon.GearFill size={16} />
             </Button>
         </div>
-    );
+    </>);
 }
 
-export function App(props: {}) {
+export function App(_: {}) {
     const config = useContext(ConfigContext);
-    const server = config.getServers()[0];
+    const servers = config.getServers();
 
     var client = useMemo(() => {
-        const client = new TransmissionClient(server.connection);
+        const client = new TransmissionClient(servers[0].connection);
         client.getSessionFull().catch(console.log);
         return client;
     }, []);
+
+    const onServerSave = useCallback((servers: ServerConfig[]) => {
+        console.log("saving servers", servers);
+    }, []);
+
     return (
-        <div className="d-flex flex-column h-100 v-100">
-            <Tabs />
-            <ServerConfigContext.Provider value={server}>
+        <div className="d-flex flex-column h-100 w-100">
+            <Tabs servers={servers} onServersSave={onServerSave} />
+            <ServerConfigContext.Provider value={servers[0]}>
                 <Server client={client} />
             </ServerConfigContext.Provider>
         </div>

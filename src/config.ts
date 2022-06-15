@@ -28,7 +28,7 @@ export interface ServerConnection {
     password: string,
 }
 
-export interface Server {
+export interface ServerConfig {
     name: string,
     connection: ServerConnection,
     pathMappings:
@@ -58,7 +58,7 @@ interface TableSettings {
 type TableName = "torrents" | "filetree";
 
 interface Settings {
-    servers: Server[],
+    servers: ServerConfig[],
     app: {
         tables: Record<TableName, TableSettings>
     }
@@ -102,7 +102,7 @@ export class Config {
         );
     }
 
-    getServers(): Server[] {
+    getServers(): ServerConfig[] {
         return this.values.servers;
     }
 
@@ -161,7 +161,7 @@ export class Config {
 }
 
 export const ConfigContext = React.createContext(new Config());
-export const ServerConfigContext = React.createContext<Server>(
+export const ServerConfigContext = React.createContext<ServerConfig>(
     {
         connection: { url: "", useAuth: false, username: "", password: "" },
         name: "", pathMappings: [], expandedDirFilters: [], lastSaveDirs: []
