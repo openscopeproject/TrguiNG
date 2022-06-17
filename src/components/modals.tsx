@@ -18,7 +18,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Icon from "react-bootstrap-icons";
-import { Button, ButtonGroup, Form, Modal } from "react-bootstrap";
+import { Button, ButtonGroup, Col, Form, Modal, Row } from "react-bootstrap";
 import { Tag, WithContext as ReactTags } from 'react-tag-input';
 import { ServerConfig } from "../config";
 import { cloneDeep } from "lodash";
@@ -142,10 +142,16 @@ interface ServerPanelProps {
 
 function ServerPanel(props: ServerPanelProps) {
     const forceRender = useForceRender();
+    const [mappingsString, setMappingsString] = useState("");
+
+    useEffect(() => {
+        setMappingsString(props.server.pathMappings.map((m) => `${m.from}=${m.to}`).join("\n"));
+    }, [props.server]);
+
 
     return (
         <div className="flex-grow-1">
-            <Form.Group className="mb-3">
+            <Form.Group className="mb-2">
                 <Form.Label>Name</Form.Label>
                 <Form.Control
                     type="text"
@@ -155,26 +161,48 @@ function ServerPanel(props: ServerPanelProps) {
                     }}
                     value={props.server.name} />
             </Form.Group>
-            <Form.Group className="mb-3">
+            <Form.Group className="mb-2">
                 <Form.Label>Server url</Form.Label>
                 <Form.Control type="text" placeholder="http://1.2.3.4:9091/transmission/rpc" onChange={(e) => {
                     props.server.connection.url = e.target.value;
                     forceRender();
                 }} value={props.server.connection.url} />
             </Form.Group>
-            <Form.Group className="mb-3">
-                <Form.Label>User name</Form.Label>
-                <Form.Control type="text" onChange={(e) => {
-                    props.server.connection.username = e.target.value;
-                    forceRender();
-                }} value={props.server.connection.username} />
-            </Form.Group>
-            <Form.Group className="mb-3">
-                <Form.Label>Password</Form.Label>
-                <Form.Control type="password" onChange={(e) => {
-                    props.server.connection.password = e.target.value;
-                    forceRender();
-                }} value={props.server.connection.password} />
+            <Row>
+                <Col lg={6}>
+                    <Form.Group className="mb-2">
+                        <Form.Label>User name</Form.Label>
+                        <Form.Control type="text" onChange={(e) => {
+                            props.server.connection.username = e.target.value;
+                            forceRender();
+                        }} value={props.server.connection.username} />
+                    </Form.Group>
+                </Col>
+                <Col lg={6}>
+                    <Form.Group className="mb-2">
+                        <Form.Label>Password</Form.Label>
+                        <Form.Control type="password" onChange={(e) => {
+                            props.server.connection.password = e.target.value;
+                            forceRender();
+                        }} value={props.server.connection.password} />
+                    </Form.Group>
+                </Col>
+            </Row>
+            <Form.Group>
+                <Form.Label>Path mappings in "remote=local" format, one per line</Form.Label>
+                <Form.Control as="textarea"
+                    onChange={(e) => {
+                        var mappings = e.target.value.split("\n")
+                            .filter((line) => line.includes("="))
+                            .map((line) => {
+                                var equalsPos = line.indexOf("=");
+                                return { from: line.substring(0, equalsPos), to: line.substring(equalsPos + 1) };
+                            });
+                        props.server.pathMappings = mappings;
+                        setMappingsString(e.target.value);
+                    }}
+                    value={mappingsString}
+                    style={{ minHeight: "8rem" }} />
             </Form.Group>
         </div>
     );

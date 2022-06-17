@@ -16,16 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
- .btn-light {
+.main-toolbar .btn-light {
     min-width: 2.5rem;
     border-color: #d8ebff;
 }
 
-.btn-light:hover {
+.main-toolbar .btn-light:hover {
     background-color: #ebebeb;
 }
 
-.btn-light.alt {
+.main-toolbar .btn-light.alt {
     background-color: lightblue;
     transform: scale(-1, 1);
 }

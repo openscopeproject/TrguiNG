@@ -74,7 +74,7 @@ export function Toolbar(props: ToolbarProps) {
     }, [props.actionController, props.selectedTorrents]);
 
     return (
-        <ButtonToolbar>
+        <ButtonToolbar className="main-toolbar">
             <ButtonGroup className="me-2">
                 <Button variant="light" className="p-1"><Icon.FileArrowDownFill size={24} color="seagreen" /></Button>
                 <Button variant="light" className="p-1"><Icon.MagnetFill size={24} color="seagreen" /></Button>

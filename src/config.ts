@@ -59,6 +59,7 @@ type TableName = "torrents" | "filetree";
 
 interface Settings {
     servers: ServerConfig[],
+    openTabs: string[],
     app: {
         tables: Record<TableName, TableSettings>
     }
@@ -66,6 +67,7 @@ interface Settings {
 
 const DefaultSettings: Settings = {
     servers: [],
+    openTabs: [],
     app: {
         tables: {
             "torrents": {
@@ -106,9 +108,20 @@ export class Config {
         return this.values.servers;
     }
 
-    getConnection(serverName: string): ServerConnection | null {
-        var server = this.values.servers.find((c) => c.name == serverName);
-        return server ? server.connection : null;
+    setServers(servers: ServerConfig[]) {
+        this.values.servers = servers;
+    }
+
+    getServer(name: string): ServerConfig | undefined {
+        return this.values.servers.find((s) => s.name == name);
+    }
+
+    getOpenTabs() {
+        return this.values.openTabs;
+    }
+
+    setOpenTabs(tabs: string[]) {
+        this.values.openTabs = tabs;
     }
 
     setTableFields(table: TableName, fields: TableFieldConfig[]) {
