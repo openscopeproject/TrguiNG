@@ -19,8 +19,8 @@ use std::sync::Arc;
 
 use hyper::body::Bytes;
 use hyper::header::{
-    HeaderValue, ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS,
-    ACCESS_CONTROL_ALLOW_ORIGIN, ORIGIN, self, AUTHORIZATION,
+    self, HeaderValue, ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS,
+    ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION, ORIGIN,
 };
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Client, HeaderMap, Method, Request, Response, Server, StatusCode};
@@ -52,11 +52,13 @@ fn not_found() -> Response<Body> {
         .unwrap()
 }
 
-fn invalid_request() -> Response<Body> {
-    Response::builder()
+fn invalid_request(request_headers: &HeaderMap, msg: &str) -> Response<Body> {
+    let mut response = Response::builder()
         .status(StatusCode::BAD_REQUEST)
-        .body("INVALID REQUEST".into())
-        .unwrap()
+        .body(format!("INVALID REQUEST: {}", msg).into())
+        .unwrap();
+    cors(request_headers, &mut response, ALLOW_ORIGINS);
+    response
 }
 
 fn cors(request_headers: &HeaderMap, r: &mut Response<Body>, allowed_origins: &[&str]) {
@@ -131,22 +133,26 @@ async fn proxy_fetch(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
             if auth_header.is_some() {
                 req_builder = req_builder.header(AUTHORIZATION, auth_header.unwrap());
             }
-            let req = req_builder.body(req.into_body()).unwrap();
 
-            let client = Client::new();
+            match req_builder.body(req.into_body()) {
+                Ok(req) => {
+                    let client = Client::new();
 
-            match client.request(req).await {
-                Ok(mut response) => {
-                    cors(&headers, &mut response, ALLOW_ORIGINS);
-                    Ok(response)
+                    match client.request(req).await {
+                        Ok(mut response) => {
+                            cors(&headers, &mut response, ALLOW_ORIGINS);
+                            Ok(response)
+                        }
+                        Err(e) => Err(e),
+                    }
                 }
-                Err(e) => Err(e),
+                Err(e) => Ok(invalid_request(&headers, e.to_string().as_str())),
             }
         } else {
-            return Ok(invalid_request());
+            return Ok(invalid_request(req.headers(), "no url query parameter"));
         }
     } else {
-        return Ok(invalid_request());
+        return Ok(invalid_request(req.headers(), "no query parameters"));
     }
 }
 

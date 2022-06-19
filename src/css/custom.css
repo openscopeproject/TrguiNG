@@ -184,6 +184,7 @@ html, body {
 }
 
 .app-tab {
+    background-color: #eee;
     white-space: nowrap;
     text-overflow: ellipsis;
     text-align: center;
