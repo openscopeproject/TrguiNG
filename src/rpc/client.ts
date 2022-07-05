@@ -57,7 +57,7 @@ export class TransmissionClient {
     auth: string;
     headers: Record<string, string>;
     timeout: number;
-    session_info: SessionInfo;
+    sessionInfo: SessionInfo;
 
     constructor(connection: ServerConnection, timeout = 15) {
         this.url = "http://127.123.45.67:8080/post?url=" + encodeURIComponent(connection.url);
@@ -65,7 +65,7 @@ export class TransmissionClient {
         this.auth = "Basic " + Buffer.from(connection.username + ":" + connection.password, 'utf-8').toString('base64');
         this.headers = { "Authorization": this.auth };
         this.timeout = timeout;
-        this.session_info = {};
+        this.sessionInfo = {};
     }
 
     getHeader(headers: Record<string, string>, header: string) {
@@ -157,14 +157,14 @@ export class TransmissionClient {
 
     async getSession(): Promise<SessionInfo> {
         const session = await this._getSession(SessionFields);
-        merge(this.session_info, session);
-        return this.session_info;
+        merge(this.sessionInfo, session);
+        return this.sessionInfo;
     }
 
     async getSessionFull(): Promise<SessionInfo> {
         const session = await this._getSession(SessionAllFields);
-        merge(this.session_info, session);
-        return this.session_info;
+        merge(this.sessionInfo, session);
+        return this.sessionInfo;
     }
 
     async setSession(fields: Record<string, any>) {

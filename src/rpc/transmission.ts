@@ -143,6 +143,10 @@ export const TorrentAllFields = [
 
 export type TorrentAllFieldsType = typeof TorrentAllFields[number];
 
+export type Torrent = {
+    [key in TorrentAllFieldsType]: any
+}
+
 // These fields are polled regularlly with torrent list
 export const SessionFields = [
     "alt-speed-down", // number: max global download speed (KBps)
@@ -210,3 +214,7 @@ export const SessionAllFields = [
 ] as const;
 
 export type SessionAllFieldsType = typeof SessionAllFields[number];
+
+export type SessionType = {
+    [Property in SessionAllFieldsType]: any
+}

@@ -25,6 +25,7 @@ import { Server } from '../components/server';
 import * as Icon from "react-bootstrap-icons";
 import { Button, Dropdown } from 'react-bootstrap';
 import { ManageServersModal } from './modals';
+import { ClientManager } from '../clientmanager';
 
 interface TabsProps {
     openTabs: string[],
@@ -84,16 +85,20 @@ export function App(_: {}) {
     const [servers, setServers] = useState(config.getServers());
     const [openTabs, setOpenTabs] = useState<string[]>(config.getOpenTabs());
     const [currentTab, setCurrentTab] = useState(-1);
+    const clientManager = useMemo(() => new ClientManager(config), [config]);
 
-    const client = useRef<TransmissionClient | undefined>();
+    useEffect(() => {
+        for(let tab of openTabs)
+            clientManager.open(tab);
+    }, []);
+
     const server = useRef<ServerConfig | undefined>();
 
     const tabSwitch = useCallback((tab: number) => {
         console.log("Tab switch to", tab);
         server.current = config.getServer(openTabs[tab]);
         if (!server.current) return;
-        client.current = new TransmissionClient(server.current.connection);
-        client.current.getSessionFull().catch(console.log);
+        clientManager.setActiveServer(server.current.name);
         setCurrentTab(tab);
     }, [openTabs]);
 
@@ -108,14 +113,22 @@ export function App(_: {}) {
 
     const openTab = useCallback((name: string) => {
         if (openTabs.includes(name)) return;
+
+        clientManager.open(name);
+
         openTabs.push(name);
         setOpenTabs(openTabs.slice());
+
         tabSwitch(openTabs.length - 1);
     }, [openTabs]);
 
     const closeTab = useCallback((tab: number) => {
         if (tab >= openTabs.length) return;
+
+        clientManager.close(openTabs[tab]);
+
         setOpenTabs(openTabs.filter((_, i) => i != tab));
+
         if (currentTab == tab) {
             var nextTab = currentTab;
             if (nextTab == openTabs.length - 1) nextTab -= 1;
@@ -123,7 +136,6 @@ export function App(_: {}) {
                 tabSwitch(nextTab)
             } else {
                 server.current = undefined;
-                client.current = undefined;
                 setCurrentTab(0);
             }
         }
@@ -137,7 +149,7 @@ export function App(_: {}) {
                 servers={servers} onServersSave={onServerSave} />
             {server.current !== undefined ?
                 <ServerConfigContext.Provider value={server.current!}>
-                    <Server client={client.current!} />
+                    <Server clientManager={clientManager}/>
                 </ServerConfigContext.Provider>
                 : <div className="d-flex justify-content-center align-items-center w-100 h-100">
                     <div className="d-flex flex-column" style={{ minHeight: "10rem", height: "75vh" }}>

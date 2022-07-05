@@ -107,7 +107,6 @@ export class CachedFileTree {
     }
 
     parse(torrent: Torrent) {
-        console.log("Parsing torrent", torrent.name);
         this.torrenthash = torrent.hashString;
 
         this.files = torrent.files.map((entry: any, index: number): FileEntry => {

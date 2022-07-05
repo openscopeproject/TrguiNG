@@ -16,31 +16,32 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import Split from "react-split";
-import { SessionInfo, TransmissionClient } from "../rpc/client";
+import { SessionInfo } from "../rpc/client";
 import { Details } from "./details";
 import { DefaultFilter, Filters, TorrentFilter } from "./filters";
 import { TorrentTable } from "./torrenttable";
 import { Torrent } from "../rpc/torrent";
 import '../css/custom.css';
-import { invoke } from "@tauri-apps/api";
 import { Toolbar } from "./toolbar";
 import { Statusbar, StatusbarProps } from "./statusbar";
 import { ActionController } from "../actions";
 import { EditLabelsModal } from "./modals";
+import { ClientManager } from "../clientmanager";
+import { ServerConfigContext } from "../config";
 
 interface ServerProps {
-    client: TransmissionClient,
+    clientManager: ClientManager,
 }
 
-function usePausingModalState(setRunUpdates: React.Dispatch<boolean>): [boolean, (b: boolean) => void] {
+function usePausingModalState(runUpdates: (run: boolean) => void): [boolean, (b: boolean) => void] {
     const [show, setShow] = useState(false);
 
     const setShowWrapped = useCallback((show: boolean) => {
-        setRunUpdates(!show);
+        runUpdates(!show);
         setShow(show);
-    }, [setRunUpdates, setShow]);
+    }, [runUpdates, setShow]);
 
     return [show, setShowWrapped];
 }
@@ -62,51 +63,39 @@ function selectedTorrentsReducer(selected: Set<number>, action: { verb: string, 
 }
 
 export function Server(props: ServerProps) {
+    const serverConfig = useContext(ServerConfigContext);
     const [torrents, setTorrents] = useState<Torrent[]>([]);
     const [session, setSession] = useState<SessionInfo>({});
 
-    const updateTimers = useMemo(() => {
-        return {
-            torrents: -1,
-            detais: -1,
-            paused: true,
+    const runUpdates = useCallback((run: boolean) => {
+        if (run) {
+            props.clientManager.startTimers(serverConfig.name);
+        } else {
+            props.clientManager.stopTimers(serverConfig.name);
         }
     }, []);
 
-    const update = useCallback(() => {
-        props.client.getTorrents().then((torrents) => {
-            if (!updateTimers.paused) setTorrents(torrents)
-        }).catch(console.log);
-        props.client.getSession().then((session) => {
-            if (!updateTimers.paused) setSession(session);
-        }).catch(console.log);
-    }, [props.client]);
-
-    const [runUpdates, setRunUpdates] = useReducer(useCallback((state: boolean, run: boolean) => {
-        if (state && !run) {
-            updateTimers.paused = true;
-            clearInterval(updateTimers.torrents);
-        }
-        if (!state && run) {
-            updateTimers.paused = false;
-            update();
-            updateTimers.torrents = setInterval(update, 5000);
-        }
-        return run;
-    }, []), false);
+    useEffect(() => {
+        setTorrents(props.clientManager.servers[serverConfig.name].torrents);
+        setSession(props.clientManager.servers[serverConfig.name].session);
+    }, [serverConfig, props.clientManager] );
 
     useEffect(() => {
-        setRunUpdates(true);
-    }, [props.client]);
+        props.clientManager.onTorrentsChange = setTorrents;
+        props.clientManager.onSessionChange = setSession;
 
-    useEffect(() => {
-        return () => clearInterval(updateTimers.detais);
-    }, []);
+        return () => {
+            props.clientManager.onTorrentsChange = undefined;
+            props.clientManager.onSessionChange = undefined;
+        }
+    }, [props.clientManager]);
 
     const [currentTorrent, setCurrentTorrent] = useState<number>();
     const [currentFilter, setCurrentFilter] = useState({ id: "", filter: DefaultFilter });
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
-    const actionController = useMemo(() => new ActionController(props.client), [props.client]);
+    const actionController = useMemo(
+        () => new ActionController(props.clientManager.getClient(serverConfig.name)),
+        [props.clientManager, serverConfig]);
 
     const searchFilter = useCallback((t: Torrent) => {
         const name = t.name.toLowerCase();
@@ -133,17 +122,11 @@ export function Server(props: ServerProps) {
 
     }, [torrents, currentFilter]);
 
-    // var readFile = useCallback((e) => {
-    //     invoke("read_file", { path: "D:\\Downloads\\1.torrent" }).then((result) => {
-    //         console.log("Invoke result:\n", result);
-    //     })
-    // }, []);
-
     const statusbarProps = useMemo<StatusbarProps>(() => {
         const selected = filteredTorrents.filter((t) => selectedTorrents.has(t.id));
         return {
             daemon_version: session.version,
-            hostname: props.client.hostname,
+            hostname: props.clientManager.getHostname(serverConfig.name),
             down_rate: filteredTorrents.reduce((p, t) => p + t.rateDownload, 0),
             down_rate_limit: session["speed-limit-down-enabled"] ?
                 session["alt-speed-enabled"] ? session["alt-speed-down"] : session["speed-limit-down"]
@@ -158,9 +141,9 @@ export function Server(props: ServerProps) {
             size_done: selected.reduce((p, t) => p + t.haveValid, 0),
             size_left: selected.reduce((p, t) => p + t.leftUntilDone, 0),
         }
-    }, [session, filteredTorrents, selectedTorrents]);
+    }, [serverConfig, session, filteredTorrents, selectedTorrents]);
 
-    const [showLabelsModal, setShowLabelsModal] = usePausingModalState(setRunUpdates);
+    const [showLabelsModal, setShowLabelsModal] = usePausingModalState(runUpdates);
 
     const allLabels = useMemo(() => {
         var labels = new Set<string>();
@@ -224,7 +207,7 @@ export function Server(props: ServerProps) {
                             selectedReducer={selectedReducer} />
                     </Split>
                     <div className="w-100">
-                        <Details torrentId={currentTorrent} client={props.client} />
+                        <Details torrentId={currentTorrent} {...props} />
                     </div>
                 </Split>
             </div>

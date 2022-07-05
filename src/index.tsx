@@ -26,10 +26,7 @@ import { EventListener } from './event';
 import { App } from './components/app';
 
 
-async function run() {
-    var config = new Config();
-    await config.read();
-
+function run(config: Config) {
     var eventListener = new EventListener();
     eventListener.add("app-arg", (payload) => console.log(`Got app-arg: ${payload}`));
     eventListener.finalize();
@@ -52,5 +49,5 @@ async function run() {
 }
 
 window.onload = (event) => {
-    run();
+    new Config().read().then(run);
 }

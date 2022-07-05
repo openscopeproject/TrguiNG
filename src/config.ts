@@ -87,13 +87,12 @@ export class Config {
     values = DefaultSettings;
 
     async read() {
-        return fs.readTextFile(
+        let text = await fs.readTextFile(
             this.fileName,
             { dir: fs.BaseDirectory.Config }
-        ).then((text) => {
-            merge(this.values, JSON.parse(text));
-            console.log(`Read config`, this.values);
-        }).catch((e) => console.log(e));
+        );
+        merge(this.values, JSON.parse(text));
+        return this;
     }
 
     async save() {

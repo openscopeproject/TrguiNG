@@ -16,10 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useEffect, useMemo, useReducer } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useReducer } from "react";
 import { Container, Form, Nav, Row, Tab, Table } from "react-bootstrap";
 import { CachedFileTree } from "../cachedfiletree";
-import { TransmissionClient } from "../rpc/client";
+import { ClientManager } from "../clientmanager";
+import { ServerConfigContext } from "../config";
 import { getTorrentError, Torrent } from "../rpc/torrent";
 import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr, timestampToDateString } from "../util";
 import { FileTreeTable } from "./filetreetable";
@@ -29,7 +30,7 @@ import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./t
 
 interface DetailsProps {
     torrentId?: number;
-    client: TransmissionClient;
+    clientManager: ClientManager;
 }
 
 function DownloadBar(props: { torrent: Torrent }) {
@@ -212,6 +213,7 @@ function GeneralPane(props: { torrent: Torrent }) {
 }
 
 export function Details(props: DetailsProps) {
+    const serverConfig = useContext(ServerConfigContext);
     const fileTree = useMemo(() => new CachedFileTree(), []);
 
     const [torrent, setTorrent] = useReducer(useCallback(
@@ -221,16 +223,21 @@ export function Details(props: DetailsProps) {
         }, []), undefined);
 
     useEffect(() => {
+        setTorrent(props.clientManager.servers[serverConfig.name].torrentDetails);
+    }, [serverConfig, props.clientManager]);
+
+    useEffect(() => {
+        props.clientManager.setServerDetailsId(serverConfig.name, props.torrentId);
+
         if (!props.torrentId) return () => { };
 
-        props.client.getTorrentDetails(props.torrentId).then(setTorrent).catch(console.log);
+        props.clientManager.onTorrentDetailsChange = setTorrent;
+        props.clientManager.startDetailsTimer(serverConfig.name);
 
-        var timer = setInterval(() => {
-            props.client.getTorrentDetails(props.torrentId!).then(setTorrent).catch(console.log);
-        }, 5000);
-
-        return () => clearInterval(timer);
-    }, [props]);
+        return () => {
+            props.clientManager.onTorrentDetailsChange = undefined;
+        }
+    }, [props.torrentId]);
 
     if (!torrent) return <div className="p-3">Select a torrent to view it's details</div>;
 
