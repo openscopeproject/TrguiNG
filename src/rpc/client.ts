@@ -61,11 +61,16 @@ export class TransmissionClient {
 
     constructor(connection: ServerConnection, timeout = 15) {
         this.url = "http://127.123.45.67:8080/post?url=" + encodeURIComponent(connection.url);
-        this.hostname = new URL(this.url).hostname;
         this.auth = "Basic " + Buffer.from(connection.username + ":" + connection.password, 'utf-8').toString('base64');
         this.headers = { "Authorization": this.auth };
         this.timeout = timeout;
         this.sessionInfo = {};
+        this.hostname = "unknown";
+        try {
+            this.hostname = new URL(connection.url).hostname;
+        } catch {
+            console.log("Invalid URL", connection.url);
+        }
     }
 
     getHeader(headers: Record<string, string>, header: string) {

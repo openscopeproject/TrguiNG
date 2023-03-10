@@ -92,6 +92,12 @@ export class Config {
             { dir: fs.BaseDirectory.Config }
         );
         merge(this.values, JSON.parse(text));
+
+        // sanitize data
+        this.values.openTabs = this.values.openTabs.filter(
+            (name) => this.values.servers.find((s) => s.name == name) !== undefined
+        );
+
         return this;
     }
 

@@ -88,7 +88,7 @@ export function App(_: {}) {
     const clientManager = useMemo(() => new ClientManager(config), [config]);
 
     useEffect(() => {
-        for(let tab of openTabs)
+        for (let tab of openTabs)
             clientManager.open(tab);
     }, []);
 
@@ -103,12 +103,17 @@ export function App(_: {}) {
     }, [openTabs]);
 
     useEffect(() => { tabSwitch(0) }, []);
+    useEffect(() => { config.setOpenTabs(openTabs); }, [openTabs]);
 
     const onServerSave = useCallback((servers: ServerConfig[]) => {
         config.setServers(servers);
         setServers(servers);
-        setOpenTabs(openTabs.filter((tab) => servers.find((s) => s.name == tab) !== undefined));
-        setCurrentTab(0);
+        openTabs.slice().reverse().forEach((serverName, reverseIndex) => {
+            if (servers.find((s) => s.name == serverName) === undefined) {
+                console.log("Closing tab", serverName);
+                closeTab(openTabs.length - reverseIndex - 1);
+            }
+        });
     }, [config]);
 
     const openTab = useCallback((name: string) => {
@@ -138,6 +143,8 @@ export function App(_: {}) {
                 server.current = undefined;
                 setCurrentTab(0);
             }
+        } else if (tab < currentTab) {
+            setCurrentTab(currentTab - 1);
         }
     }, [openTabs]);
 
@@ -149,7 +156,7 @@ export function App(_: {}) {
                 servers={servers} onServersSave={onServerSave} />
             {server.current !== undefined ?
                 <ServerConfigContext.Provider value={server.current!}>
-                    <Server clientManager={clientManager}/>
+                    <Server clientManager={clientManager} />
                 </ServerConfigContext.Provider>
                 : <div className="d-flex justify-content-center align-items-center w-100 h-100">
                     <div className="d-flex flex-column" style={{ minHeight: "10rem", height: "75vh" }}>
