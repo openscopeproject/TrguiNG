@@ -80,7 +80,7 @@ function Tabs(props: TabsProps) {
     </>);
 }
 
-export function App(_: {}) {
+export function App({}) {
     const config = useContext(ConfigContext);
     const [servers, setServers] = useState(config.getServers());
     const [openTabs, setOpenTabs] = useState<string[]>(config.getOpenTabs());

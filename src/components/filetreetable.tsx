@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
+import React, { memo, useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import { Badge } from "react-bootstrap";
 import { useReactTable, Row, ColumnSizingState, SortingState, VisibilityState, ColumnDef, getCoreRowModel, flexRender, CellContext, getSortedRowModel } from '@tanstack/react-table';
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -103,13 +103,15 @@ interface FileTreeTableProps {
     tree: CachedFileTree,
 }
 
-function FileTableRow(props: {
+const FileTableRow = memo(function FileTableRow(props: {
     row: Row<FileDirEntry>,
     index: number,
     start: number,
     lastIndex: number,
     rowClick: (e: React.MouseEvent<Element>, i: number, li: number) => void,
     height: number,
+    columnSizingState: ColumnSizingState,
+    columnVisibilityState: VisibilityState
 }) {
     return (
         <div
@@ -134,7 +136,7 @@ function FileTableRow(props: {
             })}
         </div>
     );
-}
+});
 
 export function FileTreeTable(props: FileTreeTableProps) {
     const config = useContext(ConfigContext);
@@ -272,6 +274,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
                             key={virtualRow.index}
                             row={row} index={virtualRow.index} lastIndex={lastIndex}
                             start={virtualRow.start} rowClick={rowClick} height={rowHeight}
+                            columnSizingState={columnSizing} columnVisibilityState={columnVisibility}
                         />;
                     })}
                 </div>

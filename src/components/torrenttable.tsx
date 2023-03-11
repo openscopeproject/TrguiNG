@@ -17,7 +17,7 @@
  */
 
 import '../css/torrenttable.css';
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Badge } from 'react-bootstrap';
 import { Torrent } from '../rpc/torrent';
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentFieldsType } from '../rpc/transmission';
@@ -187,13 +187,15 @@ const defaultColumns = AllFields.map((f): ColumnDef<Torrent> => {
     };
 });
 
-function TorrentTableRow(props: {
+const TorrentTableRow = memo(function TorrentTableRow(props: {
     row: Row<Torrent>,
     index: number,
     start: number,
     lastIndex: number,
     rowClick: (e: React.MouseEvent<Element>, i: number, li: number) => void,
     height: number,
+    columnSizingState: ColumnSizingState,
+    columnVisibilityState: VisibilityState
 }) {
     return (
         <div
@@ -218,7 +220,7 @@ function TorrentTableRow(props: {
             })}
         </div>
     );
-}
+});
 
 export function TorrentTable(props: TorrentTableProps) {
     const config = useContext(ConfigContext);
@@ -361,6 +363,7 @@ export function TorrentTable(props: TorrentTableProps) {
                             key={row.original.id}
                             row={row} index={virtualRow.index} lastIndex={lastIndex}
                             start={virtualRow.start} rowClick={rowClick} height={rowHeight}
+                            columnSizingState={columnSizing} columnVisibilityState={columnVisibility}
                         />;
                     })}
                 </div>
