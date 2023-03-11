@@ -19,7 +19,7 @@
 import * as fs from "@tauri-apps/api/fs";
 import React from "react";
 import { merge } from "lodash";
-import { ActionType, TableState } from "react-table";
+import { SortingState, ColumnSizingState, ColumnOrderState, VisibilityState } from "@tanstack/react-table";
 
 export interface ServerConnection {
     url: string,
@@ -40,18 +40,15 @@ export interface ServerConfig {
     lastSaveDirs: string[],
 }
 
-export interface TableFieldConfig {
-    name: string
-    width: number
-}
-
 export interface SortByConfig {
     id: string,
     desc: boolean,
 }
 
 interface TableSettings {
-    fields: TableFieldConfig[],
+    columns: string[],
+    columnVisibility: Record<string, boolean>,
+    columnSizes: Record<string, number>,
     sortBy: SortByConfig[],
 }
 
@@ -71,11 +68,15 @@ const DefaultSettings: Settings = {
     app: {
         tables: {
             "torrents": {
-                fields: [],
+                columns: [],
+                columnVisibility: {},
+                columnSizes: {},
                 sortBy: [],
             },
             "filetree": {
-                fields: [],
+                columns: [],
+                columnVisibility: {},
+                columnSizes: {},
                 sortBy: [],
             }
         }
@@ -129,52 +130,28 @@ export class Config {
         this.values.openTabs = tabs;
     }
 
-    setTableFields(table: TableName, fields: TableFieldConfig[]) {
-        this.values.app.tables[table].fields = fields;
+    setTableColumnSizes(table: TableName, sizes: ColumnSizingState) {
+        this.values.app.tables[table].columnSizes = sizes;
     }
 
-    getTableFields(table: TableName): TableFieldConfig[] {
-        return this.values.app.tables[table].fields;
+    getTableColumnSizes(table: TableName): ColumnSizingState {
+        return this.values.app.tables[table].columnSizes;
     }
 
-    setTableSortBy(table: TableName, sortBy: SortByConfig[]) {
+    setTableColumnVisibility(table: TableName, visibility: VisibilityState) {
+        this.values.app.tables[table].columnVisibility = visibility;
+    }
+
+    getTableColumnVisibility(table: TableName): VisibilityState {
+        return this.values.app.tables[table].columnVisibility;
+    }
+
+    setTableSortBy(table: TableName, sortBy: SortingState) {
         this.values.app.tables[table].sortBy = sortBy;
     }
 
-    getTableSortBy(table: TableName): SortByConfig[] {
+    getTableSortBy(table: TableName): SortingState {
         return this.values.app.tables[table].sortBy;
-    }
-
-    processTableStateChange<T extends object>(
-        table: TableName, defaultOrder: string[], state: TableState<T>, action: ActionType
-    ) {
-        // console.log("Table state reducer", action);
-        if (action.type == "columnDoneResizing") {
-            const order =
-                (state.columnOrder !== undefined && state.columnOrder.length > 0)
-                    ? state.columnOrder : defaultOrder;
-            const visible = order.filter(
-                (f) => state.hiddenColumns ? !state.hiddenColumns.includes(f) : true);
-            const oldFields = this.getTableFields(table);
-            const fields: TableFieldConfig[] = visible.map((f) => {
-                const newWidths = state.columnResizing.columnWidths;
-                var width = 150;
-                var oldField = oldFields.find((oldfield) => oldfield.name == f);
-                if (oldField) width = oldField.width;
-                if (f in newWidths) width = newWidths[f];
-                return {
-                    name: f,
-                    width
-                }
-            });
-            this.setTableFields(table, fields);
-        }
-
-        if (action.type == "toggleSortBy") {
-            this.setTableSortBy(table, state.sortBy.map((r) => {
-                return { id: r.id, desc: r.desc || false };
-            }));
-        }
     }
 }
 

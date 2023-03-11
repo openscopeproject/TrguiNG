@@ -18,7 +18,7 @@
 
 import { Buffer } from 'buffer';
 
-import { SessionAllFields, SessionFields, TorrentAllFields, TorrentFields } from './transmission';
+import { SessionAllFields, SessionAllFieldsType, SessionFields, TorrentAllFields, TorrentFields } from './transmission';
 import { ServerConnection } from '../config';
 import { Torrent } from './torrent';
 import { merge } from 'lodash';
@@ -33,7 +33,7 @@ class ApiResponse {
     tag?: number;
 }
 
-export interface SessionInfo extends Record<string, any> {
+export interface SessionInfo extends Partial<Record<SessionAllFieldsType, any>> {
 
 }
 

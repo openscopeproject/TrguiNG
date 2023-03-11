@@ -20,7 +20,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { appWindow } from '@tauri-apps/api/window';
 
 import { Config, ConfigContext } from './config';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import React from 'react';
 import { EventListener } from './event';
 import { App } from './components/app';
@@ -31,21 +31,22 @@ function run(config: Config) {
     eventListener.add("app-arg", (payload) => console.log(`Got app-arg: ${payload}`));
     eventListener.finalize();
     var appnode = document.getElementById("app")!;
+    const app = createRoot(appnode);
 
     appWindow.listen('tauri://close-requested', (event) => {
-        ReactDOM.unmountComponentAtNode(appnode);
+        app.unmount();
         config.save().then(() => {
             appWindow.close();
         });
     });
 
-    ReactDOM.render(
+    app.render(
         <React.StrictMode>
             <ConfigContext.Provider value={config}>
                 <App />
             </ConfigContext.Provider>
-        </React.StrictMode>,
-        appnode);
+        </React.StrictMode>
+    );
 }
 
 window.onload = (event) => {

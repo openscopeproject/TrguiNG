@@ -64,20 +64,6 @@ html, body {
     width: 100%;
 }
 
-.resizer {
-    display: inline-block;
-    background: blue;
-    width: 0.2em;
-    height: 100%;
-    position: absolute;
-    right: 0;
-    top: 0;
-    transform: translateX(50%);
-    z-index: 1;
-    /* prevents from scrolling while dragging on touch devices */
-    touch-action: none;
-}
-
 .statusbar>* {
     white-space: nowrap;
     overflow: hidden;

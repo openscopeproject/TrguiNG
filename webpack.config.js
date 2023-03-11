@@ -34,8 +34,12 @@ module.exports = {
     optimization: {
         minimize: false,
     },
-    devtool: 'inline-source-map',
+    devtool: 'source-map',
     devServer: {
         static: './dist',
+        client: {
+            overlay: true,
+            progress: true,
+        },
     },
 };

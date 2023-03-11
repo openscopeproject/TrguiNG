@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useContext, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import { Badge } from "react-bootstrap";
-import { useTable, useColumnOrder, useSortBy, useBlockLayout, useResizeColumns, useRowSelect, Column, CellProps, TableState, ActionType, Row } from "react-table";
-import { useVirtual } from "react-virtual";
+import { useReactTable, Row, ColumnSizingState, SortingState, VisibilityState, ColumnDef, getCoreRowModel, flexRender, CellContext, getSortedRowModel } from '@tanstack/react-table';
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { CachedFileTree, DirEntry, FileDirEntry, isDirEntry } from "../cachedfiletree";
 import { ConfigContext } from "../config";
 import { PriorityColors, PriorityStrings } from "../rpc/transmission";
-import { bytesToHumanReadableStr, useForceRender } from "../util";
+import { bytesToHumanReadableStr } from "../util";
 import { ProgressBar } from "./progressbar";
 import * as Icon from "react-bootstrap-icons";
 
@@ -58,6 +58,7 @@ function NameField(props: TableFieldProps) {
     const isDir = isDirEntry(props.entry);
     const onExpand = useCallback(() => {
         if (isDirEntry(props.entry)) props.entry.expanded = true;
+        console.log("Expand");
         props.forceRender();
     }, [props.entry]);
     const onCollapse = useCallback(() => {
@@ -111,17 +112,23 @@ function FileTableRow(props: {
     height: number,
 }) {
     return (
-        <div {...props.row.getRowProps()}
-            className={`tr ${/*props.row.original.isSelected ? " selected" : */""} ${props.index % 2 ? " odd" : ""}`}
+        <div
+            className={`tr ${props.index % 2 ? " odd" : ""}`}
             style={{ height: `${props.height}px`, transform: `translateY(${props.start}px)` }}
             onClick={(e) => {
                 props.rowClick(e, props.index, props.lastIndex);
             }}
         >
-            {props.row.cells.map(cell => {
+            {props.row.getVisibleCells().map(cell => {
                 return (
-                    <div {...cell.getCellProps()} className="td">
-                        {cell.render('Cell')}
+                    <div {...{
+                        key: cell.id,
+                        style: {
+                            width: cell.column.getSize(),
+                        },
+                        className: "td"
+                    }} >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </div>
                 )
             })}
@@ -131,7 +138,13 @@ function FileTableRow(props: {
 
 export function FileTreeTable(props: FileTreeTableProps) {
     const config = useContext(ConfigContext);
-    const forceRender = useForceRender();
+    const [renderVal, forceRender] = useReducer((oldVal) => oldVal + 1, 0);
+
+    const defaultColumn = useMemo(() => ({
+        minSize: 30,
+        size: 150,
+        maxSize: 2000,
+    }), []);
 
     const nameSortFunc = useCallback(
         (rowa: Row<FileDirEntry>, rowb: Row<FileDirEntry>) => {
@@ -144,74 +157,51 @@ export function FileTreeTable(props: FileTreeTableProps) {
         }, []);
 
     const columns = useMemo(() => {
-        const fields = config.getTableFields("filetree");
-
-        return AllFields.map((field): Column<FileDirEntry> => {
-            const cell = (props: CellProps<FileDirEntry>) => {
+        return AllFields.map((field): ColumnDef<FileDirEntry> => {
+            const cell = (props: CellContext<FileDirEntry, unknown>) => {
                 return <field.component
                     fieldName={field.name}
                     entry={props.row.original}
                     forceRender={forceRender} />
             }
-            var column: Column<FileDirEntry> = {
-                Header: field.label,
-                accessor: field.name,
-                Cell: cell,
-                minWidth: 30,
-                width: 150,
-                maxWidth: 2000,
+            var column: ColumnDef<FileDirEntry> = {
+                header: field.label,
+                accessorKey: field.name,
+                cell,
             }
-            var f = fields.find((f) => f.name == column.accessor || f.name == column.id);
-            if (f) column.width = f.width;
-            if (f?.name == "name") column.sortType = nameSortFunc;
+            if (field.name == "name") column.sortingFn = nameSortFunc;
             return column;
         });
-    }, [config]);
+    }, []);
 
-    const [hiddenColumns, columnOrder, sortBy] = useMemo(() => {
-        const fields = AllFields.map((f) => f.name);
-        const visibleFields = config.getTableFields("filetree").map((f) => f.name);
-        return [
-            fields.filter((f) => !visibleFields.includes(f)),
-            visibleFields,
-            config.getTableSortBy("filetree")
-        ];
-    }, [config]);
+    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(config.getTableColumnVisibility("filetree"));
+    const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(config.getTableColumnSizes("filetree"));
+    const [sorting, setSorting] = useState<SortingState>(config.getTableSortBy("filetree"));
 
-    const stateChange = useCallback((state: TableState<FileDirEntry>, action: ActionType) => {
-        config.processTableStateChange("filetree", AllFields.map((f) => f.name), state, action);
-        return state;
-    }, [config]);
+    useEffect(() => config.setTableColumnVisibility("filetree", columnVisibility), [config, columnVisibility]);
+    useEffect(() => config.setTableColumnSizes("filetree", columnSizing), [config, columnSizing]);
+    useEffect(() => config.setTableSortBy("filetree", sorting), [config, sorting]);
 
-    const data = props.tree.flatten();
+    const data = useMemo(() => props.tree.flatten(), [props.tree.epoch, renderVal]);
 
-    const {
-        getTableProps,
-        getTableBodyProps,
-        headerGroups,
-        rows,
-        prepareRow,
-        totalColumnsWidth,
-    } = useTable<FileDirEntry>(
-        {
-            columns,
-            data,
-            autoResetSortBy: false,
-            autoResetResize: false,
-            autoResetSelectedRows: false,
-            stateReducer: stateChange,
-            initialState: {
-                hiddenColumns,
-                columnOrder,
-                sortBy,
-            }
+    const table = useReactTable<FileDirEntry>({
+        columns,
+        data,
+        defaultColumn,
+        enableHiding: true,
+        onColumnVisibilityChange: setColumnVisibility,
+        enableColumnResizing: true,
+        onColumnSizingChange: setColumnSizing,
+        enableSorting: true,
+        onSortingChange: setSorting,
+        state: {
+            columnVisibility,
+            columnSizing,
+            sorting,
         },
-        useColumnOrder,
-        useSortBy,
-        useBlockLayout,
-        useResizeColumns,
-        useRowSelect
-    );
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+    });
 
     const parentRef = React.useRef(null);
     const rowHeight = React.useMemo(() => {
@@ -224,11 +214,11 @@ export function FileTreeTable(props: FileTreeTableProps) {
         (event: React.MouseEvent<Element>, index: number, lastIndex: number) => {
             //todo
         },
-        [rows]);
+        []);
 
-    const rowVirtualizer = useVirtual({
-        size: data.length,
-        parentRef,
+    const rowVirtualizer = useVirtualizer({
+        count: data.length,
+        getScrollElement: () => parentRef.current,
         paddingStart: rowHeight,
         overscan: 3,
         estimateSize: React.useCallback(() => rowHeight, []),
@@ -236,27 +226,48 @@ export function FileTreeTable(props: FileTreeTableProps) {
 
     return (
         <div ref={parentRef} className="torrent-table-container">
-            <div {...getTableProps()}
-                className="torrent-table"
-                style={{ height: `${rowVirtualizer.totalSize}px`, width: `${totalColumnsWidth}px` }}>
+            <div className="torrent-table"
+                style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: `${table.getTotalSize()}px` }}>
                 <div className="sticky-top bg-light" style={{ height: `${rowHeight}px` }}>
-                    {headerGroups.map(headerGroup => (
-                        <div {...headerGroup.getHeaderGroupProps()} className="tr">
-                            {headerGroup.headers.map(column => (
-                                <div {...column.getHeaderProps(column.getSortByToggleProps())} className="th">
-                                    <span>{column.isSorted ? column.isSortedDesc ? '▼ ' : '▲ ' : ''}</span>
-                                    {column.render('Header')}
-                                    <div {...column.getResizerProps()} className="resizer" />
+                    {table.getHeaderGroups().map(headerGroup => (
+                        <div className="tr" key={headerGroup.id}>
+                            {headerGroup.headers.map(header => (
+                                <div {...{
+                                    key: header.id,
+                                    style: {
+                                        width: header.getSize(),
+                                    },
+                                    onClick: header.column.getToggleSortingHandler(),
+                                    className: "th"
+                                }}>
+                                    <span>{header.column.getIsSorted() ? header.column.getIsSorted() == "desc" ? '▼ ' : '▲ ' : ''}</span>
+                                    {flexRender(
+                                        header.column.columnDef.header,
+                                        header.getContext()
+                                    )}
+                                    <div {...{
+                                        onMouseDown: header.getResizeHandler(),
+                                        onTouchStart: header.getResizeHandler(),
+                                        className: `resizer ${header.column.getIsResizing() ? 'isResizing' : ''
+                                            }`,
+                                        style: {
+                                            left: `${header.getStart() + header.getSize() - 3}px`,
+                                            transform:
+                                                header.column.getIsResizing()
+                                                    ? `translateX(${table.getState().columnSizingInfo.deltaOffset
+                                                    }px)`
+                                                    : '',
+                                        },
+                                    }} />
                                 </div>
                             ))}
                         </div>
                     ))}
                 </div>
 
-                <div {...getTableBodyProps()}>
-                    {rowVirtualizer.virtualItems.map((virtualRow) => {
-                        const row = rows[virtualRow.index];
-                        prepareRow(row);
+                <div>
+                    {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                        const row = table.getRowModel().rows[virtualRow.index];
                         return <FileTableRow
                             key={virtualRow.index}
                             row={row} index={virtualRow.index} lastIndex={lastIndex}

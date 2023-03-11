@@ -17,15 +17,16 @@
  */
 
 import '../css/torrenttable.css';
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Badge } from 'react-bootstrap';
 import { Torrent } from '../rpc/torrent';
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentFieldsType } from '../rpc/transmission';
-import { useTable, useBlockLayout, useResizeColumns, useRowSelect, Column, CellProps, useColumnOrder, TableState, Accessor, useSortBy, Row, ActionType } from 'react-table';
+import { useReactTable, Row, ColumnSizingState, SortingState, VisibilityState, ColumnDef, getCoreRowModel, flexRender, getSortedRowModel } from '@tanstack/react-table';
 import { ConfigContext } from '../config';
 import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from '../util';
 import { ProgressBar } from './progressbar';
-import { useVirtual } from 'react-virtual';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { AccessorFn, CellContext } from '@tanstack/table-core';
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -39,7 +40,7 @@ interface TableField {
     label: string,
     component: React.FunctionComponent<TableFieldProps>,
     columnId?: string,
-    accessor?: Accessor<Torrent>,
+    accessorFn?: AccessorFn<Torrent>,
 }
 
 const AllFields: readonly TableField[] = [
@@ -58,7 +59,7 @@ const AllFields: readonly TableField[] = [
     { name: "trackerStats", label: "Tracker", component: TrackerField },
     {
         name: "trackerStats", label: "Tracker status", component: TrackerStatusField,
-        columnId: "trackerStatus", accessor: getTrackerStatus
+        columnId: "trackerStatus", accessorFn: getTrackerStatus
     },
     { name: "doneDate", label: "Completed on", component: DateField },
     { name: "activityDate", label: "Last active", component: DateField },
@@ -168,21 +169,21 @@ interface TorrentTableProps {
     selectedReducer: React.Dispatch<{ verb: string; ids: number[]; }>
 }
 
-const defaultColumns = AllFields.map((f): Column<Torrent> => {
-    const cell = (props: CellProps<Torrent>) => {
+const defaultColumns = AllFields.map((f): ColumnDef<Torrent> => {
+    const cell = (props: CellContext<Torrent, unknown>) => {
         const active = props.row.original.rateDownload > 0 || props.row.original.rateUpload > 0;
         return <f.component fieldName={f.name} torrent={props.row.original} active={active} />
     };
-    if (f.accessor) return {
-        Header: f.label,
-        accessor: f.accessor,
+    if (f.accessorFn) return {
+        header: f.label,
+        accessorFn: f.accessorFn,
         id: f.columnId!,
-        Cell: cell
+        cell
     }
     return {
-        Header: f.label,
-        accessor: f.name,
-        Cell: cell
+        header: f.label,
+        accessorKey: f.name,
+        cell
     };
 });
 
@@ -195,17 +196,23 @@ function TorrentTableRow(props: {
     height: number,
 }) {
     return (
-        <div {...props.row.getRowProps()}
+        <div
             className={`tr ${props.row.original.isSelected ? " selected" : ""} ${props.index % 2 ? " odd" : ""}`}
             style={{ height: `${props.height}px`, transform: `translateY(${props.start}px)` }}
             onClick={(e) => {
                 props.rowClick(e, props.index, props.lastIndex);
             }}
         >
-            {props.row.cells.map(cell => {
+            {props.row.getVisibleCells().map(cell => {
                 return (
-                    <div {...cell.getCellProps()} className="td">
-                        {cell.render('Cell')}
+                    <div {...{
+                        key: cell.id,
+                        style: {
+                            width: cell.column.getSize(),
+                        },
+                        className: "td"
+                    }} >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </div>
                 )
             })}
@@ -217,38 +224,20 @@ export function TorrentTable(props: TorrentTableProps) {
     const config = useContext(ConfigContext);
 
     const defaultColumn = useMemo(() => ({
-        minWidth: 30,
-        width: 150,
-        maxWidth: 2000,
+        minSize: 30,
+        size: 150,
+        maxSize: 2000,
     }), []);
 
-    const columns = useMemo(() => {
-        const fields = config.getTableFields("torrents");
+    const getRowId = useCallback((t: Torrent) => String(t.id), []);
 
-        return defaultColumns.map((column) => {
-            Object.assign(column, defaultColumn);
-            var f = fields.find((f) => f.name == column.accessor || f.name == column.id);
-            if (f) column.width = f.width;
-            return column;
-        });
-    }, [config]);
+    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(config.getTableColumnVisibility("torrents"));
+    const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(config.getTableColumnSizes("torrents"));
+    const [sorting, setSorting] = useState<SortingState>(config.getTableSortBy("torrents"));
 
-    const getRowId = useCallback((t: Torrent, i: number) => String(t.id), []);
-
-    const [hiddenColumns, columnOrder, sortBy] = useMemo(() => {
-        const fields = AllFields.map((f) => f.name);
-        const visibleFields = config.getTableFields("torrents").map((f) => f.name);
-        return [
-            fields.filter((f) => !visibleFields.includes(f)),
-            visibleFields,
-            config.getTableSortBy("torrents")
-        ];
-    }, [config]);
-
-    const stateChange = useCallback((state: TableState<Torrent>, action: ActionType) => {
-        config.processTableStateChange("torrents", AllFields.map((f) => f.name), state, action);
-        return state;
-    }, [config]);
+    useEffect(() => config.setTableColumnVisibility("torrents", columnVisibility), [config, columnVisibility]);
+    useEffect(() => config.setTableColumnSizes("torrents", columnSizing), [config, columnSizing]);
+    useEffect(() => config.setTableSortBy("torrents", sorting), [config, sorting]);
 
     const [lastIndex, setLastIndex] = useState(-1);
 
@@ -258,37 +247,28 @@ export function TorrentTable(props: TorrentTableProps) {
         });
     }, [props.torrents, props.selectedTorrents]);
 
-    const {
-        getTableProps,
-        getTableBodyProps,
-        headerGroups,
-        rows,
-        prepareRow,
-        totalColumnsWidth,
-    } = useTable<Torrent>(
-        {
-            columns,
-            data,
-            defaultColumn,
-            getRowId,
-            autoResetSortBy: false,
-            autoResetResize: false,
-            autoResetSelectedRows: false,
-            stateReducer: stateChange,
-            initialState: {
-                hiddenColumns,
-                columnOrder,
-                sortBy,
-            }
+    const table = useReactTable<Torrent>({
+        columns: defaultColumns,
+        data,
+        defaultColumn,
+        getRowId,
+        enableHiding: true,
+        onColumnVisibilityChange: setColumnVisibility,
+        enableColumnResizing: true,
+        onColumnSizingChange: setColumnSizing,
+        enableSorting: true,
+        onSortingChange: setSorting,
+        state: {
+            columnVisibility,
+            columnSizing,
+            sorting,
         },
-        useColumnOrder,
-        useSortBy,
-        useBlockLayout,
-        useResizeColumns,
-        useRowSelect
-    );
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+    });
 
     const rowClick = useCallback((event: React.MouseEvent<Element>, index: number, lastIndex: number) => {
+        const rows = table.getRowModel().rows;
         event.preventDefault();
         event.stopPropagation();
 
@@ -319,7 +299,7 @@ export function TorrentTable(props: TorrentTableProps) {
             setLastIndex(index);
         }
         props.setCurrentTorrent(rows[index].original.id);
-    }, [props.selectedReducer, setLastIndex, rows]);
+    }, [props.selectedReducer, setLastIndex, table]);
 
     const parentRef = React.useRef(null);
     const rowHeight = React.useMemo(() => {
@@ -327,9 +307,9 @@ export function TorrentTable(props: TorrentTableProps) {
         return Math.ceil(Number(lineHeight) * 1.1);
     }, []);
 
-    const rowVirtualizer = useVirtual({
-        size: props.torrents.length,
-        parentRef,
+    const rowVirtualizer = useVirtualizer({
+        count: props.torrents.length,
+        getScrollElement: () => parentRef.current,
         paddingStart: rowHeight,
         overscan: 3,
         estimateSize: React.useCallback(() => rowHeight, []),
@@ -337,28 +317,46 @@ export function TorrentTable(props: TorrentTableProps) {
 
     return (
         <div ref={parentRef} className="torrent-table-container">
-            <div {...getTableProps()}
-                className="torrent-table"
-                style={{ height: `${rowVirtualizer.totalSize}px`, width: `${totalColumnsWidth}px` }}>
+            <div className="torrent-table"
+                style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: `${table.getTotalSize()}px` }}>
                 <div className="sticky-top bg-light" style={{ height: `${rowHeight}px` }}>
-                    {headerGroups.map(headerGroup => (
-                        <div {...headerGroup.getHeaderGroupProps()} className="tr">
-                            {headerGroup.headers.map(column => (
-                                <div {...column.getHeaderProps(column.getSortByToggleProps())} className="th">
-                                    <span>{column.isSorted ? column.isSortedDesc ? '▼ ' : '▲ ' : ''}</span>
-                                    {column.render('Header')}
-                                    {/* Use column.getResizerProps to hook up the events correctly */}
-                                    <div {...column.getResizerProps()} className="resizer" />
+                    {table.getHeaderGroups().map(headerGroup => (
+                        <div className="tr" key={headerGroup.id}>
+                            {headerGroup.headers.map(header => (
+                                <div {...{
+                                    key: header.id,
+                                    style: {
+                                        width: header.getSize(),
+                                    },
+                                    onClick: header.column.getToggleSortingHandler(),
+                                    className: "th"
+                                }}>
+                                    <span>{header.column.getIsSorted() ? header.column.getIsSorted() == "desc" ? '▼ ' : '▲ ' : ''}</span>
+                                    {flexRender(
+                                        header.column.columnDef.header,
+                                        header.getContext()
+                                    )}
+                                    <div {...{
+                                        onMouseDown: header.getResizeHandler(),
+                                        onTouchStart: header.getResizeHandler(),
+                                        className: `resizer ${header.column.getIsResizing() ? 'isResizing' : ''}`,
+                                        style: {
+                                            left: `${header.getStart() + header.getSize() - 3}px`,
+                                            transform:
+                                                header.column.getIsResizing()
+                                                    ? `translateX(${table.getState().columnSizingInfo.deltaOffset}px)`
+                                                    : '',
+                                        },
+                                    }} />
                                 </div>
                             ))}
                         </div>
                     ))}
                 </div>
 
-                <div {...getTableBodyProps()}>
-                    {rowVirtualizer.virtualItems.map((virtualRow) => {
-                        const row = rows[virtualRow.index];
-                        prepareRow(row);
+                <div>
+                    {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                        const row = table.getRowModel().rows[virtualRow.index];
                         return <TorrentTableRow
                             key={row.original.id}
                             row={row} index={virtualRow.index} lastIndex={lastIndex}
@@ -367,7 +365,7 @@ export function TorrentTable(props: TorrentTableProps) {
                     })}
                 </div>
             </div>
-        </div>
+        </div >
 
     );
 }

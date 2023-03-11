@@ -51,6 +51,7 @@ export class CachedFileTree {
     tree: DirEntry;
     torrenthash: string;
     files: FileEntry[];
+    epoch: number;
 
     constructor() {
         this.tree = {
@@ -68,6 +69,7 @@ export class CachedFileTree {
         }
         this.torrenthash = "";
         this.files = [];
+        this.epoch = 0;
     }
 
     destroy(dir: DirEntry) {
@@ -104,6 +106,8 @@ export class CachedFileTree {
         dir.percent = done * 100 / size;
         dir.want = want.size == 1 ? [...want][0] : undefined;
         dir.priority = priority.size == 1 ? [...priority][0] : undefined;
+
+        this.epoch = 0;
     }
 
     parse(torrent: Torrent) {
@@ -180,6 +184,7 @@ export class CachedFileTree {
                     node = node.parent;
                 }
             });
+            this.epoch++;
         } else {
             // rebuild the tree from scratch
             this.destroy(this.tree);
