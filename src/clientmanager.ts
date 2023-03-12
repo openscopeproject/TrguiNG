@@ -53,6 +53,9 @@ export class ClientManager {
     startTimers(server: string) {
         if (!(server in this.servers)) return;
 
+        if (this.servers[server].timers.torrents >= 0 &&
+            this.servers[server].timers.session >= 0) return;
+
         const updateTorrents = () => {
             let srv = this.servers[server];
             const reschedule = () => {
@@ -102,6 +105,8 @@ export class ClientManager {
     }
 
     startDetailsTimer(server: string) {
+        if (this.servers[server].timers.details >= 0) return;
+
         const updateDetails = () => {
             let srv = this.servers[server];
             if (srv.detailsId === undefined) return;
@@ -124,7 +129,6 @@ export class ClientManager {
                 reschedule();
             });
         }
-
         this.servers[server].timers.details = 0;
 
         updateDetails.bind(this)();

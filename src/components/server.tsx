@@ -118,10 +118,6 @@ export function Server(props: ServerProps) {
         },
         [torrents, currentFilter, searchFilter]);
 
-    useEffect(() => {
-
-    }, [torrents, currentFilter]);
-
     const statusbarProps = useMemo<StatusbarProps>(() => {
         const selected = filteredTorrents.filter((t) => selectedTorrents.has(t.id));
         return {
