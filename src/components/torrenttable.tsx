@@ -38,10 +38,18 @@ interface TableFieldProps {
 interface TableField {
     name: TorrentFieldsType,
     label: string,
-    component: React.FunctionComponent<TableFieldProps>,
+    component: React.FunctionComponent<TableFieldProps> | React.NamedExoticComponent<TableFieldProps>,
     columnId?: string,
     accessorFn?: AccessorFn<Torrent>,
 }
+
+const TimeField = memo(function TimeField(props: TableFieldProps) {
+    return <>{secondsToHumanReadableStr(props.torrent[props.fieldName])}</>;
+}, (prev, next) => {
+    let previousValue = prev.torrent[prev.fieldName] as number;
+    let nextValue = next.torrent[next.fieldName] as number;
+    return Math.abs((previousValue - nextValue) / nextValue) < 1 / 60 / 60;
+});
 
 const AllFields: readonly TableField[] = [
     { name: "name", label: "Name", component: StringField },
@@ -79,10 +87,6 @@ function StringField(props: TableFieldProps) {
     return <>
         {props.torrent[props.fieldName]}
     </>;
-}
-
-function TimeField(props: TableFieldProps) {
-    return <>{secondsToHumanReadableStr(props.torrent[props.fieldName])}</>;
 }
 
 export function EtaField(props: TableFieldProps) {
@@ -132,7 +136,8 @@ export function StatusField(props: TableFieldProps) {
 }
 
 export function DateField(props: TableFieldProps) {
-    const date = timestampToDateString(props.torrent[props.fieldName]);
+    const date = props.torrent[props.fieldName] > 0 ?
+        timestampToDateString(props.torrent[props.fieldName]) : "";
     return <span className={props.className}>{date}</span>;
 }
 

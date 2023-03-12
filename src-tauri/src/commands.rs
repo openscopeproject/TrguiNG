@@ -17,8 +17,8 @@
 #[cfg(target_os = "windows")]
 use std::os::windows::fs::MetadataExt;
 
+use base64::{engine::general_purpose::STANDARD as b64engine, Engine as _};
 use lava_torrent::torrent::v1::Torrent;
-
 
 #[derive(serde::Serialize)]
 pub struct TorrentFileEntry {
@@ -53,17 +53,17 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
         return Err("Failed to parse torrent".to_string());
     }
 
-    let b64 = base64::encode(read_result.unwrap());
+    let b64 = b64engine.encode(read_result.unwrap());
 
     Ok(TorrentReadResult {
         metadata: b64,
         files: torrent.unwrap().files.map_or(Vec::new(), |v| {
-            v.into_iter().map(|f| {
-                TorrentFileEntry {
+            v.into_iter()
+                .map(|f| TorrentFileEntry {
                     name: f.path.to_string_lossy().into(),
-                    size: f.length
-                }
-            }).collect()
+                    size: f.length,
+                })
+                .collect()
         }),
     })
 }

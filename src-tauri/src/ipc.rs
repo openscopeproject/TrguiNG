@@ -29,7 +29,7 @@ use tokio::sync::{oneshot, Semaphore};
 
 const ADDRESS: &str = "127.123.45.67:8080";
 const ALLOW_ORIGINS: &'static [&'static str] = if cfg!(feature = "custom-protocol") {
-    &["tauri://localhost"]
+    &["tauri://localhost", "https://tauri.localhost"]
 } else {
     &["http://localhost:8080"]
 };

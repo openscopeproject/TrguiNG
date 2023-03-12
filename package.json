@@ -1,5 +1,6 @@
 {
   "name": "transgui-ng",
+  "sideEffects": ["*.css"],
   "scripts": {
     "tauri dev": "tauri dev",
     "webpack serve": "webpack serve",

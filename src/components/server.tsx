@@ -20,7 +20,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useReducer, useStat
 import Split from "react-split";
 import { SessionInfo } from "../rpc/client";
 import { Details } from "./details";
-import { DefaultFilter, Filters, TorrentFilter } from "./filters";
+import { DefaultFilter, Filters } from "./filters";
 import { TorrentTable } from "./torrenttable";
 import { Torrent } from "../rpc/torrent";
 import '../css/custom.css';
