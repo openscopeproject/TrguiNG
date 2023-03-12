@@ -36,21 +36,20 @@ export function Toolbar(props: ToolbarProps) {
         () => debounce(props.setSearchTerms, 500, { trailing: true, leading: false }),
         [props.setSearchTerms]);
 
-    const [altSpeedMode, altSpeedModeChange] = useReducer(
-        (state: boolean, action: { set?: boolean }) => {
-            var newState = action.set !== undefined ? action.set : !state;
-            if (action.set === undefined) {
-                // FIXME this runs on page load for some reason
-                props.actionController.run("setAltSpeedMode", newState)
-                    .catch((e) => {
-                        console.log("Can't set alt speed mode", e);
-                    });
-            }
-            return newState;
-        }, props.altSpeedMode);
+    const [altSpeedMode, setAltSpeedMode] = useState<boolean>();
+
+    const toggleAltSpeedMode = useCallback(() => {
+        console.log("Toggling altspeedmode");
+        props.actionController.run("setAltSpeedMode", !altSpeedMode)
+            .catch((e) => {
+                console.log("Can't set alt speed mode", e);
+            });
+        setAltSpeedMode(!altSpeedMode);
+    }, [altSpeedMode]);
 
     useEffect(() => {
-        altSpeedModeChange({ set: props.altSpeedMode });
+        if (props.altSpeedMode !== undefined)
+            setAltSpeedMode(props.altSpeedMode);
     }, [props.altSpeedMode]);
 
     const onSearchInput = useCallback((e: React.FormEvent) => {
@@ -109,7 +108,7 @@ export function Toolbar(props: ToolbarProps) {
                 variant="light"
                 title={`Turn alternative bandwidth mode ${altSpeedMode ? "off" : "on"}`}
                 className={`me-2 p-1 ${altSpeedMode ? "alt" : ""}`}
-                onClick={() => altSpeedModeChange({})}
+                onClick={toggleAltSpeedMode}
             >
                 <Icon.Speedometer2 size={24} />
             </Button>

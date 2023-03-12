@@ -76,6 +76,8 @@ export class ActionController {
     }
 
     async run(method: ActionMethodsType, ...args: any[]) {
+        console.log("Running method", method);
+        console.log("Args:", args);
         if (method in this.methodMap)
             await this.methodMap[method](this, ...args);
     }
