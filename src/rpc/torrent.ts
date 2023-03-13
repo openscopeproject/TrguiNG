@@ -16,10 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Status } from "./transmission";
+import { Status, TorrentAllFieldsType } from "./transmission";
 
-export interface Torrent extends Record<string, any> {
-
+export interface Torrent extends Partial<Record<TorrentAllFieldsType, any>> {
+    isSelected?: boolean;
 }
 
 export function getTorrentError(t: Torrent): string {

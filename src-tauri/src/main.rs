@@ -103,7 +103,7 @@ fn main() {
     let context = tauri::generate_context!();
 
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![commands::read_file])
+        .invoke_handler(tauri::generate_handler![commands::read_file, commands::shell_open])
         .manage(ListenerHandle(Arc::new(Mutex::new(ipc))))
         .manage(tray::HideStateHandle(Default::default()))
         .system_tray(tray::create_tray())

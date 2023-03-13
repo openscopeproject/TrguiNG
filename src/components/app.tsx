@@ -95,7 +95,6 @@ export function App({}) {
     const server = useRef<ServerConfig | undefined>();
 
     const tabSwitch = useCallback((tab: number) => {
-        console.log("Tab switch to", tab);
         server.current = config.getServer(openTabs[tab]);
         if (!server.current) return;
         clientManager.setActiveServer(server.current.name);

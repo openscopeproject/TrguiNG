@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useContext, useEffect, useMemo, useReducer } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import { Container, Form, Nav, Row, Tab, Table } from "react-bootstrap";
 import { CachedFileTree } from "../cachedfiletree";
 import { ClientManager } from "../clientmanager";
@@ -60,10 +60,10 @@ function DownloadSpeed(props: { torrent: Torrent }) {
         return <>{speed}</>;
 }
 
-function SpeedLimit(props: { torrent: Torrent, field: string }) {
-    const limited = props.torrent[props.field + "Limited"];
+function SpeedLimit(props: { torrent: Torrent, field: "download" | "upload" }) {
+    const limited = props.field === "download" ? props.torrent.downloadLimited : props.torrent.uploadLimited;
     if (!limited) return <>-</>;
-    const limit = props.torrent[props.field + "Limit"];
+    const limit = props.field === "download" ? props.torrent.downloadLimit : props.torrent.uploadLimit;
     if (limit < 0) return <>∞</>;
     return <>{`${bytesToHumanReadableStr(limit * 1024)}/s`}</>;
 }
@@ -214,13 +214,8 @@ function GeneralPane(props: { torrent: Torrent }) {
 
 export function Details(props: DetailsProps) {
     const serverConfig = useContext(ServerConfigContext);
-    const fileTree = useMemo(() => new CachedFileTree(), []);
 
-    const [torrent, setTorrent] = useReducer(useCallback(
-        (_oldtorrent: Torrent | undefined, torrent: Torrent | undefined) => {
-            if (torrent) fileTree.update(torrent)
-            return torrent;
-        }, []), undefined);
+    const [torrent, setTorrent] = useState<Torrent>();
 
     useEffect(() => {
         setTorrent(props.clientManager.servers[serverConfig.name].torrentDetails);
@@ -257,7 +252,7 @@ export function Details(props: DetailsProps) {
                         <GeneralPane torrent={torrent} />
                     </Tab.Pane>
                     <Tab.Pane eventKey="files" className="h-100">
-                        <FileTreeTable tree={fileTree} />
+                        <FileTreeTable torrent={torrent}/>
                     </Tab.Pane>
                     <Tab.Pane eventKey="pieces" className="h-100">
                         <PiecesCanvas torrent={torrent} />

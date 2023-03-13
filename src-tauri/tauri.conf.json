@@ -67,7 +67,7 @@
         "all": true
       },
       "shell": {
-        "open": "^(file:|https?:)//"
+        "open": "^(/)|([a-zA-Z]:[\\\\/])|(\\\\\\\\)|((file:|https?:)//)"
       },
       "window": {
         "setTitle": true,

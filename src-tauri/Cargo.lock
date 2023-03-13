@@ -156,6 +156,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ffdb39cb703212f3c11973452c2861b972f757b021158f3516ba10f2fa8b2c1"
 dependencies = [
  "memchr",
+ "once_cell",
+ "regex-automata",
  "serde",
 ]
 
@@ -1737,6 +1739,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "opener"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "293c15678e37254c15bd2f092314abb4e51d7fdde05c2021279c12631b54f005"
+dependencies = [
+ "bstr",
+ "winapi",
+]
+
+[[package]]
 name = "openssl"
 version = "0.10.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3099,6 +3111,7 @@ dependencies = [
  "base64 0.21.0",
  "hyper",
  "lava_torrent",
+ "opener",
  "serde",
  "serde_json",
  "tauri",

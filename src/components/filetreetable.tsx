@@ -21,11 +21,13 @@ import { Badge } from "react-bootstrap";
 import { useReactTable, Row, ColumnSizingState, SortingState, VisibilityState, ColumnDef, getCoreRowModel, flexRender, CellContext, getSortedRowModel } from '@tanstack/react-table';
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { CachedFileTree, DirEntry, FileDirEntry, isDirEntry } from "../cachedfiletree";
-import { ConfigContext } from "../config";
+import { ConfigContext, PathMapping, ServerConfigContext } from "../config";
 import { PriorityColors, PriorityStrings } from "../rpc/transmission";
 import { bytesToHumanReadableStr } from "../util";
 import { ProgressBar } from "./progressbar";
 import * as Icon from "react-bootstrap-icons";
+import { Torrent } from "../rpc/torrent";
+import { invoke } from '@tauri-apps/api/tauri'
 
 
 type FileDirEntryKey = keyof FileDirEntry;
@@ -58,7 +60,6 @@ function NameField(props: TableFieldProps) {
     const isDir = isDirEntry(props.entry);
     const onExpand = useCallback(() => {
         if (isDirEntry(props.entry)) props.entry.expanded = true;
-        console.log("Expand");
         props.forceRender();
     }, [props.entry]);
     const onCollapse = useCallback(() => {
@@ -99,11 +100,9 @@ function PriorityField(props: TableFieldProps) {
     return <Badge pill bg={PriorityColors.get(priority)!}>{PriorityStrings.get(priority)}</Badge>;
 }
 
-interface FileTreeTableProps {
-    tree: CachedFileTree,
-}
-
 const FileTableRow = memo(function FileTableRow(props: {
+    torrent: Torrent,
+    mappings: PathMapping[],
     row: Row<FileDirEntry>,
     index: number,
     start: number,
@@ -113,6 +112,16 @@ const FileTableRow = memo(function FileTableRow(props: {
     columnSizingState: ColumnSizingState,
     columnVisibilityState: VisibilityState
 }) {
+    const doubleClickHandler = useCallback(() => {
+        let path = `${props.torrent.downloadDir}/${props.torrent.name}/${props.row.original.fullpath}`;
+        for (let mapping of props.mappings) {
+            if (mapping.from.length > 0 && path.startsWith(mapping.from)) {
+                path = mapping.to + path.substring(mapping.from.length);
+            }
+        }
+        invoke('shell_open', {path}).catch(console.error);
+    }, [props.torrent, props.mappings, props.row]);
+
     return (
         <div
             className={`tr ${props.index % 2 ? " odd" : ""}`}
@@ -120,6 +129,7 @@ const FileTableRow = memo(function FileTableRow(props: {
             onClick={(e) => {
                 props.rowClick(e, props.index, props.lastIndex);
             }}
+            onDoubleClick={doubleClickHandler}
         >
             {props.row.getVisibleCells().map(cell => {
                 return (
@@ -138,9 +148,14 @@ const FileTableRow = memo(function FileTableRow(props: {
     );
 });
 
-export function FileTreeTable(props: FileTreeTableProps) {
+export function FileTreeTable(props: { torrent: Torrent }) {
     const config = useContext(ConfigContext);
+    const serverConfig = useContext(ServerConfigContext);
     const [renderVal, forceRender] = useReducer((oldVal) => oldVal + 1, 0);
+
+    const fileTree = useMemo(() => new CachedFileTree(), []);
+
+    useEffect(() => fileTree.update(props.torrent), [props.torrent]);
 
     const defaultColumn = useMemo(() => ({
         minSize: 30,
@@ -184,7 +199,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
     useEffect(() => config.setTableColumnSizes("filetree", columnSizing), [config, columnSizing]);
     useEffect(() => config.setTableSortBy("filetree", sorting), [config, sorting]);
 
-    const data = useMemo(() => props.tree.flatten(), [props.tree.epoch, renderVal]);
+    const data = useMemo(() => fileTree.flatten(), [fileTree.epoch, renderVal]);
 
     const table = useReactTable<FileDirEntry>({
         columns,
@@ -271,7 +286,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
                     {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                         const row = table.getRowModel().rows[virtualRow.index];
                         return <FileTableRow
-                            key={virtualRow.index}
+                            key={virtualRow.index} torrent={props.torrent} mappings={serverConfig.pathMappings}
                             row={row} index={virtualRow.index} lastIndex={lastIndex}
                             start={virtualRow.start} rowClick={rowClick} height={rowHeight}
                             columnSizingState={columnSizing} columnVisibilityState={columnVisibility}

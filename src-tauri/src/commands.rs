@@ -67,3 +67,11 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
         }),
     })
 }
+
+#[tauri::command]
+pub async fn shell_open(path: String) -> Result<(), String> {
+    if let Err(e) = opener::open(path) {
+        return Err(e.to_string())
+    }
+    Ok(())
+}

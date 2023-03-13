@@ -22,7 +22,7 @@ import '../css/menus.css';
 import React, { memo, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Badge } from 'react-bootstrap';
 import { Torrent } from '../rpc/torrent';
-import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentFieldsType } from '../rpc/transmission';
+import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentAllFieldsType, TorrentFieldsType } from '../rpc/transmission';
 import { useReactTable, Row, ColumnSizingState, SortingState, VisibilityState, ColumnDef, getCoreRowModel, flexRender, getSortedRowModel } from '@tanstack/react-table';
 import { ConfigContext } from '../config';
 import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from '../util';
@@ -33,7 +33,7 @@ import { ClickEvent, ControlledMenu, MenuItem } from '@szhsin/react-menu';
 
 interface TableFieldProps {
     torrent: Torrent,
-    fieldName: string,
+    fieldName: TorrentAllFieldsType,
     className?: string,
     active?: boolean
 }
@@ -351,13 +351,13 @@ export function TorrentTable(props: TorrentTableProps) {
                                 state={isColumnMenuOpen ? 'open' : 'closed'}
                                 direction="right"
                                 onClose={() => setColumnMenuOpen(false)}
+                                onItemClick={onColumnMenuItemClick}
                                 overflow="auto"
                                 portal={true}
                             >
                                 {AllFields.map((field) =>
                                     <MenuItem key={field.columnId ?? field.name}
                                         type="checkbox"
-                                        onClick={onColumnMenuItemClick}
                                         checked={columnVisibility[field.columnId ?? field.name] !== false}
                                         value={field.columnId ?? field.name}
                                     >

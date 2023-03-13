@@ -28,14 +28,15 @@ export interface ServerConnection {
     password: string,
 }
 
+export interface PathMapping {
+    from: string,
+    to: string,
+}
+
 export interface ServerConfig {
     name: string,
     connection: ServerConnection,
-    pathMappings:
-    {
-        from: string,
-        to: string,
-    }[],
+    pathMappings: PathMapping[],
     expandedDirFilters: string[],
     lastSaveDirs: string[],
 }
