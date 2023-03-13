@@ -119,7 +119,7 @@ const FileTableRow = memo(function FileTableRow(props: {
                 path = mapping.to + path.substring(mapping.from.length);
             }
         }
-        invoke('shell_open', {path}).catch(console.error);
+        invoke('shell_open', { path }).catch(console.error);
     }, [props.torrent, props.mappings, props.row]);
 
     return (
@@ -155,7 +155,7 @@ export function FileTreeTable(props: { torrent: Torrent }) {
 
     const fileTree = useMemo(() => new CachedFileTree(), []);
 
-    useEffect(() => fileTree.update(props.torrent), [props.torrent]);
+    useMemo(() => fileTree.update(props.torrent), [props.torrent]);
 
     const defaultColumn = useMemo(() => ({
         minSize: 30,
@@ -199,7 +199,7 @@ export function FileTreeTable(props: { torrent: Torrent }) {
     useEffect(() => config.setTableColumnSizes("filetree", columnSizing), [config, columnSizing]);
     useEffect(() => config.setTableSortBy("filetree", sorting), [config, sorting]);
 
-    const data = useMemo(() => fileTree.flatten(), [fileTree.epoch, renderVal]);
+    const data = useMemo(() => fileTree.flatten(), [renderVal, props.torrent]);
 
     const table = useReactTable<FileDirEntry>({
         columns,
