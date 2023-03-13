@@ -16,7 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import "@szhsin/react-menu/dist/index.css";
 import '../css/torrenttable.css';
+import '../css/menus.css';
 import React, { memo, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Badge } from 'react-bootstrap';
 import { Torrent } from '../rpc/torrent';
@@ -27,6 +29,7 @@ import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateStri
 import { ProgressBar } from './progressbar';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { AccessorFn, CellContext } from '@tanstack/table-core';
+import { ClickEvent, ControlledMenu, MenuItem } from '@szhsin/react-menu';
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -322,13 +325,46 @@ export function TorrentTable(props: TorrentTableProps) {
         estimateSize: React.useCallback(() => rowHeight, []),
     });
 
+    const [isColumnMenuOpen, setColumnMenuOpen] = useState(false);
+    const [columnMenuAnchorPoint, setColumnMenuAnchorPoint] = useState({ x: 0, y: 0 });
+
+    const onColumnMenuItemClick = useCallback((event: ClickEvent) => {
+        event.keepOpen = true;
+        setColumnVisibility({...columnVisibility, [event.value!]: event.checked});
+    }, [columnVisibility]);
+
     return (
         <div ref={parentRef} className="torrent-table-container">
             <div className="torrent-table"
                 style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: `${table.getTotalSize()}px` }}>
                 <div className="sticky-top bg-light" style={{ height: `${rowHeight}px` }}>
                     {table.getHeaderGroups().map(headerGroup => (
-                        <div className="tr" key={headerGroup.id}>
+                        <div className="tr" key={headerGroup.id}
+                            onContextMenu={(e) => {
+                                e.preventDefault();
+                                setColumnMenuAnchorPoint({ x: e.clientX, y: e.clientY });
+                                setColumnMenuOpen(true);
+                            }}
+                        >
+                            <ControlledMenu
+                                anchorPoint={columnMenuAnchorPoint}
+                                state={isColumnMenuOpen ? 'open' : 'closed'}
+                                direction="right"
+                                onClose={() => setColumnMenuOpen(false)}
+                                overflow="auto"
+                                portal={true}
+                            >
+                                {AllFields.map((field) =>
+                                    <MenuItem key={field.columnId ?? field.name}
+                                        type="checkbox"
+                                        onClick={onColumnMenuItemClick}
+                                        checked={columnVisibility[field.columnId ?? field.name] !== false}
+                                        value={field.columnId ?? field.name}
+                                    >
+                                        {field.label}
+                                    </MenuItem>
+                                )}
+                            </ControlledMenu>
                             {headerGroup.headers.map(header => (
                                 <div {...{
                                     key: header.id,
