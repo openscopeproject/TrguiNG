@@ -46,18 +46,19 @@ function usePausingModalState(runUpdates: (run: boolean) => void): [boolean, (b:
     return [show, setShowWrapped];
 }
 
-function selectedTorrentsReducer(selected: Set<number>, action: { verb: string, ids: number[] }) {
+function selectedTorrentsReducer(selected: Set<number>, action: { verb: string, ids: string[] }) {
     var selected = new Set(selected);
+    var ids = action.ids.map((t) => +t);
     if (action.verb == "set") {
         selected.clear();
-        for (var id of action.ids) selected.add(id);
+        for (var id of ids) selected.add(id);
     } else if (action.verb == "add") {
-        for (var id of action.ids) selected.add(id);
+        for (var id of ids) selected.add(id);
     } else if (action.verb == "filter") {
-        selected = new Set(Array.from(selected).filter((t) => action.ids.includes(t)));
+        selected = new Set(Array.from(selected).filter((t) => ids.includes(t)));
     } else if (action.verb == "toggle") {
-        if (!selected.delete(action.ids[0]))
-            selected.add(action.ids[0]);
+        if (!selected.delete(ids[0]))
+            selected.add(ids[0]);
     }
     return selected;
 }
@@ -90,7 +91,10 @@ export function Server(props: ServerProps) {
         }
     }, [props.clientManager]);
 
-    const [currentTorrent, setCurrentTorrent] = useState<number>();
+    const [currentTorrent, setCurrentTorrentInt] = useState<number>();
+    const setCurrentTorrent = useCallback(
+        (id: string) => setCurrentTorrentInt(+id),
+        [setCurrentTorrentInt]);
     const [currentFilter, setCurrentFilter] = useState({ id: "", filter: DefaultFilter });
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
     const actionController = useMemo(
@@ -105,14 +109,14 @@ export function Server(props: ServerProps) {
     }, [searchTerms]);
 
     const [selectedTorrents, selectedReducer] = useReducer(useCallback(
-        (selected: Set<number>, action: { verb: string, ids: number[] }) =>
+        (selected: Set<number>, action: { verb: string, ids: string[] }) =>
             selectedTorrentsReducer(selected, action), []),
         new Set<number>());
 
     const filteredTorrents = useMemo(
         () => {
             var filtered = torrents.filter(currentFilter.filter).filter(searchFilter);
-            const ids: number[] = filtered.map((t) => t.id);
+            const ids: string[] = filtered.map((t) => t.id);
             selectedReducer({ verb: "filter", ids });
             return filtered;
         },

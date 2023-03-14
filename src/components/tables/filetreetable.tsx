@@ -16,18 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { memo, useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
+import React, { useCallback, useContext, useMemo, useReducer } from "react";
 import { Badge } from "react-bootstrap";
-import { useReactTable, Row, ColumnSizingState, SortingState, VisibilityState, ColumnDef, getCoreRowModel, flexRender, CellContext, getSortedRowModel } from '@tanstack/react-table';
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { Row, ColumnDef, CellContext } from '@tanstack/react-table';
 import { CachedFileTree, DirEntry, FileDirEntry, isDirEntry } from "../../cachedfiletree";
-import { ConfigContext, PathMapping, ServerConfigContext } from "../../config";
+import { ServerConfigContext } from "../../config";
 import { PriorityColors, PriorityStrings } from "../../rpc/transmission";
 import { bytesToHumanReadableStr } from "../../util";
 import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
 import { Torrent } from "../../rpc/torrent";
 import { invoke } from '@tauri-apps/api/tauri'
+import { Table } from "./common";
 
 
 type FileDirEntryKey = keyof FileDirEntry;
@@ -58,11 +58,13 @@ const AllFields: readonly TableField[] = [
 
 function NameField(props: TableFieldProps) {
     const isDir = isDirEntry(props.entry);
-    const onExpand = useCallback(() => {
+    const onExpand = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
         if (isDirEntry(props.entry)) props.entry.expanded = true;
         props.forceRender();
     }, [props.entry]);
-    const onCollapse = useCallback(() => {
+    const onCollapse = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
         if (isDirEntry(props.entry)) props.entry.expanded = false;
         props.forceRender();
     }, [props.entry]);
@@ -100,68 +102,13 @@ function PriorityField(props: TableFieldProps) {
     return <Badge pill bg={PriorityColors.get(priority)!}>{PriorityStrings.get(priority)}</Badge>;
 }
 
-const FileTableRow = memo(function FileTableRow(props: {
-    torrent: Torrent,
-    mappings: PathMapping[],
-    row: Row<FileDirEntry>,
-    index: number,
-    start: number,
-    lastIndex: number,
-    rowClick: (e: React.MouseEvent<Element>, i: number, li: number) => void,
-    height: number,
-    columnSizingState: ColumnSizingState,
-    columnVisibilityState: VisibilityState
-}) {
-    const doubleClickHandler = useCallback(() => {
-        let path = `${props.torrent.downloadDir}/${props.torrent.name}/${props.row.original.fullpath}`;
-        for (let mapping of props.mappings) {
-            if (mapping.from.length > 0 && path.startsWith(mapping.from)) {
-                path = mapping.to + path.substring(mapping.from.length);
-            }
-        }
-        invoke('shell_open', { path }).catch(console.error);
-    }, [props.torrent, props.mappings, props.row]);
-
-    return (
-        <div
-            className={`tr ${props.index % 2 ? " odd" : ""}`}
-            style={{ height: `${props.height}px`, transform: `translateY(${props.start}px)` }}
-            onClick={(e) => {
-                props.rowClick(e, props.index, props.lastIndex);
-            }}
-            onDoubleClick={doubleClickHandler}
-        >
-            {props.row.getVisibleCells().map(cell => {
-                return (
-                    <div {...{
-                        key: cell.id,
-                        style: {
-                            width: cell.column.getSize(),
-                        },
-                        className: "td"
-                    }} >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </div>
-                )
-            })}
-        </div>
-    );
-});
-
 export function FileTreeTable(props: { torrent: Torrent }) {
-    const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
     const [renderVal, forceRender] = useReducer((oldVal) => oldVal + 1, 0);
 
     const fileTree = useMemo(() => new CachedFileTree(), []);
 
     useMemo(() => fileTree.update(props.torrent), [props.torrent]);
-
-    const defaultColumn = useMemo(() => ({
-        minSize: 30,
-        size: 150,
-        maxSize: 2000,
-    }), []);
 
     const nameSortFunc = useCallback(
         (rowa: Row<FileDirEntry>, rowb: Row<FileDirEntry>) => {
@@ -189,111 +136,33 @@ export function FileTreeTable(props: { torrent: Torrent }) {
             if (field.name == "name") column.sortingFn = nameSortFunc;
             return column;
         });
-    }, []);
-
-    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(config.getTableColumnVisibility("filetree"));
-    const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(config.getTableColumnSizes("filetree"));
-    const [sorting, setSorting] = useState<SortingState>(config.getTableSortBy("filetree"));
-
-    useEffect(() => config.setTableColumnVisibility("filetree", columnVisibility), [config, columnVisibility]);
-    useEffect(() => config.setTableColumnSizes("filetree", columnSizing), [config, columnSizing]);
-    useEffect(() => config.setTableSortBy("filetree", sorting), [config, sorting]);
+    }, [forceRender]);
 
     const data = useMemo(() => fileTree.flatten(), [renderVal, props.torrent]);
 
-    const table = useReactTable<FileDirEntry>({
+    const getRowId = useCallback((row: FileDirEntry) => row.fullpath, []);
+
+    const selectedReducer = useCallback((action: { verb: "add" | "set", ids: string[] }) => {
+        fileTree.selectAction(action);
+        forceRender();
+     }, [fileTree, forceRender]);
+
+    const onRowDoubleClick = useCallback((row: FileDirEntry) => {
+        let path = `${props.torrent.downloadDir}/${props.torrent.name}/${row.fullpath}`;
+        for (let mapping of serverConfig.pathMappings) {
+            if (mapping.from.length > 0 && path.startsWith(mapping.from)) {
+                path = mapping.to + path.substring(mapping.from.length);
+            }
+        }
+        invoke('shell_open', { path }).catch(console.error);
+    }, [props.torrent]);
+
+    return <Table<FileDirEntry> {...{
+        tablename: "filetree",
         columns,
         data,
-        defaultColumn,
-        enableHiding: true,
-        onColumnVisibilityChange: setColumnVisibility,
-        enableColumnResizing: true,
-        onColumnSizingChange: setColumnSizing,
-        enableSorting: true,
-        onSortingChange: setSorting,
-        state: {
-            columnVisibility,
-            columnSizing,
-            sorting,
-        },
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-    });
-
-    const parentRef = React.useRef(null);
-    const rowHeight = React.useMemo(() => {
-        const lineHeight = getComputedStyle(document.body).lineHeight.match(/[\d\.]+/);
-        return Math.ceil(Number(lineHeight) * 1.1);
-    }, []);
-
-    const [lastIndex, setLastIndex] = useState(-1);
-    const rowClick = useCallback(
-        (event: React.MouseEvent<Element>, index: number, lastIndex: number) => {
-            //todo
-        },
-        []);
-
-    const rowVirtualizer = useVirtualizer({
-        count: data.length,
-        getScrollElement: () => parentRef.current,
-        paddingStart: rowHeight,
-        overscan: 3,
-        estimateSize: React.useCallback(() => rowHeight, []),
-    });
-
-    return (
-        <div ref={parentRef} className="torrent-table-container">
-            <div className="torrent-table"
-                style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: `${table.getTotalSize()}px` }}>
-                <div className="sticky-top bg-light" style={{ height: `${rowHeight}px` }}>
-                    {table.getHeaderGroups().map(headerGroup => (
-                        <div className="tr" key={headerGroup.id}>
-                            {headerGroup.headers.map(header => (
-                                <div {...{
-                                    key: header.id,
-                                    style: {
-                                        width: header.getSize(),
-                                    },
-                                    onClick: header.column.getToggleSortingHandler(),
-                                    className: "th"
-                                }}>
-                                    <span>{header.column.getIsSorted() ? header.column.getIsSorted() == "desc" ? '▼ ' : '▲ ' : ''}</span>
-                                    {flexRender(
-                                        header.column.columnDef.header,
-                                        header.getContext()
-                                    )}
-                                    <div {...{
-                                        onMouseDown: header.getResizeHandler(),
-                                        onTouchStart: header.getResizeHandler(),
-                                        className: `resizer ${header.column.getIsResizing() ? 'isResizing' : ''
-                                            }`,
-                                        style: {
-                                            left: `${header.getStart() + header.getSize() - 3}px`,
-                                            transform:
-                                                header.column.getIsResizing()
-                                                    ? `translateX(${table.getState().columnSizingInfo.deltaOffset
-                                                    }px)`
-                                                    : '',
-                                        },
-                                    }} />
-                                </div>
-                            ))}
-                        </div>
-                    ))}
-                </div>
-
-                <div>
-                    {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                        const row = table.getRowModel().rows[virtualRow.index];
-                        return <FileTableRow
-                            key={virtualRow.index} torrent={props.torrent} mappings={serverConfig.pathMappings}
-                            row={row} index={virtualRow.index} lastIndex={lastIndex}
-                            start={virtualRow.start} rowClick={rowClick} height={rowHeight}
-                            columnSizingState={columnSizing} columnVisibilityState={columnVisibility}
-                        />;
-                    })}
-                </div>
-            </div>
-        </div>
-    );
+        getRowId,
+        selectedReducer,
+        onRowDoubleClick,
+    }} />;
 }

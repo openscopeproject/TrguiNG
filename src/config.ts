@@ -53,7 +53,7 @@ interface TableSettings {
     sortBy: SortByConfig[],
 }
 
-type TableName = "torrents" | "filetree";
+export type TableName = "torrents" | "filetree";
 
 interface Settings {
     servers: ServerConfig[],

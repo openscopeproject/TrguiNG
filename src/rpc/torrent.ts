@@ -16,11 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { SelectableRow } from "components/tables/common";
 import { Status, TorrentAllFieldsType } from "./transmission";
 
-export interface Torrent extends Partial<Record<TorrentAllFieldsType, any>> {
-    isSelected?: boolean;
-}
+export type Torrent = Partial<Record<TorrentAllFieldsType, any>> & SelectableRow;
 
 export function getTorrentError(t: Torrent): string {
     var torrentError = t.errorString;

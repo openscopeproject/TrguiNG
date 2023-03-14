@@ -16,9 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { SelectableRow } from "components/tables/common";
 import { Torrent } from "./rpc/torrent";
 
-interface Entry {
+interface Entry extends SelectableRow {
     name: string,
     level: number,
     fullpath: string,
@@ -51,6 +52,7 @@ export class CachedFileTree {
     tree: DirEntry;
     torrenthash: string;
     files: FileEntry[];
+    filePathToIndex: Record<string, number>;
 
     constructor() {
         this.tree = {
@@ -68,6 +70,7 @@ export class CachedFileTree {
         }
         this.torrenthash = "";
         this.files = [];
+        this.filePathToIndex = {};
     }
 
     destroy(dir: DirEntry) {
@@ -122,16 +125,20 @@ export class CachedFileTree {
                 done: torrent.fileStats[index].bytesCompleted,
                 percent: torrent.fileStats[index].bytesCompleted * 100 / entry.length,
                 priority: torrent.fileStats[index].priority,
+                isSelected: false,
             }
         });
 
-        var filePathToIndex: [string, number][] = this.files.map(
+        var filePathIndex: [string, number][] = this.files.map(
             (f, i): [string, number] => [f.fullpath, i]).sort((a, b) => {
                 if (a[0] < b[0]) return -1;
                 return 1;
             });
 
-        filePathToIndex.forEach(([path, index]) => {
+        this.filePathToIndex = {};
+
+        filePathIndex.forEach(([path, index]) => {
+            this.filePathToIndex[path] = index;
             var parts = path.split("/");
             var node = this.tree;
             var currentPath = "";
@@ -150,6 +157,7 @@ export class CachedFileTree {
                         files: new Map(),
                         expanded: false,
                         parent: node,
+                        isSelected: false,
                     });
                 }
                 node = node.subdirs.get(subdir)!;
@@ -203,5 +211,43 @@ export class CachedFileTree {
         append(this.tree);
 
         return result;
+    }
+
+    updateDirSelection(dir: DirEntry) {
+        let selected = 0;
+        dir.subdirs.forEach((d) => {
+            this.updateDirSelection(d);
+            if(d.isSelected) selected++;
+        });
+        dir.files.forEach((f) => {if(f.isSelected) selected++});
+        if(selected == dir.subdirs.size + dir.files.size)
+            dir.isSelected = true;
+    }
+
+    setSelection(dir: DirEntry, value: boolean) {
+        dir.subdirs.forEach((d) => this.setSelection(d, value));
+        dir.files.forEach((f) => {f.isSelected = value});
+        dir.isSelected = value;
+    }
+
+    selectAction({ verb, ids }: { verb: "add" | "set", ids: string[] }) {
+        if (verb == "set")
+            this.setSelection(this.tree, false);
+        ids.forEach((id) => {
+            let parts = id.split("/");
+            let i = 0;
+            let node = this.tree;
+            while(node.subdirs.has(parts[i])) {
+                node = node.subdirs.get(parts[i])!;
+                i++;
+            }
+            if( i < parts.length - 1)
+                console.log("What the horse?", id);
+            if( i < parts.length)
+                node.files.get(parts[i])!.isSelected = true;
+            else
+                this.setSelection(node, true);
+        });
+        this.updateDirSelection(this.tree);
     }
 }

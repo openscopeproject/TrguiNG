@@ -19,17 +19,15 @@
 import "@szhsin/react-menu/dist/index.css";
 import 'css/torrenttable.css';
 import 'css/menus.css';
-import React, { memo, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { Badge } from 'react-bootstrap';
 import { Torrent } from 'rpc/torrent';
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentAllFieldsType, TorrentFieldsType } from 'rpc/transmission';
-import { useReactTable, Row, ColumnSizingState, SortingState, VisibilityState, ColumnDef, getCoreRowModel, flexRender, getSortedRowModel } from '@tanstack/react-table';
-import { ConfigContext } from 'config';
+import { ColumnDef } from '@tanstack/react-table';
 import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from 'util';
 import { ProgressBar } from '../progressbar';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import { AccessorFn, CellContext } from '@tanstack/table-core';
-import { ClickEvent, ControlledMenu, MenuItem } from '@szhsin/react-menu';
+import { Table } from "./common";
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -172,12 +170,12 @@ function PercentBarField(props: TableFieldProps) {
 
 interface TorrentTableProps {
     torrents: Torrent[];
-    setCurrentTorrent: (id: number) => void;
+    setCurrentTorrent: (id: string) => void;
     selectedTorrents: Set<number>,
-    selectedReducer: React.Dispatch<{ verb: string; ids: number[]; }>
+    selectedReducer: React.Dispatch<{ verb: string; ids: string[]; }>
 }
 
-const defaultColumns = AllFields.map((f): ColumnDef<Torrent> => {
+const Columns = AllFields.map((f): ColumnDef<Torrent> => {
     const cell = (props: CellContext<Torrent, unknown>) => {
         const active = props.row.original.rateDownload > 0 || props.row.original.rateUpload > 0;
         return <f.component fieldName={f.name} torrent={props.row.original} active={active} />
@@ -195,61 +193,9 @@ const defaultColumns = AllFields.map((f): ColumnDef<Torrent> => {
     };
 });
 
-const TorrentTableRow = memo(function TorrentTableRow(props: {
-    row: Row<Torrent>,
-    index: number,
-    start: number,
-    lastIndex: number,
-    rowClick: (e: React.MouseEvent<Element>, i: number, li: number) => void,
-    height: number,
-    columnSizingState: ColumnSizingState,
-    columnVisibilityState: VisibilityState
-}) {
-    return (
-        <div
-            className={`tr ${props.row.original.isSelected ? " selected" : ""} ${props.index % 2 ? " odd" : ""}`}
-            style={{ height: `${props.height}px`, transform: `translateY(${props.start}px)` }}
-            onClick={(e) => {
-                props.rowClick(e, props.index, props.lastIndex);
-            }}
-        >
-            {props.row.getVisibleCells().map(cell => {
-                return (
-                    <div {...{
-                        key: cell.id,
-                        style: {
-                            width: cell.column.getSize(),
-                        },
-                        className: "td"
-                    }} >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </div>
-                )
-            })}
-        </div>
-    );
-});
-
 export function TorrentTable(props: TorrentTableProps) {
-    const config = useContext(ConfigContext);
-
-    const defaultColumn = useMemo(() => ({
-        minSize: 30,
-        size: 150,
-        maxSize: 2000,
-    }), []);
 
     const getRowId = useCallback((t: Torrent) => String(t.id), []);
-
-    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(config.getTableColumnVisibility("torrents"));
-    const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(config.getTableColumnSizes("torrents"));
-    const [sorting, setSorting] = useState<SortingState>(config.getTableSortBy("torrents"));
-
-    useEffect(() => config.setTableColumnVisibility("torrents", columnVisibility), [config, columnVisibility]);
-    useEffect(() => config.setTableColumnSizes("torrents", columnSizing), [config, columnSizing]);
-    useEffect(() => config.setTableSortBy("torrents", sorting), [config, sorting]);
-
-    const [lastIndex, setLastIndex] = useState(-1);
 
     const data = useMemo(() => {
         return props.torrents.map((t) => {
@@ -257,159 +203,12 @@ export function TorrentTable(props: TorrentTableProps) {
         });
     }, [props.torrents, props.selectedTorrents]);
 
-    const table = useReactTable<Torrent>({
-        columns: defaultColumns,
+    return <Table<Torrent> {...{
+        tablename: "torrents",
+        columns: Columns,
         data,
-        defaultColumn,
         getRowId,
-        enableHiding: true,
-        onColumnVisibilityChange: setColumnVisibility,
-        enableColumnResizing: true,
-        onColumnSizingChange: setColumnSizing,
-        enableSorting: true,
-        onSortingChange: setSorting,
-        state: {
-            columnVisibility,
-            columnSizing,
-            sorting,
-        },
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-    });
-
-    const rowClick = useCallback((event: React.MouseEvent<Element>, index: number, lastIndex: number) => {
-        const rows = table.getRowModel().rows;
-        event.preventDefault();
-        event.stopPropagation();
-
-        function genIds() {
-            var minIndex = Math.min(index, lastIndex);
-            var maxIndex = Math.max(index, lastIndex);
-            var ids = [];
-            for (var i = minIndex; i <= maxIndex; i++)
-                ids.push(rows[i].original.id);
-            return ids;
-        }
-
-        if (event.shiftKey && event.ctrlKey && lastIndex != -1) {
-            var ids = genIds();
-            props.selectedReducer({ verb: "add", ids });
-        } else if (event.shiftKey && lastIndex != -1) {
-            var ids = genIds();
-            props.selectedReducer({ verb: "set", ids });
-        } else if (event.ctrlKey) {
-            props.selectedReducer({ verb: "add", ids: [rows[index].original.id] });
-        } else {
-            props.selectedReducer({ verb: "set", ids: [rows[index].original.id] });
-        }
-
-        if (event.shiftKey) {
-            document.getSelection()?.removeAllRanges();
-        } else {
-            setLastIndex(index);
-        }
-        props.setCurrentTorrent(rows[index].original.id);
-    }, [props.selectedReducer, setLastIndex, table]);
-
-    const parentRef = React.useRef(null);
-    const rowHeight = React.useMemo(() => {
-        const lineHeight = getComputedStyle(document.body).lineHeight.match(/[\d\.]+/);
-        return Math.ceil(Number(lineHeight) * 1.1);
-    }, []);
-
-    const rowVirtualizer = useVirtualizer({
-        count: props.torrents.length,
-        getScrollElement: () => parentRef.current,
-        paddingStart: rowHeight,
-        overscan: 3,
-        estimateSize: React.useCallback(() => rowHeight, []),
-    });
-
-    const [isColumnMenuOpen, setColumnMenuOpen] = useState(false);
-    const [columnMenuAnchorPoint, setColumnMenuAnchorPoint] = useState({ x: 0, y: 0 });
-
-    const onColumnMenuItemClick = useCallback((event: ClickEvent) => {
-        event.keepOpen = true;
-        setColumnVisibility({...columnVisibility, [event.value!]: event.checked});
-    }, [columnVisibility]);
-
-    return (
-        <div ref={parentRef} className="torrent-table-container">
-            <div className="torrent-table"
-                style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: `${table.getTotalSize()}px` }}>
-                <div className="sticky-top bg-light" style={{ height: `${rowHeight}px` }}>
-                    {table.getHeaderGroups().map(headerGroup => (
-                        <div className="tr" key={headerGroup.id}
-                            onContextMenu={(e) => {
-                                e.preventDefault();
-                                setColumnMenuAnchorPoint({ x: e.clientX, y: e.clientY });
-                                setColumnMenuOpen(true);
-                            }}
-                        >
-                            <ControlledMenu
-                                anchorPoint={columnMenuAnchorPoint}
-                                state={isColumnMenuOpen ? 'open' : 'closed'}
-                                direction="right"
-                                onClose={() => setColumnMenuOpen(false)}
-                                onItemClick={onColumnMenuItemClick}
-                                overflow="auto"
-                                portal={true}
-                            >
-                                {AllFields.map((field) =>
-                                    <MenuItem key={field.columnId ?? field.name}
-                                        type="checkbox"
-                                        checked={columnVisibility[field.columnId ?? field.name] !== false}
-                                        value={field.columnId ?? field.name}
-                                    >
-                                        {field.label}
-                                    </MenuItem>
-                                )}
-                            </ControlledMenu>
-                            {headerGroup.headers.map(header => (
-                                <div {...{
-                                    key: header.id,
-                                    style: {
-                                        width: header.getSize(),
-                                    },
-                                    onClick: header.column.getToggleSortingHandler(),
-                                    className: "th"
-                                }}>
-                                    <span>{header.column.getIsSorted() ? header.column.getIsSorted() == "desc" ? '▼ ' : '▲ ' : ''}</span>
-                                    {flexRender(
-                                        header.column.columnDef.header,
-                                        header.getContext()
-                                    )}
-                                    <div {...{
-                                        onMouseDown: header.getResizeHandler(),
-                                        onTouchStart: header.getResizeHandler(),
-                                        className: `resizer ${header.column.getIsResizing() ? 'isResizing' : ''}`,
-                                        style: {
-                                            left: `${header.getStart() + header.getSize() - 3}px`,
-                                            transform:
-                                                header.column.getIsResizing()
-                                                    ? `translateX(${table.getState().columnSizingInfo.deltaOffset}px)`
-                                                    : '',
-                                        },
-                                    }} />
-                                </div>
-                            ))}
-                        </div>
-                    ))}
-                </div>
-
-                <div>
-                    {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                        const row = table.getRowModel().rows[virtualRow.index];
-                        return <TorrentTableRow
-                            key={row.original.id}
-                            row={row} index={virtualRow.index} lastIndex={lastIndex}
-                            start={virtualRow.start} rowClick={rowClick} height={rowHeight}
-                            columnSizingState={columnSizing} columnVisibilityState={columnVisibility}
-                        />;
-                    })}
-                </div>
-            </div>
-        </div >
-
-    );
+        selectedReducer: props.selectedReducer,
+        setCurrent: props.setCurrentTorrent
+    }} />;
 }
