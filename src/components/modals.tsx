@@ -21,7 +21,7 @@ import * as Icon from "react-bootstrap-icons";
 import { Button, ButtonGroup, Col, Form, Modal, Row } from "react-bootstrap";
 import { Tag, WithContext as ReactTags } from 'react-tag-input';
 import { ServerConfig } from "../config";
-import { cloneDeep } from "lodash";
+import { cloneDeep } from "lodash-es";
 import { swapElements, useForceRender } from "../util";
 
 interface ModalProps {

@@ -21,7 +21,7 @@ import { Buffer } from 'buffer';
 import { SessionAllFields, SessionAllFieldsType, SessionFields, TorrentAllFields, TorrentFields } from './transmission';
 import { ServerConnection } from '../config';
 import { Torrent } from './torrent';
-import { merge } from 'lodash';
+import { merge } from 'lodash-es';
 
 class ApiError extends Error {
 

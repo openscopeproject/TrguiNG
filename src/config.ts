@@ -18,7 +18,7 @@
 
 import * as fs from "@tauri-apps/api/fs";
 import React from "react";
-import { merge } from "lodash";
+import { merge } from "lodash-es";
 import { SortingState, ColumnSizingState, ColumnOrderState, VisibilityState } from "@tanstack/react-table";
 
 export interface ServerConnection {

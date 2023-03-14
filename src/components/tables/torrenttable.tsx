@@ -17,16 +17,16 @@
  */
 
 import "@szhsin/react-menu/dist/index.css";
-import '../css/torrenttable.css';
-import '../css/menus.css';
+import 'css/torrenttable.css';
+import 'css/menus.css';
 import React, { memo, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Badge } from 'react-bootstrap';
-import { Torrent } from '../rpc/torrent';
-import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentAllFieldsType, TorrentFieldsType } from '../rpc/transmission';
+import { Torrent } from 'rpc/torrent';
+import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentAllFieldsType, TorrentFieldsType } from 'rpc/transmission';
 import { useReactTable, Row, ColumnSizingState, SortingState, VisibilityState, ColumnDef, getCoreRowModel, flexRender, getSortedRowModel } from '@tanstack/react-table';
-import { ConfigContext } from '../config';
-import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from '../util';
-import { ProgressBar } from './progressbar';
+import { ConfigContext } from 'config';
+import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from 'util';
+import { ProgressBar } from '../progressbar';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { AccessorFn, CellContext } from '@tanstack/table-core';
 import { ClickEvent, ControlledMenu, MenuItem } from '@szhsin/react-menu';

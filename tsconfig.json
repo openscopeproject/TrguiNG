@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "baseUrl": "src",
         "alwaysStrict": true,
         "outDir": "./dist/",
         "sourceMap": true,
@@ -11,5 +12,6 @@
         "moduleResolution": "node",
         "esModuleInterop": true,
         "types": []
-    }
+    },
+    "include": ["src/**/*"]
 }

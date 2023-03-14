@@ -20,13 +20,13 @@ import React, { memo, useCallback, useContext, useEffect, useMemo, useReducer, u
 import { Badge } from "react-bootstrap";
 import { useReactTable, Row, ColumnSizingState, SortingState, VisibilityState, ColumnDef, getCoreRowModel, flexRender, CellContext, getSortedRowModel } from '@tanstack/react-table';
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { CachedFileTree, DirEntry, FileDirEntry, isDirEntry } from "../cachedfiletree";
-import { ConfigContext, PathMapping, ServerConfigContext } from "../config";
-import { PriorityColors, PriorityStrings } from "../rpc/transmission";
-import { bytesToHumanReadableStr } from "../util";
-import { ProgressBar } from "./progressbar";
+import { CachedFileTree, DirEntry, FileDirEntry, isDirEntry } from "../../cachedfiletree";
+import { ConfigContext, PathMapping, ServerConfigContext } from "../../config";
+import { PriorityColors, PriorityStrings } from "../../rpc/transmission";
+import { bytesToHumanReadableStr } from "../../util";
+import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
-import { Torrent } from "../rpc/torrent";
+import { Torrent } from "../../rpc/torrent";
 import { invoke } from '@tauri-apps/api/tauri'
 
 

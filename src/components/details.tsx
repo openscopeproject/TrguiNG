@@ -16,17 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Container, Form, Nav, Row, Tab, Table } from "react-bootstrap";
-import { CachedFileTree } from "../cachedfiletree";
 import { ClientManager } from "../clientmanager";
 import { ServerConfigContext } from "../config";
 import { getTorrentError, Torrent } from "../rpc/torrent";
 import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr, timestampToDateString } from "../util";
-import { FileTreeTable } from "./filetreetable";
+import { FileTreeTable } from "./tables/filetreetable";
 import { PiecesCanvas } from "./piecescanvas";
 import { ProgressBar } from "./progressbar";
-import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./torrenttable";
+import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./tables/torrenttable";
 
 interface DetailsProps {
     torrentId?: number;

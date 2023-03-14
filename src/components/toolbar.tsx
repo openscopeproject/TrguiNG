@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 import React, { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import { ButtonToolbar, ButtonGroup, Button, FormControl, InputGroup, Dropdown } from "react-bootstrap";
 import * as Icon from "react-bootstrap-icons";
