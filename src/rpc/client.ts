@@ -18,7 +18,7 @@
 
 import { Buffer } from 'buffer';
 
-import { SessionAllFields, SessionAllFieldsType, SessionFields, TorrentAllFields, TorrentFields } from './transmission';
+import { SessionAllFields, SessionAllFieldsType, SessionFields, SessionStatistics, TorrentAllFields, TorrentFields } from './transmission';
 import { ServerConnection } from '../config';
 import { Torrent } from './torrent';
 import { merge } from 'lodash-es';
@@ -181,8 +181,17 @@ export class TransmissionClient {
         await this.sendRpc(request);
     }
 
+    async getSessionStats(): Promise<SessionStatistics> {
+        var request = {
+            method: "session-stats"
+        };
+
+        let response = await this.sendRpc(request);
+
+        return response.arguments;
+    }
+
     async setTorrents(torrentIds: number[], fields: Record<string, any>) {
-        console.log("setting", torrentIds, fields);
         var request = {
             method: "torrent-set",
             arguments: { ...fields, ids: torrentIds },

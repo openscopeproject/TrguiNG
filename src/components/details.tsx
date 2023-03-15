@@ -28,6 +28,8 @@ import { ProgressBar } from "./progressbar";
 import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./tables/torrenttable";
 import { TrackersTable } from "./tables/trackertable";
 import { PeersTable } from "./tables/peerstable";
+import { SessionInfo } from "rpc/client";
+import { SessionStatEntry, SessionStatistics } from "rpc/transmission";
 
 interface DetailsProps {
     torrentId?: number;
@@ -166,7 +168,7 @@ function Urlize(props: { text: string }) {
     })}</>;
 }
 
-function TorrentTable(props: { torrent: Torrent }) {
+function TorrentDetails(props: { torrent: Torrent }) {
     return (
         <Table size="sm">
             <tbody>
@@ -205,8 +207,65 @@ function GeneralPane(props: { torrent: Torrent }) {
                         <Row><h5 className="bg-light">Transfer</h5></Row>
                         <TransferTable {...props} />
                         <Row><h5 className="bg-light">Torrent</h5></Row>
-                        <TorrentTable {...props} />
+                        <TorrentDetails {...props} />
                     </Container>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function Stats(props: { stats: SessionStatEntry }) {
+    return <Table size="sm">
+        <tbody>
+            <tr>
+                <td>Downloaded</td><td>{bytesToHumanReadableStr(props.stats.downloadedBytes)}</td>
+                <td>Uploaded</td><td>{bytesToHumanReadableStr(props.stats.uploadedBytes)}</td>
+            </tr>
+            <tr>
+                <td>Files added</td><td>{props.stats.filesAdded}</td>
+                <td>Active</td><td>{secondsToHumanReadableStr(props.stats.secondsActive)}</td>
+            </tr>
+            {props.stats.sessionCount > 1 ?
+                <tr><td>Sesssion count</td><td>{props.stats.sessionCount}</td><td></td><td></td></tr>
+                : undefined}
+        </tbody>
+    </Table>;
+}
+
+function ServerStats(props: { clientManager: ClientManager }) {
+    const serverConfig = useContext(ServerConfigContext);
+    const [sessionStats, setSessionStats] = useState<SessionStatistics>();
+
+    useEffect(() => {
+        setSessionStats(props.clientManager.servers[serverConfig.name].sessionStats);
+    }, [serverConfig, props.clientManager]);
+
+    useEffect(() => {
+        console.log("Starting stats timer")
+        props.clientManager.onSessionStatsChange = setSessionStats;
+        props.clientManager.startSessionStatsTimer(serverConfig.name);
+
+        return () => {
+            console.log("Stopping stats timer")
+            props.clientManager.onSessionStatsChange = undefined;
+            props.clientManager.stopSessionStatsTimer(serverConfig.name)
+        }
+    }, [serverConfig]);
+
+    return (
+        <div className="d-flex flex-column h-100 w-100">
+            <div className="flex-grow-1">
+                <div className="scrollable">
+                    {sessionStats !== undefined ?
+                        <Container fluid>
+                            <Row><h5 className="bg-light p-1">Session</h5></Row>
+                            <Stats stats={sessionStats["current-stats"]} />
+                            <Row><h5 className="bg-light p-1">Cumulative</h5></Row>
+                            <Stats stats={sessionStats["cumulative-stats"]} />
+                        </Container>
+                        : <></>
+                    }
                 </div>
             </div>
         </div>
@@ -235,37 +294,46 @@ export function Details(props: DetailsProps) {
         }
     }, [props.torrentId]);
 
-    if (!torrent) return <div className="p-3">Select a torrent to view it's details</div>;
-
     return (
         <Container fluid className="d-flex flex-column h-100">
-            <Tab.Container id="details-tabs" defaultActiveKey="general">
+            <Tab.Container id="details-tabs" defaultActiveKey="general" unmountOnExit>
                 <Nav variant="tabs">
-                    <Nav.Link eventKey="general">General</Nav.Link>
-                    <Nav.Link eventKey="files">{`Files (${torrent.files.length})`}</Nav.Link>
-                    <Nav.Link eventKey="pieces">{`Pieces (${torrent.pieceCount})`}</Nav.Link>
-                    <Nav.Link eventKey="peers">Peers</Nav.Link>
-                    <Nav.Link eventKey="trackers">Trackers</Nav.Link>
-                    <Nav.Link eventKey="stats">Stats</Nav.Link>
+                    <Nav.Link eventKey="general" disabled={torrent === undefined}>General</Nav.Link>
+                    <Nav.Link eventKey="files" disabled={torrent === undefined}>{`Files${torrent ? ` (${torrent.files.length})` : ""}`}</Nav.Link>
+                    <Nav.Link eventKey="pieces" disabled={torrent === undefined}>{`Pieces${torrent ? ` (${torrent.pieceCount})` : ""}`}</Nav.Link>
+                    <Nav.Link eventKey="peers" disabled={torrent === undefined}>Peers</Nav.Link>
+                    <Nav.Link eventKey="trackers" disabled={torrent === undefined}>Trackers</Nav.Link>
+                    <div className="flex-grow-1" />
+                    <Nav.Link eventKey="serverstats">Server statistics</Nav.Link>
                 </Nav>
                 <Tab.Content className="flex-grow-1">
                     <Tab.Pane eventKey="general" className="h-100">
-                        <GeneralPane torrent={torrent} />
+                        {torrent ?
+                            <GeneralPane torrent={torrent} />
+                            : <></>}
                     </Tab.Pane>
                     <Tab.Pane eventKey="files" className="h-100">
-                        <FileTreeTable torrent={torrent} />
+                        {torrent ?
+                            <FileTreeTable torrent={torrent} />
+                            : <></>}
                     </Tab.Pane>
                     <Tab.Pane eventKey="pieces" className="h-100">
-                        <PiecesCanvas torrent={torrent} />
+                        {torrent ?
+                            <PiecesCanvas torrent={torrent} />
+                            : <></>}
                     </Tab.Pane>
                     <Tab.Pane eventKey="peers" className="h-100">
-                        <PeersTable torrent={torrent} />
+                        {torrent ?
+                            <PeersTable torrent={torrent} />
+                            : <></>}
                     </Tab.Pane>
                     <Tab.Pane eventKey="trackers" className="h-100">
-                        <TrackersTable torrent={torrent} />
+                        {torrent ?
+                            <TrackersTable torrent={torrent} />
+                            : <></>}
                     </Tab.Pane>
-                    <Tab.Pane eventKey="stats">
-                        todo stats
+                    <Tab.Pane eventKey="serverstats" className="h-100">
+                        <ServerStats clientManager={props.clientManager} />
                     </Tab.Pane>
                 </Tab.Content>
             </Tab.Container>

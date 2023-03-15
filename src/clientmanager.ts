@@ -1,8 +1,9 @@
+import { SessionStatistics } from "rpc/transmission";
 import { Config } from "./config";
 import { SessionInfo, TransmissionClient } from "./rpc/client";
 import { Torrent } from "./rpc/torrent";
 
-const ClientTimerTypes = ["torrents", "details", "session"] as const;
+const ClientTimerTypes = ["torrents", "details", "session", "sessionstats"] as const;
 type ClientTimerType = typeof ClientTimerTypes[number];
 
 interface ServerEntry {
@@ -10,6 +11,7 @@ interface ServerEntry {
     torrents: Torrent[];
     torrentDetails?: Torrent;
     session: SessionInfo;
+    sessionStats?: SessionStatistics;
     timers: Record<ClientTimerType, number>;
     detailsId?: number;
 }
@@ -17,9 +19,10 @@ interface ServerEntry {
 export class ClientManager {
     servers: Record<string, ServerEntry> = {};
     activeServer?: string;
-    onTorrentsChange: ((torrents: Torrent[]) => void) | undefined;
-    onTorrentDetailsChange: ((torrent: Torrent | undefined) => void) | undefined;
-    onSessionChange: ((session: SessionInfo) => void) | undefined;
+    onTorrentsChange?: (torrents: Torrent[]) => void;
+    onTorrentDetailsChange?: (torrent?: Torrent) => void;
+    onSessionChange?: (session: SessionInfo) => void;
+    onSessionStatsChange?: (sessionStats: SessionStatistics) => void;
     config: Config;
 
     constructor(config: Config) {
@@ -38,6 +41,7 @@ export class ClientManager {
                 torrents: -1,
                 details: -1,
                 session: -1,
+                sessionstats: -1,
             }
         }
         this.servers[server].client.getSessionFull();
@@ -101,7 +105,10 @@ export class ClientManager {
         updateTorrents.bind(this)();
         updateSession.bind(this)();
 
-        this.startDetailsTimer(server);
+        if(this.servers[server].torrentDetails)
+            this.startDetailsTimer(server);
+        if(this.onSessionStatsChange)
+            this.startSessionStatsTimer(server);
     }
 
     startDetailsTimer(server: string) {
@@ -132,6 +139,41 @@ export class ClientManager {
         this.servers[server].timers.details = 0;
 
         updateDetails.bind(this)();
+    }
+
+    startSessionStatsTimer(server: string) {
+        if (this.servers[server].timers.sessionstats >= 0) return;
+
+        const updateSessionStats = () => {
+            let srv = this.servers[server];
+            const reschedule = () => {
+                // TODO make timeout configurable
+                if (srv.timers.sessionstats >= 0) {
+                    srv.timers.sessionstats = setTimeout(updateSessionStats, 5000);
+                }
+            }
+            srv.client.getSessionStats().then((stats) => {
+                console.log("Got stats")
+                if (this.onSessionStatsChange !== undefined && this.activeServer == server)
+                    this.onSessionStatsChange(stats);
+                srv.sessionStats = stats;
+                reschedule();
+            }).catch((e) => {
+                console.log("Error fetching torrent details", e);
+                reschedule();
+            });
+        }
+        this.servers[server].timers.sessionstats = 0;
+
+        updateSessionStats.bind(this)();
+    }
+
+    stopSessionStatsTimer(server: string) {
+        if (!(server in this.servers)) return;
+        var srv = this.servers[server];
+        if(srv.timers.sessionstats >= 0)
+            clearTimeout(srv.timers.sessionstats);
+        srv.timers.sessionstats = -1;
     }
 
     stopTimers(server: string) {

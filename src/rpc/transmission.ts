@@ -262,3 +262,16 @@ export const PeerStatsFields = [
 ] as const;
 
 export type PeerStatsFieldsType = typeof PeerStatsFields[number];
+
+export interface SessionStatEntry {
+    uploadedBytes: number,
+    downloadedBytes: number,
+    filesAdded: number,
+    sessionCount: number,
+    secondsActive: number,
+}
+
+export interface SessionStatistics {
+    "cumulative-stats": SessionStatEntry,
+    "current-stats": SessionStatEntry,
+}
