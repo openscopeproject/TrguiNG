@@ -2,7 +2,7 @@ import { ClickEvent, ControlledMenu, MenuItem } from "@szhsin/react-menu";
 import { useReactTable, Table, ColumnDef, ColumnSizingState, SortingState, VisibilityState, getCoreRowModel, getSortedRowModel, flexRender, Row, Header, Column } from "@tanstack/react-table";
 import { useVirtualizer, Virtualizer } from "@tanstack/react-virtual";
 import { ConfigContext, TableName } from "config";
-import React, { memo } from "react";
+import React, { memo, useReducer } from "react";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 const defaultColumn = {
@@ -163,6 +163,32 @@ function useColumnMenu<TData>(
     ];
 }
 
+export function useStandardSelect<TData>(
+    data: TData[],
+    getRowId: (row: TData) => string
+): [Set<string>, React.Dispatch<{ verb: "add" | "set", ids: string[] }>, TData[]] {
+    const [selected, selectedReducer] = useReducer(
+        (old: Set<string>, action: { verb: "add" | "set", ids: string[] }) => {
+            if (action.verb == "set") return new Set(action.ids);
+            else {
+                let newset = new Set(old);
+                action.ids.forEach((id) => newset.add(id));
+                return newset;
+            }
+        }, new Set<string>()
+    );
+
+    const selectedData = useMemo(() =>
+        data.map(
+            (row: TData) => {
+                return { ...row, isSelected: selected.has(getRowId(row)) };
+            }),
+        [selected, data]
+    );
+
+    return [selected, selectedReducer, selectedData];
+}
+
 export interface SelectableRow {
     isSelected?: boolean
 }
@@ -179,7 +205,7 @@ function TableRow<TData extends SelectableRow>(props: {
     columnVisibility: VisibilityState
 }) {
     const onRowDoubleClick = useCallback(() => {
-        if(props.onRowDoubleClick)
+        if (props.onRowDoubleClick)
             props.onRowDoubleClick(props.row.original);
     }, [props.row]);
     return (

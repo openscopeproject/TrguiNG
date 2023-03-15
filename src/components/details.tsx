@@ -26,6 +26,8 @@ import { FileTreeTable } from "./tables/filetreetable";
 import { PiecesCanvas } from "./piecescanvas";
 import { ProgressBar } from "./progressbar";
 import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./tables/torrenttable";
+import { TrackersTable } from "./tables/trackertable";
+import { PeersTable } from "./tables/peerstable";
 
 interface DetailsProps {
     torrentId?: number;
@@ -251,16 +253,16 @@ export function Details(props: DetailsProps) {
                         <GeneralPane torrent={torrent} />
                     </Tab.Pane>
                     <Tab.Pane eventKey="files" className="h-100">
-                        <FileTreeTable torrent={torrent}/>
+                        <FileTreeTable torrent={torrent} />
                     </Tab.Pane>
                     <Tab.Pane eventKey="pieces" className="h-100">
                         <PiecesCanvas torrent={torrent} />
                     </Tab.Pane>
-                    <Tab.Pane eventKey="peers">
-                        todo peers
+                    <Tab.Pane eventKey="peers" className="h-100">
+                        <PeersTable torrent={torrent} />
                     </Tab.Pane>
-                    <Tab.Pane eventKey="trackers">
-                        todo trackers
+                    <Tab.Pane eventKey="trackers" className="h-100">
+                        <TrackersTable torrent={torrent} />
                     </Tab.Pane>
                     <Tab.Pane eventKey="stats">
                         todo stats

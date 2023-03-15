@@ -53,7 +53,8 @@ interface TableSettings {
     sortBy: SortByConfig[],
 }
 
-export type TableName = "torrents" | "filetree";
+const TableNames = ["torrents", "filetree", "trackers", "peers"] as const;
+export type TableName = typeof TableNames[number];
 
 interface Settings {
     servers: ServerConfig[],
@@ -67,20 +68,12 @@ const DefaultSettings: Settings = {
     servers: [],
     openTabs: [],
     app: {
-        tables: {
-            "torrents": {
-                columns: [],
-                columnVisibility: {},
-                columnSizes: {},
-                sortBy: [],
-            },
-            "filetree": {
-                columns: [],
-                columnVisibility: {},
-                columnSizes: {},
-                sortBy: [],
-            }
-        }
+        tables: Object.fromEntries(TableNames.map((table) => [table, {
+            columns: [],
+            columnVisibility: {},
+            columnSizes: {},
+            sortBy: [],
+        }])) as unknown as Record<TableName, TableSettings>,
     }
 }
 

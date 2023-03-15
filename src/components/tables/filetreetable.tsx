@@ -39,18 +39,14 @@ interface TableFieldProps {
 }
 
 interface TableField {
-    name: "name" | "size" | "done" | "percent" | "priority",
+    name: FileDirEntryKey,
     label: string,
     component: React.FunctionComponent<TableFieldProps>,
 }
 
-const BasicFields: readonly TableField[] = [
+const AllFields: readonly TableField[] = [
     { name: "name", label: "Name", component: NameField },
     { name: "size", label: "Size", component: ByteSizeField },
-] as const;
-
-const AllFields: readonly TableField[] = [
-    ...BasicFields,
     { name: "done", label: "Done", component: ByteSizeField },
     { name: "percent", label: "Percent", component: PercentBarField },
     { name: "priority", label: "Priority", component: PriorityField },

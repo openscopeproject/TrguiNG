@@ -211,6 +211,54 @@ export const SessionAllFields = [
 
 export type SessionAllFieldsType = typeof SessionAllFields[number];
 
-export type SessionType = {
-    [Property in SessionAllFieldsType]: any
-}
+export const TrackerStatsFields = [
+    "announceState", // number
+    "announce", // string
+    "downloadCount", // number
+    "hasAnnounced", // boolean
+    "hasScraped", // boolean
+    "host", // string
+    "id", // number
+    "isBackup", // boolean
+    "lastAnnouncePeerCount", // number
+    "lastAnnounceResult", // string
+    "lastAnnounceStartTime", // number
+    "lastAnnounceSucceeded", // boolean
+    "lastAnnounceTime", // number
+    "lastAnnounceTimedOut", // boolean
+    "lastScrapeResult", // string
+    "lastScrapeStartTime", // number
+    "lastScrapeSucceeded", // boolean
+    "lastScrapeTime", // number
+    "lastScrapeTimedOut", // boolean
+    "leecherCount", // number
+    "nextAnnounceTime", // number
+    "nextScrapeTime", // number
+    "scrapeState", // number
+    "scrape", // string
+    "seederCount", // number
+    "sitename", // string
+] as const;
+
+export type TrackerStatsFieldsType = typeof TrackerStatsFields[number];
+
+export const PeerStatsFields = [
+    "address", // string
+    "clientName", // string
+    "clientIsChoked", // boolean
+    "clientIsInterested", // boolean
+    "flagStr", // string
+    "isDownloadingFrom", // boolean
+    "isEncrypted", // boolean
+    "isIncoming", // boolean
+    "isUploadingTo", // boolean
+    "isUTP", // boolean
+    "peerIsChoked", // boolean
+    "peerIsInterested", // boolean
+    "port", // number
+    "progress", // double
+    "rateToClient", // (B/s) number
+    "rateToPeer", // (B/s) number
+] as const;
+
+export type PeerStatsFieldsType = typeof PeerStatsFields[number];

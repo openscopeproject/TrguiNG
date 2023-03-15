@@ -21,18 +21,18 @@ import 'css/torrenttable.css';
 import 'css/menus.css';
 import React, { memo, useCallback, useMemo } from 'react';
 import { Badge } from 'react-bootstrap';
-import { Torrent } from 'rpc/torrent';
+import { Torrent, TrackerStats } from 'rpc/torrent';
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentAllFieldsType, TorrentFieldsType } from 'rpc/transmission';
 import { ColumnDef } from '@tanstack/react-table';
 import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from 'util';
 import { ProgressBar } from '../progressbar';
 import { AccessorFn, CellContext } from '@tanstack/table-core';
 import { Table } from "./common";
+import { getTrackerAnnounceState } from "./trackertable";
 
 interface TableFieldProps {
     torrent: Torrent,
     fieldName: TorrentAllFieldsType,
-    className?: string,
     active?: boolean
 }
 
@@ -103,16 +103,9 @@ export function TrackerField(props: TableFieldProps) {
 }
 
 function getTrackerStatus(torrent: Torrent): string {
-    var trackers = torrent.trackerStats;
+    var trackers = torrent.trackerStats as TrackerStats[];
     if (torrent.status == Status.stopped || trackers.length == 0) return "";
-    var tracker = trackers[0];
-    if (tracker.announceState == 2 || tracker.announceState == 3) return "Working";
-    if (tracker.hasAnnounced) {
-        if (tracker.lastAnnounceSucceeded) return "Working";
-        if (tracker.lastAnnounceResult == "Success") return "Working";
-        return tracker.lastAnnounceResult;
-    }
-    return "";
+    return getTrackerAnnounceState(trackers[0]);
 }
 
 function TrackerStatusField(props: TableFieldProps) {
@@ -139,7 +132,7 @@ export function StatusField(props: TableFieldProps) {
 export function DateField(props: TableFieldProps) {
     const date = props.torrent[props.fieldName] > 0 ?
         timestampToDateString(props.torrent[props.fieldName]) : "";
-    return <span className={props.className}>{date}</span>;
+    return <>{date}</>;
 }
 
 function ByteSizeField(props: TableFieldProps) {
@@ -147,7 +140,7 @@ function ByteSizeField(props: TableFieldProps) {
         return bytesToHumanReadableStr(props.torrent[props.fieldName]);
     }, [props.torrent[props.fieldName]]);
 
-    return <div className={props.className}>{stringValue}</div>;
+    return <>{stringValue}</>;
 }
 
 function ByteRateField(props: TableFieldProps) {
@@ -155,7 +148,7 @@ function ByteRateField(props: TableFieldProps) {
         return `${bytesToHumanReadableStr(props.torrent[props.fieldName])}/s`;
     }, [props.torrent[props.fieldName]]);
 
-    return <div className={props.className}>{stringValue}</div>;
+    return <>{stringValue}</>;
 }
 
 function PercentBarField(props: TableFieldProps) {

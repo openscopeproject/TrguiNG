@@ -17,9 +17,11 @@
  */
 
 import { SelectableRow } from "components/tables/common";
-import { Status, TorrentAllFieldsType } from "./transmission";
+import { PeerStatsFieldsType, Status, TorrentAllFieldsType, TrackerStatsFieldsType } from "./transmission";
 
 export type Torrent = Partial<Record<TorrentAllFieldsType, any>> & SelectableRow;
+export type TrackerStats = Partial<Record<TrackerStatsFieldsType, any>> & SelectableRow;
+export type PeerStats = Partial<Record<PeerStatsFieldsType, any>> & SelectableRow;
 
 export function getTorrentError(t: Torrent): string {
     var torrentError = t.errorString;
