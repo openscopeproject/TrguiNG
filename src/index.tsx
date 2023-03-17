@@ -24,6 +24,7 @@ import { createRoot } from 'react-dom/client';
 import React from 'react';
 import { EventListener } from './event';
 import { App } from './components/app';
+import { CustomMantineProvider } from 'components/mantinetheme';
 
 
 function run(config: Config) {
@@ -43,7 +44,9 @@ function run(config: Config) {
     app.render(
         <React.StrictMode>
             <ConfigContext.Provider value={config}>
-                <App />
+                <CustomMantineProvider>
+                    <App />
+                </CustomMantineProvider>
             </ConfigContext.Provider>
         </React.StrictMode>
     );

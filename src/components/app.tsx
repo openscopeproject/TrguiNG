@@ -18,14 +18,13 @@
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-import { TransmissionClient } from '../rpc/client';
 import { ConfigContext, ServerConfig, ServerConfigContext } from '../config';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Server } from '../components/server';
 import * as Icon from "react-bootstrap-icons";
-import { Button, Dropdown } from 'react-bootstrap';
 import { ManageServersModal } from './modals';
 import { ClientManager } from '../clientmanager';
+import { ActionIcon, Button, Menu, useMantineColorScheme } from '@mantine/core';
 
 interface TabsProps {
     openTabs: string[],
@@ -43,6 +42,9 @@ function Tabs(props: TabsProps) {
         return props.servers.filter((s) => !props.openTabs.includes(s.name)).map((s) => s.name);
     }, [props.servers, props.openTabs]);
 
+    const { colorScheme, toggleColorScheme } = useMantineColorScheme();
+    const dark = colorScheme === 'dark';
+
     return (<>
         <ManageServersModal
             servers={props.servers} onSave={props.onServersSave}
@@ -54,33 +56,47 @@ function Tabs(props: TabsProps) {
                         <div className="flex-grow-1" onClick={() => props.onTabSwitch(index)}>
                             {tab}
                         </div>
-                        <div>
-                            <Button variant="light" className="p-0" onClick={() => props.onTabClose(index)}>
-                                <Icon.XLg size={16} />
-                            </Button>
-                        </div>
+                        <ActionIcon variant="subtle" onClick={() => props.onTabClose(index)}>
+                            <Icon.XLg size={16} />
+                        </ActionIcon>
                     </div>
                 </div>
             )}
             {unopenedTabs.length > 0 ?
-                <Dropdown>
-                    <Dropdown.Toggle size='sm' variant="light" className="p-1">
-                        {/* <Icon.PlusLg size={16} /> */}
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu>
-                        {unopenedTabs.map((tab) => <Dropdown.Item key={tab} onClick={() => props.onTabOpen(tab)}>{tab}</Dropdown.Item>)}
-                    </Dropdown.Menu>
-                </Dropdown>
+                <Menu shadow="md" width={200} position="bottom-start">
+                    <Menu.Target>
+                        <ActionIcon variant="subtle" color="secondaryColorName">
+                            <Icon.PlusLg size={16} />
+                        </ActionIcon>
+                    </Menu.Target>
+
+                    <Menu.Dropdown>
+                        <Menu.Label>Connect</Menu.Label>
+                        {unopenedTabs.map((tab) =>
+                            <Menu.Item key={tab} onClick={() => props.onTabOpen(tab)}>{tab}</Menu.Item>)
+                        }
+                    </Menu.Dropdown>
+                </Menu>
                 : <></>}
             <div className="w-100 flex-shrink-1" />
-            <Button variant="light" onClick={() => setShowServerConfig(true)}>
-                <Icon.GearFill size={16} />
-            </Button>
+            <ActionIcon
+                variant="default"
+                size="lg"
+                onClick={() => toggleColorScheme()}
+                title="Toggle color scheme"
+            >
+                {dark ?
+                    <Icon.Sun size="1.1rem" color="yellow" />
+                    : <Icon.MoonStars size="1.1rem" color="blue" />}
+            </ActionIcon>
+            <ActionIcon size="lg" variant="default" onClick={() => setShowServerConfig(true)}>
+                <Icon.GearFill size="1.1rem" />
+            </ActionIcon>
         </div>
     </>);
 }
 
-export function App({}) {
+export function App({ }) {
     const config = useContext(ConfigContext);
     const [servers, setServers] = useState(config.getServers());
     const [openTabs, setOpenTabs] = useState<string[]>(config.getOpenTabs());

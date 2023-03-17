@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import * as Icon from "react-bootstrap-icons";
 import { Button, ButtonGroup, Col, Form, Modal, Row } from "react-bootstrap";
 import { Tag, WithContext as ReactTags } from 'react-tag-input';

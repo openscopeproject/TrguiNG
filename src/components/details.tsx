@@ -228,7 +228,7 @@ function Stats(props: { stats: SessionStatEntry }) {
             </tr>
             {props.stats.sessionCount > 1 ?
                 <tr><td>Sesssion count</td><td>{props.stats.sessionCount}</td><td></td><td></td></tr>
-                : undefined}
+                : <></>}
         </tbody>
     </Table>;
 }

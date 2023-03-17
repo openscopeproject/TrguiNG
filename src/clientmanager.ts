@@ -159,7 +159,7 @@ export class ClientManager {
                 srv.sessionStats = stats;
                 reschedule();
             }).catch((e) => {
-                console.log("Error fetching torrent details", e);
+                console.log("Error fetching session stats", e);
                 reschedule();
             });
         }

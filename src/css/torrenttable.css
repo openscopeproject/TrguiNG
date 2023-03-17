@@ -59,7 +59,7 @@
 }
 
 .sticky-top {
-    z-index: 500;
+    z-index: 3;
 }
 
 .selected {
