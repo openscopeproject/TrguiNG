@@ -24,7 +24,7 @@ import { Server } from '../components/server';
 import * as Icon from "react-bootstrap-icons";
 import { ManageServersModal } from './modals';
 import { ClientManager } from '../clientmanager';
-import { ActionIcon, Button, Menu, useMantineColorScheme } from '@mantine/core';
+import { ActionIcon, Menu, useMantineColorScheme } from '@mantine/core';
 
 interface TabsProps {
     openTabs: string[],

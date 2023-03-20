@@ -17,7 +17,6 @@
  */
 
 import React, { useContext, useEffect, useState } from "react";
-import { Container, Form, Nav, Row, Tab, Table } from "react-bootstrap";
 import { ClientManager } from "../clientmanager";
 import { ServerConfigContext } from "../config";
 import { getTorrentError, Torrent } from "../rpc/torrent";
@@ -28,8 +27,8 @@ import { ProgressBar } from "./progressbar";
 import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./tables/torrenttable";
 import { TrackersTable } from "./tables/trackertable";
 import { PeersTable } from "./tables/peerstable";
-import { SessionInfo } from "rpc/client";
 import { SessionStatEntry, SessionStatistics } from "rpc/transmission";
+import { Box, Container, Flex, Group, MantineTheme, Table, Tabs, TextInput } from "@mantine/core";
 
 interface DetailsProps {
     torrentId?: number;
@@ -42,10 +41,10 @@ function DownloadBar(props: { torrent: Torrent }) {
     const now = Math.round(percent * 1000);
     const nowStr = `${Math.floor(now / 10.0)}.${now % 10}%`;
     return (
-        <div className="d-flex py-1 align-items-center">
-            <div className="me-2">{props.torrent.status == 2 ? "Verified:" : "Downloaded:"}</div>
+        <Flex direction="row" w="100%" my="0.5rem">
+            <Box mr="1rem">{props.torrent.status == 2 ? "Verified:" : "Downloaded:"}</Box>
             <ProgressBar now={now} max={1000} label={nowStr} className="flex-grow-1" />
-        </div>
+        </Flex>
     );
 }
 
@@ -100,7 +99,7 @@ function TrackerUpdate(props: { torrent: Torrent }) {
 
 function TransferTable(props: { torrent: Torrent }) {
     return (
-        <Table size="sm">
+        <Table p={0}>
             <tbody>
                 <tr>
                     <td>Status:</td><td><StatusField {...props} fieldName="status" /></td>
@@ -168,9 +167,15 @@ function Urlize(props: { text: string }) {
     })}</>;
 }
 
+const readonlyInputStyles = (theme: MantineTheme) => ({
+    root: {
+        "background-color": (theme.colorScheme == "dark" ? theme.colors.dark[4] : theme.colors.gray[2])
+    }
+});
+
 function TorrentDetails(props: { torrent: Torrent }) {
     return (
-        <Table size="sm">
+        <Table>
             <tbody>
                 <tr>
                     <td>Full path:</td><td>{ensurePathDelimiter(props.torrent.downloadDir) + props.torrent.name}</td>
@@ -181,7 +186,10 @@ function TorrentDetails(props: { torrent: Torrent }) {
                     <td>Pieces:</td><td><Pieces {...props} /></td>
                 </tr>
                 <tr>
-                    <td>Hash:</td><td><Form.Control size="sm" plaintext readOnly defaultValue={props.torrent.hashString} style={{ "padding": 0 }} /></td>
+                    <td>Hash:</td>
+                    <td>
+                        <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly defaultValue={props.torrent.hashString} />
+                    </td>
                     <td>Comment:</td><td><Urlize text={props.torrent.comment} /></td>
                 </tr>
                 <tr>
@@ -189,7 +197,10 @@ function TorrentDetails(props: { torrent: Torrent }) {
                     <td>Completed on:</td><td><DateField {...props} fieldName="doneDate" /></td>
                 </tr>
                 <tr>
-                    <td>Magnet link:</td><td><Form.Control size="sm" plaintext readOnly defaultValue={props.torrent.magnetLink} style={{ "padding": 0 }} /></td>
+                    <td>Magnet link:</td>
+                    <td>
+                        <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly defaultValue={props.torrent.magnetLink} />
+                    </td>
                     <td>Labels:</td><td><LabelsField {...props} fieldName="labels" /></td>
                 </tr>
             </tbody>
@@ -197,16 +208,30 @@ function TorrentDetails(props: { torrent: Torrent }) {
     );
 }
 
+function TableNameRow(props: { children: React.ReactNode }) {
+    return (
+        <Group grow>
+            <Box className="h5" sx={(theme: MantineTheme) => ({
+                backgroundColor: theme.colorScheme == "dark" ? theme.colors.dark[4] : theme.colors.gray[3],
+            })}>
+                {props.children}
+            </Box>
+        </Group>
+    );
+}
+
 function GeneralPane(props: { torrent: Torrent }) {
     return (
         <div className="d-flex flex-column h-100 w-100">
-            <DownloadBar {...props} />
+            <Container fluid mx={0}>
+                <DownloadBar {...props} />
+            </Container>
             <div className="flex-grow-1">
                 <div className="scrollable">
                     <Container fluid>
-                        <Row><h5 className="bg-light">Transfer</h5></Row>
+                        <TableNameRow>Transfer</TableNameRow>
                         <TransferTable {...props} />
-                        <Row><h5 className="bg-light">Torrent</h5></Row>
+                        <TableNameRow>Torrent</TableNameRow>
                         <TorrentDetails {...props} />
                     </Container>
                 </div>
@@ -216,7 +241,7 @@ function GeneralPane(props: { torrent: Torrent }) {
 }
 
 function Stats(props: { stats: SessionStatEntry }) {
-    return <Table size="sm">
+    return <Table>
         <tbody>
             <tr>
                 <td>Downloaded</td><td>{bytesToHumanReadableStr(props.stats.downloadedBytes)}</td>
@@ -259,9 +284,9 @@ function ServerStats(props: { clientManager: ClientManager }) {
                 <div className="scrollable">
                     {sessionStats !== undefined ?
                         <Container fluid>
-                            <Row><h5 className="bg-light p-1">Session</h5></Row>
+                            <TableNameRow>Session</TableNameRow>
                             <Stats stats={sessionStats["current-stats"]} />
-                            <Row><h5 className="bg-light p-1">Cumulative</h5></Row>
+                            <TableNameRow>Cumulative</TableNameRow>
                             <Stats stats={sessionStats["cumulative-stats"]} />
                         </Container>
                         : <></>
@@ -295,48 +320,50 @@ export function Details(props: DetailsProps) {
     }, [props.torrentId]);
 
     return (
-        <Container fluid className="d-flex flex-column h-100">
-            <Tab.Container id="details-tabs" defaultActiveKey="general" unmountOnExit>
-                <Nav variant="tabs">
-                    <Nav.Link eventKey="general" disabled={torrent === undefined}>General</Nav.Link>
-                    <Nav.Link eventKey="files" disabled={torrent === undefined}>{`Files${torrent ? ` (${torrent.files.length})` : ""}`}</Nav.Link>
-                    <Nav.Link eventKey="pieces" disabled={torrent === undefined}>{`Pieces${torrent ? ` (${torrent.pieceCount})` : ""}`}</Nav.Link>
-                    <Nav.Link eventKey="peers" disabled={torrent === undefined}>Peers</Nav.Link>
-                    <Nav.Link eventKey="trackers" disabled={torrent === undefined}>Trackers</Nav.Link>
-                    <div className="flex-grow-1" />
-                    <Nav.Link eventKey="serverstats">Server statistics</Nav.Link>
-                </Nav>
-                <Tab.Content className="flex-grow-1">
-                    <Tab.Pane eventKey="general" className="h-100">
-                        {torrent ?
-                            <GeneralPane torrent={torrent} />
-                            : <></>}
-                    </Tab.Pane>
-                    <Tab.Pane eventKey="files" className="h-100">
-                        {torrent ?
-                            <FileTreeTable torrent={torrent} />
-                            : <></>}
-                    </Tab.Pane>
-                    <Tab.Pane eventKey="pieces" className="h-100">
-                        {torrent ?
-                            <PiecesCanvas torrent={torrent} />
-                            : <></>}
-                    </Tab.Pane>
-                    <Tab.Pane eventKey="peers" className="h-100">
-                        {torrent ?
-                            <PeersTable torrent={torrent} />
-                            : <></>}
-                    </Tab.Pane>
-                    <Tab.Pane eventKey="trackers" className="h-100">
-                        {torrent ?
-                            <TrackersTable torrent={torrent} />
-                            : <></>}
-                    </Tab.Pane>
-                    <Tab.Pane eventKey="serverstats" className="h-100">
-                        <ServerStats clientManager={props.clientManager} />
-                    </Tab.Pane>
-                </Tab.Content>
-            </Tab.Container>
-        </Container>
+        <Tabs variant="outline" defaultValue="general" keepMounted={false} className="h-100 d-flex flex-column">
+            <Tabs.List>
+                <Tabs.Tab value="general" disabled={torrent === undefined}>General</Tabs.Tab>
+                <Tabs.Tab value="files" disabled={torrent === undefined}>
+                    {`Files${torrent ? ` (${torrent.files.length})` : ""}`}
+                </Tabs.Tab>
+                <Tabs.Tab value="pieces" disabled={torrent === undefined}>
+                    {`Pieces${torrent ? ` (${torrent.pieceCount})` : ""}`}
+                </Tabs.Tab>
+                <Tabs.Tab value="peers" disabled={torrent === undefined}>Peers</Tabs.Tab>
+                <Tabs.Tab value="trackers" disabled={torrent === undefined}>Trackers</Tabs.Tab>
+                <div className="flex-grow-1" />
+                <Tabs.Tab value="serverstats">Server statistics</Tabs.Tab>
+            </Tabs.List>
+            <div className="flex-grow-1">
+                <Tabs.Panel value="general" className="h-100">
+                    {torrent ?
+                        <GeneralPane torrent={torrent} />
+                        : <></>}
+                </Tabs.Panel>
+                <Tabs.Panel value="files" className="h-100">
+                    {torrent ?
+                        <FileTreeTable torrent={torrent} />
+                        : <></>}
+                </Tabs.Panel>
+                <Tabs.Panel value="pieces" className="h-100">
+                    {torrent ?
+                        <PiecesCanvas torrent={torrent} />
+                        : <></>}
+                </Tabs.Panel>
+                <Tabs.Panel value="peers" className="h-100">
+                    {torrent ?
+                        <PeersTable torrent={torrent} />
+                        : <></>}
+                </Tabs.Panel>
+                <Tabs.Panel value="trackers" className="h-100">
+                    {torrent ?
+                        <TrackersTable torrent={torrent} />
+                        : <></>}
+                </Tabs.Panel>
+                <Tabs.Panel value="serverstats" className="h-100">
+                    <ServerStats clientManager={props.clientManager} />
+                </Tabs.Panel>
+            </div>
+        </Tabs>
     );
 }
