@@ -17,44 +17,51 @@
  */
 
 import React from "react";
-import { Col, Container, Row } from "react-bootstrap";
 import { byteRateToHumanReadableStr, bytesToHumanReadableStr } from "../util";
 import * as Icon from "react-bootstrap-icons";
+import { Container, Group } from "@mantine/core";
 
 export interface StatusbarProps {
     daemon_version: string,
     hostname: string,
-    down_rate: number,
-    down_rate_limit: number,
-    up_rate: number,
-    up_rate_limit: number,
+    downRate: number,
+    downRateLimit: number,
+    upRate: number,
+    upRateLimit: number,
     free: number,
-    size_total: number,
-    size_selected: number,
-    size_done: number,
-    size_left: number,
+    sizeTotal: number,
+    sizeSelected: number,
+    sizeDone: number,
+    sizeLeft: number,
 }
 
 export function Statusbar(props: StatusbarProps) {
     return (
         <Container fluid>
-            <Row className="statusbar">
-                <Col sm={3}><Icon.Diagram2 className="me-2" /><span>{`${props.daemon_version} at ${props.hostname}`}</span></Col>
-                <Col>
+            <Group className="statusbar" styles={{root: {"flex-wrap": "nowrap"}}}>
+                <div>
+                    <Icon.Diagram2 className="me-2" />
+                    <span>{`${props.daemon_version} at ${props.hostname}`}</span>
+                </div>
+                <div>
                     <Icon.ArrowDown className="me-2" />
-                    <span>{`${bytesToHumanReadableStr(props.down_rate)}/s (${byteRateToHumanReadableStr(props.down_rate_limit * 1024)})`}</span>
-                </Col>
-                <Col>
+                    <span>{`${bytesToHumanReadableStr(props.downRate)}/s (${byteRateToHumanReadableStr(props.downRateLimit * 1024)})`}</span>
+                </div>
+                <div>
                     <Icon.ArrowUp className="me-2" />
-                    <span>{`${bytesToHumanReadableStr(props.up_rate)}/s (${byteRateToHumanReadableStr(props.up_rate_limit * 1024)})`}</span>
-                </Col>
-                <Col>
+                    <span>{`${bytesToHumanReadableStr(props.upRate)}/s (${byteRateToHumanReadableStr(props.upRateLimit * 1024)})`}</span>
+                </div>
+                <div>
                     <Icon.Hdd className="me-2" />
                     <span>{`Free: ${bytesToHumanReadableStr(props.free)}`}</span>
-                </Col>
-                <Col>{`Total: ${bytesToHumanReadableStr(props.size_total)}`}</Col>
-                <Col sm={3}>{`Selected: ${bytesToHumanReadableStr(props.size_selected)}, done ${bytesToHumanReadableStr(props.size_done)}, left ${bytesToHumanReadableStr(props.size_left)}`}</Col>
-            </Row>
+                </div>
+                <div>
+                    {`Total: ${bytesToHumanReadableStr(props.sizeTotal)}`}
+                </div>
+                <div>
+                    {`Selected: ${bytesToHumanReadableStr(props.sizeSelected)}, done ${bytesToHumanReadableStr(props.sizeDone)}, left ${bytesToHumanReadableStr(props.sizeLeft)}`}
+                </div>
+            </Group>
         </Container>
     );
 }

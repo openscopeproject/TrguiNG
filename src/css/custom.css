@@ -65,10 +65,15 @@ html, body {
     width: 100%;
 }
 
+.statusbar {
+    flex-wrap: nowrap;
+}
+
 .statusbar>* {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex-shrink: 1;
 }
 
 .labels {

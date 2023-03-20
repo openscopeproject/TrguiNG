@@ -20,7 +20,6 @@ import "@szhsin/react-menu/dist/index.css";
 import 'css/torrenttable.css';
 import 'css/menus.css';
 import React, { memo, useCallback, useMemo } from 'react';
-import { Badge } from 'react-bootstrap';
 import { Torrent, TrackerStats } from 'rpc/torrent';
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentAllFieldsType, TorrentFieldsType } from 'rpc/transmission';
 import { ColumnDef } from '@tanstack/react-table';
@@ -29,6 +28,7 @@ import { ProgressBar } from '../progressbar';
 import { AccessorFn, CellContext } from '@tanstack/table-core';
 import { Table } from "./common";
 import { getTrackerAnnounceState } from "./trackertable";
+import { Badge } from "@mantine/core";
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -114,13 +114,13 @@ function TrackerStatusField(props: TableFieldProps) {
 
 function PriorityField(props: TableFieldProps) {
     const priority = props.torrent[props.fieldName];
-    return <Badge pill bg={PriorityColors.get(priority)!}>{PriorityStrings.get(priority)}</Badge>;
+    return <Badge radius="md" variant="filled" bg={PriorityColors.get(priority)!}>{PriorityStrings.get(priority)}</Badge>;
 }
 
 export function LabelsField(props: TableFieldProps) {
     const labels: string[] = props.torrent.labels;
     return <>
-        {labels.map((label) => <Badge key={label} bg="primary" className="torrent-label white-outline">{label}</Badge>)}
+        {labels.map((label) => <Badge key={label} radius="md" variant="filled" className="torrent-label white-outline">{label}</Badge>)}
     </>;
 }
 

@@ -127,19 +127,19 @@ export function Server(props: ServerProps) {
         return {
             daemon_version: session.version,
             hostname: props.clientManager.getHostname(serverConfig.name),
-            down_rate: filteredTorrents.reduce((p, t) => p + t.rateDownload, 0),
-            down_rate_limit: session["speed-limit-down-enabled"] ?
+            downRate: filteredTorrents.reduce((p, t) => p + t.rateDownload, 0),
+            downRateLimit: session["speed-limit-down-enabled"] ?
                 session["alt-speed-enabled"] ? session["alt-speed-down"] : session["speed-limit-down"]
                 : -1,
-            up_rate: filteredTorrents.reduce((p, t) => p + t.rateUpload, 0),
-            up_rate_limit: session["speed-limit-up-enabled"] ?
+            upRate: filteredTorrents.reduce((p, t) => p + t.rateUpload, 0),
+            upRateLimit: session["speed-limit-up-enabled"] ?
                 session["alt-speed-enabled"] ? session["alt-speed-up"] : session["speed-limit-up"]
                 : -1,
             free: session["download-dir-free-space"],
-            size_total: filteredTorrents.reduce((p, t) => p + t.sizeWhenDone, 0),
-            size_selected: selected.reduce((p, t) => p + t.sizeWhenDone, 0),
-            size_done: selected.reduce((p, t) => p + t.haveValid, 0),
-            size_left: selected.reduce((p, t) => p + t.leftUntilDone, 0),
+            sizeTotal: filteredTorrents.reduce((p, t) => p + t.sizeWhenDone, 0),
+            sizeSelected: selected.reduce((p, t) => p + t.sizeWhenDone, 0),
+            sizeDone: selected.reduce((p, t) => p + t.haveValid, 0),
+            sizeLeft: selected.reduce((p, t) => p + t.leftUntilDone, 0),
         }
     }, [serverConfig, session, filteredTorrents, selectedTorrents]);
 

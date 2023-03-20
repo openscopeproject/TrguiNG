@@ -27,8 +27,8 @@ export function CustomMantineProvider({ children }: { children: React.ReactNode 
                         Input: {
                             styles: {
                                 input: {
-                                    "min-height": "1rem",
-                                    "height": "1rem"
+                                    minHeight: "1rem",
+                                    height: "1rem"
                                 }
                             }
                         }

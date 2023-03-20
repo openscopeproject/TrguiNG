@@ -52,9 +52,9 @@ export const PriorityStrings = new Map<number, string>([
 ]);
 
 export const PriorityColors = new Map<number, string>([
-    [-1, "warning"],
-    [0, "success"],
-    [1, "danger"],
+    [-1, "yellow.6"],
+    [0, "teal"],
+    [1, "orange.7"],
 ]);
 
 export const TorrentFields = [

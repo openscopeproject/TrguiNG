@@ -17,7 +17,6 @@
  */
 
 import React, { useCallback, useContext, useMemo, useReducer } from "react";
-import { Badge } from "react-bootstrap";
 import { Row, ColumnDef, CellContext } from '@tanstack/react-table';
 import { CachedFileTree, DirEntry, FileDirEntry, isDirEntry } from "../../cachedfiletree";
 import { ServerConfigContext } from "../../config";
@@ -28,6 +27,7 @@ import * as Icon from "react-bootstrap-icons";
 import { Torrent } from "../../rpc/torrent";
 import { invoke } from '@tauri-apps/api/tauri'
 import { Table } from "./common";
+import { Badge } from "@mantine/core";
 
 
 type FileDirEntryKey = keyof FileDirEntry;
@@ -95,7 +95,7 @@ function PercentBarField(props: TableFieldProps) {
 
 function PriorityField(props: TableFieldProps) {
     const priority = props.entry.priority || 0;
-    return <Badge pill bg={PriorityColors.get(priority)!}>{PriorityStrings.get(priority)}</Badge>;
+    return <Badge radius="md" variant="filled" bg={PriorityColors.get(priority)!}>{PriorityStrings.get(priority)}</Badge>;
 }
 
 export function FileTreeTable(props: { torrent: Torrent }) {
