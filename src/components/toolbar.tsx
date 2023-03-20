@@ -16,12 +16,34 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { Button, Flex, MantineTheme, Menu, TextInput } from "@mantine/core";
 import { debounce } from "lodash-es";
-import React, { useCallback, useEffect, useMemo, useReducer, useState } from "react";
-import { ButtonToolbar, ButtonGroup, Button, FormControl, InputGroup, Dropdown } from "react-bootstrap";
+import React, { forwardRef, useCallback, useEffect, useMemo, useState } from "react";
 import * as Icon from "react-bootstrap-icons";
 import { ActionController } from "../actions";
-import "../css/toolbar.css";
+
+interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {
+    depressed?: boolean
+}
+
+const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
+    { children, depressed, ...other }: ToolbarButtonProps, ref
+) => {
+    return (
+        <Button variant="light" color="gray" compact h="2.5rem" {...other} ref={ref}
+            styles={(theme: MantineTheme) => ({
+                root: {
+                    backgroundColor: theme.colorScheme == "dark" ?
+                        theme.colors.gray[depressed ? 8 : 9]
+                        : theme.colors.gray[depressed ? 3 : 1],
+                    transform: depressed ? "scale(-1, 1)" : "none",
+                }
+            })}
+        >
+            {children}
+        </Button>
+    );
+});
 
 interface ToolbarProps {
     setSearchTerms: (terms: string[]) => void,
@@ -73,54 +95,52 @@ export function Toolbar(props: ToolbarProps) {
     }, [props.actionController, props.selectedTorrents]);
 
     return (
-        <ButtonToolbar className="main-toolbar">
-            <ButtonGroup className="me-2">
-                <Button variant="light" className="p-1"><Icon.FileArrowDownFill size={24} color="seagreen" /></Button>
-                <Button variant="light" className="p-1"><Icon.MagnetFill size={24} color="seagreen" /></Button>
-            </ButtonGroup>
-            <ButtonGroup className="me-2">
-                <Button variant="light" className="p-1"><Icon.PlayCircleFill size={24} color="steelblue" onClick={onResume} /></Button>
-                <Button variant="light" className="p-1"><Icon.PauseCircleFill size={24} color="steelblue" onClick={onPause} /></Button>
-                <Button variant="light" className="p-1"><Icon.XCircleFill size={24} color="tomato" /></Button>
-            </ButtonGroup>
-            <ButtonGroup className="me-2">
-                <Button variant="light" className="p-1"><Icon.ArrowUpCircleFill size={24} color="seagreen" /></Button>
-                <Button variant="light" className="p-1"><Icon.ArrowDownCircleFill size={24} color="seagreen" /></Button>
-            </ButtonGroup>
-            <ButtonGroup className="me-2">
-                <Button variant="light" className="p-1"><Icon.FolderFill size={24} color="gold" /></Button>
-                <Button variant="light" className="p-1">
-                    <Icon.TagsFill size={24} color="steelblue" onClick={() => props.setShowLabelsModal(true)} />
-                </Button>
-                <Dropdown>
-                    <Dropdown.Toggle variant="light">
-                        <Icon.ExclamationDiamondFill size={24} color="gold" />
-                    </Dropdown.Toggle>
+        <Flex w="100%" py="md" align="stretch">
+            <Button.Group mx="sm">
+                <ToolbarButton><Icon.FileArrowDownFill size="1.5rem" color="seagreen" /></ToolbarButton>
+                <ToolbarButton><Icon.MagnetFill size="1.5rem" color="seagreen" /></ToolbarButton>
+            </Button.Group>
+            <Button.Group mx="sm">
+                <ToolbarButton><Icon.PlayCircleFill size="1.5rem" color="steelblue" onClick={onResume} /></ToolbarButton>
+                <ToolbarButton><Icon.PauseCircleFill size="1.5rem" color="steelblue" onClick={onPause} /></ToolbarButton>
+                <ToolbarButton><Icon.XCircleFill size="1.5rem" color="tomato" /></ToolbarButton>
+            </Button.Group>
+            <Button.Group mx="sm">
+                <ToolbarButton><Icon.ArrowUpCircleFill size="1.5rem" color="seagreen" /></ToolbarButton>
+                <ToolbarButton><Icon.ArrowDownCircleFill size="1.5rem" color="seagreen" /></ToolbarButton>
+            </Button.Group>
+            <Button.Group mx="sm">
+                <ToolbarButton><Icon.FolderFill size="1.5rem" color="gold" /></ToolbarButton>
+                <ToolbarButton>
+                    <Icon.TagsFill size="1.5rem" color="steelblue" onClick={() => props.setShowLabelsModal(true)} />
+                </ToolbarButton>
+                <Menu shadow="md" width={200} withinPortal>
+                    <Menu.Target>
+                        <ToolbarButton><Icon.ExclamationDiamondFill size="1.5rem" color="gold" /></ToolbarButton>
+                    </Menu.Target>
 
-                    <Dropdown.Menu>
-                        <Dropdown.Item><Icon.CircleFill color="tomato" className="me-2" /><span>High</span></Dropdown.Item>
-                        <Dropdown.Item><Icon.CircleFill color="seagreen" className="me-2" /><span>Normal</span></Dropdown.Item>
-                        <Dropdown.Item><Icon.CircleFill color="gold" className="me-2" /><span>Low</span></Dropdown.Item>
-                    </Dropdown.Menu>
-                </Dropdown>
-            </ButtonGroup>
-            <Button
-                variant="light"
+                    <Menu.Dropdown>
+                        <Menu.Label>Set priority</Menu.Label>
+                        <Menu.Item icon={<Icon.CircleFill color="tomato" />}>High</Menu.Item>
+                        <Menu.Item icon={<Icon.CircleFill color="seagreen" />}>Normal</Menu.Item>
+                        <Menu.Item icon={<Icon.CircleFill color="gold" />}>Low</Menu.Item>
+                    </Menu.Dropdown>
+                </Menu>
+            </Button.Group>
+            <ToolbarButton
                 title={`Turn alternative bandwidth mode ${altSpeedMode ? "off" : "on"}`}
-                className={`me-2 p-1 ${altSpeedMode ? "alt" : ""}`}
                 onClick={toggleAltSpeedMode}
+                depressed={altSpeedMode}
             >
-                <Icon.Speedometer2 size={24} />
-            </Button>
-            <InputGroup className="flex-grow-1 me-2">
-                <InputGroup.Text><Icon.Search size={16} /></InputGroup.Text>
-                <FormControl
-                    type="text"
-                    placeholder="search"
-                    onInput={onSearchInput}
-                />
-            </InputGroup>
-            <Button variant="light" className="p-1"><Icon.Tools size={24} /></Button>
-        </ButtonToolbar >
+                <Icon.Speedometer2 size="1.5rem" />
+            </ToolbarButton>
+            <TextInput mx="sm" className="flex-grow-1"
+                icon={<Icon.Search size="1rem" />}
+                placeholder="search"
+                onInput={onSearchInput}
+                styles={{ input: { height: "auto" } }}
+            />
+            <ToolbarButton><Icon.Tools size="1.5rem" /></ToolbarButton>
+        </Flex >
     );
 }
