@@ -325,7 +325,7 @@ export function Details(props: DetailsProps) {
 
     return (
         <Tabs variant="outline" defaultValue="general" keepMounted={false} className="h-100 d-flex flex-column">
-            <Tabs.List>
+            <Tabs.List px="sm" pt="xs">
                 <Tabs.Tab value="general" disabled={torrent === undefined}>General</Tabs.Tab>
                 <Tabs.Tab value="files" disabled={torrent === undefined}>
                     {`Files${torrent ? ` (${torrent.files.length})` : ""}`}
@@ -335,8 +335,7 @@ export function Details(props: DetailsProps) {
                 </Tabs.Tab>
                 <Tabs.Tab value="peers" disabled={torrent === undefined}>Peers</Tabs.Tab>
                 <Tabs.Tab value="trackers" disabled={torrent === undefined}>Trackers</Tabs.Tab>
-                <div className="flex-grow-1" />
-                <Tabs.Tab value="serverstats">Server statistics</Tabs.Tab>
+                <Tabs.Tab value="serverstats" ml="auto">Server statistics</Tabs.Tab>
             </Tabs.List>
             <div className="flex-grow-1">
                 <Tabs.Panel value="general" className="h-100">

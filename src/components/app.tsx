@@ -24,10 +24,10 @@ import { Server } from '../components/server';
 import * as Icon from "react-bootstrap-icons";
 import { ManageServersModal } from './modals/settings';
 import { ClientManager } from '../clientmanager';
-import { ActionIcon, Menu, useMantineColorScheme } from '@mantine/core';
+import { ActionIcon, Menu, Tabs, TabsValue, useMantineColorScheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 
-interface TabsProps {
+interface ServerTabsProps {
     openTabs: string[],
     currentTab: number,
     servers: ServerConfig[],
@@ -37,7 +37,7 @@ interface TabsProps {
     onServersSave: (servers: ServerConfig[]) => void,
 }
 
-function Tabs(props: TabsProps) {
+function ServerTabs(props: ServerTabsProps) {
     const [showServerConfig, serverConfigHandlers] = useDisclosure(false);
     const unopenedTabs = useMemo(() => {
         return props.servers.filter((s) => !props.openTabs.includes(s.name)).map((s) => s.name);
@@ -46,54 +46,79 @@ function Tabs(props: TabsProps) {
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
     const dark = colorScheme === 'dark';
 
+    const onTabsChange = useCallback((value: TabsValue) => {
+        props.onTabSwitch(Number(value));
+    }, [props.onTabSwitch]);
+
     return (<>
         <ManageServersModal
             servers={props.servers} onSave={props.onServersSave}
             opened={showServerConfig} close={serverConfigHandlers.close} />
-        <div className="d-flex app-tab-row">
-            {props.openTabs.map((tab, index) =>
-                <div key={index} className={"d-flex flex-column justify-content-center app-tab " + (index == props.currentTab ? "active" : "")}>
-                    <div className="d-flex align-items-center">
-                        <div className="flex-grow-1" onClick={() => props.onTabSwitch(index)}>
-                            {tab}
-                        </div>
-                        <ActionIcon variant="subtle" onClick={() => props.onTabClose(index)}>
-                            <Icon.XLg size={16} />
-                        </ActionIcon>
-                    </div>
-                </div>
-            )}
-            {unopenedTabs.length > 0 ?
-                <Menu shadow="md" width={200} position="bottom-start">
-                    <Menu.Target>
-                        <ActionIcon variant="subtle" color="secondaryColorName">
-                            <Icon.PlusLg size={16} />
-                        </ActionIcon>
-                    </Menu.Target>
-
-                    <Menu.Dropdown>
-                        <Menu.Label>Connect</Menu.Label>
-                        {unopenedTabs.map((tab) =>
-                            <Menu.Item key={tab} onClick={() => props.onTabOpen(tab)}>{tab}</Menu.Item>)
+        <Tabs
+            variant="outline"
+            radius="lg"
+            value={props.currentTab >= 0 ? String(props.currentTab) : null}
+            onTabChange={onTabsChange}
+            styles={() => ({
+                tab: {
+                    minWidth: "12rem",
+                },
+                tabLabel: {
+                    marginInline: "auto"
+                },
+                tabRightSection: {
+                    padding: "0.2rem"
+                }
+            })}
+        >
+            <Tabs.List px="sm">
+                {props.openTabs.map((name, index) =>
+                    <Tabs.Tab
+                        key={index}
+                        value={String(index)}
+                        rightSection={
+                            <Icon.XLg size={16} onClick={(e) => {
+                                e.preventDefault();
+                                props.onTabClose(index);
+                            }} />
                         }
-                    </Menu.Dropdown>
-                </Menu>
-                : <></>}
-            <div className="w-100 flex-shrink-1" />
-            <ActionIcon
-                variant="default"
-                size="lg"
-                onClick={() => toggleColorScheme()}
-                title="Toggle color scheme"
-            >
-                {dark ?
-                    <Icon.Sun size="1.1rem" color="yellow" />
-                    : <Icon.MoonStars size="1.1rem" color="blue" />}
-            </ActionIcon>
-            <ActionIcon size="lg" variant="default" onClick={serverConfigHandlers.open}>
-                <Icon.GearFill size="1.1rem" />
-            </ActionIcon>
-        </div>
+                    >
+                        {name}
+                    </Tabs.Tab>
+                )}
+                {unopenedTabs.length > 0 ?
+                    <Menu shadow="md" width={200} position="bottom-start">
+                        <Menu.Target>
+                            <ActionIcon variant="subtle" color="secondaryColorName">
+                                <Icon.PlusLg size={16} />
+                            </ActionIcon>
+                        </Menu.Target>
+
+                        <Menu.Dropdown>
+                            <Menu.Label>Connect</Menu.Label>
+                            {unopenedTabs.map((tab) =>
+                                <Menu.Item key={tab} onClick={() => props.onTabOpen(tab)}>{tab}</Menu.Item>)
+                            }
+                        </Menu.Dropdown>
+                    </Menu>
+                    : <></>}
+                <ActionIcon
+                    variant="default"
+                    size="lg"
+                    onClick={() => toggleColorScheme()}
+                    title="Toggle color scheme"
+                    ml="auto"
+                    my="auto"
+                >
+                    {dark ?
+                        <Icon.Sun size="1.1rem" color="yellow" />
+                        : <Icon.MoonStars size="1.1rem" color="blue" />}
+                </ActionIcon>
+                <ActionIcon size="lg" variant="default" my="auto" onClick={serverConfigHandlers.open}>
+                    <Icon.GearFill size="1.1rem" />
+                </ActionIcon>
+            </Tabs.List>
+        </Tabs>
     </>);
 }
 
@@ -166,7 +191,7 @@ export function App({ }) {
 
     return (
         <div className="d-flex flex-column h-100 w-100">
-            <Tabs
+            <ServerTabs
                 openTabs={openTabs} onTabOpen={openTab} onTabClose={closeTab}
                 currentTab={currentTab} onTabSwitch={tabSwitch}
                 servers={servers} onServersSave={onServerSave} />

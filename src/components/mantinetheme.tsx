@@ -19,6 +19,16 @@ const Theme: (colorScheme: ColorScheme) => MantineThemeOverride = (colorScheme) 
                 }
             }
         },
+        Tabs: {
+            styles: (theme) => ({
+                tab: {
+                    borderColor: colorScheme == "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
+                    "&[data-active]": {
+                        borderColor: theme.colorScheme == "dark" ? theme.colors.dark[3] : theme.colors.gray[5],
+                    }
+                }
+            })
+        }
     },
     colors: {
         secondaryColorName: ['#dcfdff', '#b2f4fd', '#85ebf9', '#58e3f6', '#36d9f3', '#25c0d9', '#1696aa', '#066b7a', '#00404a', '#00171b']

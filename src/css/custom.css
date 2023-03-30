@@ -166,14 +166,6 @@ html, body {
     white-space: nowrap;
 }
 
-.app-tab-row {
-    background-color: #ddd;
-}
-
-.app-tab-row>* {
-    border-bottom: 1px solid gray;
-}
-
 .app-tab {
     background-color: #eee;
     white-space: nowrap;
@@ -185,9 +177,4 @@ html, body {
     padding-right: 0.5rem;
     border-top-left-radius: 1rem;
     border-top-right-radius: 1rem;
-}
-
-.app-tab-row .active {
-    background-color: white;
-    border-bottom: none;
 }
