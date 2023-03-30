@@ -22,9 +22,10 @@ import { ConfigContext, ServerConfig, ServerConfigContext } from '../config';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Server } from '../components/server';
 import * as Icon from "react-bootstrap-icons";
-import { ManageServersModal } from './modals';
+import { ManageServersModal } from './modals/settings';
 import { ClientManager } from '../clientmanager';
 import { ActionIcon, Menu, useMantineColorScheme } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 
 interface TabsProps {
     openTabs: string[],
@@ -37,7 +38,7 @@ interface TabsProps {
 }
 
 function Tabs(props: TabsProps) {
-    const [showServerConfig, setShowServerConfig] = useState(false);
+    const [showServerConfig, serverConfigHandlers] = useDisclosure(false);
     const unopenedTabs = useMemo(() => {
         return props.servers.filter((s) => !props.openTabs.includes(s.name)).map((s) => s.name);
     }, [props.servers, props.openTabs]);
@@ -48,7 +49,7 @@ function Tabs(props: TabsProps) {
     return (<>
         <ManageServersModal
             servers={props.servers} onSave={props.onServersSave}
-            show={showServerConfig} setShow={setShowServerConfig} />
+            opened={showServerConfig} close={serverConfigHandlers.close} />
         <div className="d-flex app-tab-row">
             {props.openTabs.map((tab, index) =>
                 <div key={index} className={"d-flex flex-column justify-content-center app-tab " + (index == props.currentTab ? "active" : "")}>
@@ -89,7 +90,7 @@ function Tabs(props: TabsProps) {
                     <Icon.Sun size="1.1rem" color="yellow" />
                     : <Icon.MoonStars size="1.1rem" color="blue" />}
             </ActionIcon>
-            <ActionIcon size="lg" variant="default" onClick={() => setShowServerConfig(true)}>
+            <ActionIcon size="lg" variant="default" onClick={serverConfigHandlers.open}>
                 <Icon.GearFill size="1.1rem" />
             </ActionIcon>
         </div>

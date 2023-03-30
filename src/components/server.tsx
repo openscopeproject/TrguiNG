@@ -27,23 +27,27 @@ import '../css/custom.css';
 import { Toolbar } from "./toolbar";
 import { Statusbar, StatusbarProps } from "./statusbar";
 import { ActionController } from "../actions";
-import { EditLabelsModal } from "./modals";
+import { EditLabelsModal } from "./modals/editlabels";
 import { ClientManager } from "../clientmanager";
 import { ServerConfigContext } from "../config";
+import { useDisclosure } from "@mantine/hooks";
 
 interface ServerProps {
     clientManager: ClientManager,
 }
 
-function usePausingModalState(runUpdates: (run: boolean) => void): [boolean, (b: boolean) => void] {
-    const [show, setShow] = useState(false);
+function usePausingModalState(runUpdates: (run: boolean) => void): [boolean, () => void, () => void] {
+    const [opened, {open, close}] = useDisclosure(false);
 
     const setShowWrapped = useCallback((show: boolean) => {
         runUpdates(!show);
-        setShow(show);
-    }, [runUpdates, setShow]);
+        if(show)
+            open();
+        else
+            close();
+    }, [runUpdates, open, close]);
 
-    return [show, setShowWrapped];
+    return [opened, open, close];
 }
 
 function selectedTorrentsReducer(selected: Set<number>, action: { verb: string, ids: string[] }) {
@@ -143,7 +147,7 @@ export function Server(props: ServerProps) {
         }
     }, [serverConfig, session, filteredTorrents, selectedTorrents]);
 
-    const [showLabelsModal, setShowLabelsModal] = usePausingModalState(runUpdates);
+    const [showLabelsModal, openLabelsModal, closeLabelsModal] = usePausingModalState(runUpdates);
 
     const allLabels = useMemo(() => {
         var labels = new Set<string>();
@@ -167,14 +171,14 @@ export function Server(props: ServerProps) {
     return (<>
         <EditLabelsModal
             allLabels={allLabels} labels={selectedLabels}
-            show={showLabelsModal} setShow={setShowLabelsModal} onSave={setLabels} />
+            opened={showLabelsModal} close={closeLabelsModal} onSave={setLabels} />
         <div className="d-flex flex-column h-100 w-100">
             <div className="border-bottom border-dark p-2">
                 <Toolbar
                     setSearchTerms={setSearchTerms}
                     actionController={actionController}
                     altSpeedMode={session["alt-speed-enabled"]}
-                    setShowLabelsModal={setShowLabelsModal}
+                    setShowLabelsModal={openLabelsModal}
                     selectedTorrents={selectedTorrents}
                 />
             </div>
