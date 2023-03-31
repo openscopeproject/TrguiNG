@@ -144,13 +144,13 @@ export function FileTreeTable(props: { torrent: Torrent }) {
      }, [fileTree, forceRender]);
 
     const onRowDoubleClick = useCallback((row: FileDirEntry) => {
-        let path = `${props.torrent.downloadDir}/${props.torrent.name}/${row.fullpath}`;
+        let path = `${props.torrent.downloadDir}/${row.originalpath}`;
         for (let mapping of serverConfig.pathMappings) {
             if (mapping.from.length > 0 && path.startsWith(mapping.from)) {
                 path = mapping.to + path.substring(mapping.from.length);
             }
         }
-        invoke('shell_open', { path }).catch(console.error);
+        invoke('shell_open', { path }).catch((e) => console.error("Error opening", path, e));
     }, [props.torrent]);
 
     return <Table<FileDirEntry> {...{
