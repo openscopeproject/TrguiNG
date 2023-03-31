@@ -29,19 +29,21 @@ import { Statusbar, StatusbarProps } from "./statusbar";
 import { ActionController } from "../actions";
 import { EditLabelsModal } from "./modals/editlabels";
 import { ClientManager } from "../clientmanager";
-import { ServerConfigContext } from "../config";
+import { ConfigContext, ServerConfigContext } from "../config";
 import { useDisclosure } from "@mantine/hooks";
+import { Box, CSSObject, useMantineColorScheme, useMantineTheme } from "@mantine/core";
+import { useForceRender } from "util";
 
 interface ServerProps {
     clientManager: ClientManager,
 }
 
 function usePausingModalState(runUpdates: (run: boolean) => void): [boolean, () => void, () => void] {
-    const [opened, {open, close}] = useDisclosure(false);
+    const [opened, { open, close }] = useDisclosure(false);
 
     const setShowWrapped = useCallback((show: boolean) => {
         runUpdates(!show);
-        if(show)
+        if (show)
             open();
         else
             close();
@@ -67,6 +69,49 @@ function selectedTorrentsReducer(selected: Set<number>, action: { verb: string, 
     return selected;
 }
 
+function SplitLayout({ left, right, bottom }: { left: React.ReactNode, right: React.ReactNode, bottom: React.ReactNode }) {
+    const config = useContext(ConfigContext);
+
+    const onVerticalDragEnd = useCallback((sizes: [number, number]) => {
+        config.values.app.sashSizes.vertical = sizes;
+    }, [config]);
+    const onHorizontalDragEnd = useCallback((sizes: [number, number]) => {
+        config.values.app.sashSizes.horizontal = sizes;
+    }, [config]);
+
+    return (
+        <Box sx={(theme): CSSObject => ({
+            flexGrow: 1,
+            "& .gutter": {
+                backgroundColor: theme.colorScheme == "dark" ? theme.colors.gray[7] : theme.colors.gray[3],
+            }
+        })
+        } >
+            <Split
+                direction="vertical"
+                sizes={config.values.app.sashSizes.vertical}
+                snapOffset={0}
+                gutterSize={6}
+                className="split-vertical"
+                onDragEnd={onVerticalDragEnd}
+            >
+                <Split
+                    direction="horizontal"
+                    sizes={config.values.app.sashSizes.horizontal}
+                    snapOffset={0}
+                    gutterSize={6}
+                    className="split-horizontal"
+                    onDragEnd={onHorizontalDragEnd}
+                >
+                    {left}
+                    {right}
+                </Split>
+                {bottom}
+            </Split>
+        </ Box>
+    );
+}
+
 export function Server(props: ServerProps) {
     const serverConfig = useContext(ServerConfigContext);
     const [torrents, setTorrents] = useState<Torrent[]>([]);
@@ -83,7 +128,7 @@ export function Server(props: ServerProps) {
     useEffect(() => {
         setTorrents(props.clientManager.servers[serverConfig.name].torrents);
         setSession(props.clientManager.servers[serverConfig.name].session);
-    }, [serverConfig, props.clientManager] );
+    }, [serverConfig, props.clientManager]);
 
     useEffect(() => {
         props.clientManager.onTorrentsChange = setTorrents;
@@ -182,39 +227,29 @@ export function Server(props: ServerProps) {
                     selectedTorrents={selectedTorrents}
                 />
             </div>
-            <div className="flex-grow-1">
-                <Split
-                    direction="vertical"
-                    sizes={[70, 30]}
-                    gutterSize={8}
-                    snapOffset={0}
-                    className="split-vertical"
-                >
-                    <Split
-                        direction="horizontal"
-                        sizes={[20, 80]}
-                        gutterSize={8}
-                        snapOffset={0}
-                        className="split-horizontal"
-                    >
-                        <div className="scrollable">
-                            <Filters
-                                torrents={torrents}
-                                allLabels={allLabels}
-                                currentFilter={currentFilter}
-                                setCurrentFilter={setCurrentFilter} />
-                        </div>
-                        <TorrentTable
-                            torrents={filteredTorrents}
-                            setCurrentTorrent={setCurrentTorrent}
-                            selectedTorrents={selectedTorrents}
-                            selectedReducer={selectedReducer} />
-                    </Split>
+            <SplitLayout
+                left={
+                    <div className="scrollable">
+                        <Filters
+                            torrents={torrents}
+                            allLabels={allLabels}
+                            currentFilter={currentFilter}
+                            setCurrentFilter={setCurrentFilter} />
+                    </div>
+                }
+                right={
+                    <TorrentTable
+                        torrents={filteredTorrents}
+                        setCurrentTorrent={setCurrentTorrent}
+                        selectedTorrents={selectedTorrents}
+                        selectedReducer={selectedReducer} />
+                }
+                bottom={
                     <div className="w-100">
                         <Details torrentId={currentTorrent} {...props} />
                     </div>
-                </Split>
-            </div>
+                }
+            />
             <div className="border-top border-dark py-1">
                 <Statusbar {...statusbarProps} />
             </div>

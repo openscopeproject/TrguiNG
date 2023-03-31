@@ -19,7 +19,7 @@
 import * as fs from "@tauri-apps/api/fs";
 import React from "react";
 import { merge } from "lodash-es";
-import { SortingState, ColumnSizingState, ColumnOrderState, VisibilityState } from "@tanstack/react-table";
+import { SortingState, ColumnSizingState, VisibilityState } from "@tanstack/react-table";
 
 export interface ServerConnection {
     url: string,
@@ -56,11 +56,19 @@ interface TableSettings {
 const TableNames = ["torrents", "filetree", "trackers", "peers"] as const;
 export type TableName = typeof TableNames[number];
 
+const Sashes = ["vertical", "horizontal"] as const;
+export type SashName = typeof Sashes[number];
+
 interface Settings {
     servers: ServerConfig[],
     openTabs: string[],
     app: {
-        tables: Record<TableName, TableSettings>
+        tables: Record<TableName, TableSettings>,
+        sashSizes: Record<SashName, [number, number]>,
+        window: {
+            size: [number, number],
+            position: [number, number] | undefined,
+        }
     }
 }
 
@@ -74,6 +82,14 @@ const DefaultSettings: Settings = {
             columnSizes: {},
             sortBy: [],
         }])) as unknown as Record<TableName, TableSettings>,
+        sashSizes: {
+            vertical: [70, 30],
+            horizontal: [20, 80],
+        },
+        window: {
+            size: [1024, 800],
+            position: undefined,
+        },
     }
 }
 

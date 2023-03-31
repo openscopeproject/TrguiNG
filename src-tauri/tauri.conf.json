@@ -71,7 +71,9 @@
       },
       "window": {
         "setTitle": true,
-        "close": true
+        "close": true,
+        "setSize": true,
+        "setPosition": true
       }
     },
     "windows": [

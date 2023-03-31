@@ -17,7 +17,7 @@
  */
 
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { appWindow } from '@tauri-apps/api/window';
+import { appWindow, PhysicalPosition, PhysicalSize } from '@tauri-apps/api/window';
 
 import { Config, ConfigContext } from './config';
 import { createRoot } from 'react-dom/client';
@@ -27,19 +27,30 @@ import { App } from './components/app';
 import { CustomMantineProvider } from 'components/mantinetheme';
 
 
-function run(config: Config) {
+async function run(config: Config) {
     var eventListener = new EventListener();
     eventListener.add("app-arg", (payload) => console.log(`Got app-arg: ${payload}`));
     eventListener.finalize();
     var appnode = document.getElementById("app")!;
     const app = createRoot(appnode);
 
-    appWindow.listen('tauri://close-requested', (event) => {
+    appWindow.onCloseRequested(async (event) => {
         app.unmount();
-        config.save().then(() => {
-            appWindow.close();
-        });
+        await config.save();
     });
+
+    appWindow.onResized(({ payload: size }) => {
+        config.values.app.window.size = [size.width, size.height];
+    });
+    appWindow.onMoved(({ payload: size }) => {
+        config.values.app.window.position = [size.x, size.y];
+    });
+
+    await appWindow.setSize(new PhysicalSize(...config.values.app.window.size));
+    if(config.values.app.window.position !== undefined)
+        await appWindow.setPosition(new PhysicalPosition(...config.values.app.window.position));
+    else
+        await appWindow.center();
 
     app.render(
         <React.StrictMode>

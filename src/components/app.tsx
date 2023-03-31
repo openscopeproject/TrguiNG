@@ -89,7 +89,7 @@ function ServerTabs(props: ServerTabsProps) {
                 {unopenedTabs.length > 0 ?
                     <Menu shadow="md" width={200} position="bottom-start">
                         <Menu.Target>
-                            <ActionIcon variant="subtle" color="secondaryColorName">
+                            <ActionIcon variant="subtle" color="secondaryColorName" my="auto">
                                 <Icon.PlusLg size={16} />
                             </ActionIcon>
                         </Menu.Target>
