@@ -31,8 +31,7 @@ import { EditLabelsModal } from "./modals/editlabels";
 import { ClientManager } from "../clientmanager";
 import { ConfigContext, ServerConfigContext } from "../config";
 import { useDisclosure } from "@mantine/hooks";
-import { Box, CSSObject, useMantineColorScheme, useMantineTheme } from "@mantine/core";
-import { useForceRender } from "util";
+import { Box, CSSObject } from "@mantine/core";
 
 interface ServerProps {
     clientManager: ClientManager,
@@ -41,15 +40,17 @@ interface ServerProps {
 function usePausingModalState(runUpdates: (run: boolean) => void): [boolean, () => void, () => void] {
     const [opened, { open, close }] = useDisclosure(false);
 
-    const setShowWrapped = useCallback((show: boolean) => {
-        runUpdates(!show);
-        if (show)
-            open();
-        else
-            close();
-    }, [runUpdates, open, close]);
+    const pauseOpen = useCallback(() => {
+        runUpdates(false);
+        open();
+    }, [runUpdates, open]);
 
-    return [opened, open, close];
+    const closeResume = useCallback(() => {
+        close();
+        runUpdates(true);
+    }, [runUpdates, open]);
+
+    return [opened, pauseOpen, closeResume];
 }
 
 function selectedTorrentsReducer(selected: Set<number>, action: { verb: string, ids: string[] }) {
