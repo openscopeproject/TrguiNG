@@ -20,6 +20,7 @@ import * as fs from "@tauri-apps/api/fs";
 import React from "react";
 import { merge } from "lodash-es";
 import { SortingState, ColumnSizingState, VisibilityState } from "@tanstack/react-table";
+import { ColorScheme } from "@mantine/core";
 
 export interface ServerConnection {
     url: string,
@@ -68,6 +69,7 @@ interface Settings {
         window: {
             size: [number, number],
             position: [number, number] | undefined,
+            theme: ColorScheme | undefined,
         }
     }
 }
@@ -89,6 +91,7 @@ const DefaultSettings: Settings = {
         window: {
             size: [1024, 800],
             position: undefined,
+            theme: undefined,
         },
     }
 }

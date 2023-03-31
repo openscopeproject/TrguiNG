@@ -1,6 +1,7 @@
 import { ColorScheme, ColorSchemeProvider, MantineProvider, MantineThemeOverride } from "@mantine/core";
 import { useColorScheme } from "@mantine/hooks";
-import React from "react";
+import { ConfigContext } from "config";
+import React, { useCallback, useContext } from "react";
 import { useState } from "react";
 
 const Theme: (colorScheme: ColorScheme) => MantineThemeOverride = (colorScheme) => ({
@@ -43,10 +44,17 @@ const Theme: (colorScheme: ColorScheme) => MantineThemeOverride = (colorScheme) 
 });
 
 export function CustomMantineProvider({ children }: { children: React.ReactNode }) {
+    const config = useContext(ConfigContext);
+
     const preferredColorScheme = useColorScheme();
-    const [colorScheme, setColorScheme] = useState<ColorScheme>(preferredColorScheme);
-    const toggleColorScheme = (value?: ColorScheme) =>
-        setColorScheme(value || (colorScheme === 'dark' ? 'light' : 'dark'));
+    const [colorScheme, setColorScheme] = useState<ColorScheme>(
+        config.values.app.window.theme || preferredColorScheme);
+
+    const toggleColorScheme = useCallback((value?: ColorScheme) => {
+        value = value || (colorScheme === 'dark' ? 'light' : 'dark');
+        config.values.app.window.theme = value;
+        setColorScheme(value);
+    }, [config, colorScheme]);
 
     return (
         <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
