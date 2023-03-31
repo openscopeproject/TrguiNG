@@ -164,16 +164,3 @@ html, body {
     overflow: hidden;
     white-space: nowrap;
 }
-
-.app-tab {
-    background-color: #eee;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    text-align: center;
-    width: 12rem;
-    flex-shrink: 1;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-    border-top-left-radius: 1rem;
-    border-top-right-radius: 1rem;
-}

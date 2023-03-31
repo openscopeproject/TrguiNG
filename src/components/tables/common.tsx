@@ -1,3 +1,4 @@
+import { Box } from "@mantine/core";
 import { ClickEvent, ControlledMenu, MenuItem } from "@szhsin/react-menu";
 import { useReactTable, Table, ColumnDef, ColumnSizingState, SortingState, VisibilityState, getCoreRowModel, getSortedRowModel, flexRender, Row, Header, Column } from "@tanstack/react-table";
 import { useVirtualizer, Virtualizer } from "@tanstack/react-virtual";
@@ -258,7 +259,11 @@ export function Table<TData extends SelectableRow>(props: {
         <div ref={parentRef} className="torrent-table-container">
             <div className="torrent-table"
                 style={{ height: `${virtualizer.getTotalSize()}px`, width: `${table.getTotalSize()}px` }}>
-                <div className="sticky-top bg-light" style={{ height: `${rowHeight}px` }}>
+                <Box sx={(theme) => ({
+                    height: `${rowHeight}px`,
+                    backgroundColor: theme.colorScheme == "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
+                    zIndex: 3,
+                })}>
                     {table.getHeaderGroups().map(headerGroup => (
                         <div className="tr" key={headerGroup.id}
                             onContextMenu={menuContextHandler}
@@ -294,7 +299,7 @@ export function Table<TData extends SelectableRow>(props: {
                             ))}
                         </div>
                     ))}
-                </div>
+                </Box>
 
                 <div>
                     {virtualizer.getVirtualItems().map((virtualRow) => {
