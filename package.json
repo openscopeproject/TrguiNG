@@ -35,7 +35,6 @@
     "@mantine/modals": "^6.0.2",
     "@mantine/notifications": "^6.0.2",
     "@popperjs/core": "^2.11.6",
-    "@szhsin/react-menu": "^3.5.2",
     "@tanstack/react-table": "^8.7.9",
     "@tanstack/react-virtual": "^3.0.0-beta.54",
     "@tauri-apps/api": "^1.2.0",

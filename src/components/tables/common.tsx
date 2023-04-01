@@ -1,7 +1,8 @@
-import { Box } from "@mantine/core";
-import { ClickEvent, ControlledMenu, MenuItem } from "@szhsin/react-menu";
+import { Box, Menu } from "@mantine/core";
+import * as Icon from "react-bootstrap-icons";
 import { useReactTable, Table, ColumnDef, ColumnSizingState, SortingState, VisibilityState, getCoreRowModel, getSortedRowModel, flexRender, Row, Header, Column } from "@tanstack/react-table";
 import { useVirtualizer, Virtualizer } from "@tanstack/react-virtual";
+import { ContextMenu, useContextMenu } from "components/contextmenu";
 import { ConfigContext, TableName } from "config";
 import React, { memo, useReducer } from "react";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -126,41 +127,31 @@ function useColumnMenu<TData>(
     setColumnVisibility: (v: VisibilityState) => void,
     columns: Column<TData, unknown>[]
 ): [React.MouseEventHandler<HTMLDivElement>, React.ReactElement] {
-    const [isColumnMenuOpen, setColumnMenuOpen] = useState(false);
-    const [columnMenuAnchorPoint, setColumnMenuAnchorPoint] = useState({ x: 0, y: 0 });
 
-    const onColumnMenuItemClick = useCallback((event: ClickEvent) => {
-        event.keepOpen = true;
-        setColumnVisibility({ ...columnVisibility, [event.value!]: event.checked });
+    const [info, setInfo, handler] = useContextMenu();
+
+    const onColumnMenuItemClick = useCallback((value: string, checked: boolean) => {
+        setColumnVisibility({ ...columnVisibility, [value]: checked });
     }, [columnVisibility]);
 
-    const onContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        setColumnMenuAnchorPoint({ x: e.clientX, y: e.clientY });
-        setColumnMenuOpen(true);
-    }, [setColumnMenuAnchorPoint, setColumnMenuOpen]);
-
     return [
-        onContextMenu,
-        <ControlledMenu
-            anchorPoint={columnMenuAnchorPoint}
-            state={isColumnMenuOpen ? 'open' : 'closed'}
-            direction="right"
-            onClose={() => setColumnMenuOpen(false)}
-            onItemClick={onColumnMenuItemClick}
-            overflow="auto"
-            portal={true}
+        handler,
+        <ContextMenu
+            contextMenuInfo={info}
+            setContextMenuInfo={setInfo}
+            position="bottom-start"
+            closeOnItemClick={false}
+            withinPortal
         >
             {columns.map(column =>
-                <MenuItem key={column.id}
-                    type="checkbox"
-                    checked={columnVisibility[column.id] !== false}
-                    value={column.id}
+                <Menu.Item key={column.id}
+                    icon={columnVisibility[column.id] !== false ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                    onClick={() => { onColumnMenuItemClick(column.id, columnVisibility[column.id] === false) }}
                 >
                     {column.columnDef.header! as string}
-                </MenuItem>
+                </Menu.Item >
             )}
-        </ControlledMenu>
+        </ContextMenu >
     ];
 }
 

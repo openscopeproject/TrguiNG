@@ -16,7 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "@szhsin/react-menu/dist/index.css";
 import 'css/torrenttable.css';
 import 'css/menus.css';
 import React, { memo, useCallback, useMemo } from 'react';
