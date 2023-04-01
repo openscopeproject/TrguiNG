@@ -1,3 +1,4 @@
 node_modules
 dist
 .vscode
+webpack-report.html
