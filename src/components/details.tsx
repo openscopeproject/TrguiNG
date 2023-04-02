@@ -28,7 +28,7 @@ import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./t
 import { TrackersTable } from "./tables/trackertable";
 import { PeersTable } from "./tables/peerstable";
 import { SessionStatEntry, SessionStatistics } from "rpc/transmission";
-import { Box, Container, Flex, Group, MantineTheme, Table, Tabs, TextInput } from "@mantine/core";
+import { Box, Container, Flex, Group, MantineTheme, ScrollArea, Table, Tabs, TextInput } from "@mantine/core";
 
 interface DetailsProps {
     torrentId?: number;
@@ -39,12 +39,12 @@ function DownloadBar(props: { torrent: Torrent }) {
     // temporarily just a progress bar
     const percent = props.torrent.status == 2 ? props.torrent.recheckProgress : props.torrent.percentDone;
     const now = Math.round(percent * 1000);
-    const nowStr = `${Math.floor(now / 10.0)}.${now % 10}%`;
+    const prefix = props.torrent.status == 2 ? "Verified" : "Downloaded";
+    const nowStr = `${prefix}: ${now / 10}%`;
     return (
-        <Flex direction="row" w="100%" my="0.5rem">
-            <Box mr="1rem">{props.torrent.status == 2 ? "Verified:" : "Downloaded:"}</Box>
-            <ProgressBar now={now} max={1000} label={nowStr} className="flex-grow-1" />
-        </Flex>
+        <Box w="100%" my="0.5rem">
+            <ProgressBar now={now} max={1000} label={nowStr} />
+        </Box>
     );
 }
 
