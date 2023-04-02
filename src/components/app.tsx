@@ -78,6 +78,7 @@ function ServerTabs(props: ServerTabsProps) {
                         value={String(index)}
                         rightSection={
                             <Icon.XLg size={16} onClick={(e) => {
+                                e.stopPropagation();
                                 e.preventDefault();
                                 props.onTabClose(index);
                             }} />

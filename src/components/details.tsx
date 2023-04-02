@@ -28,7 +28,8 @@ import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./t
 import { TrackersTable } from "./tables/trackertable";
 import { PeersTable } from "./tables/peerstable";
 import { SessionStatEntry, SessionStatistics } from "rpc/transmission";
-import { Box, Container, Flex, Group, MantineTheme, ScrollArea, Table, Tabs, TextInput } from "@mantine/core";
+import { Box, Container, Group, MantineTheme, Table, Tabs, TextInput } from "@mantine/core";
+import * as Icon from "react-bootstrap-icons";
 
 interface DetailsProps {
     torrentId?: number;
@@ -326,16 +327,42 @@ export function Details(props: DetailsProps) {
     return (
         <Tabs variant="outline" defaultValue="general" keepMounted={false} className="h-100 d-flex flex-column">
             <Tabs.List px="sm" pt="xs">
-                <Tabs.Tab value="general" disabled={torrent === undefined}>General</Tabs.Tab>
+                <Tabs.Tab value="general" disabled={torrent === undefined}>
+                    <Group>
+                        <Icon.InfoCircleFill size={16} />
+                        General
+                    </Group>
+                </Tabs.Tab>
                 <Tabs.Tab value="files" disabled={torrent === undefined}>
-                    {`Files${torrent ? ` (${torrent.files.length})` : ""}`}
+                    <Group>
+                        <Icon.Files size={16} />
+                        {`Files${torrent ? ` (${torrent.files.length})` : ""}`}
+                    </Group>
                 </Tabs.Tab>
                 <Tabs.Tab value="pieces" disabled={torrent === undefined}>
-                    {`Pieces${torrent ? ` (${torrent.pieceCount})` : ""}`}
+                    <Group>
+                        <Icon.Grid3x2 size={16} />
+                        {`Pieces${torrent ? ` (${torrent.pieceCount})` : ""}`}
+                    </Group>
                 </Tabs.Tab>
-                <Tabs.Tab value="peers" disabled={torrent === undefined}>Peers</Tabs.Tab>
-                <Tabs.Tab value="trackers" disabled={torrent === undefined}>Trackers</Tabs.Tab>
-                <Tabs.Tab value="serverstats" ml="auto">Server statistics</Tabs.Tab>
+                <Tabs.Tab value="peers" disabled={torrent === undefined}>
+                    <Group>
+                        <Icon.PeopleFill size={16} />
+                        Peers
+                    </Group>
+                </Tabs.Tab>
+                <Tabs.Tab value="trackers" disabled={torrent === undefined}>
+                    <Group>
+                        <Icon.Wifi size={16} />
+                        Trackers
+                    </Group>
+                </Tabs.Tab>
+                <Tabs.Tab value="serverstats" ml="auto">
+                    <Group>
+                        <Icon.ArrowDownUp size={16} />
+                        Server statistics
+                    </Group>
+                </Tabs.Tab>
             </Tabs.List>
             <div className="flex-grow-1">
                 <Tabs.Panel value="general" className="h-100">
