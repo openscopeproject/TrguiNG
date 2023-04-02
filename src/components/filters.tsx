@@ -23,6 +23,7 @@ import { Status } from '../rpc/transmission';
 import * as Icon from "react-bootstrap-icons";
 import { useForceRender } from '../util';
 import { ConfigContext, ServerConfigContext } from '../config';
+import { Divider } from '@mantine/core';
 
 export interface TorrentFilter {
     id: string;
@@ -245,18 +246,18 @@ export function Filters(props: FiltersProps) {
 
     return (
         <div className='w-100 filter-container'>
-            <div className="strike"><span>Status</span></div>
+            <Divider mx="sm" label="Status" labelPosition="center" />
             {allFilters.statusFilters.map((f) =>
                 <FilterRow key={`status-${f.label}`} id={`status-${f.label}`}
                     filter={f} {...props} />)}
-            <div className="strike"><span>Directories</span></div>
+            <Divider mx="sm" mt="md" label="Directories" labelPosition="center" />
             {paths.length > 0 ?
                 dirs.map((d) =>
                     <DirFilterRow key={`dir-${d.path}`} id={`dir-${d.path}`}
                         dir={d} forceRender={forceRender} {...props} />
                 ) : <></>
             }
-            <div className="strike"><span>Labels</span></div>
+            <Divider mx="sm" mt="md" label="Labels" labelPosition="center" />
             {allFilters.labelFilters.map((f) =>
                 <FilterRow key={`labels-${f.label}`} id={`labels-${f.label}`}
                     filter={f} {...props} />)}
