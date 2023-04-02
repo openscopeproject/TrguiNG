@@ -139,9 +139,7 @@ function useColumnMenu<TData>(
         <ContextMenu
             contextMenuInfo={info}
             setContextMenuInfo={setInfo}
-            position="bottom-start"
             closeOnItemClick={false}
-            withinPortal
         >
             {columns.map(column =>
                 <Menu.Item key={column.id}

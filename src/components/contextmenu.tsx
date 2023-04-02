@@ -1,4 +1,4 @@
-import { Button, Menu, MenuProps, ScrollArea } from "@mantine/core";
+import { Button, Menu, MenuProps, Portal, ScrollArea } from "@mantine/core";
 import React, { useCallback, useEffect, useState } from "react";
 
 interface ContextMenuInfo {
@@ -13,12 +13,7 @@ export function useContextMenu():
 
     const contextMenuHandler = useCallback<React.MouseEventHandler<HTMLElement>>((e) => {
         e.preventDefault();
-        let bbox = (e.target as HTMLElement).getBoundingClientRect();
-        setInfo({
-            x: e.clientX - bbox.left,
-            y: e.clientY - bbox.top,
-            opened: true
-        });
+        setInfo({ x: e.clientX, y: e.clientY, opened: true });
     }, [setInfo]);
 
     return [info, setInfo, contextMenuHandler];
@@ -46,34 +41,36 @@ export function ContextMenu({ contextMenuInfo, setContextMenuInfo, children, ...
             middlewares={{ shift: true, flip: false }}
             position="right-start"
         >
-            <Menu.Target>
-                <Button unstyled
-                    sx={{
-                        position: "absolute",
-                        width: 0,
-                        height: 0,
-                        padding: 0,
-                        border: 0,
-                    }}
-                    style={{
-                        left: contextMenuInfo.x,
-                        top: contextMenuInfo.y,
-                    }} />
-            </Menu.Target>
-            <Menu.Dropdown>
-                <ScrollArea.Autosize
-                    type="auto"
-                    mah={`calc(${window.visualViewport!.height}px - 0.5rem)`}
-                    offsetScrollbars
-                    styles={{
-                        viewport: {
-                            paddingBottom: 0
-                        }
-                    }}
-                >
-                    {children}
-                </ScrollArea.Autosize>
-            </Menu.Dropdown>
+            <Portal>
+                <Menu.Target>
+                    <Button unstyled
+                        sx={{
+                            position: "absolute",
+                            width: 0,
+                            height: 0,
+                            padding: 0,
+                            border: 0,
+                        }}
+                        style={{
+                            left: contextMenuInfo.x,
+                            top: contextMenuInfo.y,
+                        }} />
+                </Menu.Target>
+                <Menu.Dropdown>
+                    <ScrollArea.Autosize
+                        type="auto"
+                        mah={`calc(${window.visualViewport!.height}px - 0.5rem)`}
+                        offsetScrollbars
+                        styles={{
+                            viewport: {
+                                paddingBottom: 0
+                            }
+                        }}
+                    >
+                        {children}
+                    </ScrollArea.Autosize>
+                </Menu.Dropdown>
+            </Portal>
         </Menu>
     );
 }
