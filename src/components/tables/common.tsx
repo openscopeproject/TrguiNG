@@ -266,14 +266,15 @@ export function Table<TData extends SelectableRow>(props: {
                                     style: {
                                         width: header.getSize(),
                                     },
-                                    onClick: header.column.getToggleSortingHandler(),
                                     className: "th"
                                 }}>
-                                    <span>{header.column.getIsSorted() ? header.column.getIsSorted() == "desc" ? '▼ ' : '▲ ' : ''}</span>
-                                    {flexRender(
-                                        header.column.columnDef.header,
-                                        header.getContext()
-                                    )}
+                                    <div onClick={header.column.getToggleSortingHandler()}>
+                                        <span>{header.column.getIsSorted() ? header.column.getIsSorted() == "desc" ? '▼ ' : '▲ ' : ''}</span>
+                                        {flexRender(
+                                            header.column.columnDef.header,
+                                            header.getContext()
+                                        )}
+                                    </div>
                                     <div {...{
                                         onMouseDown: header.getResizeHandler(),
                                         onTouchStart: header.getResizeHandler(),
@@ -309,7 +310,7 @@ export function Table<TData extends SelectableRow>(props: {
                         }} />;
                     })}
                 </div>
-            </div>
+            </div >
         </div >
     );
 }
