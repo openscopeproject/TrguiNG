@@ -17,7 +17,6 @@
  */
 
 import 'css/torrenttable.css';
-import 'css/menus.css';
 import React, { memo, useCallback, useMemo } from 'react';
 import { Torrent, TrackerStats } from 'rpc/torrent';
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentAllFieldsType, TorrentFieldsType } from 'rpc/transmission';

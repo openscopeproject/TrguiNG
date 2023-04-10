@@ -17,12 +17,11 @@
  */
 
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import '../css/filters.css';
 import { getTorrentError, Torrent } from '../rpc/torrent';
 import { Status } from '../rpc/transmission';
 import * as Icon from "react-bootstrap-icons";
 import { useForceRender } from '../util';
-import { ConfigContext, ServerConfigContext } from '../config';
+import { ServerConfigContext } from '../config';
 import { Divider } from '@mantine/core';
 
 export interface TorrentFilter {

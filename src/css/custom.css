@@ -79,3 +79,10 @@ html, body {
     overflow: hidden;
     white-space: nowrap;
 }
+
+.filters>* {
+    border-width: 0px 0px 1px 0px;
+    border-style: solid;
+    border-color: #999;
+    cursor: pointer;
+}
