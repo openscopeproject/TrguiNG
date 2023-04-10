@@ -39,19 +39,23 @@ export const StatusStrings = [
     "Seeding",
 ] as const;
 
-export const Priority = {
+const PriorityNumbers = [ -1, 0, 1] as const;
+
+export type PriorityNumberType = typeof PriorityNumbers[number];
+
+export const BandwidthPriority = {
     low: -1,
     normal: 0,
     high: 1,
 } as const;
 
-export const PriorityStrings = new Map<number, string>([
+export const PriorityStrings = new Map<PriorityNumberType, string>([
     [-1, "Low"],
     [0, "Normal"],
     [1, "High"],
 ]);
 
-export const PriorityColors = new Map<number, string>([
+export const PriorityColors = new Map<PriorityNumberType, string>([
     [-1, "yellow.6"],
     [0, "teal"],
     [1, "orange.7"],

@@ -47,6 +47,10 @@ const TorrentActionMethods = [
     "torrent-stop",
     "torrent-verify",
     "torrent-reannounce",
+    "queue-move-top",
+    "queue-move-bottom",
+    "queue-move-up",
+    "queue-move-down",
 ] as const;
 
 export type TorrentActionMethodsType = typeof TorrentActionMethods[number];
@@ -208,4 +212,33 @@ export class TransmissionClient {
 
         await this.sendRpc(request);
     }
+
+    async torrentDelete(torrentIds: number[], deleteLocalData: boolean) {
+        var request = {
+            method: "torrent-remove",
+            arguments: { ids: torrentIds, "delete-local-data": deleteLocalData },
+        }
+
+        await this.sendRpc(request);
+    }
+
+    /**
+     * Moves torrent(s)
+     * @param torrentIds id's of torrents to move
+     * @param location the new torrent location
+     * @param move if true, move from previous location. otherwise, search "location" for files
+     */
+    async torrentMove(torrentIds: number[], location: string, move: boolean) {
+        var request = {
+            method: "torrent-remove",
+            arguments: {
+                ids: torrentIds,
+                location,
+                move
+            },
+        }
+
+        await this.sendRpc(request);
+    }
+
 }

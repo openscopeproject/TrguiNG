@@ -20,7 +20,8 @@ import { Button, Flex, MantineTheme, Menu, TextInput } from "@mantine/core";
 import { debounce } from "lodash-es";
 import React, { forwardRef, useCallback, useEffect, useMemo, useState } from "react";
 import * as Icon from "react-bootstrap-icons";
-import { ActionController } from "../actions";
+import { ActionController, ActionMethodsType } from "../actions";
+import { BandwidthPriority, PriorityNumberType } from "rpc/transmission";
 
 interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {
     depressed?: boolean
@@ -53,6 +54,22 @@ interface ToolbarProps {
     selectedTorrents: Set<number>,
 }
 
+function simpleActionHandler(action: ActionMethodsType, props: ToolbarProps) {
+    return useCallback(() => {
+        props.actionController.run(action, Array.from(props.selectedTorrents)).catch((e) => {
+            console.log("Error for action", action, e);
+        });
+    }, [props.actionController, props.selectedTorrents]);
+}
+
+function priorityHandler(priority: PriorityNumberType, props: ToolbarProps) {
+    return useCallback(() => {
+        props.actionController.run("setPriority", Array.from(props.selectedTorrents), priority).catch((e) => {
+            console.log("Error setting priority", e);
+        });
+    }, [props.actionController, props.selectedTorrents]);
+}
+
 export function Toolbar(props: ToolbarProps) {
     const debouncedSetSearchTerms = useMemo(
         () => debounce(props.setSearchTerms, 500, { trailing: true, leading: false }),
@@ -82,18 +99,6 @@ export function Toolbar(props: ToolbarProps) {
                 .filter((s) => s != ""));
     }, [debouncedSetSearchTerms]);
 
-    const onResume = useCallback(() => {
-        props.actionController.run("resumeTorrents", Array.from(props.selectedTorrents)).catch((e) => {
-            console.log("Can't resume torrents", e);
-        });
-    }, [props.actionController, props.selectedTorrents]);
-
-    const onPause = useCallback(() => {
-        props.actionController.run("pauseTorrents", Array.from(props.selectedTorrents)).catch((e) => {
-            console.log("Can't resume torrents", e);
-        });
-    }, [props.actionController, props.selectedTorrents]);
-
     return (
         <Flex w="100%" py="md" align="stretch">
             <Button.Group mx="sm">
@@ -101,13 +106,27 @@ export function Toolbar(props: ToolbarProps) {
                 <ToolbarButton><Icon.MagnetFill size="1.5rem" color="seagreen" /></ToolbarButton>
             </Button.Group>
             <Button.Group mx="sm">
-                <ToolbarButton><Icon.PlayCircleFill size="1.5rem" color="steelblue" onClick={onResume} /></ToolbarButton>
-                <ToolbarButton><Icon.PauseCircleFill size="1.5rem" color="steelblue" onClick={onPause} /></ToolbarButton>
-                <ToolbarButton><Icon.XCircleFill size="1.5rem" color="tomato" /></ToolbarButton>
+                <ToolbarButton>
+                    <Icon.PlayCircleFill size="1.5rem" color="steelblue"
+                        onClick={simpleActionHandler("resume", props)} />
+                </ToolbarButton>
+                <ToolbarButton>
+                    <Icon.PauseCircleFill size="1.5rem" color="steelblue"
+                        onClick={simpleActionHandler("pause", props)} />
+                </ToolbarButton>
+                <ToolbarButton>
+                    <Icon.XCircleFill size="1.5rem" color="tomato" />
+                </ToolbarButton>
             </Button.Group>
             <Button.Group mx="sm">
-                <ToolbarButton><Icon.ArrowUpCircleFill size="1.5rem" color="seagreen" /></ToolbarButton>
-                <ToolbarButton><Icon.ArrowDownCircleFill size="1.5rem" color="seagreen" /></ToolbarButton>
+                <ToolbarButton>
+                    <Icon.ArrowUpCircleFill size="1.5rem" color="seagreen"
+                        onClick={simpleActionHandler("moveQueueUp", props)} />
+                </ToolbarButton>
+                <ToolbarButton>
+                    <Icon.ArrowDownCircleFill size="1.5rem" color="seagreen"
+                        onClick={simpleActionHandler("moveQueueDown", props)} />
+                </ToolbarButton>
             </Button.Group>
             <Button.Group mx="sm">
                 <ToolbarButton><Icon.FolderFill size="1.5rem" color="gold" /></ToolbarButton>
@@ -121,9 +140,18 @@ export function Toolbar(props: ToolbarProps) {
 
                     <Menu.Dropdown>
                         <Menu.Label>Set priority</Menu.Label>
-                        <Menu.Item icon={<Icon.CircleFill color="tomato" />}>High</Menu.Item>
-                        <Menu.Item icon={<Icon.CircleFill color="seagreen" />}>Normal</Menu.Item>
-                        <Menu.Item icon={<Icon.CircleFill color="gold" />}>Low</Menu.Item>
+                        <Menu.Item icon={<Icon.CircleFill color="tomato" />}
+                            onClick={priorityHandler(BandwidthPriority.high, props)}>
+                            High
+                        </Menu.Item>
+                        <Menu.Item icon={<Icon.CircleFill color="seagreen" />}
+                            onClick={priorityHandler(BandwidthPriority.normal, props)}>
+                            Normal
+                        </Menu.Item>
+                        <Menu.Item icon={<Icon.CircleFill color="gold" />}
+                            onClick={priorityHandler(BandwidthPriority.low, props)}>
+                            Low
+                        </Menu.Item>
                     </Menu.Dropdown>
                 </Menu>
             </Button.Group>

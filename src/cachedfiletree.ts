@@ -18,6 +18,7 @@
 
 import { SelectableRow } from "components/tables/common";
 import { Torrent } from "./rpc/torrent";
+import { PriorityNumberType } from "rpc/transmission";
 
 interface Entry extends SelectableRow {
     name: string,
@@ -32,12 +33,12 @@ interface Entry extends SelectableRow {
 
 export interface FileEntry extends Entry {
     want: boolean,
-    priority: number,
+    priority: PriorityNumberType,
 }
 
 export interface DirEntry extends Entry {
     want?: boolean,
-    priority?: number,
+    priority?: PriorityNumberType,
     subdirs: Map<string, DirEntry>,
     files: Map<string, FileEntry>,
     expanded: boolean,
@@ -92,7 +93,7 @@ export class CachedFileTree {
         var size = 0;
         var done = 0;
         var want: Set<boolean | undefined> = new Set();
-        var priority: Set<number | undefined> = new Set();
+        var priority: Set<PriorityNumberType | undefined> = new Set();
 
         const update = (e: FileDirEntry) => {
             size += e.size;

@@ -16,16 +16,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { BandwidthPriority, PriorityNumberType } from "rpc/transmission";
 import { TorrentActionMethodsType, TransmissionClient } from "./rpc/client";
 
 const ActionMethods = [
-    "setAltSpeedMode",
+    "resume",
+    "pause",
+    "delete",
+    "moveQueueUp",
+    "moveQueueDown",
+    "changeDirectory",
     "setLabels",
-    "resumeTorrents",
-    "pauseTorrents",
+    "setPriority",
+    "setAltSpeedMode",
+    "verify",
+    "reannounce",
 ] as const;
 
-type ActionMethodsType = typeof ActionMethods[number];
+export type ActionMethodsType = typeof ActionMethods[number];
 
 interface Action {
     name: ActionMethodsType,
@@ -33,7 +41,7 @@ interface Action {
     defaultShortcut: string,
 }
 
-function makeTorrentAction(name: ActionMethodsType, method: TorrentActionMethodsType, shortcut: string): Action {
+function mapSimpleAction(name: ActionMethodsType, method: TorrentActionMethodsType, shortcut: string): Action {
     return {
         name,
         method: async (ac: ActionController, torrentIds: number[]) => {
@@ -43,7 +51,25 @@ function makeTorrentAction(name: ActionMethodsType, method: TorrentActionMethods
     }
 }
 
-const actions: Action[] = [
+const Actions: Action[] = [
+    mapSimpleAction("resume", "torrent-start", ""),
+    mapSimpleAction("pause", "torrent-stop", ""),
+    {
+        name: "delete",
+        method: async (ac: ActionController, torrentIds: number[], deleteLocalData: boolean) => {
+            await ac.client.torrentDelete(torrentIds, deleteLocalData);
+        },
+        defaultShortcut: "",
+    },
+    mapSimpleAction("moveQueueUp", "queue-move-up", ""),
+    mapSimpleAction("moveQueueDown", "queue-move-down", ""),
+    {
+        name: "changeDirectory",
+        method: async (ac: ActionController, torrentIds: number[], location: string, move: boolean) => {
+            await ac.client.torrentMove(torrentIds, location, move);
+        },
+        defaultShortcut: "",
+    },
     {
         name: "setAltSpeedMode",
         method: async (ac: ActionController, altMode: boolean) => {
@@ -58,8 +84,15 @@ const actions: Action[] = [
         },
         defaultShortcut: "",
     },
-    makeTorrentAction("resumeTorrents", "torrent-start", ""),
-    makeTorrentAction("pauseTorrents", "torrent-stop", ""),
+    {
+        name: "setPriority",
+        method: async (ac: ActionController, torrentIds: number[], priority: PriorityNumberType) => {
+            await ac.client.setTorrents(torrentIds, { bandwidthPriority: priority });
+        },
+        defaultShortcut: "",
+    },
+    mapSimpleAction("verify", "torrent-verify", ""),
+    mapSimpleAction("reannounce", "torrent-reannounce", ""),
 ];
 
 export class ActionController {
@@ -69,7 +102,7 @@ export class ActionController {
     constructor(client: TransmissionClient) {
         this.client = client;
         this.methodMap = {};
-        for (var action of actions) {
+        for (var action of Actions) {
             this.methodMap[action.name] = action.method;
             //TODO shortcuts
         }
