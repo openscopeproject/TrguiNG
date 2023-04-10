@@ -50,24 +50,22 @@ interface ToolbarProps {
     setSearchTerms: (terms: string[]) => void,
     actionController: ActionController,
     altSpeedMode: boolean,
-    setShowLabelsModal: (show: boolean) => void,
-    selectedTorrents: Set<number>,
 }
 
 function simpleActionHandler(action: ActionMethodsType, props: ToolbarProps) {
     return useCallback(() => {
-        props.actionController.run(action, Array.from(props.selectedTorrents)).catch((e) => {
+        props.actionController.run(action).catch((e) => {
             console.log("Error for action", action, e);
         });
-    }, [props.actionController, props.selectedTorrents]);
+    }, [props.actionController]);
 }
 
 function priorityHandler(priority: PriorityNumberType, props: ToolbarProps) {
     return useCallback(() => {
-        props.actionController.run("setPriority", Array.from(props.selectedTorrents), priority).catch((e) => {
+        props.actionController.run("setPriority", priority).catch((e) => {
             console.log("Error setting priority", e);
         });
-    }, [props.actionController, props.selectedTorrents]);
+    }, [props.actionController]);
 }
 
 export function Toolbar(props: ToolbarProps) {
@@ -105,34 +103,34 @@ export function Toolbar(props: ToolbarProps) {
                 <ToolbarButton><Icon.FileArrowDownFill size="1.5rem" color="seagreen" /></ToolbarButton>
                 <ToolbarButton><Icon.MagnetFill size="1.5rem" color="seagreen" /></ToolbarButton>
             </Button.Group>
+
             <Button.Group mx="sm">
-                <ToolbarButton>
-                    <Icon.PlayCircleFill size="1.5rem" color="steelblue"
-                        onClick={simpleActionHandler("resume", props)} />
+                <ToolbarButton onClick={simpleActionHandler("resume", props)} >
+                    <Icon.PlayCircleFill size="1.5rem" color="steelblue" />
                 </ToolbarButton>
-                <ToolbarButton>
-                    <Icon.PauseCircleFill size="1.5rem" color="steelblue"
-                        onClick={simpleActionHandler("pause", props)} />
+                <ToolbarButton onClick={simpleActionHandler("pause", props)} >
+                    <Icon.PauseCircleFill size="1.5rem" color="steelblue" />
                 </ToolbarButton>
-                <ToolbarButton>
+                <ToolbarButton onClick={() => props.actionController.showModal("remove")}>
                     <Icon.XCircleFill size="1.5rem" color="tomato" />
                 </ToolbarButton>
             </Button.Group>
+
             <Button.Group mx="sm">
-                <ToolbarButton>
-                    <Icon.ArrowUpCircleFill size="1.5rem" color="seagreen"
-                        onClick={simpleActionHandler("moveQueueUp", props)} />
+                <ToolbarButton onClick={simpleActionHandler("moveQueueUp", props)} >
+                    <Icon.ArrowUpCircleFill size="1.5rem" color="seagreen" />
                 </ToolbarButton>
-                <ToolbarButton>
-                    <Icon.ArrowDownCircleFill size="1.5rem" color="seagreen"
-                        onClick={simpleActionHandler("moveQueueDown", props)} />
+                <ToolbarButton onClick={simpleActionHandler("moveQueueDown", props)} >
+                    <Icon.ArrowDownCircleFill size="1.5rem" color="seagreen" />
                 </ToolbarButton>
             </Button.Group>
+
             <Button.Group mx="sm">
                 <ToolbarButton><Icon.FolderFill size="1.5rem" color="gold" /></ToolbarButton>
-                <ToolbarButton>
-                    <Icon.TagsFill size="1.5rem" color="steelblue" onClick={() => props.setShowLabelsModal(true)} />
+                <ToolbarButton onClick={() => props.actionController.showModal("setLabels")} >
+                    <Icon.TagsFill size="1.5rem" color="steelblue" />
                 </ToolbarButton>
+
                 <Menu shadow="md" width={200} withinPortal>
                     <Menu.Target>
                         <ToolbarButton><Icon.ExclamationDiamondFill size="1.5rem" color="gold" /></ToolbarButton>
@@ -155,6 +153,7 @@ export function Toolbar(props: ToolbarProps) {
                     </Menu.Dropdown>
                 </Menu>
             </Button.Group>
+
             <ToolbarButton
                 title={`Turn alternative bandwidth mode ${altSpeedMode ? "off" : "on"}`}
                 onClick={toggleAltSpeedMode}
@@ -162,12 +161,14 @@ export function Toolbar(props: ToolbarProps) {
             >
                 <Icon.Speedometer2 size="1.5rem" />
             </ToolbarButton>
+
             <TextInput mx="sm" className="flex-grow-1"
                 icon={<Icon.Search size="1rem" />}
                 placeholder="search"
                 onInput={onSearchInput}
                 styles={{ input: { height: "auto" } }}
             />
+
             <ToolbarButton><Icon.Tools size="1.5rem" /></ToolbarButton>
         </Flex >
     );

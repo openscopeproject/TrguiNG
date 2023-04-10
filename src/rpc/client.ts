@@ -213,7 +213,7 @@ export class TransmissionClient {
         await this.sendRpc(request);
     }
 
-    async torrentDelete(torrentIds: number[], deleteLocalData: boolean) {
+    async torrentRemove(torrentIds: number[], deleteLocalData: boolean) {
         var request = {
             method: "torrent-remove",
             arguments: { ids: torrentIds, "delete-local-data": deleteLocalData },

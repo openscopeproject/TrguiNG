@@ -16,22 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { Box, CSSObject } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import Split from "react-split";
-import { SessionInfo } from "../rpc/client";
-import { Details } from "./details";
-import { DefaultFilter, Filters } from "./filters";
-import { TorrentTable } from "./tables/torrenttable";
-import { Torrent } from "../rpc/torrent";
-import '../css/custom.css';
-import { Toolbar } from "./toolbar";
-import { Statusbar, StatusbarProps } from "./statusbar";
 import { ActionController } from "../actions";
-import { EditLabelsModal } from "./modals/editlabels";
 import { ClientManager } from "../clientmanager";
 import { ConfigContext, ServerConfigContext } from "../config";
-import { useDisclosure } from "@mantine/hooks";
-import { Box, CSSObject } from "@mantine/core";
+import '../css/custom.css';
+import { SessionInfo } from "../rpc/client";
+import { Torrent } from "../rpc/torrent";
+import { Details } from "./details";
+import { DefaultFilter, Filters } from "./filters";
+import { EditLabelsModal } from "./modals/editlabels";
+import { Statusbar, StatusbarProps } from "./statusbar";
+import { TorrentTable } from "./tables/torrenttable";
+import { Toolbar } from "./toolbar";
+import { RemoveModal } from "./modals/remove";
 
 interface ServerProps {
     clientManager: ClientManager,
@@ -113,10 +114,53 @@ function SplitLayout({ left, right, bottom }: { left: React.ReactNode, right: Re
     );
 }
 
+interface ServerModalsProps {
+    actionController: ActionController,
+    filteredTorrents: Torrent[],
+    selectedTorrents: Set<number>,
+    allLabels: string[],
+    runUpdates: (run: boolean) => void
+}
+
+function ServerModals(props: ServerModalsProps) {
+    const selectedLabels = useMemo(() => {
+        const selected = props.filteredTorrents.filter((t) => props.selectedTorrents.has(t.id));
+        var labels: string[] = [];
+        selected.forEach((t) => t.labels.forEach((l: string) => {
+            if (!labels.includes(l)) labels.push(l);
+        }));
+        return labels;
+    }, [props.filteredTorrents, props.selectedTorrents]);
+
+    const [showLabelsModal, openLabelsModal, closeLabelsModal] = usePausingModalState(props.runUpdates);
+    const [showRemoveModal, openRemoveModal, closeRemoveModal] = usePausingModalState(props.runUpdates);
+
+    useEffect(() => {
+        props.actionController.setModalCallbacks({
+            setLabels: openLabelsModal,
+            remove: openRemoveModal,
+        })
+    }, [props.actionController, openLabelsModal]);
+
+    return <>
+        <EditLabelsModal
+            actionController={props.actionController}
+            allLabels={props.allLabels} labels={selectedLabels}
+            opened={showLabelsModal} close={closeLabelsModal} />
+        <RemoveModal
+            actioController={props.actionController}
+            opened={showRemoveModal} close={closeRemoveModal} />
+    </>;
+}
+
 export function Server(props: ServerProps) {
     const serverConfig = useContext(ServerConfigContext);
     const [torrents, setTorrents] = useState<Torrent[]>([]);
     const [session, setSession] = useState<SessionInfo>({});
+
+    const actionController = useMemo(
+        () => new ActionController(props.clientManager.getClient(serverConfig.name)),
+        [props.clientManager, serverConfig]);
 
     const runUpdates = useCallback((run: boolean) => {
         if (run) {
@@ -147,10 +191,6 @@ export function Server(props: ServerProps) {
         [setCurrentTorrentInt]);
     const [currentFilter, setCurrentFilter] = useState({ id: "", filter: DefaultFilter });
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
-    const actionController = useMemo(
-        () => new ActionController(props.clientManager.getClient(serverConfig.name)),
-        [props.clientManager, serverConfig]);
-
     const searchFilter = useCallback((t: Torrent) => {
         const name = t.name.toLowerCase();
         for (var term of searchTerms)
@@ -162,6 +202,8 @@ export function Server(props: ServerProps) {
         (selected: Set<number>, action: { verb: string, ids: string[] }) =>
             selectedTorrentsReducer(selected, action), []),
         new Set<number>());
+
+    useEffect(() => actionController.setSelected(selectedTorrents), [actionController, selectedTorrents]);
 
     const filteredTorrents = useMemo(
         () => {
@@ -193,39 +235,20 @@ export function Server(props: ServerProps) {
         }
     }, [serverConfig, session, filteredTorrents, selectedTorrents]);
 
-    const [showLabelsModal, openLabelsModal, closeLabelsModal] = usePausingModalState(runUpdates);
-
     const allLabels = useMemo(() => {
         var labels = new Set<string>();
         torrents.forEach((t) => t.labels.forEach((l: string) => labels.add(l)));
         return Array.from(labels).sort();
     }, [torrents]);
 
-    const selectedLabels = useMemo(() => {
-        const selected = filteredTorrents.filter((t) => selectedTorrents.has(t.id));
-        var labels: string[] = [];
-        selected.forEach((t) => t.labels.forEach((l: string) => {
-            if (!labels.includes(l)) labels.push(l);
-        }));
-        return labels;
-    }, [filteredTorrents, selectedTorrents]);
-
-    const setLabels = useCallback((labels: string[]) => {
-        actionController.run("setLabels", Array.from(selectedTorrents), labels).catch(console.log);
-    }, [selectedTorrents, actionController]);
-
     return (<>
-        <EditLabelsModal
-            allLabels={allLabels} labels={selectedLabels}
-            opened={showLabelsModal} close={closeLabelsModal} onSave={setLabels} />
+        <ServerModals {...{ actionController, filteredTorrents, selectedTorrents, runUpdates, allLabels }} />
         <div className="d-flex flex-column h-100 w-100">
             <div className="border-bottom border-dark p-2">
                 <Toolbar
                     setSearchTerms={setSearchTerms}
                     actionController={actionController}
                     altSpeedMode={session["alt-speed-enabled"]}
-                    setShowLabelsModal={openLabelsModal}
-                    selectedTorrents={selectedTorrents}
                 />
             </div>
             <SplitLayout

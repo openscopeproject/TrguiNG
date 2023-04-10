@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { BandwidthPriority, PriorityNumberType } from "rpc/transmission";
+import { PriorityNumberType } from "rpc/transmission";
 import { TorrentActionMethodsType, TransmissionClient } from "./rpc/client";
 
 const ActionMethods = [
     "resume",
     "pause",
-    "delete",
+    "remove",
     "moveQueueUp",
     "moveQueueDown",
     "changeDirectory",
@@ -55,9 +55,10 @@ const Actions: Action[] = [
     mapSimpleAction("resume", "torrent-start", ""),
     mapSimpleAction("pause", "torrent-stop", ""),
     {
-        name: "delete",
-        method: async (ac: ActionController, torrentIds: number[], deleteLocalData: boolean) => {
-            await ac.client.torrentDelete(torrentIds, deleteLocalData);
+        name: "remove",
+        method: async (ac: ActionController, deleteLocalData: boolean) => {
+            const torrentIds = Array.from(ac.selectedTorrents);
+            await ac.client.torrentRemove(torrentIds, deleteLocalData);
         },
         defaultShortcut: "",
     },
@@ -65,7 +66,8 @@ const Actions: Action[] = [
     mapSimpleAction("moveQueueDown", "queue-move-down", ""),
     {
         name: "changeDirectory",
-        method: async (ac: ActionController, torrentIds: number[], location: string, move: boolean) => {
+        method: async (ac: ActionController, location: string, move: boolean) => {
+            const torrentIds = Array.from(ac.selectedTorrents);
             await ac.client.torrentMove(torrentIds, location, move);
         },
         defaultShortcut: "",
@@ -79,14 +81,16 @@ const Actions: Action[] = [
     },
     {
         name: "setLabels",
-        method: async (ac: ActionController, torrentIds: number[], labels: string[]) => {
+        method: async (ac: ActionController, labels: string[]) => {
+            const torrentIds = Array.from(ac.selectedTorrents);
             await ac.client.setTorrents(torrentIds, { labels: labels });
         },
         defaultShortcut: "",
     },
     {
         name: "setPriority",
-        method: async (ac: ActionController, torrentIds: number[], priority: PriorityNumberType) => {
+        method: async (ac: ActionController, priority: PriorityNumberType) => {
+            const torrentIds = Array.from(ac.selectedTorrents);
             await ac.client.setTorrents(torrentIds, { bandwidthPriority: priority });
         },
         defaultShortcut: "",
@@ -95,9 +99,18 @@ const Actions: Action[] = [
     mapSimpleAction("reannounce", "torrent-reannounce", ""),
 ];
 
+interface ModalCallbacks {
+    setLabels: () => void,
+    remove: () => void,
+}
+
+export type ActionModalCallback = keyof ModalCallbacks;
+
 export class ActionController {
     client: TransmissionClient;
     methodMap: Record<string, (ac: ActionController, ...args: any[]) => Promise<void>>;
+    modalCallbacks: ModalCallbacks | undefined;
+    selectedTorrents: Set<number>;
 
     constructor(client: TransmissionClient) {
         this.client = client;
@@ -106,6 +119,7 @@ export class ActionController {
             this.methodMap[action.name] = action.method;
             //TODO shortcuts
         }
+        this.selectedTorrents = new Set();
     }
 
     async run(method: ActionMethodsType, ...args: any[]) {
@@ -115,4 +129,15 @@ export class ActionController {
             await this.methodMap[method](this, ...args);
     }
 
+    setSelected(selected: Set<number>) {
+        this.selectedTorrents = selected;
+    }
+
+    setModalCallbacks(callbacks: ModalCallbacks) {
+        this.modalCallbacks = callbacks;
+    }
+
+    showModal(modal: ActionModalCallback) {
+        this.modalCallbacks?.[modal]();
+    }
 }

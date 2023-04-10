@@ -19,6 +19,7 @@
 import { Badge, CloseButton, MultiSelect, MultiSelectValueProps } from "@mantine/core";
 import { ModalState, SaveCancelModal } from "./common";
 import React, { useCallback, useEffect, useState } from "react";
+import { ActionController } from "actions";
 
 function Label({
     label,
@@ -49,7 +50,7 @@ function Label({
 interface EditLabelsProps extends ModalState {
     allLabels: string[],
     labels: string[],
-    onSave: (labels: string[]) => void,
+    actionController: ActionController,
 }
 
 export function EditLabelsModal(props: EditLabelsProps) {
@@ -60,7 +61,7 @@ export function EditLabelsModal(props: EditLabelsProps) {
     }, [props.labels]);
 
     const onSave = useCallback(() => {
-        props.onSave(labels);
+        props.actionController.run("setLabels", labels).catch(console.log);
         props.close();
     }, [props, labels]);
 
