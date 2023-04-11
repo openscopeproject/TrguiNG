@@ -33,6 +33,7 @@ import { Statusbar, StatusbarProps } from "./statusbar";
 import { TorrentTable } from "./tables/torrenttable";
 import { Toolbar } from "./toolbar";
 import { RemoveModal } from "./modals/remove";
+import { MoveModal } from "./modals/move";
 
 interface ServerProps {
     clientManager: ClientManager,
@@ -123,33 +124,29 @@ interface ServerModalsProps {
 }
 
 function ServerModals(props: ServerModalsProps) {
-    const selectedLabels = useMemo(() => {
-        const selected = props.filteredTorrents.filter((t) => props.selectedTorrents.has(t.id));
-        var labels: string[] = [];
-        selected.forEach((t) => t.labels.forEach((l: string) => {
-            if (!labels.includes(l)) labels.push(l);
-        }));
-        return labels;
-    }, [props.filteredTorrents, props.selectedTorrents]);
-
     const [showLabelsModal, openLabelsModal, closeLabelsModal] = usePausingModalState(props.runUpdates);
     const [showRemoveModal, openRemoveModal, closeRemoveModal] = usePausingModalState(props.runUpdates);
+    const [showMoveModal, openMoveModal, closeMoveModal] = usePausingModalState(props.runUpdates);
 
     useEffect(() => {
         props.actionController.setModalCallbacks({
             setLabels: openLabelsModal,
             remove: openRemoveModal,
-        })
-    }, [props.actionController, openLabelsModal]);
+            move: openMoveModal,
+        });
+    }, [props.actionController, openLabelsModal, openRemoveModal, openMoveModal]);
 
     return <>
         <EditLabelsModal
             actionController={props.actionController}
-            allLabels={props.allLabels} labels={selectedLabels}
-            opened={showLabelsModal} close={closeLabelsModal} />
+            opened={showLabelsModal} close={closeLabelsModal}
+            allLabels={props.allLabels} />
         <RemoveModal
-            actioController={props.actionController}
+            actionController={props.actionController}
             opened={showRemoveModal} close={closeRemoveModal} />
+        <MoveModal
+            actionController={props.actionController}
+            opened={showMoveModal} close={closeMoveModal} />
     </>;
 }
 
@@ -213,6 +210,8 @@ export function Server(props: ServerProps) {
             return filtered;
         },
         [torrents, currentFilter, searchFilter]);
+
+    useEffect(() => actionController.setTorrents(filteredTorrents), [actionController, filteredTorrents]);
 
     const statusbarProps = useMemo<StatusbarProps>(() => {
         const selected = filteredTorrents.filter((t) => selectedTorrents.has(t.id));

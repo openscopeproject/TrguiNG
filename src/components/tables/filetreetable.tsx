@@ -21,7 +21,7 @@ import { Row, ColumnDef, CellContext } from '@tanstack/react-table';
 import { CachedFileTree, DirEntry, FileDirEntry, isDirEntry } from "../../cachedfiletree";
 import { ServerConfigContext } from "../../config";
 import { PriorityColors, PriorityStrings } from "../../rpc/transmission";
-import { bytesToHumanReadableStr } from "../../util";
+import { bytesToHumanReadableStr, pathMapFromServer } from "../../util";
 import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
 import { Torrent } from "../../rpc/torrent";
@@ -145,11 +145,7 @@ export function FileTreeTable(props: { torrent: Torrent }) {
 
     const onRowDoubleClick = useCallback((row: FileDirEntry) => {
         let path = `${props.torrent.downloadDir}/${row.originalpath}`;
-        for (let mapping of serverConfig.pathMappings) {
-            if (mapping.from.length > 0 && path.startsWith(mapping.from)) {
-                path = mapping.to + path.substring(mapping.from.length);
-            }
-        }
+        path = pathMapFromServer(path, serverConfig);
         invoke('shell_open', { path }).catch((e) => console.error("Error opening", path, e));
     }, [props.torrent]);
 

@@ -16,26 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Button, Checkbox, Divider, Group, Modal } from "@mantine/core";
-import { ModalState } from "./common";
+import { Button, Checkbox, Divider, Group, Modal, Text } from "@mantine/core";
+import { ActionModalState, TorrentsNames } from "./common";
 import React, { useCallback, useState } from "react";
-import { ActionController } from "actions";
 
-interface DeleteModalProps extends ModalState {
-    actioController: ActionController
-}
-
-export function RemoveModal(props: DeleteModalProps) {
+export function RemoveModal(props: ActionModalState) {
     const [deleteData, setDeleteData] = useState<boolean>(false);
 
     const onDelete = useCallback(() => {
-        props.actioController.run("remove", deleteData).catch(console.log);
+        props.actionController.run("remove", deleteData).catch(console.log);
         props.close();
-    }, [props.actioController, deleteData]);
+    }, [props.actionController, deleteData]);
 
     return (
-        <Modal opened={props.opened} onClose={props.close} title="Remove torrents" centered>
+        <Modal opened={props.opened} onClose={props.close} title="Remove torrents" centered size="lg">
             <Divider my="sm" />
+            <Text mb="md">Are you sure you want to remove following torrents?</Text>
+            <TorrentsNames actionController={props.actionController} />
             <Checkbox
                 label="Delete torrent data"
                 checked={deleteData}

@@ -18,6 +18,7 @@
 
 import { PriorityNumberType } from "rpc/transmission";
 import { TorrentActionMethodsType, TransmissionClient } from "./rpc/client";
+import { Torrent } from "rpc/torrent";
 
 const ActionMethods = [
     "resume",
@@ -102,6 +103,7 @@ const Actions: Action[] = [
 interface ModalCallbacks {
     setLabels: () => void,
     remove: () => void,
+    move: () => void,
 }
 
 export type ActionModalCallback = keyof ModalCallbacks;
@@ -111,6 +113,7 @@ export class ActionController {
     methodMap: Record<string, (ac: ActionController, ...args: any[]) => Promise<void>>;
     modalCallbacks: ModalCallbacks | undefined;
     selectedTorrents: Set<number>;
+    torrents: Torrent[];
 
     constructor(client: TransmissionClient) {
         this.client = client;
@@ -120,6 +123,7 @@ export class ActionController {
             //TODO shortcuts
         }
         this.selectedTorrents = new Set();
+        this.torrents = [];
     }
 
     async run(method: ActionMethodsType, ...args: any[]) {
@@ -131,6 +135,10 @@ export class ActionController {
 
     setSelected(selected: Set<number>) {
         this.selectedTorrents = selected;
+    }
+
+    setTorrents(torrents: Torrent[]) {
+        this.torrents = torrents;
     }
 
     setModalCallbacks(callbacks: ModalCallbacks) {

@@ -74,6 +74,9 @@
         "close": true,
         "setSize": true,
         "setPosition": true
+      },
+      "dialog": {
+        "all": true
       }
     },
     "windows": [

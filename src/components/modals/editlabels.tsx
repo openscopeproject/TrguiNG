@@ -16,10 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Badge, CloseButton, MultiSelect, MultiSelectValueProps } from "@mantine/core";
-import { ModalState, SaveCancelModal } from "./common";
-import React, { useCallback, useEffect, useState } from "react";
-import { ActionController } from "actions";
+import { Badge, CloseButton, MultiSelect, MultiSelectValueProps, Text } from "@mantine/core";
+import { ActionModalState, SaveCancelModal, TorrentsNames } from "./common";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 function Label({
     label,
@@ -47,18 +46,26 @@ function Label({
     );
 }
 
-interface EditLabelsProps extends ModalState {
+interface EditLabelsProps extends ActionModalState {
     allLabels: string[],
-    labels: string[],
-    actionController: ActionController,
 }
 
 export function EditLabelsModal(props: EditLabelsProps) {
     const [labels, setLabels] = useState<string[]>([]);
 
+    const initialLabels = useMemo(() => {
+        const selected = props.actionController.torrents.filter(
+            (t) => props.actionController.selectedTorrents.has(t.id));
+        var labels: string[] = [];
+        selected.forEach((t) => t.labels.forEach((l: string) => {
+            if (!labels.includes(l)) labels.push(l);
+        }));
+        return labels;
+    }, [props.actionController.torrents, props.actionController.selectedTorrents]);
+
     useEffect(() => {
-        setLabels(props.labels);
-    }, [props.labels]);
+        setLabels(initialLabels);
+    }, [initialLabels]);
 
     const onSave = useCallback(() => {
         props.actionController.run("setLabels", labels).catch(console.log);
@@ -74,6 +81,8 @@ export function EditLabelsModal(props: EditLabelsProps) {
             centered
             title="Edit torrent labels"
         >
+            <Text mb="md">Enter new labels for</Text>
+            <TorrentsNames actionController={props.actionController} />
             <MultiSelect
                 data={props.allLabels}
                 value={labels}

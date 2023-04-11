@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { ServerConfig } from "config";
 import { Duration } from "luxon"
 import { useReducer } from "react";
 
@@ -77,4 +78,34 @@ export function useForceRender() {
 export function swapElements(a: Array<Object>, i: number, j: number) {
     if (i >= 0 && i < a.length && j >= 0 && j < a.length && i != j)
         [a[i], a[j]] = [a[j], a[i]];
+}
+
+function normalizePath(path: string) {
+    let p = path.replace("\\", "/");
+    if(p.match(/^[a-zA-Z]:\//)) p = p.toLowerCase();
+    return p;
+}
+
+export function pathMapFromServer(path: string, config: ServerConfig) {
+    let mappedPath = path;
+    let normalizedPath = normalizePath(path);
+    for (let mapping of config.pathMappings) {
+        if (mapping.from.length > 0 && normalizedPath.startsWith(normalizePath(mapping.from))) {
+            mappedPath = mapping.to + mappedPath.substring(mapping.from.length);
+            break;
+        }
+    }
+    return mappedPath;
+}
+
+export function pathMapToServer(path: string, config: ServerConfig) {
+    let mappedPath = path;
+    let normalizedPath = normalizePath(path);
+    for (let mapping of config.pathMappings) {
+        if (mapping.to.length > 0 && normalizedPath.startsWith(normalizePath(mapping.to))) {
+            mappedPath = mapping.from + mappedPath.substring(mapping.to.length);
+            break;
+        }
+    }
+    return mappedPath;
 }

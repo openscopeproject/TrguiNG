@@ -126,7 +126,9 @@ export function Toolbar(props: ToolbarProps) {
             </Button.Group>
 
             <Button.Group mx="sm">
-                <ToolbarButton><Icon.FolderFill size="1.5rem" color="gold" /></ToolbarButton>
+                <ToolbarButton onClick={() => props.actionController.showModal("move")}>
+                    <Icon.FolderFill size="1.5rem" color="gold" />
+                </ToolbarButton>
                 <ToolbarButton onClick={() => props.actionController.showModal("setLabels")} >
                     <Icon.TagsFill size="1.5rem" color="steelblue" />
                 </ToolbarButton>

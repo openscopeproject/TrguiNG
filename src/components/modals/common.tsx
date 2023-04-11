@@ -16,12 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Button, Divider, Group, Modal, ModalProps } from "@mantine/core";
-import React, { useCallback } from "react";
+import { Button, Divider, Group, Modal, ModalProps, Text } from "@mantine/core";
+import { ActionController } from "actions";
+import React, { useCallback, useMemo } from "react";
 
 export interface ModalState {
     opened: boolean,
     close: () => void,
+}
+
+export interface ActionModalState extends ModalState {
+    actionController: ActionController
 }
 
 interface SaveCancelModalProps extends ModalProps {
@@ -46,4 +51,30 @@ export function SaveCancelModal({ onSave, onClose, children, ...other }: SaveCan
             </Group>
         </Modal>
     );
+}
+
+function useTorrentsNameString(actionController: ActionController) {
+    return useMemo<string[]>(() => {
+        if (!actionController.selectedTorrents.size)
+            return ["No torrent selected"];
+
+        const selected = actionController.torrents.filter(
+            (t) => actionController.selectedTorrents.has(t.id));
+
+        let allNames: string[] = [];
+        selected.forEach((t) => allNames.push(t.name));
+        let names: string[] = allNames.slice(0, 5);
+
+        if (allNames.length > 5) names.push(`... and ${allNames.length - 5} more`);
+
+        return names;
+    }, [actionController.selectedTorrents, actionController.torrents]);
+}
+
+export function TorrentsNames({ actionController }: { actionController: ActionController }) {
+    const names = useTorrentsNameString(actionController);
+
+    return <>
+        {names.map((s, i) => <Text key={i} ml="xl" mb="md">{s}</Text>)}
+    </>;
 }
