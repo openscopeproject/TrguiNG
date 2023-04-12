@@ -17,9 +17,11 @@
  */
 
 import { Button, Checkbox, Divider, Group, Modal, SegmentedControl, Text, TextInput } from "@mantine/core";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionModalState, LabelsData, LocationData, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
 import { PriorityColors, PriorityNumberType, PriorityStrings } from "rpc/transmission";
+import { invoke } from "@tauri-apps/api/tauri";
+import { dialog } from "@tauri-apps/api";
 
 interface AddCommonProps {
     location: LocationData,
@@ -61,47 +63,125 @@ interface AddCommonModalProps extends ActionModalState {
     allLabels: string[],
 }
 
-export function AddMagnet(props: AddCommonModalProps) {
-    const [url, setUrl] = useState<string>("");
+function useCommonProps(allLabels: string[]) {
     const location = useTorrentLocation();
     const [labels, setLabels] = useState<string[]>([]);
     const [start, setStart] = useState<boolean>(true);
     const [priority, setPriority] = useState<PriorityNumberType>(0);
 
-    const commonProps = useMemo<AddCommonProps>(() => ({
+    const props = useMemo<AddCommonProps>(() => ({
         location,
         labels: {
             labels,
             setLabels,
-            allLabels: props.allLabels,
+            allLabels,
         },
         start,
         setStart,
         priority,
         setPriority,
-    }), [location.path, labels, props.allLabels, start, priority]);
+    }), [location.path, labels, allLabels, start, priority]);
+
+    return {
+        location,
+        labels,
+        start,
+        priority,
+        props,
+    }
+}
+
+export function AddMagnet(props: AddCommonModalProps) {
+    const [url, setUrl] = useState<string>("");
+
+    const common = useCommonProps(props.allLabels);
 
     const onAdd = useCallback(() => {
         props.actionController.addTorrent({
             url,
-            downloadDir: location.path,
-            labels,
-            start,
-            priority,
+            downloadDir: common.location.path,
+            labels: common.labels,
+            start: common.start,
+            priority: common.priority,
         });
         props.close();
-    }, [props.actionController, url, location.path, labels, start, priority]);
+    }, [props.actionController, url, common]);
 
     return (
         <Modal opened={props.opened} onClose={props.close} title="Add torrent by magnet link or URL" centered size="lg">
             <Divider my="sm" />
             <TextInput label="Link" w="100%" value={url} onChange={(e) => setUrl(e.currentTarget.value)} />
-            <AddCommon {...commonProps} />
+            <AddCommon {...common.props} />
             <Divider my="sm" />
             <Group position="center" spacing="md">
                 <Button onClick={onAdd} variant="filled">Add</Button>
                 <Button onClick={props.close} variant="light">Cancel</Button>
             </Group>
         </Modal>
+    );
+}
+
+interface TorrentFileData {
+    metadata: string,
+    name: string,
+    length: number,
+    files: {
+        name: string,
+        size: number,
+    }[] | null,
+}
+
+export function AddTorrent(props: AddCommonModalProps) {
+    const common = useCommonProps(props.allLabels);
+    const [torrentData, setTorrentData] = useState<TorrentFileData>();
+
+    useEffect(() => {
+        if (!props.opened) {
+            setTorrentData(undefined);
+            return;
+        };
+
+        dialog.open({
+            title: "Select torrent file",
+            filters: [
+                {
+                    name: "Torrent",
+                    extensions: ["torrent"],
+                }
+            ]
+        }).then((path) => {
+            if (!path) return;
+
+            return invoke("read_file", { path: path as string });
+        }).then((torrentData) => setTorrentData(torrentData as TorrentFileData)).catch((e) => {
+            console.error(e);
+            props.close();
+        });
+    }, [props.opened]);
+
+    const onAdd = useCallback(() => {
+        props.actionController.addTorrent({
+            metainfo: torrentData?.metadata,
+            downloadDir: common.location.path,
+            labels: common.labels,
+            start: common.start,
+            priority: common.priority,
+        });
+        props.close();
+    }, [props.actionController, torrentData, common]);
+
+    return (
+        torrentData === undefined ? <></> :
+            <Modal opened={props.opened} onClose={props.close} title="Add torrent by magnet link or URL" centered size="lg">
+                <Divider my="sm" />
+                <Text>Torrent name: {torrentData.name}</Text>
+                <AddCommon {...common.props} />
+                <Text>Torrent has {torrentData.files?.length || 1} files</Text>
+                <Divider my="sm" />
+                <Group position="center" spacing="md">
+                    <Button onClick={onAdd} variant="filled">Add</Button>
+                    <Button onClick={props.close} variant="light">Cancel</Button>
+                </Group>
+            </Modal>
     );
 }

@@ -105,6 +105,7 @@ interface ModalCallbacks {
     remove: () => void,
     move: () => void,
     addMagnet: () => void,
+    addTorrent: () => void,
 }
 
 export type ActionModalCallback = keyof ModalCallbacks;

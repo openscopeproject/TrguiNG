@@ -28,7 +28,9 @@ pub struct TorrentFileEntry {
 #[derive(serde::Serialize)]
 pub struct TorrentReadResult {
     metadata: String,
-    files: Vec<TorrentFileEntry>,
+    name: String,
+    length: i64,
+    files: Option<Vec<TorrentFileEntry>>,
 }
 
 #[tauri::command]
@@ -48,30 +50,32 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
         return Err("Failed to read file".to_string());
     }
 
-    let torrent = Torrent::read_from_bytes(&read_result.as_ref().unwrap()[..]);
-    if let Err(_) = torrent {
-        return Err("Failed to parse torrent".to_string());
+    match Torrent::read_from_bytes(&read_result.as_ref().unwrap()[..]) {
+        Err(_) => Err("Failed to parse torrent".to_string()),
+        Ok(torrent) => {
+            let b64 = b64engine.encode(read_result.unwrap());
+
+            Ok(TorrentReadResult {
+                metadata: b64,
+                name: torrent.name,
+                length: torrent.length,
+                files: torrent.files.map(|v| {
+                    v.into_iter()
+                        .map(|f| TorrentFileEntry {
+                            name: f.path.to_string_lossy().into(),
+                            size: f.length,
+                        })
+                        .collect()
+                }),
+            })
+        }
     }
-
-    let b64 = b64engine.encode(read_result.unwrap());
-
-    Ok(TorrentReadResult {
-        metadata: b64,
-        files: torrent.unwrap().files.map_or(Vec::new(), |v| {
-            v.into_iter()
-                .map(|f| TorrentFileEntry {
-                    name: f.path.to_string_lossy().into(),
-                    size: f.length,
-                })
-                .collect()
-        }),
-    })
 }
 
 #[tauri::command]
 pub async fn shell_open(path: String) -> Result<(), String> {
     if let Err(e) = opener::open(path) {
-        return Err(e.to_string())
+        return Err(e.to_string());
     }
     Ok(())
 }
