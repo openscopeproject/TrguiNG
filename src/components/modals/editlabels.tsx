@@ -17,34 +17,8 @@
  */
 
 import { Badge, CloseButton, MultiSelect, MultiSelectValueProps, Text } from "@mantine/core";
-import { ActionModalState, SaveCancelModal, TorrentsNames } from "./common";
+import { ActionModalState, SaveCancelModal, TorrentLabels, TorrentsNames } from "./common";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-
-function Label({
-    label,
-    onRemove,
-    classNames,
-    ...others
-}: MultiSelectValueProps) {
-    return (
-        <div {...others}>
-            <Badge radius="md" variant="filled"
-                rightSection={
-                    <CloseButton
-                        onMouseDown={onRemove}
-                        variant="transparent"
-                        size={22}
-                        iconSize={14}
-                        tabIndex={-1}
-                        mr="-0.25rem"
-                    />
-                }
-            >
-                {label}
-            </Badge>
-        </div>
-    );
-}
 
 interface EditLabelsProps extends ActionModalState {
     allLabels: string[],
@@ -83,20 +57,7 @@ export function EditLabelsModal(props: EditLabelsProps) {
         >
             <Text mb="md">Enter new labels for</Text>
             <TorrentsNames actionController={props.actionController} />
-            <MultiSelect
-                data={props.allLabels}
-                value={labels}
-                onChange={setLabels}
-                withinPortal
-                searchable
-                creatable
-                getCreateLabel={(query) => `+ Add ${query}`}
-                onCreate={(query) => {
-                    setLabels((current) => [...current, query]);
-                    return query;
-                }}
-                valueComponent={Label}
-            />
+            <TorrentLabels allLabels={props.allLabels} labels={labels} setLabels={setLabels} />
         </SaveCancelModal>
     );
 }

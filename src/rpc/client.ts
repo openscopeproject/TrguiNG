@@ -18,7 +18,7 @@
 
 import { Buffer } from 'buffer';
 
-import { SessionAllFields, SessionAllFieldsType, SessionFields, SessionStatistics, TorrentAllFields, TorrentFields } from './transmission';
+import { PriorityNumberType, SessionAllFields, SessionAllFieldsType, SessionFields, SessionStatistics, TorrentAllFields, TorrentFields } from './transmission';
 import { ServerConnection } from '../config';
 import { Torrent } from './torrent';
 import { merge } from 'lodash-es';
@@ -54,6 +54,16 @@ const TorrentActionMethods = [
 ] as const;
 
 export type TorrentActionMethodsType = typeof TorrentActionMethods[number];
+
+export interface TorrentAddParams {
+    url?: string,
+    metainfo?: string,
+    downloadDir: string,
+    labels: string[],
+    start: boolean,
+    priority: PriorityNumberType,
+    unwanted?: number[],
+}
 
 export class TransmissionClient {
     url: string;
@@ -230,7 +240,7 @@ export class TransmissionClient {
      */
     async torrentMove(torrentIds: number[], location: string, move: boolean) {
         var request = {
-            method: "torrent-remove",
+            method: "torrent-set-location",
             arguments: {
                 ids: torrentIds,
                 location,
@@ -241,4 +251,18 @@ export class TransmissionClient {
         await this.sendRpc(request);
     }
 
+    async torrentAdd(params: TorrentAddParams) {
+        const { url, unwanted, downloadDir, ...other } = params;
+        var request = {
+            method: "torrent-add",
+            arguments: {
+                filename: url,
+                "download-dir": downloadDir,
+                "files-unwanted": unwanted,
+                ...other
+            }
+        }
+
+        return await this.sendRpc(request);
+    }
 }

@@ -16,9 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Button, Divider, Group, Modal, ModalProps, Text } from "@mantine/core";
+import { Badge, Button, CloseButton, Divider, Group, Modal, ModalProps, MultiSelect, MultiSelectValueProps, Text, TextInput } from "@mantine/core";
+import { dialog } from "@tauri-apps/api";
 import { ActionController } from "actions";
-import React, { useCallback, useMemo } from "react";
+import { ServerConfigContext } from "config";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { pathMapFromServer, pathMapToServer } from "util";
 
 export interface ModalState {
     opened: boolean,
@@ -77,4 +80,104 @@ export function TorrentsNames({ actionController }: { actionController: ActionCo
     return <>
         {names.map((s, i) => <Text key={i} ml="xl" mb="md">{s}</Text>)}
     </>;
+}
+
+export interface LocationData {
+    path: string,
+    setPath: (s: string) => void,
+    browseHandler: () => void,
+    inputLabel?: string,
+}
+
+export function useTorrentLocation(): LocationData {
+    const serverConfig = useContext(ServerConfigContext);
+    const [path, setPath] = useState<string>("");
+
+    const browseHandler = useCallback(async () => {
+        let mappedLocation = pathMapFromServer(path, serverConfig);
+        console.log(mappedLocation);
+        let directory = await dialog.open({
+            title: "Select directory",
+            defaultPath: mappedLocation,
+            directory: true
+        }) as string | null;
+        if (!directory) return;
+        setPath(pathMapToServer(directory.replace("\\", "/"), serverConfig));
+    }, [serverConfig, path, setPath]);
+
+    return { path, setPath, browseHandler };
+}
+
+export function TorrentLocation(props: LocationData) {
+    return (
+        <Group align="flex-end">
+            <TextInput
+                value={props.path}
+                label={props.inputLabel}
+                onChange={(e) => props.setPath(e.currentTarget.value)}
+                styles={{
+                    root: {
+                        flexGrow: 1
+                    }
+                }} />
+            <Button onClick={props.browseHandler}>Browse</Button>
+        </Group>
+    );
+}
+
+export interface LabelsData {
+    allLabels: string[],
+    labels: string[],
+    setLabels: React.Dispatch<React.SetStateAction<string[]>>,
+    inputLabel?: string,
+}
+
+function Label({
+    label,
+    onRemove,
+    classNames,
+    ...others
+}: MultiSelectValueProps) {
+    return (
+        <div {...others}>
+            <Badge radius="md" variant="filled"
+                rightSection={
+                    <CloseButton
+                        onMouseDown={onRemove}
+                        variant="transparent"
+                        size={22}
+                        iconSize={14}
+                        tabIndex={-1}
+                        mr="-0.25rem"
+                    />
+                }
+            >
+                {label}
+            </Badge>
+        </div>
+    );
+}
+
+export function TorrentLabels(props: LabelsData) {
+    const [data, setData] = useState<string[]>([]);
+
+    useEffect(() => setData(props.allLabels), [props.allLabels]);
+
+    return (
+        <MultiSelect
+            data={data}
+            value={props.labels}
+            onChange={props.setLabels}
+            label={props.inputLabel}
+            withinPortal
+            searchable
+            creatable
+            getCreateLabel={(query) => `+ Add ${query}`}
+            onCreate={(query) => {
+                setData((current) => [...current, query]);
+                return query;
+            }}
+            valueComponent={Label}
+        />
+    );
 }

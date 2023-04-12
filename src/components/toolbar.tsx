@@ -101,7 +101,9 @@ export function Toolbar(props: ToolbarProps) {
         <Flex w="100%" py="md" align="stretch">
             <Button.Group mx="sm">
                 <ToolbarButton><Icon.FileArrowDownFill size="1.5rem" color="seagreen" /></ToolbarButton>
-                <ToolbarButton><Icon.MagnetFill size="1.5rem" color="seagreen" /></ToolbarButton>
+                <ToolbarButton onClick={() => props.actionController.showModal("addMagnet")}>
+                    <Icon.MagnetFill size="1.5rem" color="seagreen" />
+                </ToolbarButton>
             </Button.Group>
 
             <Button.Group mx="sm">

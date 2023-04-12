@@ -34,6 +34,7 @@ import { TorrentTable } from "./tables/torrenttable";
 import { Toolbar } from "./toolbar";
 import { RemoveModal } from "./modals/remove";
 import { MoveModal } from "./modals/move";
+import { AddMagnet } from "./modals/add";
 
 interface ServerProps {
     clientManager: ClientManager,
@@ -127,12 +128,14 @@ function ServerModals(props: ServerModalsProps) {
     const [showLabelsModal, openLabelsModal, closeLabelsModal] = usePausingModalState(props.runUpdates);
     const [showRemoveModal, openRemoveModal, closeRemoveModal] = usePausingModalState(props.runUpdates);
     const [showMoveModal, openMoveModal, closeMoveModal] = usePausingModalState(props.runUpdates);
+    const [showAddMagnetModal, openAddMagnetModal, closeAddMagnetModal] = usePausingModalState(props.runUpdates);
 
     useEffect(() => {
         props.actionController.setModalCallbacks({
             setLabels: openLabelsModal,
             remove: openRemoveModal,
             move: openMoveModal,
+            addMagnet: openAddMagnetModal,
         });
     }, [props.actionController, openLabelsModal, openRemoveModal, openMoveModal]);
 
@@ -147,6 +150,11 @@ function ServerModals(props: ServerModalsProps) {
         <MoveModal
             actionController={props.actionController}
             opened={showMoveModal} close={closeMoveModal} />
+        <AddMagnet
+            actionController={props.actionController}
+            opened={showAddMagnetModal} close={closeAddMagnetModal}
+            allLabels={props.allLabels}
+        />
     </>;
 }
 

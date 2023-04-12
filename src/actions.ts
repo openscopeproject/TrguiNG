@@ -17,7 +17,7 @@
  */
 
 import { PriorityNumberType } from "rpc/transmission";
-import { TorrentActionMethodsType, TransmissionClient } from "./rpc/client";
+import { TorrentActionMethodsType, TorrentAddParams, TransmissionClient } from "./rpc/client";
 import { Torrent } from "rpc/torrent";
 
 const ActionMethods = [
@@ -104,6 +104,7 @@ interface ModalCallbacks {
     setLabels: () => void,
     remove: () => void,
     move: () => void,
+    addMagnet: () => void,
 }
 
 export type ActionModalCallback = keyof ModalCallbacks;
@@ -147,5 +148,10 @@ export class ActionController {
 
     showModal(modal: ActionModalCallback) {
         this.modalCallbacks?.[modal]();
+    }
+
+    async addTorrent(params: TorrentAddParams) {
+        console.log("Torrent add params", params);
+        await this.client.torrentAdd(params).then(console.log).catch(console.error);
     }
 }
