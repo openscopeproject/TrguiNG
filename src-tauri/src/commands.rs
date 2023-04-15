@@ -23,7 +23,7 @@ use lava_torrent::torrent::v1::Torrent;
 #[derive(serde::Serialize)]
 pub struct TorrentFileEntry {
     name: String,
-    size: i64,
+    length: i64,
 }
 #[derive(serde::Serialize)]
 pub struct TorrentReadResult {
@@ -63,7 +63,7 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
                     v.into_iter()
                         .map(|f| TorrentFileEntry {
                             name: f.path.to_string_lossy().into(),
-                            size: f.length,
+                            length: f.length,
                         })
                         .collect()
                 }),

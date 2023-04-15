@@ -25,9 +25,9 @@ import { bytesToHumanReadableStr, pathMapFromServer } from "../../util";
 import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
 import { Torrent } from "../../rpc/torrent";
-import { invoke } from '@tauri-apps/api/tauri'
+import { tauri } from '@tauri-apps/api'
 import { Table } from "./common";
-import { Badge } from "@mantine/core";
+import { Badge, Box, Checkbox, Flex, Group } from "@mantine/core";
 
 
 type FileDirEntryKey = keyof FileDirEntry;
@@ -42,11 +42,12 @@ interface TableField {
     name: FileDirEntryKey,
     label: string,
     component: React.FunctionComponent<TableFieldProps>,
+    briefField?: boolean,
 }
 
 const AllFields: readonly TableField[] = [
-    { name: "name", label: "Name", component: NameField },
-    { name: "size", label: "Size", component: ByteSizeField },
+    { name: "name", label: "Name", component: NameField, briefField: true },
+    { name: "size", label: "Size", component: ByteSizeField, briefField: true },
     { name: "done", label: "Done", component: ByteSizeField },
     { name: "percent", label: "Percent", component: PercentBarField },
     { name: "priority", label: "Priority", component: PriorityField },
@@ -66,16 +67,18 @@ function NameField(props: TableFieldProps) {
     }, [props.entry]);
 
     return (
-        <div style={{ paddingLeft: `${props.entry.level * 2}em`, cursor: "default" }}>
-            <input type="checkbox" checked={props.entry.want} className={"me-2"} readOnly />
-            {isDir ?
-                (props.entry as DirEntry).expanded ?
-                    <Icon.DashSquare size={16} onClick={onCollapse} style={{ cursor: "pointer" }} />
-                    : <Icon.PlusSquare size={16} onClick={onExpand} style={{ cursor: "pointer" }} />
-                : <Icon.FileEarmark size={16} />
-            }
-            <span className="ms-2">{props.entry.name}</span>
-        </div>
+        <Flex wrap="nowrap" gap="0.3rem" align="flex-end" sx={{ paddingLeft: `${props.entry.level * 2}em`, cursor: "default" }}>
+            <Checkbox checked={props.entry.want} readOnly />
+            <Box>
+                {isDir ?
+                    (props.entry as DirEntry).expanded ?
+                        <Icon.DashSquare size={16} onClick={onCollapse} style={{ cursor: "pointer" }} />
+                        : <Icon.PlusSquare size={16} onClick={onExpand} style={{ cursor: "pointer" }} />
+                    : <Icon.FileEarmark size={16} />
+                }
+            </Box>
+            <Box sx={{ overflow: "hidden", textOverflow: "ellipsis" }}>{props.entry.name}</Box>
+        </Flex>
     );
 }
 
@@ -98,13 +101,15 @@ function PriorityField(props: TableFieldProps) {
     return <Badge radius="md" variant="filled" bg={PriorityColors.get(priority)!}>{PriorityStrings.get(priority)}</Badge>;
 }
 
-export function FileTreeTable(props: { torrent: Torrent }) {
+interface FileTreeTableProps {
+    fileTree: CachedFileTree,
+    downloadDir?: string,
+    brief?: boolean,
+}
+
+export function FileTreeTable(props: FileTreeTableProps) {
     const serverConfig = useContext(ServerConfigContext);
     const [renderVal, forceRender] = useReducer((oldVal) => oldVal + 1, 0);
-
-    const fileTree = useMemo(() => new CachedFileTree(), []);
-
-    useMemo(() => fileTree.update(props.torrent), [props.torrent]);
 
     const nameSortFunc = useCallback(
         (rowa: Row<FileDirEntry>, rowb: Row<FileDirEntry>) => {
@@ -116,8 +121,9 @@ export function FileTreeTable(props: { torrent: Torrent }) {
             return a.fullpath < b.fullpath ? -1 : 1;
         }, []);
 
-    const columns = useMemo(() => {
-        return AllFields.map((field): ColumnDef<FileDirEntry> => {
+    const columns = useMemo(() => AllFields
+        .filter((field) => field.briefField || !props.brief)
+        .map((field): ColumnDef<FileDirEntry> => {
             const cell = (props: CellContext<FileDirEntry, unknown>) => {
                 return <field.component
                     fieldName={field.name}
@@ -131,26 +137,26 @@ export function FileTreeTable(props: { torrent: Torrent }) {
             }
             if (field.name == "name") column.sortingFn = nameSortFunc;
             return column;
-        });
-    }, [forceRender]);
+        }), [forceRender, props.brief]);
 
-    const data = useMemo(() => fileTree.flatten(), [renderVal, props.torrent]);
+    const data = useMemo(() => props.fileTree.flatten(), [renderVal, props.fileTree]);
 
     const getRowId = useCallback((row: FileDirEntry) => row.fullpath, []);
 
     const selectedReducer = useCallback((action: { verb: "add" | "set", ids: string[] }) => {
-        fileTree.selectAction(action);
+        props.fileTree.selectAction(action);
         forceRender();
-     }, [fileTree, forceRender]);
+    }, [props.fileTree, forceRender]);
 
     const onRowDoubleClick = useCallback((row: FileDirEntry) => {
-        let path = `${props.torrent.downloadDir}/${row.originalpath}`;
+        if (!props.downloadDir) return;
+        let path = `${props.downloadDir}/${row.originalpath}`;
         path = pathMapFromServer(path, serverConfig);
-        invoke('shell_open', { path }).catch((e) => console.error("Error opening", path, e));
-    }, [props.torrent]);
+        tauri.invoke('shell_open', { path }).catch((e) => console.error("Error opening", path, e));
+    }, [props.downloadDir, serverConfig]);
 
     return <Table<FileDirEntry> {...{
-        tablename: "filetree",
+        tablename: props.brief ? "filetreebrief" : "filetree",
         columns,
         data,
         getRowId,

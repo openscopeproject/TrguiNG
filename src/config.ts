@@ -54,7 +54,7 @@ interface TableSettings {
     sortBy: SortByConfig[],
 }
 
-const TableNames = ["torrents", "filetree", "trackers", "peers"] as const;
+const TableNames = ["torrents", "filetree", "filetreebrief", "trackers", "peers"] as const;
 export type TableName = typeof TableNames[number];
 
 const Sashes = ["vertical", "horizontal"] as const;

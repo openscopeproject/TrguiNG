@@ -16,12 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Button, Checkbox, Divider, Group, Modal, SegmentedControl, Text, TextInput } from "@mantine/core";
+import { Box, Button, Checkbox, Divider, Group, Modal, ScrollArea, SegmentedControl, Text, TextInput } from "@mantine/core";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionModalState, LabelsData, LocationData, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
 import { PriorityColors, PriorityNumberType, PriorityStrings } from "rpc/transmission";
-import { invoke } from "@tauri-apps/api/tauri";
-import { dialog } from "@tauri-apps/api";
+import { dialog, tauri } from "@tauri-apps/api";
+import { CachedFileTree } from "cachedfiletree";
+import { FileTreeTable } from "components/tables/filetreetable";
 
 interface AddCommonProps {
     location: LocationData,
@@ -34,8 +35,8 @@ interface AddCommonProps {
 
 function AddCommon(props: AddCommonProps) {
     return <>
-        <TorrentLocation {...props.location} inputLabel="Torrent location" />
-        <TorrentLabels {...props.labels} inputLabel="Torrent labels" />
+        <TorrentLocation {...props.location} inputLabel="Download directory" />
+        <TorrentLabels {...props.labels} inputLabel="Labels" />
         <Group>
             <Checkbox
                 label="Start torrent"
@@ -127,7 +128,7 @@ interface TorrentFileData {
     length: number,
     files: {
         name: string,
-        size: number,
+        length: number,
     }[] | null,
 }
 
@@ -150,9 +151,11 @@ export function AddTorrent(props: AddCommonModalProps) {
                 }
             ]
         }).then((path) => {
-            if (!path) return;
-
-            return invoke("read_file", { path: path as string });
+            if (!path) {
+                props.close();
+                return undefined;
+            };
+            return tauri.invoke("read_file", { path: path as string });
         }).then((torrentData) => setTorrentData(torrentData as TorrentFileData)).catch((e) => {
             console.error(e);
             props.close();
@@ -170,13 +173,21 @@ export function AddTorrent(props: AddCommonModalProps) {
         props.close();
     }, [props.actionController, torrentData, common]);
 
+    const fileTree = useMemo(() => {
+        const ft = new CachedFileTree();
+        if (torrentData) ft.parse(torrentData, true);
+        return ft;
+    }, [torrentData]);
+
     return (
         torrentData === undefined ? <></> :
-            <Modal opened={props.opened} onClose={props.close} title="Add torrent by magnet link or URL" centered size="lg">
+            <Modal opened={props.opened} onClose={props.close} title="Add torrent" centered size="lg">
                 <Divider my="sm" />
-                <Text>Torrent name: {torrentData.name}</Text>
+                <Text>Name: {torrentData.name}</Text>
                 <AddCommon {...common.props} />
-                <Text>Torrent has {torrentData.files?.length || 1} files</Text>
+                <Box w="100%" h="15rem">
+                    <FileTreeTable fileTree={fileTree} brief />
+                </Box>
                 <Divider my="sm" />
                 <Group position="center" spacing="md">
                     <Button onClick={onAdd} variant="filled">Add</Button>

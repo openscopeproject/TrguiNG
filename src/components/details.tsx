@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { ClientManager } from "../clientmanager";
 import { ServerConfigContext } from "../config";
 import { getTorrentError, Torrent } from "../rpc/torrent";
@@ -30,6 +30,7 @@ import { PeersTable } from "./tables/peerstable";
 import { SessionStatEntry, SessionStatistics } from "rpc/transmission";
 import { Box, Container, Group, MantineTheme, Table, Tabs, TextInput } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
+import { CachedFileTree } from "cachedfiletree";
 
 interface DetailsProps {
     torrentId?: number;
@@ -245,6 +246,14 @@ function GeneralPane(props: { torrent: Torrent }) {
     );
 }
 
+function FileTreePane(props: { torrent: Torrent }) {
+    const fileTree = useMemo(() => new CachedFileTree(), []);
+
+    useMemo(() => fileTree.update(props.torrent), [props.torrent]);
+
+    return <FileTreeTable fileTree={fileTree} downloadDir={props.torrent.downloadDir} />;
+}
+
 function Stats(props: { stats: SessionStatEntry }) {
     return <Table>
         <tbody>
@@ -372,7 +381,7 @@ export function Details(props: DetailsProps) {
                 </Tabs.Panel>
                 <Tabs.Panel value="files" className="h-100">
                     {torrent ?
-                        <FileTreeTable torrent={torrent} />
+                        <FileTreePane torrent={torrent} />
                         : <></>}
                 </Tabs.Panel>
                 <Tabs.Panel value="pieces" className="h-100">

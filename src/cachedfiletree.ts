@@ -112,11 +112,11 @@ export class CachedFileTree {
         dir.priority = priority.size == 1 ? [...priority][0] : undefined;
     }
 
-    parse(torrent: Torrent) {
-        this.torrenthash = torrent.hashString;
+    parse(torrent: Torrent, fromFile: boolean) {
+        this.torrenthash = torrent.hashString || "";
 
         this.files = torrent.files.map((entry: any, index: number): FileEntry => {
-            var path = entry.name as string;
+            var path = (entry.name as string).replace("\\", "/");
             if (path.startsWith(torrent.name + "/"))
                 path = path.substring(torrent.name.length + 1);
             return {
@@ -125,10 +125,10 @@ export class CachedFileTree {
                 fullpath: path,
                 originalpath: entry.name as string,
                 size: entry.length as number,
-                want: torrent.fileStats[index].wanted as boolean,
-                done: torrent.fileStats[index].bytesCompleted,
-                percent: torrent.fileStats[index].bytesCompleted * 100 / entry.length,
-                priority: torrent.fileStats[index].priority,
+                want: fromFile ? true : torrent.fileStats[index].wanted as boolean,
+                done: fromFile ? 0 : torrent.fileStats[index].bytesCompleted,
+                percent: fromFile ? 0 : torrent.fileStats[index].bytesCompleted * 100 / entry.length,
+                priority: fromFile ? 0 : torrent.fileStats[index].priority,
                 isSelected: false,
             }
         });
@@ -197,7 +197,7 @@ export class CachedFileTree {
             // rebuild the tree from scratch
             this.destroy(this.tree);
 
-            this.parse(torrent);
+            this.parse(torrent, false);
         }
     }
 

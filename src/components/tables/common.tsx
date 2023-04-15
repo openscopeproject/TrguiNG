@@ -270,6 +270,8 @@ export function Table<TData extends SelectableRow>(props: {
                     height: `${rowHeight}px`,
                     backgroundColor: theme.colorScheme == "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
                     zIndex: 3,
+                    position: "sticky",
+                    top: 0,
                 })}>
                     {table.getHeaderGroups().map(headerGroup => (
                         <div className="tr" key={headerGroup.id}
