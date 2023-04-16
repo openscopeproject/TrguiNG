@@ -16,12 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useReducer, useState } from "react";
 import { ClientManager } from "../clientmanager";
 import { ServerConfigContext } from "../config";
 import { getTorrentError, Torrent } from "../rpc/torrent";
-import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr, timestampToDateString } from "../util";
-import { FileTreeTable } from "./tables/filetreetable";
+import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr, timestampToDateString, useForceRender } from "../util";
+import { FileTreeTable, useUnwantedFiles } from "./tables/filetreetable";
 import { PiecesCanvas } from "./piecescanvas";
 import { ProgressBar } from "./progressbar";
 import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./tables/torrenttable";
@@ -247,11 +247,23 @@ function GeneralPane(props: { torrent: Torrent }) {
 }
 
 function FileTreePane(props: { torrent: Torrent }) {
+    const [renderVal, forceRender] = useReducer((oldVal) => oldVal + 1, 0);
     const fileTree = useMemo(() => new CachedFileTree(), []);
 
-    useMemo(() => fileTree.update(props.torrent), [props.torrent]);
+    useEffect(() => {
+        fileTree.update(props.torrent);
+        forceRender();
+    }, [props.torrent]);
 
-    return <FileTreeTable fileTree={fileTree} downloadDir={props.torrent.downloadDir} />;
+    const onCheckboxChange = useUnwantedFiles(fileTree);
+
+    return (
+        <FileTreeTable
+            fileTree={fileTree}
+            downloadDir={props.torrent.downloadDir}
+            onCheckboxChange={onCheckboxChange}
+            renderVal={renderVal} />
+    );
 }
 
 function Stats(props: { stats: SessionStatEntry }) {

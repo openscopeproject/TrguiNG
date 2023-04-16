@@ -21,8 +21,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionModalState, LabelsData, LocationData, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
 import { PriorityColors, PriorityNumberType, PriorityStrings } from "rpc/transmission";
 import { dialog, tauri } from "@tauri-apps/api";
-import { CachedFileTree } from "cachedfiletree";
-import { FileTreeTable } from "components/tables/filetreetable";
+import { CachedFileTree, FileDirEntry } from "cachedfiletree";
+import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable";
 
 interface AddCommonProps {
     location: LocationData,
@@ -102,7 +102,7 @@ export function AddMagnet(props: AddCommonModalProps) {
             url,
             downloadDir: common.location.path,
             labels: common.labels,
-            start: common.start,
+            paused: !common.start,
             priority: common.priority,
         });
         props.close();
@@ -162,22 +162,25 @@ export function AddTorrent(props: AddCommonModalProps) {
         });
     }, [props.opened]);
 
-    const onAdd = useCallback(() => {
-        props.actionController.addTorrent({
-            metainfo: torrentData?.metadata,
-            downloadDir: common.location.path,
-            labels: common.labels,
-            start: common.start,
-            priority: common.priority,
-        });
-        props.close();
-    }, [props.actionController, torrentData, common]);
-
     const fileTree = useMemo(() => {
         const ft = new CachedFileTree();
         if (torrentData) ft.parse(torrentData, true);
         return ft;
     }, [torrentData]);
+
+    const onCheckboxChange = useUnwantedFiles(fileTree);
+
+    const onAdd = useCallback(() => {
+        props.actionController.addTorrent({
+            metainfo: torrentData?.metadata,
+            downloadDir: common.location.path,
+            labels: common.labels,
+            paused: !common.start,
+            priority: common.priority,
+            unwanted: fileTree.getUnwanted(),
+        });
+        props.close();
+    }, [props.actionController, torrentData, common, fileTree]);
 
     return (
         torrentData === undefined ? <></> :
@@ -186,7 +189,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 <Text>Name: {torrentData.name}</Text>
                 <AddCommon {...common.props} />
                 <Box w="100%" h="15rem">
-                    <FileTreeTable fileTree={fileTree} brief />
+                    <FileTreeTable fileTree={fileTree} brief onCheckboxChange={onCheckboxChange} />
                 </Box>
                 <Divider my="sm" />
                 <Group position="center" spacing="md">

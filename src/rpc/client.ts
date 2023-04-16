@@ -60,7 +60,7 @@ export interface TorrentAddParams {
     metainfo?: string,
     downloadDir: string,
     labels: string[],
-    start: boolean,
+    paused: boolean,
     priority: PriorityNumberType,
     unwanted?: number[],
 }
@@ -257,7 +257,7 @@ export class TransmissionClient {
             method: "torrent-add",
             arguments: {
                 filename: url,
-                "download-dir": downloadDir,
+                "download-dir": downloadDir != "" ? downloadDir : undefined,
                 "files-unwanted": unwanted,
                 ...other
             }

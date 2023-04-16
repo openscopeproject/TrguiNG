@@ -32,6 +32,7 @@ interface Entry extends SelectableRow {
 }
 
 export interface FileEntry extends Entry {
+    index: number,
     want: boolean,
     priority: PriorityNumberType,
 }
@@ -120,6 +121,7 @@ export class CachedFileTree {
             if (path.startsWith(torrent.name + "/"))
                 path = path.substring(torrent.name.length + 1);
             return {
+                index,
                 name: path.substring(path.lastIndexOf("/") + 1),
                 level: 0,
                 fullpath: path,
@@ -215,6 +217,39 @@ export class CachedFileTree {
 
         append(this.tree);
 
+        return result;
+    }
+
+    setWanted(entry: FileDirEntry, state: boolean) {
+        const recurse = (dir: DirEntry) => {
+            dir.subdirs.forEach((d) => {
+                recurse(d);
+            });
+            dir.want = state;
+            dir.files.forEach((f) => {
+                f.want = state;
+            });
+        }
+
+        if(isDirEntry(entry))
+            recurse(entry);
+        else
+            entry.want = state;
+
+        this.recalcTree(this.tree);
+    }
+
+    getUnwanted() {
+        let result: number[] = [];
+        const recurse = (dir: DirEntry) => {
+            dir.subdirs.forEach((d) => {
+                recurse(d);
+            });
+            dir.files.forEach((f) => {
+                if(!f.want) result.push(f.index);
+            });
+        }
+        recurse(this.tree);
         return result;
     }
 

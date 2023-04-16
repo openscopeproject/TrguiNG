@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useContext, useMemo, useReducer } from "react";
+import React, { useCallback, useContext, useMemo, useReducer, useState } from "react";
 import { Row, ColumnDef, CellContext } from '@tanstack/react-table';
 import { CachedFileTree, DirEntry, FileDirEntry, isDirEntry } from "../../cachedfiletree";
 import { ServerConfigContext } from "../../config";
@@ -24,18 +24,19 @@ import { PriorityColors, PriorityStrings } from "../../rpc/transmission";
 import { bytesToHumanReadableStr, pathMapFromServer } from "../../util";
 import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
-import { Torrent } from "../../rpc/torrent";
 import { tauri } from '@tauri-apps/api'
 import { Table } from "./common";
-import { Badge, Box, Checkbox, Flex, Group } from "@mantine/core";
+import { Badge, Box, Checkbox, Flex } from "@mantine/core";
 
 
 type FileDirEntryKey = keyof FileDirEntry;
+type EntryWantedChangeHandler = (entry: FileDirEntry, state: boolean) => void;
 
 interface TableFieldProps {
     entry: FileDirEntry,
     fieldName: FileDirEntryKey,
     forceRender: () => void,
+    onCheckboxChange: EntryWantedChangeHandler,
 }
 
 interface TableField {
@@ -68,7 +69,15 @@ function NameField(props: TableFieldProps) {
 
     return (
         <Flex wrap="nowrap" gap="0.3rem" align="flex-end" sx={{ paddingLeft: `${props.entry.level * 2}em`, cursor: "default" }}>
-            <Checkbox checked={props.entry.want} readOnly />
+            <Checkbox
+                checked={props.entry.want || props.entry.want === undefined}
+                indeterminate={props.entry.want === undefined}
+                onChange={(e) => {
+                    props.onCheckboxChange(props.entry, e.currentTarget.checked);
+                    props.forceRender();
+                }}
+                onClick={(e) => e.stopPropagation()}
+                onDoubleClick={(e) => e.stopPropagation()} />
             <Box>
                 {isDir ?
                     (props.entry as DirEntry).expanded ?
@@ -103,13 +112,24 @@ function PriorityField(props: TableFieldProps) {
 
 interface FileTreeTableProps {
     fileTree: CachedFileTree,
+    onCheckboxChange: EntryWantedChangeHandler,
     downloadDir?: string,
     brief?: boolean,
+    renderVal?: number,
+}
+
+export function useUnwantedFiles(ft: CachedFileTree): EntryWantedChangeHandler {
+    const changeHandler = useCallback((entry: FileDirEntry, state: boolean) => {
+        ft.setWanted(entry, state);
+    }, [ft]);
+
+    return changeHandler;
 }
 
 export function FileTreeTable(props: FileTreeTableProps) {
     const serverConfig = useContext(ServerConfigContext);
     const [renderVal, forceRender] = useReducer((oldVal) => oldVal + 1, 0);
+    const onCheckboxChange = props.onCheckboxChange;
 
     const nameSortFunc = useCallback(
         (rowa: Row<FileDirEntry>, rowb: Row<FileDirEntry>) => {
@@ -128,7 +148,8 @@ export function FileTreeTable(props: FileTreeTableProps) {
                 return <field.component
                     fieldName={field.name}
                     entry={props.row.original}
-                    forceRender={forceRender} />
+                    forceRender={forceRender}
+                    onCheckboxChange={onCheckboxChange} />
             }
             var column: ColumnDef<FileDirEntry> = {
                 header: field.label,
@@ -137,9 +158,9 @@ export function FileTreeTable(props: FileTreeTableProps) {
             }
             if (field.name == "name") column.sortingFn = nameSortFunc;
             return column;
-        }), [forceRender, props.brief]);
+        }), [forceRender, props.brief, onCheckboxChange]);
 
-    const data = useMemo(() => props.fileTree.flatten(), [renderVal, props.fileTree]);
+    const data = useMemo(() => props.fileTree.flatten(), [renderVal, props.renderVal, props.fileTree]);
 
     const getRowId = useCallback((row: FileDirEntry) => row.fullpath, []);
 
