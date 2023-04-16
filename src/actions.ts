@@ -45,7 +45,8 @@ interface Action {
 function mapSimpleAction(name: ActionMethodsType, method: TorrentActionMethodsType, shortcut: string): Action {
     return {
         name,
-        method: async (ac: ActionController, torrentIds: number[]) => {
+        method: async (ac: ActionController) => {
+            const torrentIds = Array.from(ac.selectedTorrents);
             await ac.client.torrentAction(method, torrentIds);
         },
         defaultShortcut: shortcut
