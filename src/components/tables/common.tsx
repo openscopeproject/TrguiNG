@@ -18,7 +18,7 @@
 
 import { Box, Menu } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
-import { useReactTable, Table, ColumnDef, ColumnSizingState, SortingState, VisibilityState, getCoreRowModel, getSortedRowModel, flexRender, Row, Header, Column } from "@tanstack/react-table";
+import { useReactTable, Table, ColumnDef, ColumnSizingState, SortingState, VisibilityState, getCoreRowModel, getSortedRowModel, flexRender, Row, Header, Column, RowSelectionState } from "@tanstack/react-table";
 import { useVirtualizer, Virtualizer } from "@tanstack/react-virtual";
 import { ContextMenu, useContextMenu } from "components/contextmenu";
 import { ConfigContext, TableName } from "config";
@@ -35,6 +35,7 @@ export function useTable<TData>(
     tablename: TableName,
     columns: ColumnDef<TData, unknown>[],
     data: TData[],
+    selected: string[],
     getRowId: (r: TData) => string,
 ): [Table<TData>, VisibilityState, (v: VisibilityState) => void, ColumnSizingState] {
     const config = useContext(ConfigContext);
@@ -45,6 +46,7 @@ export function useTable<TData>(
         useState<ColumnSizingState>(config.getTableColumnSizes(tablename));
     const [sorting, setSorting] =
         useState<SortingState>(config.getTableSortBy(tablename));
+    const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
     useEffect(() => config.setTableColumnVisibility(
         tablename, columnVisibility), [config, columnVisibility]);
@@ -52,6 +54,9 @@ export function useTable<TData>(
         tablename, columnSizing), [config, columnSizing]);
     useEffect(() => config.setTableSortBy(
         tablename, sorting), [config, sorting]);
+    useEffect(() => {
+        setRowSelection(Object.fromEntries(selected.map((id) => [id, true])));
+    }, [selected])
 
     const table = useReactTable<TData>({
         columns,
@@ -64,10 +69,12 @@ export function useTable<TData>(
         onColumnSizingChange: setColumnSizing,
         enableSorting: true,
         onSortingChange: setSorting,
+        enableRowSelection: true,
         state: {
             columnVisibility,
             columnSizing,
             sorting,
+            rowSelection,
         },
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
@@ -171,38 +178,54 @@ function useColumnMenu<TData>(
     ];
 }
 
-export function useStandardSelect<TData>(
-    data: TData[],
-    getRowId: (row: TData) => string
-): [Set<string>, React.Dispatch<{ verb: "add" | "set", ids: string[] }>, TData[]] {
+export function useStandardSelect(): [string[], React.Dispatch<{ verb: "add" | "set", ids: string[] }>] {
     const [selected, selectedReducer] = useReducer(
-        (old: Set<string>, action: { verb: "add" | "set", ids: string[] }) => {
-            if (action.verb == "set") return new Set(action.ids);
+        (old: string[], action: { verb: "add" | "set", ids: string[] }) => {
+            if (action.verb == "set") return action.ids;
             else {
                 let newset = new Set(old);
                 action.ids.forEach((id) => newset.add(id));
-                return newset;
+                return Array.from(newset);
             }
-        }, new Set<string>()
+        }, []
     );
 
-    const selectedData = useMemo(() =>
-        data.map(
-            (row: TData) => {
-                return { ...row, isSelected: selected.has(getRowId(row)) };
-            }),
-        [selected, data]
-    );
-
-    return [selected, selectedReducer, selectedData];
+    return [selected, selectedReducer];
 }
 
-export interface SelectableRow {
-    isSelected?: boolean
-}
-
-function TableRow<TData extends SelectableRow>(props: {
+function InnerRow<TData>(props: {
     row: Row<TData>,
+    columnSizing: ColumnSizingState,
+    columnVisibility: VisibilityState,
+}) {
+    return <>
+        {props.row.getVisibleCells().map(cell => {
+            return (
+                <div {...{
+                    key: cell.id,
+                    style: {
+                        width: cell.column.getSize(),
+                    },
+                    className: "td"
+                }} >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </div>
+            )
+        })}
+    </>;
+}
+
+const MemoizedInnerRow = memo(InnerRow, (prev, next) => {
+    return (
+        prev.row.original == next.row.original &&
+        prev.columnSizing == next.columnSizing &&
+        prev.columnVisibility == next.columnVisibility
+    );
+}) as typeof InnerRow;
+
+function TableRow<TData>(props: {
+    row: Row<TData>,
+    selected: boolean,
     index: number,
     start: number,
     lastIndex: number,
@@ -215,46 +238,36 @@ function TableRow<TData extends SelectableRow>(props: {
     const onRowDoubleClick = useCallback(() => {
         if (props.onRowDoubleClick)
             props.onRowDoubleClick(props.row.original);
-    }, [props.row]);
+    }, [props.onRowDoubleClick, props.row.original]);
+
     return (
         <div
-            className={`tr ${props.row.original.isSelected ? " selected" : ""} ${props.index % 2 ? " odd" : ""}`}
+            className={`tr ${props.selected ? " selected" : ""} ${props.index % 2 ? " odd" : ""}`}
             style={{ height: `${props.height}px`, transform: `translateY(${props.start}px)` }}
             onClick={(e) => {
                 props.onRowClick(e, props.index, props.lastIndex);
             }}
             onDoubleClick={onRowDoubleClick}
         >
-            {props.row.getVisibleCells().map(cell => {
-                return (
-                    <div {...{
-                        key: cell.id,
-                        style: {
-                            width: cell.column.getSize(),
-                        },
-                        className: "td"
-                    }} >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </div>
-                )
-            })}
+            <MemoizedInnerRow {...props} />
         </div>
     );
 }
 
 const MemoizedTableRow = memo(TableRow) as typeof TableRow;
 
-export function Table<TData extends SelectableRow>(props: {
+export function Table<TData>(props: {
     tablename: TableName,
     columns: ColumnDef<TData, unknown>[]
     data: TData[],
+    selected: string[],
     getRowId: (r: TData) => string,
     selectedReducer: ({ verb, ids }: { verb: "add" | "set", ids: string[] }) => void,
     setCurrent?: (id: string) => void,
     onRowDoubleClick?: (row: TData) => void,
 }) {
     const [table, columnVisibility, setColumnVisibility, columnSizing] =
-        useTable(props.tablename, props.columns, props.data, props.getRowId);
+        useTable(props.tablename, props.columns, props.data, props.selected, props.getRowId);
 
     const [lastIndex, onRowClick] = useSelectHandler(table, props.selectedReducer, props.getRowId, props.setCurrent);
 
@@ -317,6 +330,7 @@ export function Table<TData extends SelectableRow>(props: {
                         return <MemoizedTableRow<TData> {...{
                             key: props.getRowId(row.original),
                             row,
+                            selected: row.getIsSelected(),
                             index: virtualRow.index,
                             lastIndex,
                             start: virtualRow.start,

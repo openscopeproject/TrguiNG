@@ -18,7 +18,7 @@
 
 import { Button, Flex, MantineTheme, Menu, TextInput } from "@mantine/core";
 import { debounce } from "lodash-es";
-import React, { forwardRef, useCallback, useEffect, useMemo, useState } from "react";
+import React, { forwardRef, memo, useCallback, useEffect, useMemo, useState } from "react";
 import * as Icon from "react-bootstrap-icons";
 import { ActionController, ActionMethodsType } from "../actions";
 import { BandwidthPriority, PriorityNumberType } from "rpc/transmission";
@@ -68,7 +68,7 @@ function priorityHandler(priority: PriorityNumberType, props: ToolbarProps) {
     }, [props.actionController]);
 }
 
-export function Toolbar(props: ToolbarProps) {
+function Toolbar(props: ToolbarProps) {
     const debouncedSetSearchTerms = useMemo(
         () => debounce(props.setSearchTerms, 500, { trailing: true, leading: false }),
         [props.setSearchTerms]);
@@ -179,3 +179,5 @@ export function Toolbar(props: ToolbarProps) {
         </Flex >
     );
 }
+
+export const MemoizedToolbar = memo(Toolbar) as typeof Toolbar;

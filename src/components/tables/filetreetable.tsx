@@ -160,9 +160,10 @@ export function FileTreeTable(props: FileTreeTableProps) {
             return column;
         }), [forceRender, props.brief, onCheckboxChange]);
 
-    const data = useMemo(() => props.fileTree.flatten(), [renderVal, props.renderVal, props.fileTree]);
-
     const getRowId = useCallback((row: FileDirEntry) => row.fullpath, []);
+
+    const data = useMemo(() => props.fileTree.flatten(), [renderVal, props.renderVal, props.fileTree]);
+    const selected = useMemo(() => data.filter((e) => e.isSelected).map(getRowId), [data]);
 
     const selectedReducer = useCallback((action: { verb: "add" | "set", ids: string[] }) => {
         props.fileTree.selectAction(action);
@@ -180,6 +181,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
         tablename: props.brief ? "filetreebrief" : "filetree",
         columns,
         data,
+        selected,
         getRowId,
         selectedReducer,
         onRowDoubleClick,

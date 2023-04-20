@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useContext, useEffect, useMemo, useReducer, useState } from "react";
+import React, { memo, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import { ClientManager } from "../clientmanager";
 import { ServerConfigContext } from "../config";
 import { getTorrentError, Torrent } from "../rpc/torrent";
@@ -310,7 +310,7 @@ function ServerStats(props: { clientManager: ClientManager }) {
     );
 }
 
-export function Details(props: DetailsProps) {
+function Details(props: DetailsProps) {
     const serverConfig = useContext(ServerConfigContext);
     const client = props.clientManager.getClient(serverConfig.name);
 
@@ -390,3 +390,5 @@ export function Details(props: DetailsProps) {
         </Tabs>
     );
 }
+
+export const MemoizedDetails = memo(Details) as typeof Details;

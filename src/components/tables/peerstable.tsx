@@ -81,13 +81,13 @@ export function PeersTable(props: { torrent: Torrent }) {
 
     const getRowId = useCallback((t: PeerStats) => `${t.address}:${t.port}`, []);
 
-    const [, selectedReducer, data] = useStandardSelect(
-        props.torrent.peers as PeerStats[], getRowId);
+    const [selected, selectedReducer] = useStandardSelect();
 
     return <Table<PeerStats> {...{
         tablename: "peers",
         columns: Columns,
-        data,
+        data: props.torrent.peers,
+        selected,
         getRowId,
         selectedReducer
     }} />;

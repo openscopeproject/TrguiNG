@@ -187,17 +187,14 @@ const Columns = AllFields.map((f): ColumnDef<Torrent> => {
 export function TorrentTable(props: TorrentTableProps) {
 
     const getRowId = useCallback((t: Torrent) => String(t.id), []);
-
-    const data = useMemo(() => {
-        return props.torrents.map((t) => {
-            return { ...t, isSelected: props.selectedTorrents.has(t.id) };
-        });
-    }, [props.torrents, props.selectedTorrents]);
+    const selected = useMemo(
+        () => Array.from(props.selectedTorrents).map(String), [props.selectedTorrents]);
 
     return <Table<Torrent> {...{
         tablename: "torrents",
         columns: Columns,
-        data,
+        data: props.torrents,
+        selected,
         getRowId,
         selectedReducer: props.selectedReducer,
         setCurrent: props.setCurrentTorrent

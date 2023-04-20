@@ -25,12 +25,12 @@ import { ClientManager } from "../clientmanager";
 import { ConfigContext, ServerConfigContext } from "../config";
 import '../css/custom.css';
 import { Torrent } from "../rpc/torrent";
-import { Details } from "./details";
+import { MemoizedDetails } from "./details";
 import { DefaultFilter, Filters } from "./filters";
 import { EditLabelsModal } from "./modals/editlabels";
 import { Statusbar, StatusbarProps } from "./statusbar";
 import { TorrentTable } from "./tables/torrenttable";
-import { Toolbar } from "./toolbar";
+import { MemoizedToolbar } from "./toolbar";
 import { RemoveModal } from "./modals/remove";
 import { MoveModal } from "./modals/move";
 import { AddMagnet, AddTorrent } from "./modals/add";
@@ -248,7 +248,7 @@ export function Server(props: ServerProps) {
         <ServerModals {...{ actionController, filteredTorrents, selectedTorrents, runUpdates, allLabels }} />
         <div className="d-flex flex-column h-100 w-100">
             <div className="border-bottom border-dark p-2">
-                <Toolbar
+                <MemoizedToolbar
                     setSearchTerms={setSearchTerms}
                     actionController={actionController}
                     altSpeedMode={session?.["alt-speed-enabled"] || false}
@@ -273,7 +273,7 @@ export function Server(props: ServerProps) {
                 }
                 bottom={
                     <div className="w-100">
-                        <Details torrentId={currentTorrent} updates={updates} {...props} />
+                        <MemoizedDetails torrentId={currentTorrent} updates={updates} {...props} />
                     </div>
                 }
             />

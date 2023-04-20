@@ -16,12 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { SelectableRow } from "components/tables/common";
 import { PeerStatsFieldsType, Status, TorrentAllFieldsType, TrackerStatsFieldsType } from "./transmission";
 
-export type Torrent = Partial<Record<TorrentAllFieldsType, any>> & SelectableRow;
-export type TrackerStats = Partial<Record<TrackerStatsFieldsType, any>> & SelectableRow;
-export type PeerStats = Partial<Record<PeerStatsFieldsType, any>> & SelectableRow;
+export type Torrent = Partial<Record<TorrentAllFieldsType, any>>;
+export type TrackerStats = Partial<Record<TrackerStatsFieldsType, any>>;
+export type PeerStats = Partial<Record<PeerStatsFieldsType, any>>;
 
 export function getTorrentError(t: Torrent): string {
     var torrentError = t.errorString;

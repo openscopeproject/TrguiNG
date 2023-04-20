@@ -83,13 +83,13 @@ export function TrackersTable(props: { torrent: Torrent }) {
 
     const getRowId = useCallback((t: TrackerStats) => String(t.id), []);
 
-    const [, selectedReducer, data] = useStandardSelect(
-        props.torrent.trackerStats as TrackerStats[], getRowId);
+    const [selected, selectedReducer] = useStandardSelect();
 
     return <Table<TrackerStats> {...{
         tablename: "trackers",
         columns: Columns,
-        data,
+        data: props.torrent.trackerStats,
+        selected,
         getRowId,
         selectedReducer
     }} />;

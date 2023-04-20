@@ -16,11 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { SelectableRow } from "components/tables/common";
 import { Torrent } from "./rpc/torrent";
 import { PriorityNumberType } from "rpc/transmission";
 
-interface Entry extends SelectableRow {
+interface Entry {
     name: string,
     level: number,
     fullpath: string,
@@ -29,6 +28,7 @@ interface Entry extends SelectableRow {
     size: number,
     done: number,
     percent: number,
+    isSelected: boolean,
 }
 
 export interface FileEntry extends Entry {
@@ -71,6 +71,7 @@ export class CachedFileTree {
             subdirs: new Map(),
             files: new Map(),
             expanded: true,
+            isSelected: false,
         }
         this.torrenthash = "";
         this.files = [];
