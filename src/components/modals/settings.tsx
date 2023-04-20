@@ -154,7 +154,8 @@ export function ManageServersModal(props: ManageServerModalProps) {
         servers.push(
             {
                 connection: { url: "", useAuth: false, username: "", password: "" },
-                name: "new", pathMappings: [], expandedDirFilters: [], lastSaveDirs: []
+                name: "new", pathMappings: [], expandedDirFilters: [], lastSaveDirs: [],
+                intervals: {session: 60, torrents: 5, torrentsMinimized: 60, details: 5},
             }
         );
         setServers(servers.slice());

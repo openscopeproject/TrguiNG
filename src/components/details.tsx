@@ -31,9 +31,11 @@ import { SessionStatEntry, SessionStatistics } from "rpc/transmission";
 import { Box, Container, Group, MantineTheme, Table, Tabs, TextInput } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
 import { CachedFileTree } from "cachedfiletree";
+import { useSessionStats, useTorrentDetails } from "queries";
 
 interface DetailsProps {
     torrentId?: number;
+    updates: boolean,
     clientManager: ClientManager;
 }
 
@@ -286,29 +288,14 @@ function Stats(props: { stats: SessionStatEntry }) {
 
 function ServerStats(props: { clientManager: ClientManager }) {
     const serverConfig = useContext(ServerConfigContext);
-    const [sessionStats, setSessionStats] = useState<SessionStatistics>();
-
-    useEffect(() => {
-        setSessionStats(props.clientManager.servers[serverConfig.name].sessionStats);
-    }, [serverConfig, props.clientManager]);
-
-    useEffect(() => {
-        console.log("Starting stats timer")
-        props.clientManager.onSessionStatsChange = setSessionStats;
-        props.clientManager.startSessionStatsTimer(serverConfig.name);
-
-        return () => {
-            console.log("Stopping stats timer")
-            props.clientManager.onSessionStatsChange = undefined;
-            props.clientManager.stopSessionStatsTimer(serverConfig.name)
-        }
-    }, [serverConfig]);
+    const client = props.clientManager.getClient(serverConfig.name);
+    const {data: sessionStats} = useSessionStats(client, true);
 
     return (
         <div className="d-flex flex-column h-100 w-100">
             <div className="flex-grow-1">
                 <div className="scrollable">
-                    {sessionStats !== undefined ?
+                    {sessionStats ?
                         <Container fluid>
                             <TableNameRow>Session</TableNameRow>
                             <Stats stats={sessionStats["current-stats"]} />
@@ -325,25 +312,10 @@ function ServerStats(props: { clientManager: ClientManager }) {
 
 export function Details(props: DetailsProps) {
     const serverConfig = useContext(ServerConfigContext);
+    const client = props.clientManager.getClient(serverConfig.name);
 
-    const [torrent, setTorrent] = useState<Torrent>();
-
-    useEffect(() => {
-        setTorrent(props.clientManager.servers[serverConfig.name].torrentDetails);
-    }, [serverConfig, props.clientManager]);
-
-    useEffect(() => {
-        props.clientManager.setServerDetailsId(serverConfig.name, props.torrentId);
-
-        if (!props.torrentId) return () => { };
-
-        props.clientManager.onTorrentDetailsChange = setTorrent;
-        props.clientManager.startDetailsTimer(serverConfig.name);
-
-        return () => {
-            props.clientManager.onTorrentDetailsChange = undefined;
-        }
-    }, [props.torrentId]);
+    const {data: torrent} = useTorrentDetails(
+        client, props.torrentId || -1, props.torrentId !== undefined && props.updates);
 
     return (
         <Tabs variant="outline" defaultValue="general" keepMounted={false} className="h-100 d-flex flex-column">

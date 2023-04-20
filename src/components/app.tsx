@@ -26,6 +26,8 @@ import { ManageServersModal } from './modals/settings';
 import { ClientManager } from '../clientmanager';
 import { ActionIcon, Menu, Tabs, TabsValue, useMantineColorScheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 interface ServerTabsProps {
     openTabs: string[],
@@ -123,6 +125,8 @@ function ServerTabs(props: ServerTabsProps) {
     </>);
 }
 
+const queryClient = new QueryClient();
+
 export function App({ }) {
     const config = useContext(ConfigContext);
     const [servers, setServers] = useState(config.getServers());
@@ -140,7 +144,6 @@ export function App({ }) {
     const tabSwitch = useCallback((tab: number) => {
         server.current = config.getServer(openTabs[tab]);
         if (!server.current) return;
-        clientManager.setActiveServer(server.current.name);
         setCurrentTab(tab);
     }, [openTabs]);
 
@@ -156,7 +159,7 @@ export function App({ }) {
                 closeTab(openTabs.length - reverseIndex - 1);
             }
         });
-    }, [config]);
+    }, [config, openTabs]);
 
     const openTab = useCallback((name: string) => {
         if (openTabs.includes(name)) return;
@@ -167,7 +170,7 @@ export function App({ }) {
         setOpenTabs(openTabs.slice());
 
         tabSwitch(openTabs.length - 1);
-    }, [openTabs]);
+    }, [openTabs, clientManager]);
 
     const closeTab = useCallback((tab: number) => {
         if (tab >= openTabs.length) return;
@@ -188,29 +191,32 @@ export function App({ }) {
         } else if (tab < currentTab) {
             setCurrentTab(currentTab - 1);
         }
-    }, [openTabs]);
+    }, [openTabs, clientManager, currentTab]);
 
     return (
-        <div className="d-flex flex-column h-100 w-100">
-            <ServerTabs
-                openTabs={openTabs} onTabOpen={openTab} onTabClose={closeTab}
-                currentTab={currentTab} onTabSwitch={tabSwitch}
-                servers={servers} onServersSave={onServerSave} />
-            {server.current !== undefined ?
-                <ServerConfigContext.Provider value={server.current!}>
-                    <Server clientManager={clientManager} />
-                </ServerConfigContext.Provider>
-                : <div className="d-flex justify-content-center align-items-center w-100 h-100">
-                    <div className="d-flex flex-column" style={{ minHeight: "10rem", height: "75vh" }}>
-                        <div>Open server tab</div>
-                        <div className="border border-secondary flex-grow-1" style={{ minHeight: "20rem" }}>
-                            {servers.map((s, i) => {
-                                return <div key={i} className="p-1" onClick={() => { openTab(s.name) }}>{s.name}</div>;
-                            })}
+        <QueryClientProvider client={queryClient}>
+            <div className="d-flex flex-column h-100 w-100">
+                <ServerTabs
+                    openTabs={openTabs} onTabOpen={openTab} onTabClose={closeTab}
+                    currentTab={currentTab} onTabSwitch={tabSwitch}
+                    servers={servers} onServersSave={onServerSave} />
+                {server.current !== undefined ?
+                    <ServerConfigContext.Provider value={server.current!}>
+                        <Server clientManager={clientManager} />
+                    </ServerConfigContext.Provider>
+                    : <div className="d-flex justify-content-center align-items-center w-100 h-100">
+                        <div className="d-flex flex-column" style={{ minHeight: "10rem", height: "75vh" }}>
+                            <div>Open server tab</div>
+                            <div className="border border-secondary flex-grow-1" style={{ minHeight: "20rem" }}>
+                                {servers.map((s, i) => {
+                                    return <div key={i} className="p-1" onClick={() => { openTab(s.name) }}>{s.name}</div>;
+                                })}
+                            </div>
                         </div>
                     </div>
-                </div>
-            }
-        </div>
+                }
+                <ReactQueryDevtools />
+            </div>
+        </QueryClientProvider>
     );
 }

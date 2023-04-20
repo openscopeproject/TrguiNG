@@ -24,7 +24,6 @@ import { ActionController } from "../actions";
 import { ClientManager } from "../clientmanager";
 import { ConfigContext, ServerConfigContext } from "../config";
 import '../css/custom.css';
-import { SessionInfo } from "../rpc/client";
 import { Torrent } from "../rpc/torrent";
 import { Details } from "./details";
 import { DefaultFilter, Filters } from "./filters";
@@ -35,6 +34,7 @@ import { Toolbar } from "./toolbar";
 import { RemoveModal } from "./modals/remove";
 import { MoveModal } from "./modals/move";
 import { AddMagnet, AddTorrent } from "./modals/add";
+import { useSession, useTorrentList } from "queries";
 
 interface ServerProps {
     clientManager: ClientManager,
@@ -165,40 +165,22 @@ function ServerModals(props: ServerModalsProps) {
 
 export function Server(props: ServerProps) {
     const serverConfig = useContext(ServerConfigContext);
-    const [torrents, setTorrents] = useState<Torrent[]>([]);
-    const [session, setSession] = useState<SessionInfo>({});
+    const [updates, runUpdates] = useState<boolean>(true);
+
+    const client = props.clientManager.getClient(serverConfig.name);
+
+    const { data: torrents, error: torrentsError } = useTorrentList(client, updates);
+    const { data: session, error: sessionError } = useSession(client, updates);
 
     const actionController = useMemo(
-        () => new ActionController(props.clientManager.getClient(serverConfig.name)),
-        [props.clientManager, serverConfig]);
-
-    const runUpdates = useCallback((run: boolean) => {
-        if (run) {
-            props.clientManager.startTimers(serverConfig.name);
-        } else {
-            props.clientManager.stopTimers(serverConfig.name);
-        }
-    }, []);
-
-    useEffect(() => {
-        setTorrents(props.clientManager.servers[serverConfig.name].torrents);
-        setSession(props.clientManager.servers[serverConfig.name].session);
-    }, [serverConfig, props.clientManager]);
-
-    useEffect(() => {
-        props.clientManager.onTorrentsChange = setTorrents;
-        props.clientManager.onSessionChange = setSession;
-
-        return () => {
-            props.clientManager.onTorrentsChange = undefined;
-            props.clientManager.onSessionChange = undefined;
-        }
-    }, [props.clientManager]);
+        () => new ActionController(client),
+        [props.clientManager, serverConfig.name]);
 
     const [currentTorrent, setCurrentTorrentInt] = useState<number>();
     const setCurrentTorrent = useCallback(
         (id: string) => setCurrentTorrentInt(+id),
         [setCurrentTorrentInt]);
+
     const [currentFilter, setCurrentFilter] = useState({ id: "", filter: DefaultFilter });
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
     const searchFilter = useCallback((t: Torrent) => {
@@ -215,12 +197,13 @@ export function Server(props: ServerProps) {
 
     useEffect(() => actionController.setSelected(selectedTorrents), [actionController, selectedTorrents]);
 
-    const filteredTorrents = useMemo(
+    const [filteredTorrents, setFilteredTorrents] = useState<Torrent[]>([]);
+    useEffect(
         () => {
-            var filtered = torrents.filter(currentFilter.filter).filter(searchFilter);
+            var filtered = torrents?.filter(currentFilter.filter).filter(searchFilter) || [];
             const ids: string[] = filtered.map((t) => t.id);
             selectedReducer({ verb: "filter", ids });
-            return filtered;
+            setFilteredTorrents(filtered);
         },
         [torrents, currentFilter, searchFilter]);
 
@@ -229,17 +212,25 @@ export function Server(props: ServerProps) {
     const statusbarProps = useMemo<StatusbarProps>(() => {
         const selected = filteredTorrents.filter((t) => selectedTorrents.has(t.id));
         return {
-            daemon_version: session.version,
+            daemon_version: session?.version || "<not connected>",
             hostname: props.clientManager.getHostname(serverConfig.name),
             downRate: filteredTorrents.reduce((p, t) => p + t.rateDownload, 0),
-            downRateLimit: session["speed-limit-down-enabled"] ?
-                session["alt-speed-enabled"] ? session["alt-speed-down"] : session["speed-limit-down"]
+            downRateLimit: session ?
+                session["speed-limit-down-enabled"] ?
+                    session["alt-speed-enabled"] ?
+                        session["alt-speed-down"]
+                        : session["speed-limit-down"]
+                    : -1
                 : -1,
             upRate: filteredTorrents.reduce((p, t) => p + t.rateUpload, 0),
-            upRateLimit: session["speed-limit-up-enabled"] ?
-                session["alt-speed-enabled"] ? session["alt-speed-up"] : session["speed-limit-up"]
+            upRateLimit: session ?
+                session["speed-limit-up-enabled"] ?
+                    session["alt-speed-enabled"] ?
+                        session["alt-speed-up"]
+                        : session["speed-limit-up"]
+                    : -1
                 : -1,
-            free: session["download-dir-free-space"],
+            free: session?.["download-dir-free-space"] || 0,
             sizeTotal: filteredTorrents.reduce((p, t) => p + t.sizeWhenDone, 0),
             sizeSelected: selected.reduce((p, t) => p + t.sizeWhenDone, 0),
             sizeDone: selected.reduce((p, t) => p + t.haveValid, 0),
@@ -249,7 +240,7 @@ export function Server(props: ServerProps) {
 
     const allLabels = useMemo(() => {
         var labels = new Set<string>();
-        torrents.forEach((t) => t.labels.forEach((l: string) => labels.add(l)));
+        torrents?.forEach((t) => t.labels.forEach((l: string) => labels.add(l)));
         return Array.from(labels).sort();
     }, [torrents]);
 
@@ -260,14 +251,14 @@ export function Server(props: ServerProps) {
                 <Toolbar
                     setSearchTerms={setSearchTerms}
                     actionController={actionController}
-                    altSpeedMode={session["alt-speed-enabled"]}
+                    altSpeedMode={session?.["alt-speed-enabled"] || false}
                 />
             </div>
             <SplitLayout
                 left={
                     <div className="scrollable">
                         <Filters
-                            torrents={torrents}
+                            torrents={torrents || []}
                             allLabels={allLabels}
                             currentFilter={currentFilter}
                             setCurrentFilter={setCurrentFilter} />
@@ -282,7 +273,7 @@ export function Server(props: ServerProps) {
                 }
                 bottom={
                     <div className="w-100">
-                        <Details torrentId={currentTorrent} {...props} />
+                        <Details torrentId={currentTorrent} updates={updates} {...props} />
                     </div>
                 }
             />

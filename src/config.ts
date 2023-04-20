@@ -40,6 +40,12 @@ export interface ServerConfig {
     pathMappings: PathMapping[],
     expandedDirFilters: string[],
     lastSaveDirs: string[],
+    intervals: {
+        session: number,
+        torrents: number,
+        torrentsMinimized: number,
+        details: number,
+    }
 }
 
 export interface SortByConfig {
@@ -172,6 +178,7 @@ export const ConfigContext = React.createContext(new Config());
 export const ServerConfigContext = React.createContext<ServerConfig>(
     {
         connection: { url: "", useAuth: false, username: "", password: "" },
-        name: "", pathMappings: [], expandedDirFilters: [], lastSaveDirs: []
+        name: "", pathMappings: [], expandedDirFilters: [], lastSaveDirs: [],
+        intervals: {session: 0, torrents: 0, torrentsMinimized: 0, details: 0},
     }
 );
