@@ -215,7 +215,7 @@ export function App({ }) {
                         </div>
                     </div>
                 }
-                <ReactQueryDevtools />
+                <ReactQueryDevtools toggleButtonProps={{style: {marginBottom: "2rem"}}}/>
             </div>
         </QueryClientProvider>
     );

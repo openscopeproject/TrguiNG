@@ -324,24 +324,22 @@ export function Table<TData>(props: {
                     ))}
                 </Box>
 
-                <div>
-                    {virtualizer.getVirtualItems().map((virtualRow) => {
-                        const row = table.getRowModel().rows[virtualRow.index];
-                        return <MemoizedTableRow<TData> {...{
-                            key: props.getRowId(row.original),
-                            row,
-                            selected: row.getIsSelected(),
-                            index: virtualRow.index,
-                            lastIndex,
-                            start: virtualRow.start,
-                            onRowClick,
-                            onRowDoubleClick: props.onRowDoubleClick,
-                            height: rowHeight,
-                            columnSizing,
-                            columnVisibility,
-                        }} />;
-                    })}
-                </div>
+                {virtualizer.getVirtualItems().map((virtualRow) => {
+                    const row = table.getRowModel().rows[virtualRow.index];
+                    return <MemoizedTableRow<TData> {...{
+                        key: props.getRowId(row.original),
+                        row,
+                        selected: row.getIsSelected(),
+                        index: virtualRow.index,
+                        lastIndex,
+                        start: virtualRow.start,
+                        onRowClick,
+                        onRowDoubleClick: props.onRowDoubleClick,
+                        height: rowHeight,
+                        columnSizing,
+                        columnVisibility,
+                    }} />;
+                })}
             </div >
         </div >
     );

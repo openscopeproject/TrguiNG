@@ -28,7 +28,7 @@ import { Torrent } from "../rpc/torrent";
 import { MemoizedDetails } from "./details";
 import { DefaultFilter, Filters } from "./filters";
 import { EditLabelsModal } from "./modals/editlabels";
-import { Statusbar, StatusbarProps } from "./statusbar";
+import { Statusbar } from "./statusbar";
 import { TorrentTable } from "./tables/torrenttable";
 import { MemoizedToolbar } from "./toolbar";
 import { RemoveModal } from "./modals/remove";
@@ -165,23 +165,15 @@ function ServerModals(props: ServerModalsProps) {
 
 export function Server(props: ServerProps) {
     const serverConfig = useContext(ServerConfigContext);
-    const [updates, runUpdates] = useState<boolean>(true);
 
     const client = props.clientManager.getClient(serverConfig.name);
-
-    const { data: torrents, error: torrentsError } = useTorrentList(client, updates);
-    const { data: session, error: sessionError } = useSession(client, updates);
 
     const actionController = useMemo(
         () => new ActionController(client),
         [props.clientManager, serverConfig.name]);
 
-    const [currentTorrent, setCurrentTorrentInt] = useState<number>();
-    const setCurrentTorrent = useCallback(
-        (id: string) => setCurrentTorrentInt(+id),
-        [setCurrentTorrentInt]);
-
     const [currentFilter, setCurrentFilter] = useState({ id: "", filter: DefaultFilter });
+
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
     const searchFilter = useCallback((t: Torrent) => {
         const name = t.name.toLowerCase();
@@ -189,6 +181,16 @@ export function Server(props: ServerProps) {
             if (!name.includes(term)) return false;
         return true;
     }, [searchTerms]);
+
+    const [updates, runUpdates] = useState<boolean>(true);
+
+    const { data: torrents, error: torrentsError } = useTorrentList(client, updates);
+    const { data: session, error: sessionError } = useSession(client, updates);
+
+    const [currentTorrent, setCurrentTorrentInt] = useState<number>();
+    const setCurrentTorrent = useCallback(
+        (id: string) => setCurrentTorrentInt(+id),
+        [setCurrentTorrentInt]);
 
     const [selectedTorrents, selectedReducer] = useReducer(useCallback(
         (selected: Set<number>, action: { verb: string, ids: string[] }) =>
@@ -208,35 +210,6 @@ export function Server(props: ServerProps) {
         [torrents, currentFilter, searchFilter]);
 
     useEffect(() => actionController.setTorrents(filteredTorrents), [actionController, filteredTorrents]);
-
-    const statusbarProps = useMemo<StatusbarProps>(() => {
-        const selected = filteredTorrents.filter((t) => selectedTorrents.has(t.id));
-        return {
-            daemon_version: session?.version || "<not connected>",
-            hostname: props.clientManager.getHostname(serverConfig.name),
-            downRate: filteredTorrents.reduce((p, t) => p + t.rateDownload, 0),
-            downRateLimit: session ?
-                session["speed-limit-down-enabled"] ?
-                    session["alt-speed-enabled"] ?
-                        session["alt-speed-down"]
-                        : session["speed-limit-down"]
-                    : -1
-                : -1,
-            upRate: filteredTorrents.reduce((p, t) => p + t.rateUpload, 0),
-            upRateLimit: session ?
-                session["speed-limit-up-enabled"] ?
-                    session["alt-speed-enabled"] ?
-                        session["alt-speed-up"]
-                        : session["speed-limit-up"]
-                    : -1
-                : -1,
-            free: session?.["download-dir-free-space"] || 0,
-            sizeTotal: filteredTorrents.reduce((p, t) => p + t.sizeWhenDone, 0),
-            sizeSelected: selected.reduce((p, t) => p + t.sizeWhenDone, 0),
-            sizeDone: selected.reduce((p, t) => p + t.haveValid, 0),
-            sizeLeft: selected.reduce((p, t) => p + t.leftUntilDone, 0),
-        }
-    }, [serverConfig, session, filteredTorrents, selectedTorrents]);
 
     const allLabels = useMemo(() => {
         var labels = new Set<string>();
@@ -278,7 +251,12 @@ export function Server(props: ServerProps) {
                 }
             />
             <div className="border-top border-dark py-1">
-                <Statusbar {...statusbarProps} />
+                <Statusbar {...{
+                    session,
+                    filteredTorrents,
+                    selectedTorrents,
+                    hostname: props.clientManager.getHostname(serverConfig.name)
+                }} />
             </div>
         </div>
     </>);

@@ -16,50 +16,81 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 import { byteRateToHumanReadableStr, bytesToHumanReadableStr } from "../util";
 import * as Icon from "react-bootstrap-icons";
 import { Container, Group } from "@mantine/core";
+import { SessionInfo } from "rpc/client";
+import { Torrent } from "rpc/torrent";
 
 export interface StatusbarProps {
-    daemon_version: string,
+    session: SessionInfo | undefined,
+    filteredTorrents: Torrent[],
+    selectedTorrents: Set<number>,
     hostname: string,
-    downRate: number,
-    downRateLimit: number,
-    upRate: number,
-    upRateLimit: number,
-    free: number,
-    sizeTotal: number,
-    sizeSelected: number,
-    sizeDone: number,
-    sizeLeft: number,
 }
 
-export function Statusbar(props: StatusbarProps) {
+export function Statusbar({ session, filteredTorrents, selectedTorrents, hostname }: StatusbarProps) {
+    const serverFields = useMemo(() => {
+        return {
+            downRateLimit: session ?
+                session["speed-limit-down-enabled"] ?
+                    session["alt-speed-enabled"] ?
+                        session["alt-speed-down"]
+                        : session["speed-limit-down"]
+                    : -1
+                : -1,
+            upRateLimit: session ?
+                session["speed-limit-up-enabled"] ?
+                    session["alt-speed-enabled"] ?
+                        session["alt-speed-up"]
+                        : session["speed-limit-up"]
+                    : -1
+                : -1,
+            free: session?.["download-dir-free-space"] || 0,
+        }
+    }, [session]);
+
+    const [downRate, upRate, sizeTotal] = useMemo(() => [
+        filteredTorrents.reduce((p, t) => p + t.rateDownload, 0),
+        bytesToHumanReadableStr(filteredTorrents.reduce((p, t) => p + t.sizeWhenDone, 0)),
+        bytesToHumanReadableStr(filteredTorrents.reduce((p, t) => p + t.rateUpload, 0)),
+    ], [filteredTorrents]);
+
+    const [sizeSelected, sizeDone, sizeLeft] = useMemo(() => {
+        const selected = filteredTorrents.filter((t) => selectedTorrents.has(t.id));
+
+        return [
+            bytesToHumanReadableStr(selected.reduce((p, t) => p + t.sizeWhenDone, 0)),
+            bytesToHumanReadableStr(selected.reduce((p, t) => p + t.haveValid, 0)),
+            bytesToHumanReadableStr(selected.reduce((p, t) => p + t.leftUntilDone, 0)),
+        ]
+    }, [filteredTorrents, selectedTorrents]);
+
     return (
         <Container fluid>
-            <Group className="statusbar" styles={{root: {"flex-wrap": "nowrap"}}}>
+            <Group className="statusbar" styles={{ root: { "flex-wrap": "nowrap" } }}>
                 <div>
                     <Icon.Diagram2 className="me-2" />
-                    <span>{`${props.daemon_version} at ${props.hostname}`}</span>
+                    <span>{`${session?.version || "<not connected>"} at ${hostname}`}</span>
                 </div>
                 <div>
                     <Icon.ArrowDown className="me-2" />
-                    <span>{`${bytesToHumanReadableStr(props.downRate)}/s (${byteRateToHumanReadableStr(props.downRateLimit * 1024)})`}</span>
+                    <span>{`${bytesToHumanReadableStr(downRate)}/s (${byteRateToHumanReadableStr(serverFields.downRateLimit * 1024)})`}</span>
                 </div>
                 <div>
                     <Icon.ArrowUp className="me-2" />
-                    <span>{`${bytesToHumanReadableStr(props.upRate)}/s (${byteRateToHumanReadableStr(props.upRateLimit * 1024)})`}</span>
+                    <span>{`${upRate}/s (${byteRateToHumanReadableStr(serverFields.upRateLimit * 1024)})`}</span>
                 </div>
                 <div>
                     <Icon.Hdd className="me-2" />
-                    <span>{`Free: ${bytesToHumanReadableStr(props.free)}`}</span>
+                    <span>{`Free: ${bytesToHumanReadableStr(serverFields.free)}`}</span>
                 </div>
                 <div>
-                    {`Total: ${bytesToHumanReadableStr(props.sizeTotal)}`}
+                    {`Total: ${sizeTotal}`}
                 </div>
                 <div>
-                    {`Selected: ${bytesToHumanReadableStr(props.sizeSelected)}, done ${bytesToHumanReadableStr(props.sizeDone)}, left ${bytesToHumanReadableStr(props.sizeLeft)}`}
+                    {`Selected: ${sizeSelected}, done ${sizeDone}, left ${sizeLeft}`}
                 </div>
             </Group>
         </Container>

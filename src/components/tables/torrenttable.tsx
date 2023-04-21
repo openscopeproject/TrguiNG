@@ -31,7 +31,6 @@ import { Badge } from "@mantine/core";
 interface TableFieldProps {
     torrent: Torrent,
     fieldName: TorrentAllFieldsType,
-    active?: boolean
 }
 
 interface TableField {
@@ -151,25 +150,18 @@ function ByteRateField(props: TableFieldProps) {
 
 function PercentBarField(props: TableFieldProps) {
     const now = props.torrent[props.fieldName] * 100;
+    const active = props.torrent.rateDownload > 0 || props.torrent.rateUpload > 0;
 
     return <ProgressBar
         now={now}
         className="white-outline"
-        {...(props.active ? { animate: true } : {})}
+        animate={active}
     />
-}
-
-interface TorrentTableProps {
-    torrents: Torrent[];
-    setCurrentTorrent: (id: string) => void;
-    selectedTorrents: Set<number>,
-    selectedReducer: React.Dispatch<{ verb: string; ids: string[]; }>
 }
 
 const Columns = AllFields.map((f): ColumnDef<Torrent> => {
     const cell = (props: CellContext<Torrent, unknown>) => {
-        const active = props.row.original.rateDownload > 0 || props.row.original.rateUpload > 0;
-        return <f.component fieldName={f.name} torrent={props.row.original} active={active} />
+        return <f.component fieldName={f.name} torrent={props.row.original} />
     };
     if (f.accessorFn) return {
         header: f.label,
@@ -184,8 +176,12 @@ const Columns = AllFields.map((f): ColumnDef<Torrent> => {
     };
 });
 
-export function TorrentTable(props: TorrentTableProps) {
-
+export function TorrentTable(props: {
+    torrents: Torrent[];
+    setCurrentTorrent: (id: string) => void;
+    selectedTorrents: Set<number>,
+    selectedReducer: React.Dispatch<{ verb: string; ids: string[]; }>
+}) {
     const getRowId = useCallback((t: Torrent) => String(t.id), []);
     const selected = useMemo(
         () => Array.from(props.selectedTorrents).map(String), [props.selectedTorrents]);
