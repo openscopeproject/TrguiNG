@@ -70,6 +70,10 @@ export const TorrentMinimumFields = [
     "status", //number (see below) tr_stat
     "downloadDir", //string tr_torrent
     "labels", //array of strings tr_torrent
+    // following are needed to get torrent error status
+    "error", //number tr_stat
+    "errorString", //string tr_stat
+    "trackerStats", //array (see below)", //n/a
     // following are needed by status bar
     "rateDownload", //number tr_stat
     "rateUpload", //number tr_stat
@@ -90,8 +94,6 @@ export const TorrentFields = [
     "downloadLimit", //number tr_torrent
     "downloadLimited", //boolean tr_torrent
     "editDate", //number tr_stat
-    "error", //number tr_stat
-    "errorString", //string tr_stat
     "eta", //number tr_stat
     "etaIdle", //number tr_stat
     "file-count", //number tr_info
@@ -124,7 +126,6 @@ export const TorrentFields = [
     "startDate", //number tr_stat
     "totalSize", //number tr_torrent_view
     "torrentFile", //string tr_info
-    "trackerStats", //array (see below)", //n/a
     "uploadedEver", //number tr_stat
     "uploadLimit", //number tr_torrent
     "uploadLimited", //boolean tr_torrent

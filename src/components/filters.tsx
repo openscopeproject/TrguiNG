@@ -39,7 +39,8 @@ const statusFilters: LabeledFilter[] = [
     { label: "Downloading", filter: (t: Torrent) => t.status == Status.downloading },
     {
         label: "Completed", filter: (t: Torrent) => {
-            return t.status == Status.seeding || t.sizeWhenDone > 0 && t.leftUntilDone == 0;
+            return t.status == Status.seeding ||
+                t.sizeWhenDone > 0 && Math.max(t.sizeWhenDone - t.haveValid, 0) == 0;
         }
     },
     {
