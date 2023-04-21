@@ -63,7 +63,22 @@ export const PriorityColors = new Map<PriorityNumberType, ExtendedCustomColors>(
     [1, "orange.7"],
 ]);
 
+export const TorrentMinimumFields = [
+    "id", //number tr_torrent
+    "name", //string tr_torrent_view
+    // following are needed by filters
+    "status", //number (see below) tr_stat
+    "downloadDir", //string tr_torrent
+    "labels", //array of strings tr_torrent
+    // following are needed by status bar
+    "rateDownload", //number tr_stat
+    "rateUpload", //number tr_stat
+    "sizeWhenDone", //number tr_stat
+    "haveValid", //number tr_stat
+] as const;
+
 export const TorrentFields = [
+    ...TorrentMinimumFields,
     "activityDate", //number tr_stat
     "addedDate", //number tr_stat
     "bandwidthPriority", //number tr_priority_t
@@ -71,7 +86,6 @@ export const TorrentFields = [
     "dateCreated", //number tr_torrent_view
     "desiredAvailable", //number tr_stat
     "doneDate", //number tr_stat
-    "downloadDir", //string tr_torrent
     "downloadedEver", //number tr_stat
     "downloadLimit", //number tr_torrent
     "downloadLimited", //boolean tr_torrent
@@ -83,18 +97,14 @@ export const TorrentFields = [
     "file-count", //number tr_info
     "group", //string", //n/a
     "haveUnchecked", //number tr_stat
-    "haveValid", //number tr_stat
     "honorsSessionLimits", //boolean tr_torrent
-    "id", //number tr_torrent
     "isFinished", //boolean tr_stat
     "isPrivate", //boolean tr_torrent
     "isStalled", //boolean tr_stat
-    "labels", //array of strings tr_torrent
     "leftUntilDone", //number tr_stat
     "manualAnnounceTime", //number tr_stat
     "maxConnectedPeers", //number tr_torrent
     "metadataPercentComplete", //double tr_stat
-    "name", //string tr_torrent_view
     "peer-limit", //number tr_torrent
     "peersConnected", //number tr_stat
     "peersGettingFromUs", //number tr_stat
@@ -104,8 +114,6 @@ export const TorrentFields = [
     "pieceCount", //number tr_torrent_view
     "pieceSize", //number tr_torrent_view
     "queuePosition", //number tr_stat
-    "rateDownload", //number tr_stat
-    "rateUpload", //number tr_stat
     "recheckProgress", //double tr_stat
     "secondsDownloading", //number tr_stat
     "secondsSeeding", //number tr_stat
@@ -113,9 +121,7 @@ export const TorrentFields = [
     "seedIdleMode", //number tr_inactvelimit
     "seedRatioLimit", //double tr_torrent
     "seedRatioMode", //number tr_ratiolimit
-    "sizeWhenDone", //number tr_stat
     "startDate", //number tr_stat
-    "status", //number (see below) tr_stat
     "totalSize", //number tr_torrent_view
     "torrentFile", //string tr_info
     "trackerStats", //array (see below)", //n/a

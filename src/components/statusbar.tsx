@@ -52,9 +52,9 @@ export function Statusbar({ session, filteredTorrents, selectedTorrents, hostnam
     }, [session]);
 
     const [downRate, upRate, sizeTotal] = useMemo(() => [
-        filteredTorrents.reduce((p, t) => p + t.rateDownload, 0),
-        bytesToHumanReadableStr(filteredTorrents.reduce((p, t) => p + t.sizeWhenDone, 0)),
+        bytesToHumanReadableStr(filteredTorrents.reduce((p, t) => p + t.rateDownload, 0)),
         bytesToHumanReadableStr(filteredTorrents.reduce((p, t) => p + t.rateUpload, 0)),
+        bytesToHumanReadableStr(filteredTorrents.reduce((p, t) => p + t.sizeWhenDone, 0)),
     ], [filteredTorrents]);
 
     const [sizeSelected, sizeDone, sizeLeft] = useMemo(() => {
@@ -63,7 +63,7 @@ export function Statusbar({ session, filteredTorrents, selectedTorrents, hostnam
         return [
             bytesToHumanReadableStr(selected.reduce((p, t) => p + t.sizeWhenDone, 0)),
             bytesToHumanReadableStr(selected.reduce((p, t) => p + t.haveValid, 0)),
-            bytesToHumanReadableStr(selected.reduce((p, t) => p + t.leftUntilDone, 0)),
+            bytesToHumanReadableStr(selected.reduce((p, t) => p + Math.max(t.sizeWhenDone - t.haveValid, 0), 0)),
         ]
     }, [filteredTorrents, selectedTorrents]);
 
@@ -76,7 +76,7 @@ export function Statusbar({ session, filteredTorrents, selectedTorrents, hostnam
                 </div>
                 <div>
                     <Icon.ArrowDown className="me-2" />
-                    <span>{`${bytesToHumanReadableStr(downRate)}/s (${byteRateToHumanReadableStr(serverFields.downRateLimit * 1024)})`}</span>
+                    <span>{`${downRate}/s (${byteRateToHumanReadableStr(serverFields.downRateLimit * 1024)})`}</span>
                 </div>
                 <div>
                     <Icon.ArrowUp className="me-2" />

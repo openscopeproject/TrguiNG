@@ -20,12 +20,16 @@ import { useQuery } from "@tanstack/react-query";
 import { ServerConfigContext } from "config"
 import { useCallback, useContext } from "react"
 import { TransmissionClient } from "rpc/client";
+import { TorrentFieldsType } from "rpc/transmission";
 
 const TorrentKeys = {
-    all: (server: string) => [server, "torrent"] as const,
-    listAll: (server: string) => [...TorrentKeys.all(server), "list"] as const,
-    list: (server: string, torrentIds: number[]) => [...TorrentKeys.listAll(server), {torrentIds}] as const,
-    details: (server: string, torrentId: number) => [...TorrentKeys.all(server), "details", {torrentId}] as const,
+    all: (server: string,) => [server, "torrent"] as const,
+    listAll: (server: string, fields: TorrentFieldsType[]) =>
+        [...TorrentKeys.all(server), "list", { fields }] as const,
+    list: (server: string, torrentIds: number[], fields: TorrentFieldsType[]) =>
+        [...TorrentKeys.all(server), { fields, torrentIds }] as const,
+    details: (server: string, torrentId: number) =>
+        [...TorrentKeys.all(server), "details", { torrentId }] as const,
 }
 
 const SessionKeys = {
@@ -37,17 +41,17 @@ const SessionStatsKeys = {
     all: (server: string) => [server, "sessionStats"] as const,
 }
 
-export function useTorrentList(client: TransmissionClient, enabled: boolean) {
+export function useTorrentList(client: TransmissionClient, enabled: boolean, fields: TorrentFieldsType[]) {
     const serverConfig = useContext(ServerConfigContext);
 
     return useQuery({
-        queryKey: TorrentKeys.listAll(serverConfig.name),
+        queryKey: TorrentKeys.listAll(serverConfig.name, fields),
         refetchInterval: 1000 * serverConfig.intervals.torrents,
         staleTime: 1000 * 60,
         enabled,
         queryFn: useCallback(() => {
-            return client.getTorrents();
-        }, [client]),
+            return client.getTorrents(fields);
+        }, [client, fields]),
     });
 }
 

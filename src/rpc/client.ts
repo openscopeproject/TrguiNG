@@ -18,7 +18,7 @@
 
 import { Buffer } from 'buffer';
 
-import { PriorityNumberType, SessionAllFields, SessionAllFieldsType, SessionFields, SessionStatistics, TorrentAllFields, TorrentFields } from './transmission';
+import { PriorityNumberType, SessionAllFields, SessionAllFieldsType, SessionFields, SessionStatistics, TorrentAllFields, TorrentFields, TorrentFieldsType } from './transmission';
 import { ServerConnection } from '../config';
 import { Torrent } from './torrent';
 import { merge } from 'lodash-es';
@@ -119,11 +119,10 @@ export class TransmissionClient {
         }
     }
 
-    async getTorrents(): Promise<Torrent[]> {
-        // console.log("Running torrent-get");
+    async getTorrents(fields: TorrentFieldsType[]): Promise<Torrent[]> {
         var request = {
             method: "torrent-get",
-            arguments: { fields: TorrentFields }
+            arguments: { fields }
         };
 
         var response = await this.sendRpc(request);

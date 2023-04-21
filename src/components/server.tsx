@@ -29,12 +29,13 @@ import { MemoizedDetails } from "./details";
 import { DefaultFilter, Filters } from "./filters";
 import { EditLabelsModal } from "./modals/editlabels";
 import { Statusbar } from "./statusbar";
-import { TorrentTable } from "./tables/torrenttable";
+import { TorrentTable, useInitialTorrentRequiredFields } from "./tables/torrenttable";
 import { MemoizedToolbar } from "./toolbar";
 import { RemoveModal } from "./modals/remove";
 import { MoveModal } from "./modals/move";
 import { AddMagnet, AddTorrent } from "./modals/add";
 import { useSession, useTorrentList } from "queries";
+import { TorrentFieldsType } from "rpc/transmission";
 
 interface ServerProps {
     clientManager: ClientManager,
@@ -184,7 +185,9 @@ export function Server(props: ServerProps) {
 
     const [updates, runUpdates] = useState<boolean>(true);
 
-    const { data: torrents, error: torrentsError } = useTorrentList(client, updates);
+    const [tableRequiredFields, setTableRequiredFields] = useState<TorrentFieldsType[]>(useInitialTorrentRequiredFields());
+
+    const { data: torrents, error: torrentsError } = useTorrentList(client, updates, tableRequiredFields);
     const { data: session, error: sessionError } = useSession(client, updates);
 
     const [currentTorrent, setCurrentTorrentInt] = useState<number>();
@@ -242,7 +245,8 @@ export function Server(props: ServerProps) {
                         torrents={filteredTorrents}
                         setCurrentTorrent={setCurrentTorrent}
                         selectedTorrents={selectedTorrents}
-                        selectedReducer={selectedReducer} />
+                        selectedReducer={selectedReducer}
+                        onColumnVisibilityChange={setTableRequiredFields} />
                 }
                 bottom={
                     <div className="w-100">

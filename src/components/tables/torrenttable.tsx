@@ -17,16 +17,17 @@
  */
 
 import 'css/torrenttable.css';
-import React, { memo, useCallback, useMemo } from 'react';
+import React, { memo, useCallback, useContext, useMemo } from 'react';
 import { Torrent, TrackerStats } from 'rpc/torrent';
-import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentAllFieldsType, TorrentFieldsType } from 'rpc/transmission';
-import { ColumnDef } from '@tanstack/react-table';
+import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentAllFieldsType, TorrentFieldsType, TorrentMinimumFields } from 'rpc/transmission';
+import { ColumnDef, VisibilityState } from '@tanstack/react-table';
 import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from 'util';
 import { ProgressBar } from '../progressbar';
 import { AccessorFn, CellContext } from '@tanstack/table-core';
 import { Table } from "./common";
 import { getTrackerAnnounceState } from "./trackertable";
 import { Badge } from "@mantine/core";
+import { ConfigContext } from 'config';
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -39,6 +40,7 @@ interface TableField {
     component: React.FunctionComponent<TableFieldProps> | React.NamedExoticComponent<TableFieldProps>,
     columnId?: string,
     accessorFn?: AccessorFn<Torrent>,
+    requiredFields?: TorrentFieldsType[],
 }
 
 const TimeField = memo(function TimeField(props: TableFieldProps) {
@@ -52,8 +54,13 @@ const TimeField = memo(function TimeField(props: TableFieldProps) {
 const AllFields: readonly TableField[] = [
     { name: "name", label: "Name", component: StringField },
     { name: "totalSize", label: "Size", component: ByteSizeField },
+    { name: "sizeWhenDone", label: "Size to download", component: ByteSizeField },
+    { name: "leftUntilDone", label: "Size left", component: ByteSizeField},
     { name: "haveValid", label: "Downloaded", component: ByteSizeField },
-    { name: "percentDone", label: "Done", component: PercentBarField },
+    {
+        name: "percentDone", label: "Done", component: PercentBarField,
+        requiredFields: ["percentDone", "rateDownload", "rateUpload"] as TorrentFieldsType[],
+    },
     { name: "rateDownload", label: "Down speed", component: ByteRateField },
     { name: "rateUpload", label: "Up speed", component: ByteRateField },
     { name: "status", label: "Status", component: StatusField },
@@ -71,14 +78,12 @@ const AllFields: readonly TableField[] = [
     { name: "activityDate", label: "Last active", component: DateField },
     { name: "downloadDir", label: "Path", component: StringField },
     { name: "bandwidthPriority", label: "Priority", component: PriorityField },
-    { name: "sizeWhenDone", label: "Size to download", component: ByteSizeField },
     { name: "id", label: "ID", component: StringField },
     { name: "queuePosition", label: "Queue position", component: StringField },
     { name: "secondsSeeding", label: "Seeding time", component: TimeField },
-    { name: "leftUntilDone", label: "Size left", component: ByteSizeField },
-    { name: "isPrivate", label: "Private", component: StringField }, //
+    { name: "isPrivate", label: "Private", component: StringField },
     { name: "labels", label: "Labels", component: LabelsField },
-    { name: "group", label: "Bandwidth group", component: StringField }, //
+    { name: "group", label: "Bandwidth group", component: StringField },
 ] as const;
 
 function StringField(props: TableFieldProps) {
@@ -137,7 +142,7 @@ function ByteSizeField(props: TableFieldProps) {
         return bytesToHumanReadableStr(props.torrent[props.fieldName]);
     }, [props.torrent[props.fieldName]]);
 
-    return <>{stringValue}</>;
+    return <div style={{textAlign: "right"}}>{stringValue}</div>;
 }
 
 function ByteRateField(props: TableFieldProps) {
@@ -145,7 +150,7 @@ function ByteRateField(props: TableFieldProps) {
         return `${bytesToHumanReadableStr(props.torrent[props.fieldName])}/s`;
     }, [props.torrent[props.fieldName]]);
 
-    return <>{stringValue}</>;
+    return <div style={{textAlign: "right"}}>{stringValue}</div>;
 }
 
 function PercentBarField(props: TableFieldProps) {
@@ -176,15 +181,48 @@ const Columns = AllFields.map((f): ColumnDef<Torrent> => {
     };
 });
 
+const ColumnRequiredFields = AllFields.map(
+    (f) => ({ id: f.columnId || f.name, requires: f.requiredFields || [f.name] })
+);
+
+function getRequiredFields(visibilityState: VisibilityState): TorrentFieldsType[] {
+    const set = ColumnRequiredFields.reduce(
+        (set: Set<TorrentFieldsType>, f) => {
+            if (visibilityState[f.id] !== false)
+                f.requires.forEach((r) => set.add(r));
+            return set;
+        },
+        new Set<TorrentFieldsType>());
+
+    // add bare minimum fields
+    TorrentMinimumFields.forEach((f) => set.add(f));
+
+    return Array.from(set).sort();
+}
+
+export function useInitialTorrentRequiredFields() {
+    const config = useContext(ConfigContext);
+
+    return useMemo(
+        () => getRequiredFields(config.getTableColumnVisibility("torrents")),
+        [config]);
+}
+
 export function TorrentTable(props: {
     torrents: Torrent[];
     setCurrentTorrent: (id: string) => void;
     selectedTorrents: Set<number>,
-    selectedReducer: React.Dispatch<{ verb: string; ids: string[]; }>
+    selectedReducer: React.Dispatch<{ verb: string; ids: string[]; }>,
+    onColumnVisibilityChange: React.Dispatch<TorrentFieldsType[]>,
 }) {
     const getRowId = useCallback((t: Torrent) => String(t.id), []);
     const selected = useMemo(
         () => Array.from(props.selectedTorrents).map(String), [props.selectedTorrents]);
+
+    const onVisibilityChange = useCallback(
+        (visibility: VisibilityState) => props.onColumnVisibilityChange(getRequiredFields(visibility)),
+        [props.onColumnVisibilityChange]
+    )
 
     return <Table<Torrent> {...{
         tablename: "torrents",
@@ -193,6 +231,7 @@ export function TorrentTable(props: {
         selected,
         getRowId,
         selectedReducer: props.selectedReducer,
-        setCurrent: props.setCurrentTorrent
+        setCurrent: props.setCurrentTorrent,
+        onVisibilityChange,
     }} />;
 }

@@ -31,12 +31,13 @@ const defaultColumn = {
     maxSize: 2000,
 };
 
-export function useTable<TData>(
+function useTable<TData>(
     tablename: TableName,
     columns: ColumnDef<TData, unknown>[],
     data: TData[],
     selected: string[],
     getRowId: (r: TData) => string,
+    onVisibilityChange?: React.Dispatch<VisibilityState>,
 ): [Table<TData>, VisibilityState, (v: VisibilityState) => void, ColumnSizingState] {
     const config = useContext(ConfigContext);
 
@@ -48,8 +49,10 @@ export function useTable<TData>(
         useState<SortingState>(config.getTableSortBy(tablename));
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-    useEffect(() => config.setTableColumnVisibility(
-        tablename, columnVisibility), [config, columnVisibility]);
+    useEffect(() => {
+        config.setTableColumnVisibility(tablename, columnVisibility);
+        onVisibilityChange?.(columnVisibility);
+    }, [config, columnVisibility, onVisibilityChange]);
     useEffect(() => config.setTableColumnSizes(
         tablename, columnSizing), [config, columnSizing]);
     useEffect(() => config.setTableSortBy(
@@ -265,9 +268,10 @@ export function Table<TData>(props: {
     selectedReducer: ({ verb, ids }: { verb: "add" | "set", ids: string[] }) => void,
     setCurrent?: (id: string) => void,
     onRowDoubleClick?: (row: TData) => void,
+    onVisibilityChange?: React.Dispatch<VisibilityState>,
 }) {
     const [table, columnVisibility, setColumnVisibility, columnSizing] =
-        useTable(props.tablename, props.columns, props.data, props.selected, props.getRowId);
+        useTable(props.tablename, props.columns, props.data, props.selected, props.getRowId, props.onVisibilityChange);
 
     const [lastIndex, onRowClick] = useSelectHandler(table, props.selectedReducer, props.getRowId, props.setCurrent);
 
