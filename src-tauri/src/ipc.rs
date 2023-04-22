@@ -27,6 +27,8 @@ use hyper::{Body, Client, HeaderMap, Method, Request, Response, Server, StatusCo
 use tauri::{async_runtime, AppHandle, Manager};
 use tokio::sync::{oneshot, Semaphore};
 
+use crate::torrentcache::process_torrents;
+
 const ADDRESS: &str = "127.123.45.67:8080";
 const ALLOW_ORIGINS: &'static [&'static str] = if cfg!(feature = "custom-protocol") {
     &["tauri://localhost", "https://tauri.localhost"]
@@ -96,7 +98,7 @@ async fn http_response(
                 .body(Body::from("transgui-ng OK"))
                 .unwrap())
         }
-        (&Method::OPTIONS, "/post") => {
+        (&Method::OPTIONS, _) => {
             let mut response = Response::builder()
                 .status(200u16)
                 .body(Body::empty())
@@ -105,6 +107,10 @@ async fn http_response(
             Ok(response)
         }
         (&Method::POST, "/post") => proxy_fetch(req).await,
+        (&Method::POST, "/torrentget") => match proxy_fetch(req).await {
+            Ok(response) => process_torrents(&app, response).await,
+            Err(e) => Err(e),
+        },
         _ => Ok(not_found()),
     }
 }
@@ -125,7 +131,7 @@ async fn proxy_fetch(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
             let auth_header = headers.get(AUTHORIZATION);
             let mut req_builder = Request::builder()
                 .method(Method::POST)
-                .uri(url)
+                .uri(url.clone())
                 .header("content-type", "application/json");
             if tr_header.is_some() {
                 req_builder = req_builder.header(TRANSMISSION_SESSION_ID, tr_header.unwrap());
@@ -141,6 +147,7 @@ async fn proxy_fetch(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
                     match client.request(req).await {
                         Ok(mut response) => {
                             cors(&headers, &mut response, ALLOW_ORIGINS);
+                            response.headers_mut().insert("X-Original-URL", HeaderValue::from_str(url.as_ref()).unwrap());
                             Ok(response)
                         }
                         Err(e) => Err(e),

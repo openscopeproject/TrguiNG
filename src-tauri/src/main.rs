@@ -26,12 +26,15 @@ use tauri::{
     async_runtime::{self, Mutex},
     App, AppHandle, GlobalWindowEvent, Manager, State,
 };
+use torrentcache::TorrentCache;
 
 mod commands;
 mod ipc;
 mod tray;
+mod torrentcache;
 
 struct ListenerHandle(Arc<Mutex<ipc::Ipc>>);
+struct TorrentCacheHandle(Arc<Mutex<torrentcache::TorrentCache>>);
 
 fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let config = app.config();
@@ -105,6 +108,7 @@ fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![commands::read_file, commands::shell_open])
         .manage(ListenerHandle(Arc::new(Mutex::new(ipc))))
+        .manage(TorrentCacheHandle(Arc::new(Mutex::new(TorrentCache::default()))))
         .manage(tray::HideStateHandle(Default::default()))
         .system_tray(tray::create_tray())
         .on_system_tray_event(tray::on_tray_event)

@@ -74,7 +74,7 @@ export class TransmissionClient {
     sessionInfo: SessionInfo;
 
     constructor(connection: ServerConnection, timeout = 15) {
-        this.url = "http://127.123.45.67:8080/post?url=" + encodeURIComponent(connection.url);
+        this.url = encodeURIComponent(connection.url);
         this.auth = "Basic " + Buffer.from(connection.username + ":" + connection.password, 'utf-8').toString('base64');
         this.headers = { "Authorization": this.auth };
         this.timeout = timeout;
@@ -95,10 +95,11 @@ export class TransmissionClient {
         return null;
     }
 
-    async sendRpc(data: Object) {
+    async sendRpc(data: Record<string, any>) {
+        let url = `http://127.123.45.67:8080/${data.method == "torrent-get" ? "torrentget" : "post"}?url=${this.url}`;
         var data_str = JSON.stringify(data);
         var response = await fetch(
-            this.url, { method: "POST", headers: this.headers, body: data_str });
+            url, { method: "POST", headers: this.headers, body: data_str });
 
         if (response.status == 409) {
             var sid = response.headers.get("X-Transmission-Session-Id");
@@ -108,7 +109,7 @@ export class TransmissionClient {
             this.headers["X-Transmission-Session-Id"] = sid;
 
             response = await await fetch(
-                this.url, { method: "POST", headers: this.headers, body: data_str });
+                url, { method: "POST", headers: this.headers, body: data_str });
         }
 
         if (response.ok) {
