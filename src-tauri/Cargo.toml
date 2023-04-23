@@ -23,7 +23,7 @@ urlencoding = "^2.1"
 hyper = { version = "^0.14", features = ["full"] }
 tokio = { version = "^1.17", features = ["net"] }
 serde = { version = "^1.0", features = ["derive"] }
-tauri = { version = "^1.2", features = ["cli", "devtools", "dialog-all", "fs-read-file", "fs-write-file", "http-all", "path-all", "shell-open", "system-tray", "window-close", "window-set-position", "window-set-size", "window-set-title", "notification"] }
+tauri = { version = "^1.2", features = ["cli", "devtools", "dialog-all", "fs-read-file", "fs-write-file", "http-all", "notification", "path-all", "shell-open", "system-tray", "window-close", "window-set-position", "window-set-size", "window-set-title"] }
 opener = "0.6"
 
 [features]

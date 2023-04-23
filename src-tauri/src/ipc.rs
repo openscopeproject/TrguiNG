@@ -108,7 +108,13 @@ async fn http_response(
         }
         (&Method::POST, "/post") => proxy_fetch(req).await,
         (&Method::POST, "/torrentget") => match proxy_fetch(req).await {
-            Ok(response) => process_torrents(&app, response).await,
+            Ok(response) => {
+                if response.status().is_success() {
+                    process_torrents(&app, response).await
+                } else {
+                    Ok(response)
+                }
+            }
             Err(e) => Err(e),
         },
         _ => Ok(not_found()),

@@ -14,13 +14,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use hyper::{body::to_bytes, Body, Response};
 use serde::Deserialize;
-use tauri::{api::notification::Notification, AppHandle, Manager, State};
-
-use crate::TorrentCacheHandle;
+use tauri::{api::notification::Notification, async_runtime::Mutex, AppHandle, Manager, State};
 
 #[derive(Deserialize, Debug)]
 struct Torrent {
@@ -29,12 +27,14 @@ struct Torrent {
     status: i64,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Default)]
+#[serde(default)]
 struct Arguments {
     torrents: Vec<Torrent>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Default)]
+#[serde(default)]
 struct ServerResponse {
     result: String,
     arguments: Option<Arguments>,
@@ -44,6 +44,9 @@ struct ServerResponse {
 pub struct TorrentCache {
     server_data: HashMap<String, HashMap<i64, Torrent>>,
 }
+
+#[derive(Default)]
+pub struct TorrentCacheHandle(Arc<Mutex<TorrentCache>>);
 
 pub async fn process_torrents(
     app: &AppHandle,
@@ -55,6 +58,7 @@ pub async fn process_torrents(
     let version = response.version();
 
     let bytes = to_bytes(response.into_body()).await?;
+
     match serde_json::from_slice::<ServerResponse>(bytes.as_ref()) {
         Ok(server_response) => {
             if server_response.result != "success" {
@@ -79,7 +83,7 @@ pub async fn process_torrents(
                         });
                     }
                 }
-                None => println!("Server returned success but no torrents!"),
+                None => println!("Server returned success but no arguments!"),
             }
         }
         Err(e) => println!("Failed to parse {:?}", e),
@@ -98,8 +102,8 @@ pub async fn process_torrents(
 
 fn show_notification(app: &AppHandle, name: &String) {
     if let Err(e) = Notification::new(app.config().tauri.bundle.identifier.as_str())
-        .title("Transmission Remote GUI")
-        .body(format!("Torrent \"{}\"finished downloading", name))
+        .title("Download complete")
+        .body(format!("{} has finished downloading", name))
         .show()
     {
         println!("Cannot show notification: {:?}", e);

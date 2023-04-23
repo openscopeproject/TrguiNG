@@ -28,6 +28,7 @@ import { ActionIcon, Menu, Tabs, TabsValue, useMantineColorScheme } from '@manti
 import { useDisclosure } from '@mantine/hooks';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { invoke } from '@tauri-apps/api';
 
 interface ServerTabsProps {
     openTabs: string[],
@@ -133,6 +134,18 @@ export function App({ }) {
     const [openTabs, setOpenTabs] = useState<string[]>(config.getOpenTabs());
     const [currentTab, setCurrentTab] = useState(-1);
     const clientManager = useMemo(() => new ClientManager(config), [config]);
+
+    useEffect(() => {
+        let configs = openTabs.filter((_, i) => i != currentTab).map((t) => {
+            let serverConfig = config.getServer(t)!;
+            return {
+                name: serverConfig.name,
+                connection: serverConfig.connection,
+                interval: serverConfig.intervals.torrentsMinimized,
+            }
+        });
+        invoke("set_poller_config", {configs});
+    }, [config, openTabs, currentTab]);
 
     useEffect(() => {
         for (let tab of openTabs)

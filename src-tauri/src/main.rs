@@ -21,20 +21,21 @@
 
 use std::sync::Arc;
 
+use poller::PollerHandle;
 use tauri::{
     api::cli::get_matches,
     async_runtime::{self, Mutex},
     App, AppHandle, GlobalWindowEvent, Manager, State,
 };
-use torrentcache::TorrentCache;
+use torrentcache::TorrentCacheHandle;
 
 mod commands;
 mod ipc;
-mod tray;
+mod poller;
 mod torrentcache;
+mod tray;
 
 struct ListenerHandle(Arc<Mutex<ipc::Ipc>>);
-struct TorrentCacheHandle(Arc<Mutex<torrentcache::TorrentCache>>);
 
 fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let config = app.config();
@@ -58,10 +59,16 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
             .collect();
     }
 
+    let app: Arc<AppHandle> = app.handle().into();
+
     let listener_state: State<ListenerHandle> = app.state();
     let listener_mutex = listener_state.0.clone();
-    let app: Arc<AppHandle> = app.handle().into();
+
     async_runtime::spawn(async move {
+        let poller_state: State<PollerHandle> = app.state();
+        let mut poller = poller_state.0.lock().await;
+        poller.set_app_handle(&app);
+
         let mut listener = listener_mutex.lock().await;
         if let Err(_) = listener.listen(app.clone()).await {
             listener.start();
@@ -106,9 +113,14 @@ fn main() {
     let context = tauri::generate_context!();
 
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![commands::read_file, commands::shell_open])
+        .invoke_handler(tauri::generate_handler![
+            commands::read_file,
+            commands::shell_open,
+            commands::set_poller_config
+        ])
         .manage(ListenerHandle(Arc::new(Mutex::new(ipc))))
-        .manage(TorrentCacheHandle(Arc::new(Mutex::new(TorrentCache::default()))))
+        .manage(TorrentCacheHandle::default())
+        .manage(PollerHandle::default())
         .manage(tray::HideStateHandle(Default::default()))
         .system_tray(tray::create_tray())
         .on_system_tray_event(tray::on_tray_event)

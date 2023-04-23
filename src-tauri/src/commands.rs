@@ -19,6 +19,9 @@ use std::os::windows::fs::MetadataExt;
 
 use base64::{engine::general_purpose::STANDARD as b64engine, Engine as _};
 use lava_torrent::torrent::v1::Torrent;
+use tauri::State;
+
+use crate::{poller::PollerConfig, PollerHandle};
 
 #[derive(serde::Serialize)]
 pub struct TorrentFileEntry {
@@ -77,5 +80,15 @@ pub async fn shell_open(path: String) -> Result<(), String> {
     if let Err(e) = opener::open(path) {
         return Err(e.to_string());
     }
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn set_poller_config(
+    poller_handle: State<'_, PollerHandle>,
+    configs: Vec<PollerConfig>,
+) -> Result<(), ()> {
+    let mut poller = poller_handle.0.lock().await;
+    poller.set_configs(&configs);
     Ok(())
 }
