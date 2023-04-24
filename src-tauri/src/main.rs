@@ -25,7 +25,7 @@ use poller::PollerHandle;
 use tauri::{
     api::cli::get_matches,
     async_runtime::{self, Mutex},
-    App, AppHandle, GlobalWindowEvent, Manager, State,
+    App, AppHandle, Manager, State,
 };
 use torrentcache::TorrentCacheHandle;
 
@@ -97,15 +97,6 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn on_main_close(event: &GlobalWindowEvent) {
-    let app = event.window().app_handle();
-    let listener_state: State<ListenerHandle> = app.state();
-    async_runtime::block_on(async move {
-        let mut listener = listener_state.0.lock().await;
-        listener.stop();
-    });
-}
-
 fn main() {
     let mut ipc = ipc::Ipc::new();
     ipc.try_bind();
@@ -121,18 +112,15 @@ fn main() {
         .manage(ListenerHandle(Arc::new(Mutex::new(ipc))))
         .manage(TorrentCacheHandle::default())
         .manage(PollerHandle::default())
-        .manage(tray::HideStateHandle(Default::default()))
         .system_tray(tray::create_tray())
         .on_system_tray_event(tray::on_tray_event)
         .setup(setup)
-        .on_window_event(|event| match event.event() {
-            tauri::WindowEvent::Destroyed => {
-                if event.window().label() == "main" {
-                    on_main_close(&event)
-                }
+        .build(context)
+        .expect("error while running tauri application")
+        .run(|_app_handle, event| match event {
+            tauri::RunEvent::ExitRequested { api, .. } => {
+                api.prevent_exit();
             }
             _ => {}
-        })
-        .run(context)
-        .expect("error while running tauri application");
+        });
 }

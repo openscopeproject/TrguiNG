@@ -133,6 +133,10 @@ export class Config {
         return this.values.servers;
     }
 
+    getOpenServers(): ServerConfig[] {
+        return this.values.servers.filter((s) => this.values.openTabs.includes(s.name));
+    }
+
     setServers(servers: ServerConfig[]) {
         this.values.servers = servers;
     }

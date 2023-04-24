@@ -20,12 +20,25 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { appWindow, PhysicalPosition, PhysicalSize } from '@tauri-apps/api/window';
 
 import { Config, ConfigContext } from './config';
-import { createRoot } from 'react-dom/client';
+import { createRoot, Root } from 'react-dom/client';
 import React from 'react';
 import { EventListener } from './event';
 import { App } from './components/app';
 import { CustomMantineProvider } from 'components/mantinetheme';
+import { invoke } from '@tauri-apps/api';
 
+async function onCloseRequested(app: Root, config: Config) {
+    app.unmount();
+    let configs = config.getOpenServers().map((serverConfig) => ({
+        name: serverConfig.name,
+        connection: serverConfig.connection,
+        interval: serverConfig.intervals.torrentsMinimized,
+    }
+    ));
+    await invoke("set_poller_config", { configs });
+    await config.save();
+    appWindow.emit("frontend-done");
+}
 
 async function run(config: Config) {
     var eventListener = new EventListener();
@@ -35,8 +48,11 @@ async function run(config: Config) {
     const app = createRoot(appnode);
 
     appWindow.onCloseRequested(async (event) => {
-        app.unmount();
-        await config.save();
+        onCloseRequested(app, config);
+    });
+
+    appWindow.listen("exit-requested", async(event) => {
+        onCloseRequested(app, config);
     });
 
     appWindow.onResized(({ payload: size }) => {
@@ -47,7 +63,7 @@ async function run(config: Config) {
     });
 
     await appWindow.setSize(new PhysicalSize(...config.values.app.window.size));
-    if(config.values.app.window.position !== undefined)
+    if (config.values.app.window.position !== undefined)
         await appWindow.setPosition(new PhysicalPosition(...config.values.app.window.position));
     else
         await appWindow.center();
