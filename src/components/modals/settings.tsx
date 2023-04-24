@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ActionIcon, Grid, Group, PasswordInput, Textarea, TextInput } from "@mantine/core";
+import { ActionIcon, Grid, Group, NumberInput, PasswordInput, Text, Textarea, TextInput } from "@mantine/core";
 import { ServerConfig } from "config";
 import cloneDeep from "lodash-es/cloneDeep";
 import React, { useCallback, useEffect, useState } from "react";
@@ -109,23 +109,76 @@ function ServerPanel(props: ServerPanelProps) {
                         value={props.server.connection.password}
                     />
                 </Grid.Col>
-            </Grid>
 
-            <Textarea
-                label={'Path mappings in "remote=local" format, one per line'}
-                onChange={(e) => {
-                    var mappings = e.target.value.split("\n")
-                        .filter((line) => line.includes("="))
-                        .map((line) => {
-                            var equalsPos = line.indexOf("=");
-                            return { from: line.substring(0, equalsPos), to: line.substring(equalsPos + 1) };
-                        });
-                    props.server.pathMappings = mappings;
-                    setMappingsString(e.target.value);
-                }}
-                value={mappingsString}
-                minRows={4}
-            />
+                <Grid.Col span={12}><Text>Update intervals (sec)</Text></Grid.Col>
+
+                <Grid.Col span={6} xs={3}>
+                    <NumberInput
+                        label="Session"
+                        min={1}
+                        max={3600}
+                        onChange={(e) => {
+                            props.server.intervals.session = +e;
+                            forceRender();
+                        }}
+                        value={props.server.intervals.session}
+                    />
+                </Grid.Col>
+                <Grid.Col span={6} xs={3}>
+                    <NumberInput
+                        label="Details"
+                        min={1}
+                        max={3600}
+                        onChange={(e) => {
+                            props.server.intervals.details = +e;
+                            forceRender();
+                        }}
+                        value={props.server.intervals.details}
+                    />
+                </Grid.Col>
+                <Grid.Col span={6} xs={3}>
+                    <NumberInput
+                        label="Torrents"
+                        min={1}
+                        max={3600}
+                        onChange={(e) => {
+                            props.server.intervals.torrents = +e;
+                            forceRender();
+                        }}
+                        value={props.server.intervals.torrents}
+                    />
+                </Grid.Col>
+                <Grid.Col span={6} xs={3}>
+                    <NumberInput
+                        label="...minimized"
+                        min={1}
+                        max={3600}
+                        onChange={(e) => {
+                            props.server.intervals.torrentsMinimized = +e;
+                            forceRender();
+                        }}
+                        value={props.server.intervals.torrentsMinimized}
+                    />
+                </Grid.Col>
+
+                <Grid.Col span={12}>
+                    <Textarea
+                        label={'Path mappings in "remote=local" format, one per line'}
+                        onChange={(e) => {
+                            var mappings = e.target.value.split("\n")
+                                .filter((line) => line.includes("="))
+                                .map((line) => {
+                                    var equalsPos = line.indexOf("=");
+                                    return { from: line.substring(0, equalsPos), to: line.substring(equalsPos + 1) };
+                                });
+                            props.server.pathMappings = mappings;
+                            setMappingsString(e.target.value);
+                        }}
+                        value={mappingsString}
+                        minRows={4}
+                    />
+                </Grid.Col>
+            </Grid>
         </div>
     );
 }
@@ -155,7 +208,7 @@ export function ManageServersModal(props: ManageServerModalProps) {
             {
                 connection: { url: "", useAuth: false, username: "", password: "" },
                 name: "new", pathMappings: [], expandedDirFilters: [], lastSaveDirs: [],
-                intervals: {session: 60, torrents: 5, torrentsMinimized: 60, details: 5},
+                intervals: { session: 60, torrents: 5, torrentsMinimized: 60, details: 5 },
             }
         );
         setServers(servers.slice());

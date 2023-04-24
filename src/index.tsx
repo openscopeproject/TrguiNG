@@ -28,6 +28,7 @@ import { CustomMantineProvider } from 'components/mantinetheme';
 import { invoke } from '@tauri-apps/api';
 
 async function onCloseRequested(app: Root, config: Config) {
+    await config.save();
     app.unmount();
     let configs = config.getOpenServers().map((serverConfig) => ({
         name: serverConfig.name,
@@ -36,7 +37,6 @@ async function onCloseRequested(app: Root, config: Config) {
     }
     ));
     await invoke("set_poller_config", { configs });
-    await config.save();
     appWindow.emit("frontend-done");
 }
 
