@@ -79,7 +79,7 @@ function ServerPanel(props: ServerPanelProps) {
             />
 
             <TextInput
-                label="Server url"
+                label="Server rpc url"
                 onChange={(e) => {
                     props.server.connection.url = e.target.value;
                     forceRender();
@@ -107,57 +107,6 @@ function ServerPanel(props: ServerPanelProps) {
                             forceRender();
                         }}
                         value={props.server.connection.password}
-                    />
-                </Grid.Col>
-
-                <Grid.Col span={12}><Text>Update intervals (sec)</Text></Grid.Col>
-
-                <Grid.Col span={6} xs={3}>
-                    <NumberInput
-                        label="Session"
-                        min={1}
-                        max={3600}
-                        onChange={(e) => {
-                            props.server.intervals.session = +e;
-                            forceRender();
-                        }}
-                        value={props.server.intervals.session}
-                    />
-                </Grid.Col>
-                <Grid.Col span={6} xs={3}>
-                    <NumberInput
-                        label="Details"
-                        min={1}
-                        max={3600}
-                        onChange={(e) => {
-                            props.server.intervals.details = +e;
-                            forceRender();
-                        }}
-                        value={props.server.intervals.details}
-                    />
-                </Grid.Col>
-                <Grid.Col span={6} xs={3}>
-                    <NumberInput
-                        label="Torrents"
-                        min={1}
-                        max={3600}
-                        onChange={(e) => {
-                            props.server.intervals.torrents = +e;
-                            forceRender();
-                        }}
-                        value={props.server.intervals.torrents}
-                    />
-                </Grid.Col>
-                <Grid.Col span={6} xs={3}>
-                    <NumberInput
-                        label="...minimized"
-                        min={1}
-                        max={3600}
-                        onChange={(e) => {
-                            props.server.intervals.torrentsMinimized = +e;
-                            forceRender();
-                        }}
-                        value={props.server.intervals.torrentsMinimized}
                     />
                 </Grid.Col>
 

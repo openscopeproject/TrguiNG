@@ -36,6 +36,7 @@ import { MoveModal } from "./modals/move";
 import { AddMagnet, AddTorrent } from "./modals/add";
 import { useSession, useTorrentList } from "queries";
 import { TorrentFieldsType } from "rpc/transmission";
+import { DaemonSettingsModal } from "./modals/daemon";
 
 interface ServerProps {
     clientManager: ClientManager,
@@ -131,6 +132,7 @@ function ServerModals(props: ServerModalsProps) {
     const [showMoveModal, openMoveModal, closeMoveModal] = usePausingModalState(props.runUpdates);
     const [showAddMagnetModal, openAddMagnetModal, closeAddMagnetModal] = usePausingModalState(props.runUpdates);
     const [showAddTorrentModal, openAddTorrentModal, closeAddTorrentModal] = usePausingModalState(props.runUpdates);
+    const [showDaemonSettingsModal, openDaemonSettingsModal, closeDaemonSettingsModal] = usePausingModalState(props.runUpdates);
 
     useEffect(() => {
         props.actionController.setModalCallbacks({
@@ -139,6 +141,7 @@ function ServerModals(props: ServerModalsProps) {
             move: openMoveModal,
             addMagnet: openAddMagnetModal,
             addTorrent: openAddTorrentModal,
+            daemonSettings: openDaemonSettingsModal,
         });
     }, [props.actionController, openLabelsModal, openRemoveModal, openMoveModal]);
 
@@ -161,6 +164,9 @@ function ServerModals(props: ServerModalsProps) {
             actionController={props.actionController}
             opened={showAddTorrentModal} close={closeAddTorrentModal}
             allLabels={props.allLabels} />
+        <DaemonSettingsModal
+            actionController={props.actionController}
+            opened={showDaemonSettingsModal} close={closeDaemonSettingsModal}/>
     </>;
 }
 

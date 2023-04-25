@@ -32,6 +32,7 @@
     "@emotion/react": "^11.10.6",
     "@mantine/core": "^6.0.2",
     "@mantine/dropzone": "^6.0.5",
+    "@mantine/form": "^6.0.8",
     "@mantine/hooks": "^6.0.2",
     "@mantine/modals": "^6.0.5",
     "@mantine/notifications": "^6.0.5",

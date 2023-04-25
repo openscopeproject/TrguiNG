@@ -83,6 +83,19 @@ export function useSession(client: TransmissionClient, enabled: boolean) {
     });
 }
 
+export function useSessionFull(client: TransmissionClient, enabled: boolean) {
+    const serverConfig = useContext(ServerConfigContext);
+
+    return useQuery({
+        queryKey: SessionKeys.full(serverConfig.name),
+        staleTime: 1000 * 60,
+        enabled,
+        queryFn: useCallback(() => {
+            return client.getSessionFull();
+        }, [client]),
+    });
+}
+
 export function useSessionStats(client: TransmissionClient, enabled: boolean) {
     const serverConfig = useContext(ServerConfigContext);
 

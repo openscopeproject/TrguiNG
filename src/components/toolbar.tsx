@@ -175,7 +175,9 @@ function Toolbar(props: ToolbarProps) {
                 styles={{ input: { height: "auto" } }}
             />
 
-            <ToolbarButton><Icon.Tools size="1.5rem" /></ToolbarButton>
+            <ToolbarButton onClick={() => props.actionController.showModal("daemonSettings")}>
+                <Icon.Tools size="1.5rem" />
+            </ToolbarButton>
         </Flex >
     );
 }

@@ -265,4 +265,12 @@ export class TransmissionClient {
 
         return await this.sendRpc(request);
     }
+
+    async testPort() {
+        var request = {
+            method: "port-test",
+        }
+
+        return await this.sendRpc(request);
+    }
 }
