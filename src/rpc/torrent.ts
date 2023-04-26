@@ -16,11 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { PeerStatsFieldsType, Status, TorrentAllFieldsType, TrackerStatsFieldsType } from "./transmission";
+import { BandwidthGroupFieldType, PeerStatsFieldsType, Status, TorrentAllFieldsType, TrackerStatsFieldsType } from "./transmission";
 
 export type Torrent = Partial<Record<TorrentAllFieldsType, any>>;
 export type TrackerStats = Partial<Record<TrackerStatsFieldsType, any>>;
 export type PeerStats = Partial<Record<PeerStatsFieldsType, any>>;
+export type BandwidthGroup = Record<BandwidthGroupFieldType, any>;
 
 export function getTorrentError(t: Torrent): string {
     var torrentError = t.errorString;

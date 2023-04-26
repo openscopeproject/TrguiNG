@@ -20,7 +20,7 @@ import { Buffer } from 'buffer';
 
 import { PriorityNumberType, SessionAllFields, SessionAllFieldsType, SessionFields, SessionStatistics, TorrentAllFields, TorrentFields, TorrentFieldsType } from './transmission';
 import { ServerConnection } from '../config';
-import { Torrent } from './torrent';
+import { BandwidthGroup, Torrent } from './torrent';
 import { merge } from 'lodash-es';
 
 class ApiError extends Error {
@@ -269,6 +269,25 @@ export class TransmissionClient {
     async testPort() {
         var request = {
             method: "port-test",
+        }
+
+        return await this.sendRpc(request);
+    }
+
+    async getBandwidthGroups(): Promise<BandwidthGroup[]> {
+        var request = {
+            method: "group-get"
+        }
+
+        var response = await this.sendRpc(request);
+
+        return response.arguments.group;
+    }
+
+    async setBandwidthGroup(group: BandwidthGroup) {
+        var request = {
+            method: "group-set",
+            arguments: group,
         }
 
         return await this.sendRpc(request);

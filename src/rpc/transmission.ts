@@ -41,7 +41,7 @@ export const StatusStrings = [
     "Seeding",
 ] as const;
 
-const PriorityNumbers = [ -1, 0, 1] as const;
+const PriorityNumbers = [-1, 0, 1] as const;
 
 export type PriorityNumberType = typeof PriorityNumbers[number];
 
@@ -288,3 +288,14 @@ export interface SessionStatistics {
     "cumulative-stats": SessionStatEntry,
     "current-stats": SessionStatEntry,
 }
+
+export const BandwidthGroupFields = [
+    "honorsSessionLimits", // boolean true if session upload limits are honored
+    "name", // string Bandwidth group name
+    "speed-limit-down-enabled", // boolean true means enabled
+    "speed-limit-down", // number max global download speed (KBps)
+    "speed-limit-up-enabled", // boolean true means enabled
+    "speed-limit-up number", // max global upload speed (KBps)
+] as const;
+
+export type BandwidthGroupFieldType = typeof BandwidthGroupFields[number];

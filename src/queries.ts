@@ -41,6 +41,10 @@ const SessionStatsKeys = {
     all: (server: string) => [server, "sessionStats"] as const,
 }
 
+const BandwidthGroupKeys = {
+    all: (server: string,) => [server, "bandwidth-group"] as const,
+}
+
 export function useTorrentList(client: TransmissionClient, enabled: boolean, fields: TorrentFieldsType[]) {
     const serverConfig = useContext(ServerConfigContext);
 
@@ -106,6 +110,32 @@ export function useSessionStats(client: TransmissionClient, enabled: boolean) {
         enabled,
         queryFn: useCallback(() => {
             return client.getSessionStats();
+        }, [client]),
+    });
+}
+
+export function useTestPort(client: TransmissionClient, enabled: boolean) {
+    const serverConfig = useContext(ServerConfigContext);
+
+    return useQuery({
+        queryKey: [serverConfig.name, "test-port"],
+        staleTime: 1,
+        enabled,
+        queryFn: useCallback(() => {
+            return client.testPort();
+        }, [client]),
+    });
+}
+
+export function useBandwidthGroups(client: TransmissionClient, enabled: boolean) {
+    const serverConfig = useContext(ServerConfigContext);
+
+    return useQuery({
+        queryKey: BandwidthGroupKeys.all(serverConfig.name),
+        staleTime: 1000 * 60,
+        enabled,
+        queryFn: useCallback(() => {
+            return client.getBandwidthGroups();
         }, [client]),
     });
 }
