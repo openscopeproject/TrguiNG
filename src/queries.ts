@@ -106,7 +106,6 @@ export function useMutateSession(client: TransmissionClient) {
     const serverConfig = useContext(ServerConfigContext);
 
     return useMutation({
-        mutationKey: SessionKeys.full(serverConfig.name),
         mutationFn: (session: SessionInfo) => {
             return client.setSession(session);
         },

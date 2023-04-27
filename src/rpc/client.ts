@@ -18,10 +18,9 @@
 
 import { Buffer } from 'buffer';
 
-import { PriorityNumberType, SessionAllFields, SessionAllFieldsType, SessionFields, SessionStatistics, TorrentAllFields, TorrentFields, TorrentFieldsType } from './transmission';
+import { PriorityNumberType, SessionAllFields, SessionAllFieldsType, SessionFields, SessionStatistics, TorrentAllFields, TorrentFieldsType } from './transmission';
 import { ServerConnection } from '../config';
 import { BandwidthGroup, Torrent } from './torrent';
-import { merge } from 'lodash-es';
 
 class ApiError extends Error {
 
@@ -176,13 +175,13 @@ export class TransmissionClient {
 
     async getSession(): Promise<SessionInfo> {
         const session = await this._getSession(SessionFields);
-        merge(this.sessionInfo, session);
+        this.sessionInfo = {...this.sessionInfo, ...session};
         return this.sessionInfo;
     }
 
     async getSessionFull(): Promise<SessionInfo> {
         const session = await this._getSession(SessionAllFields);
-        merge(this.sessionInfo, session);
+        this.sessionInfo = session;
         return this.sessionInfo;
     }
 

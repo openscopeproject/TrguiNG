@@ -208,7 +208,7 @@ export function App({ }) {
 
     return (
         <QueryClientProvider client={queryClient}>
-            <Notifications limit={3}/>
+            <Notifications limit={3} style={{bottom: "2.5rem"}}/>
             <div className="d-flex flex-column h-100 w-100">
                 <ServerTabs
                     openTabs={openTabs} onTabOpen={openTab} onTabClose={closeTab}

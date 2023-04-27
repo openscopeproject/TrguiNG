@@ -34,18 +34,16 @@ export function Statusbar({ session, filteredTorrents, selectedTorrents, hostnam
     const serverFields = useMemo(() => {
         return {
             downRateLimit: session ?
-                session["speed-limit-down-enabled"] ?
-                    session["alt-speed-enabled"] ?
-                        session["alt-speed-down"]
-                        : session["speed-limit-down"]
-                    : -1
+                session["alt-speed-enabled"] ?
+                    session["alt-speed-down"] :
+                    session["speed-limit-down-enabled"] ?
+                        session["speed-limit-down"] : -1
                 : -1,
             upRateLimit: session ?
-                session["speed-limit-up-enabled"] ?
-                    session["alt-speed-enabled"] ?
-                        session["alt-speed-up"]
-                        : session["speed-limit-up"]
-                    : -1
+                session["alt-speed-enabled"] ?
+                    session["alt-speed-up"] :
+                    session["speed-limit-up-enabled"] ?
+                        session["speed-limit-up"] : -1
                 : -1,
             free: session?.["download-dir-free-space"] || 0,
         }

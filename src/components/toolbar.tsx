@@ -22,6 +22,7 @@ import React, { forwardRef, memo, useCallback, useEffect, useMemo, useState } fr
 import * as Icon from "react-bootstrap-icons";
 import { ActionController, ActionMethodsType } from "../actions";
 import { BandwidthPriority, PriorityNumberType } from "rpc/transmission";
+import { useMutateSession } from "queries";
 
 interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {
     depressed?: boolean
@@ -75,12 +76,14 @@ function Toolbar(props: ToolbarProps) {
 
     const [altSpeedMode, setAltSpeedMode] = useState<boolean>();
 
+    const sessioMutation = useMutateSession(props.actionController.client);
+
     const toggleAltSpeedMode = useCallback(() => {
-        console.log("Toggling altspeedmode");
-        props.actionController.run("setAltSpeedMode", !altSpeedMode)
-            .catch((e) => {
-                console.log("Can't set alt speed mode", e);
-            });
+        sessioMutation.mutate({ "alt-speed-enabled": !altSpeedMode }, {
+            onError: (_, session) => {
+                setAltSpeedMode(!session["alt-speed-enabled"]);
+            }
+        });
         setAltSpeedMode(!altSpeedMode);
     }, [altSpeedMode]);
 
