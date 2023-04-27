@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Badge, Button, CloseButton, Divider, Group, Modal, ModalProps, MultiSelect, MultiSelectValueProps, Text, TextInput } from "@mantine/core";
+import { Badge, Button, CloseButton, Divider, Group, Loader, Modal, ModalProps, MultiSelect, MultiSelectValueProps, Text, TextInput } from "@mantine/core";
 import { dialog } from "@tauri-apps/api";
 import { ActionController } from "actions";
 import { ServerConfigContext } from "config";
@@ -35,21 +35,19 @@ export interface ActionModalState extends ModalState {
 interface SaveCancelModalProps extends ModalProps {
     onSave: () => void,
     onClose: () => void,
+    saveLoading?: boolean,
 }
 
-export function SaveCancelModal({ onSave, onClose, children, ...other }: SaveCancelModalProps) {
-    const save = useCallback(() => {
-        onSave();
-        onClose();
-    }, [onSave, onClose]);
-
+export function SaveCancelModal({ onSave, onClose, children, saveLoading, ...other }: SaveCancelModalProps) {
     return (
         <Modal onClose={onClose} {...other}>
             <Divider my="sm" />
             {children}
             <Divider my="sm" />
             <Group position="center" spacing="md">
-                <Button onClick={save} variant="filled">Save</Button>
+                <Button onClick={onSave} variant="filled">
+                    {saveLoading === true ? <Loader size="1rem" /> : "Save"}
+                </Button>
                 <Button onClick={onClose} variant="light">Cancel</Button>
             </Group>
         </Modal>

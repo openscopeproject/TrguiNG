@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ActionIcon, Grid, Group, NumberInput, PasswordInput, Text, Textarea, TextInput } from "@mantine/core";
+import { ActionIcon, Grid, Group, PasswordInput, Textarea, TextInput } from "@mantine/core";
 import { ServerConfig } from "config";
 import cloneDeep from "lodash-es/cloneDeep";
 import React, { useCallback, useEffect, useState } from "react";

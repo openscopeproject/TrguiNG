@@ -16,11 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { ServerConfigContext } from "config"
 import { useCallback, useContext } from "react"
-import { TransmissionClient } from "rpc/client";
+import { SessionInfo, TransmissionClient } from "rpc/client";
 import { TorrentFieldsType } from "rpc/transmission";
+
+export const queryClient = new QueryClient();
 
 const TorrentKeys = {
     all: (server: string,) => [server, "torrent"] as const,
@@ -98,6 +100,22 @@ export function useSessionFull(client: TransmissionClient, enabled: boolean) {
             return client.getSessionFull();
         }, [client]),
     });
+}
+
+export function useMutateSession(client: TransmissionClient) {
+    const serverConfig = useContext(ServerConfigContext);
+
+    return useMutation({
+        mutationKey: SessionKeys.full(serverConfig.name),
+        mutationFn: (session: SessionInfo) => {
+            return client.setSession(session);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: SessionKeys.all(serverConfig.name)
+            })
+        }
+    })
 }
 
 export function useSessionStats(client: TransmissionClient, enabled: boolean) {

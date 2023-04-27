@@ -95,7 +95,7 @@ export class TransmissionClient {
         return null;
     }
 
-    async sendRpc(data: Record<string, any>) {
+    async _sendRpc(data: Record<string, any>) {
         let url = `http://127.123.45.67:8080/${data.method == "torrent-get" ? "torrentget" : "post"}?url=${this.url}`;
         var data_str = JSON.stringify(data);
         var response = await fetch(
@@ -126,7 +126,7 @@ export class TransmissionClient {
             arguments: { fields }
         };
 
-        var response = await this.sendRpc(request);
+        var response = await this._sendRpc(request);
 
         if (!isApiResponse(response)) {
             throw new ApiError('torrent-get response is not torrents');
@@ -144,7 +144,7 @@ export class TransmissionClient {
             }
         };
 
-        var response = await this.sendRpc(request);
+        var response = await this._sendRpc(request);
 
         if (!isApiResponse(response)) {
             throw new ApiError('torrent-get response is not torrents');
@@ -165,7 +165,7 @@ export class TransmissionClient {
             arguments: { fields: fields }
         };
 
-        var response = await this.sendRpc(request);
+        var response = await this._sendRpc(request);
 
         if (!isApiResponse(response)) {
             throw new ApiError('session-get response is not a session');
@@ -186,13 +186,18 @@ export class TransmissionClient {
         return this.sessionInfo;
     }
 
-    async setSession(fields: Record<string, any>) {
+    async setSession(fields: Record<string, any>): Promise<string> {
         var request = {
             method: "session-set",
             arguments: fields,
         };
 
-        await this.sendRpc(request);
+        let response = await this._sendRpc(request);
+
+        if(response.result != "success")
+            throw new ApiError("Failed to update session: " + response.result);
+
+        return response.result;
     }
 
     async getSessionStats(): Promise<SessionStatistics> {
@@ -200,7 +205,7 @@ export class TransmissionClient {
             method: "session-stats"
         };
 
-        let response = await this.sendRpc(request);
+        let response = await this._sendRpc(request);
 
         return response.arguments;
     }
@@ -211,7 +216,7 @@ export class TransmissionClient {
             arguments: { ...fields, ids: torrentIds },
         }
 
-        await this.sendRpc(request);
+        await this._sendRpc(request);
     }
 
     async torrentAction(method: TorrentActionMethodsType, torrentIds: number[]) {
@@ -220,7 +225,7 @@ export class TransmissionClient {
             arguments: { ids: torrentIds },
         }
 
-        await this.sendRpc(request);
+        await this._sendRpc(request);
     }
 
     async torrentRemove(torrentIds: number[], deleteLocalData: boolean) {
@@ -229,7 +234,7 @@ export class TransmissionClient {
             arguments: { ids: torrentIds, "delete-local-data": deleteLocalData },
         }
 
-        await this.sendRpc(request);
+        await this._sendRpc(request);
     }
 
     /**
@@ -248,7 +253,7 @@ export class TransmissionClient {
             },
         }
 
-        await this.sendRpc(request);
+        await this._sendRpc(request);
     }
 
     async torrentAdd(params: TorrentAddParams) {
@@ -263,7 +268,7 @@ export class TransmissionClient {
             }
         }
 
-        return await this.sendRpc(request);
+        return await this._sendRpc(request);
     }
 
     async testPort() {
@@ -271,7 +276,7 @@ export class TransmissionClient {
             method: "port-test",
         }
 
-        return await this.sendRpc(request);
+        return await this._sendRpc(request);
     }
 
     async getBandwidthGroups(): Promise<BandwidthGroup[]> {
@@ -279,7 +284,7 @@ export class TransmissionClient {
             method: "group-get"
         }
 
-        var response = await this.sendRpc(request);
+        var response = await this._sendRpc(request);
 
         return response.arguments.group;
     }
@@ -290,6 +295,6 @@ export class TransmissionClient {
             arguments: group,
         }
 
-        return await this.sendRpc(request);
+        return await this._sendRpc(request);
     }
 }

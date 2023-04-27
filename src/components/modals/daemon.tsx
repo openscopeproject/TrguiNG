@@ -20,12 +20,13 @@ import { Box, Button, Checkbox, Grid, Group, Loader, LoadingOverlay, NativeSelec
 import { ServerConfig, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { ModalState, SaveCancelModal } from "./common";
-import { useBandwidthGroups, useSessionFull, useTestPort } from "queries";
+import { useBandwidthGroups, useMutateSession, useSessionFull, useTestPort } from "queries";
 import { UseFormReturnType, useForm } from "@mantine/form";
 import { ActionController } from "actions";
 import { SessionInfo } from "rpc/client";
 import { ExtendedCustomColors } from "types/mantine";
 import { BandwidthGroup } from "rpc/torrent";
+import { notifications } from "@mantine/notifications";
 
 interface DaemonSettingsProps extends ModalState {
     actionController: ActionController,
@@ -446,6 +447,7 @@ function QueuePanel({ form }: { form: UseFormReturnType<FormValues> }) {
 
 export function DaemonSettingsModal(props: DaemonSettingsProps) {
     const { data: session, fetchStatus } = useSessionFull(props.actionController.client, props.opened);
+    const mutation = useMutateSession(props.actionController.client);
     const serverConfig = useContext(ServerConfigContext);
 
     const form = useForm<FormValues>({
@@ -457,12 +459,35 @@ export function DaemonSettingsModal(props: DaemonSettingsProps) {
 
     useEffect(() => form.setFieldValue("session", session), [session]);
 
+    const onSave = useCallback(() => {
+        if(form.values.session != undefined)
+            mutation.mutate(form.values.session, {
+                onSuccess: () => {
+                    notifications.show({
+                        message: "Session saved successfully",
+                        color: "green",
+                    });
+                    props.close();
+                },
+                onError: (error) => {
+                    notifications.show({
+                        title: "Failed to update daemon settings",
+                        message: String(error),
+                        color: "red",
+                    });
+                }
+            })
+        else
+            props.close();
+    }, [mutation, props.close])
+
     return (
         <SaveCancelModal
             opened={props.opened}
             size="lg"
             onClose={props.close}
-            onSave={() => { serverConfig.intervals = form.values.intervals; }}
+            onSave={onSave}
+            saveLoading={mutation.isLoading}
             centered
             title="Edit Server Connections"
         >

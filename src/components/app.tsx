@@ -26,9 +26,11 @@ import { ManageServersModal } from './modals/settings';
 import { ClientManager } from '../clientmanager';
 import { ActionIcon, Menu, Tabs, TabsValue, useMantineColorScheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { invoke } from '@tauri-apps/api';
+import { queryClient } from 'queries';
+import { Notifications } from '@mantine/notifications';
 
 interface ServerTabsProps {
     openTabs: string[],
@@ -126,8 +128,6 @@ function ServerTabs(props: ServerTabsProps) {
     </>);
 }
 
-const queryClient = new QueryClient();
-
 export function App({ }) {
     const config = useContext(ConfigContext);
     const [servers, setServers] = useState(config.getServers());
@@ -144,7 +144,7 @@ export function App({ }) {
                 interval: serverConfig.intervals.torrentsMinimized,
             }
         });
-        invoke("set_poller_config", {configs});
+        invoke("set_poller_config", { configs });
     }, [config, openTabs, currentTab]);
 
     useEffect(() => {
@@ -208,6 +208,7 @@ export function App({ }) {
 
     return (
         <QueryClientProvider client={queryClient}>
+            <Notifications limit={3}/>
             <div className="d-flex flex-column h-100 w-100">
                 <ServerTabs
                     openTabs={openTabs} onTabOpen={openTab} onTabClose={closeTab}
@@ -228,7 +229,7 @@ export function App({ }) {
                         </div>
                     </div>
                 }
-                <ReactQueryDevtools toggleButtonProps={{style: {marginBottom: "2rem"}}}/>
+                <ReactQueryDevtools toggleButtonProps={{ style: { marginBottom: "2rem" } }} />
             </div>
         </QueryClientProvider>
     );
