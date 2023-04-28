@@ -16,9 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Badge, CloseButton, MultiSelect, MultiSelectValueProps, Text } from "@mantine/core";
+import { Text } from "@mantine/core";
 import { ActionModalState, SaveCancelModal, TorrentLabels, TorrentsNames } from "./common";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useMutateTorrent } from "queries";
+import { notifications } from "@mantine/notifications";
 
 interface EditLabelsProps extends ActionModalState {
     allLabels: string[],
@@ -41,10 +43,32 @@ export function EditLabelsModal(props: EditLabelsProps) {
         setLabels(initialLabels);
     }, [initialLabels]);
 
+    const mutation = useMutateTorrent(props.actionController.client);
+
     const onSave = useCallback(() => {
-        props.actionController.run("setLabels", labels).catch(console.log);
+        mutation.mutate(
+            {
+                torrentIds: Array.from(props.actionController.selectedTorrents),
+                fields: { labels }
+            },
+            {
+                onSuccess: () => {
+                    notifications.show({
+                        message: "Labels are updated",
+                        color: "green",
+                    });
+                },
+                onError: (error) => {
+                    notifications.show({
+                        title: "Failed to update labels",
+                        message: String(error),
+                        color: "red",
+                    })
+                }
+            }
+        );
         props.close();
-    }, [props, labels]);
+    }, [props.actionController.selectedTorrents, labels, props.close]);
 
     return (
         <SaveCancelModal

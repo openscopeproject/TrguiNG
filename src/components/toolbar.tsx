@@ -22,7 +22,9 @@ import React, { forwardRef, memo, useCallback, useEffect, useMemo, useState } fr
 import * as Icon from "react-bootstrap-icons";
 import { ActionController, ActionMethodsType } from "../actions";
 import { BandwidthPriority, PriorityNumberType } from "rpc/transmission";
-import { useMutateSession } from "queries";
+import { TorrentMutationVariables, useMutateSession, useMutateTorrent } from "queries";
+import { UseMutationResult } from "@tanstack/react-query";
+import { notifications } from "@mantine/notifications";
 
 interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {
     depressed?: boolean
@@ -58,15 +60,37 @@ function simpleActionHandler(action: ActionMethodsType, props: ToolbarProps) {
         props.actionController.run(action).catch((e) => {
             console.log("Error for action", action, e);
         });
-    }, [props.actionController]);
+    }, [props.actionController, action]);
 }
 
-function priorityHandler(priority: PriorityNumberType, props: ToolbarProps) {
+function priorityHandler(
+    priority: PriorityNumberType,
+    props: ToolbarProps,
+    mutation: UseMutationResult<void, unknown, TorrentMutationVariables>
+) {
     return useCallback(() => {
-        props.actionController.run("setPriority", priority).catch((e) => {
-            console.log("Error setting priority", e);
-        });
-    }, [props.actionController]);
+        mutation.mutate(
+            {
+                torrentIds: Array.from(props.actionController.selectedTorrents),
+                fields: { bandwidthPriority: priority }
+            },
+            {
+                onSuccess: () => {
+                    notifications.show({
+                        message: "Priority is updated",
+                        color: "green",
+                    });
+                },
+                onError: (error) => {
+                    notifications.show({
+                        title: "Failed to update priority",
+                        message: String(error),
+                        color: "red",
+                    })
+                }
+            }
+        );
+    }, [props.actionController.selectedTorrents, priority, mutation]);
 }
 
 function Toolbar(props: ToolbarProps) {
@@ -91,6 +115,8 @@ function Toolbar(props: ToolbarProps) {
         if (props.altSpeedMode !== undefined)
             setAltSpeedMode(props.altSpeedMode);
     }, [props.altSpeedMode]);
+
+    const torrentMutation = useMutateTorrent(props.actionController.client);
 
     const onSearchInput = useCallback((e: React.FormEvent) => {
         debouncedSetSearchTerms(
@@ -148,15 +174,15 @@ function Toolbar(props: ToolbarProps) {
                     <Menu.Dropdown>
                         <Menu.Label>Set priority</Menu.Label>
                         <Menu.Item icon={<Icon.CircleFill color="tomato" />}
-                            onClick={priorityHandler(BandwidthPriority.high, props)}>
+                            onClick={priorityHandler(BandwidthPriority.high, props, torrentMutation)}>
                             High
                         </Menu.Item>
                         <Menu.Item icon={<Icon.CircleFill color="seagreen" />}
-                            onClick={priorityHandler(BandwidthPriority.normal, props)}>
+                            onClick={priorityHandler(BandwidthPriority.normal, props, torrentMutation)}>
                             Normal
                         </Menu.Item>
                         <Menu.Item icon={<Icon.CircleFill color="gold" />}
-                            onClick={priorityHandler(BandwidthPriority.low, props)}>
+                            onClick={priorityHandler(BandwidthPriority.low, props, torrentMutation)}>
                             Low
                         </Menu.Item>
                     </Menu.Dropdown>

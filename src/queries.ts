@@ -20,6 +20,7 @@ import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { ServerConfigContext } from "config"
 import { useCallback, useContext } from "react"
 import { SessionInfo, TransmissionClient } from "rpc/client";
+import { Torrent } from "rpc/torrent";
 import { TorrentFieldsType } from "rpc/transmission";
 
 export const queryClient = new QueryClient();
@@ -31,7 +32,7 @@ const TorrentKeys = {
     list: (server: string, torrentIds: number[], fields: TorrentFieldsType[]) =>
         [...TorrentKeys.all(server), { fields, torrentIds }] as const,
     details: (server: string, torrentId: number) =>
-        [...TorrentKeys.all(server), "details", { torrentId }] as const,
+        [...TorrentKeys.all(server), { torrentId }] as const,
 }
 
 const SessionKeys = {
@@ -73,6 +74,48 @@ export function useTorrentDetails(client: TransmissionClient, torrentId: number,
             return client.getTorrentDetails(torrentId);
         }, [client, torrentId]),
     });
+}
+
+export interface TorrentMutationVariables {
+    torrentIds: number[],
+    fields: Torrent,
+}
+
+export function useMutateTorrent(client: TransmissionClient) {
+    const serverConfig = useContext(ServerConfigContext);
+
+    return useMutation({
+        mutationFn: ({ torrentIds, fields }: TorrentMutationVariables) => {
+            return client.setTorrents(torrentIds, fields);
+        },
+        onSuccess: (_, { torrentIds, fields }: TorrentMutationVariables) => {
+            queryClient.setQueryData(
+                TorrentKeys.all(serverConfig.name),
+                (data: Torrent[] | undefined) => {
+                    if (data === undefined) return undefined;
+                    return data.map((t) => {
+                        if (!torrentIds.includes(t.id)) return t;
+                        return { ...t, ...fields };
+                    })
+                }
+            );
+            queryClient.setQueriesData({
+                type: "active",
+                predicate: (query) => {
+                    let key = query.queryKey;
+                    return key.length == 3 &&
+                        key[0] == serverConfig.name &&
+                        key[1] == "torrent" &&
+                        torrentIds.includes((key[2] as { torrentId: number }).torrentId);
+                }
+            },
+                (t: Torrent | undefined) => {
+                    return { ...t, ...fields };
+                }
+            )
+            queryClient.invalidateQueries(TorrentKeys.all(serverConfig.name));
+        }
+    })
 }
 
 export function useSession(client: TransmissionClient, enabled: boolean) {

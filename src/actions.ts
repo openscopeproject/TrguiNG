@@ -16,7 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { PriorityNumberType } from "rpc/transmission";
 import { TorrentActionMethodsType, TorrentAddParams, TransmissionClient } from "./rpc/client";
 import { Torrent } from "rpc/torrent";
 
@@ -27,9 +26,6 @@ const ActionMethods = [
     "moveQueueUp",
     "moveQueueDown",
     "changeDirectory",
-    "setLabels",
-    "setPriority",
-    "setAltSpeedMode",
     "verify",
     "reannounce",
 ] as const;
@@ -71,29 +67,6 @@ const Actions: Action[] = [
         method: async (ac: ActionController, location: string, move: boolean) => {
             const torrentIds = Array.from(ac.selectedTorrents);
             await ac.client.torrentMove(torrentIds, location, move);
-        },
-        defaultShortcut: "",
-    },
-    {
-        name: "setAltSpeedMode",
-        method: async (ac: ActionController, altMode: boolean) => {
-            await ac.client.setSession({ "alt-speed-enabled": altMode });
-        },
-        defaultShortcut: "",
-    },
-    {
-        name: "setLabels",
-        method: async (ac: ActionController, labels: string[]) => {
-            const torrentIds = Array.from(ac.selectedTorrents);
-            await ac.client.setTorrents(torrentIds, { labels: labels });
-        },
-        defaultShortcut: "",
-    },
-    {
-        name: "setPriority",
-        method: async (ac: ActionController, priority: PriorityNumberType) => {
-            const torrentIds = Array.from(ac.selectedTorrents);
-            await ac.client.setTorrents(torrentIds, { bandwidthPriority: priority });
         },
         defaultShortcut: "",
     },
