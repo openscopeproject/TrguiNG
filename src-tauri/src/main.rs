@@ -22,11 +22,8 @@
 use std::sync::Arc;
 
 use poller::PollerHandle;
-use tauri::{
-    api::cli::get_matches,
-    async_runtime::{self, Mutex},
-    App, AppHandle, Manager, State,
-};
+use tauri::{api::cli::get_matches, async_runtime, App, AppHandle, Manager, State};
+use tokio::sync::RwLock;
 use torrentcache::TorrentCacheHandle;
 
 mod commands;
@@ -35,7 +32,7 @@ mod poller;
 mod torrentcache;
 mod tray;
 
-struct ListenerHandle(Arc<Mutex<ipc::Ipc>>);
+struct ListenerHandle(Arc<RwLock<ipc::Ipc>>);
 
 fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let config = app.config();
@@ -61,37 +58,46 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 
     let app: Arc<AppHandle> = app.handle().into();
 
-    let listener_state: State<ListenerHandle> = app.state();
-    let listener_mutex = listener_state.0.clone();
-
     async_runtime::spawn(async move {
         let poller_state: State<PollerHandle> = app.state();
         let mut poller = poller_state.0.lock().await;
         poller.set_app_handle(&app);
 
-        let mut listener = listener_mutex.lock().await;
-        if let Err(_) = listener.listen(app.clone()).await {
-            listener.start();
-            listener.stop();
-        }
-        if let Err(e) = listener.send(&torrents).await {
-            println!("Unable to send args to listener: {:?}", e);
-        }
-        let main_window = app.get_window("main").unwrap();
+        let listener_state: State<ListenerHandle> = app.state();
+        let listener_lock = listener_state.0.clone();
+
+        let mut listener = listener_lock.write().await;
+        listener.listen(app.clone()).await.ok();
 
         if listener.listening {
-            drop(listener);
+            let listener_lock1 = listener_lock.clone();
             let _ = app.listen_global("listener-start", move |_| {
-                let listener_mutex = listener_mutex.clone();
+                let listener_lock = listener_lock1.clone();
                 async_runtime::spawn(async move {
-                    let listener = listener_mutex.lock().await;
+                    let mut listener = listener_lock.write().await;
                     listener.start();
                 });
             });
+            let listener_lock2 = listener_lock.clone();
+            let _ = app.listen_global("listener-pause", move |_| {
+                let listener_lock = listener_lock2.clone();
+                async_runtime::spawn(async move {
+                    let mut listener = listener_lock.write().await;
+                    listener.pause().await;
+                });
+            });
+            let main_window = app.get_window("main").unwrap();
             main_window.show().ok();
-        } else {
-            main_window.close().ok();
         }
+        drop(listener);
+
+        let app = app.clone();
+        async_runtime::spawn(async move {
+            let listener = listener_lock.read().await;
+            if let Err(e) = listener.send(&torrents, app).await {
+                println!("Unable to send args to listener: {:?}", e);
+            }
+        });
     });
 
     Ok(())
@@ -109,7 +115,7 @@ fn main() {
             commands::shell_open,
             commands::set_poller_config
         ])
-        .manage(ListenerHandle(Arc::new(Mutex::new(ipc))))
+        .manage(ListenerHandle(Arc::new(RwLock::new(ipc))))
         .manage(TorrentCacheHandle::default())
         .manage(PollerHandle::default())
         .system_tray(tray::create_tray())

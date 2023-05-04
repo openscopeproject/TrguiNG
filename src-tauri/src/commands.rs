@@ -40,7 +40,7 @@ pub struct TorrentReadResult {
 pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
     let metadata = std::fs::metadata(path.clone());
     match metadata {
-        Err(_) => return Err("Failed to read file".to_string()),
+        Err(_) => return Err(format!("Failed to read file {:?}", path)),
         Ok(metadata) => {
             if metadata.file_size() > 10 * 1024 * 1024 {
                 return Err("File is too large".to_string());
@@ -48,13 +48,13 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
         }
     }
 
-    let read_result = tokio::fs::read(path).await;
+    let read_result = tokio::fs::read(path.clone()).await;
     if let Err(_) = read_result {
-        return Err("Failed to read file".to_string());
+        return Err(format!("Failed to read file {:?}", path));
     }
 
     match Torrent::read_from_bytes(&read_result.as_ref().unwrap()[..]) {
-        Err(_) => Err("Failed to parse torrent".to_string()),
+        Err(_) => Err(format!("Failed to parse torrent {:?}", path)),
         Ok(torrent) => {
             let b64 = b64engine.encode(read_result.unwrap());
 

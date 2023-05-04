@@ -26,9 +26,11 @@ import { EventListener } from './event';
 import { App } from './components/app';
 import { CustomMantineProvider } from 'components/mantinetheme';
 import { invoke } from '@tauri-apps/api';
+import { emit } from '@tauri-apps/api/event';
 
 async function onCloseRequested(app: Root, config: Config) {
     await config.save();
+    await emit("listener-pause", {});
     app.unmount();
     let configs = config.getOpenServers().map((serverConfig) => ({
         name: serverConfig.name,
@@ -41,9 +43,6 @@ async function onCloseRequested(app: Root, config: Config) {
 }
 
 async function run(config: Config) {
-    var eventListener = new EventListener();
-    eventListener.add("app-arg", (payload) => console.log(`Got app-arg: ${payload}`));
-    eventListener.finalize();
     var appnode = document.getElementById("app")!;
     const app = createRoot(appnode);
 

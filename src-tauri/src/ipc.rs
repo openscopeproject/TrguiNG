@@ -25,9 +25,10 @@ use hyper::header::{
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Client, HeaderMap, Method, Request, Response, Server, StatusCode};
 use tauri::{async_runtime, AppHandle, Manager};
-use tokio::sync::{oneshot, Semaphore};
+use tokio::sync::{oneshot, Semaphore, OwnedSemaphorePermit};
 
 use crate::torrentcache::process_torrents;
+use crate::tray::toggle_main_window;
 
 const ADDRESS: &str = "127.123.45.67:8080";
 const ALLOW_ORIGINS: &'static [&'static str] = if cfg!(feature = "custom-protocol") {
@@ -36,13 +37,6 @@ const ALLOW_ORIGINS: &'static [&'static str] = if cfg!(feature = "custom-protoco
     &["http://localhost:8080"]
 };
 const TRANSMISSION_SESSION_ID: &str = "X-Transmission-Session-Id";
-
-pub struct Ipc {
-    pub listening: bool,
-    listener: Option<TcpListener>,
-    stop_signal: Option<oneshot::Sender<()>>,
-    start_signal: Arc<Semaphore>,
-}
 
 #[derive(Clone, serde::Serialize)]
 struct Payload(String);
@@ -83,16 +77,20 @@ fn cors(request_headers: &HeaderMap, r: &mut Response<Body>, allowed_origins: &[
 
 async fn http_response(
     app: Arc<AppHandle>,
-    start_signal: Arc<Semaphore>,
+    args_lock: Arc<Semaphore>,
     req: Request<Body>,
 ) -> hyper::Result<Response<Body>> {
     match (req.method(), req.uri().path()) {
         (&Method::POST, "/args") => {
             let payload = hyper::body::to_bytes(req.into_body()).await?;
-            {
-                let _ = start_signal.acquire().await;
-                send_payoad(&app, payload).await;
+
+            if app.get_window("main").is_none() {
+                toggle_main_window(app.as_ref().clone(), None);
             }
+
+            let lock = args_lock.acquire().await.unwrap();
+            send_payoad(&app, payload).await;
+            drop(lock);
 
             Ok(Response::builder()
                 .body(Body::from("transgui-ng OK"))
@@ -153,7 +151,10 @@ async fn proxy_fetch(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
                     match client.request(req).await {
                         Ok(mut response) => {
                             cors(&headers, &mut response, ALLOW_ORIGINS);
-                            response.headers_mut().insert("X-Original-URL", HeaderValue::from_str(url.as_ref()).unwrap());
+                            response.headers_mut().insert(
+                                "X-Original-URL",
+                                HeaderValue::from_str(url.as_ref()).unwrap(),
+                            );
                             Ok(response)
                         }
                         Err(e) => Err(e),
@@ -179,13 +180,22 @@ async fn send_payoad(app: &AppHandle, payload: Bytes) {
         .unwrap();
 }
 
+pub struct Ipc {
+    pub listening: bool,
+    listener: Option<TcpListener>,
+    stop_signal: Option<oneshot::Sender<()>>,
+    args_sem: Arc<Semaphore>,
+    args_lock: Option<OwnedSemaphorePermit>,
+}
+
 impl Ipc {
     pub fn new() -> Self {
         Self {
             listening: false,
             listener: None,
             stop_signal: Default::default(),
-            start_signal: Semaphore::new(0).into(),
+            args_sem: Semaphore::new(0).into(),
+            args_lock: None,
         }
     }
 
@@ -201,11 +211,11 @@ impl Ipc {
             return Err("No TCP listener");
         }
 
-        let start = self.start_signal.clone();
+        let args_sem = self.args_sem.clone();
         let make_service = make_service_fn(move |_| {
             let app = app.clone();
-            let start = start.clone();
-            let service_fn = service_fn(move |req| http_response(app.clone(), start.clone(), req));
+            let args_sem = args_sem.clone();
+            let service_fn = service_fn(move |req| http_response(app.clone(), args_sem.clone(), req));
             async move { Ok::<_, hyper::Error>(service_fn) }
         });
 
@@ -231,8 +241,15 @@ impl Ipc {
         }
     }
 
-    pub fn start(&self) {
-        self.start_signal.add_permits(1);
+    pub fn start(&mut self) {
+        if self.args_sem.available_permits() == 0 {
+            self.args_sem.add_permits(1);
+        }
+        drop(self.args_lock.take());
+    }
+
+    pub async fn pause(&mut self) {
+        self.args_lock = self.args_sem.clone().acquire_owned().await.ok();
     }
 
     pub fn stop(&mut self) {
@@ -243,7 +260,7 @@ impl Ipc {
         self.listening = false;
     }
 
-    pub async fn send(&self, args: &Vec<String>) -> Result<(), hyper::Error> {
+    pub async fn send(&self, args: &Vec<String>, app: Arc<AppHandle>) -> Result<(), hyper::Error> {
         let req = Request::builder()
             .method(Method::POST)
             .uri(format!("http://{}/args", ADDRESS))
@@ -252,6 +269,7 @@ impl Ipc {
             .unwrap();
 
         let client = Client::new();
+        let should_stop = !self.listening;
 
         async_runtime::spawn(async move {
             if let Ok(resp) = client.request(req).await {
@@ -261,6 +279,10 @@ impl Ipc {
                         std::str::from_utf8(&resp_bytes.to_vec()).unwrap()
                     );
                 }
+            }
+
+            if should_stop {
+                app.exit(0);
             }
         });
 

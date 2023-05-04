@@ -16,13 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Button, Checkbox, Divider, Group, Modal, ScrollArea, SegmentedControl, Text, TextInput } from "@mantine/core";
+import { Box, Button, Checkbox, Divider, Group, Modal, SegmentedControl, Text, TextInput } from "@mantine/core";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionModalState, LabelsData, LocationData, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
 import { PriorityColors, PriorityNumberType, PriorityStrings } from "rpc/transmission";
 import { dialog, tauri } from "@tauri-apps/api";
-import { CachedFileTree, FileDirEntry } from "cachedfiletree";
+import { CachedFileTree } from "cachedfiletree";
 import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable";
+import { notifications } from "@mantine/notifications";
 
 interface AddCommonProps {
     location: LocationData,
@@ -62,6 +63,7 @@ function AddCommon(props: AddCommonProps) {
 
 interface AddCommonModalProps extends ActionModalState {
     allLabels: string[],
+    uri: string | undefined,
 }
 
 function useCommonProps(allLabels: string[]) {
@@ -93,25 +95,29 @@ function useCommonProps(allLabels: string[]) {
 }
 
 export function AddMagnet(props: AddCommonModalProps) {
-    const [url, setUrl] = useState<string>("");
+    const [magnet, setMagnet] = useState<string>("");
+
+    useEffect(() => {
+        if (props.uri) setMagnet(props.uri);
+    }, [props.uri]);
 
     const common = useCommonProps(props.allLabels);
 
     const onAdd = useCallback(() => {
         props.actionController.addTorrent({
-            url,
+            url: magnet,
             downloadDir: common.location.path,
             labels: common.labels,
             paused: !common.start,
             priority: common.priority,
         });
         props.close();
-    }, [props.actionController, url, common]);
+    }, [props.actionController, magnet, common]);
 
     return (
         <Modal opened={props.opened} onClose={props.close} title="Add torrent by magnet link or URL" centered size="lg">
             <Divider my="sm" />
-            <TextInput label="Link" w="100%" value={url} onChange={(e) => setUrl(e.currentTarget.value)} />
+            <TextInput label="Link" w="100%" value={magnet} onChange={(e) => setMagnet(e.currentTarget.value)} />
             <AddCommon {...common.props} />
             <Divider my="sm" />
             <Group position="center" spacing="md">
@@ -142,25 +148,32 @@ export function AddTorrent(props: AddCommonModalProps) {
             return;
         };
 
-        dialog.open({
-            title: "Select torrent file",
-            filters: [
-                {
-                    name: "Torrent",
-                    extensions: ["torrent"],
-                }
-            ]
-        }).then((path) => {
+        const process = async (path: string | null) => {
             if (!path) {
                 props.close();
                 return undefined;
             };
-            return tauri.invoke("read_file", { path: path as string });
-        }).then((torrentData) => setTorrentData(torrentData as TorrentFileData)).catch((e) => {
-            console.error(e);
+            return tauri.invoke("read_file", { path });
+        }
+
+        let pathPromise = props.uri ? Promise.resolve(props.uri) :
+            dialog.open({
+                title: "Select torrent file",
+                filters: [{
+                    name: "Torrent",
+                    extensions: ["torrent"],
+                }]
+            }) as Promise<string | null>;
+
+        pathPromise.then(process).then((torrentData) => setTorrentData(torrentData as TorrentFileData)).catch((e) => {
+            notifications.show({
+                title: "Error reading torrent",
+                message: String(e),
+                color: "red",
+            });
             props.close();
         });
-    }, [props.opened]);
+    }, [props.opened, props.uri]);
 
     const fileTree = useMemo(() => {
         const ft = new CachedFileTree();

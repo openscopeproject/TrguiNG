@@ -37,6 +37,7 @@ import { AddMagnet, AddTorrent } from "./modals/add";
 import { useSession, useTorrentList } from "queries";
 import { TorrentFieldsType } from "rpc/transmission";
 import { DaemonSettingsModal } from "./modals/daemon";
+import { emit, listen } from "@tauri-apps/api/event";
 
 interface ServerProps {
     clientManager: ClientManager,
@@ -134,6 +135,9 @@ function ServerModals(props: ServerModalsProps) {
     const [showAddTorrentModal, openAddTorrentModal, closeAddTorrentModal] = usePausingModalState(props.runUpdates);
     const [showDaemonSettingsModal, openDaemonSettingsModal, closeDaemonSettingsModal] = usePausingModalState(props.runUpdates);
 
+    const [magnetLink, setMagnetLink] = useState<string>();
+    const [torrentPath, setTorrentPath] = useState<string>();
+
     useEffect(() => {
         props.actionController.setModalCallbacks({
             setLabels: openLabelsModal,
@@ -143,7 +147,60 @@ function ServerModals(props: ServerModalsProps) {
             addTorrent: openAddTorrentModal,
             daemonSettings: openDaemonSettingsModal,
         });
-    }, [props.actionController, openLabelsModal, openRemoveModal, openMoveModal]);
+    }, [props.actionController, openLabelsModal, openRemoveModal, openMoveModal,
+        openAddMagnetModal, openAddTorrentModal, openDaemonSettingsModal]);
+
+    const [addQueue, setAddQueue] = useState<string[]>([]);
+
+    useEffect(() => {
+        let listenResult = listen<string>("app-arg", (event) => {
+            let args = JSON.parse(event.payload) as string[];
+            console.log("Got app-arg:", args);
+            setAddQueue([...addQueue, ...args]);
+        }).then((unlisten) => {
+            emit("listener-start", {});
+            return unlisten;
+        });
+
+        return () => {
+            listenResult.then((unlisten) => unlisten());
+        }
+    }, [addQueue]);
+
+    useEffect(() => {
+        if (addQueue.length && !showAddMagnetModal && !showAddTorrentModal) {
+            var item = addQueue[0];
+            if (item.startsWith("magnet:?")) {
+                setMagnetLink(item);
+                openAddMagnetModal();
+            } else {
+                setTorrentPath(item);
+                openAddTorrentModal();
+            }
+        }
+    }, [addQueue, showAddMagnetModal, showAddTorrentModal, setMagnetLink, setTorrentPath, openAddMagnetModal, openAddTorrentModal]);
+
+    const closeAddMagnetModalAndPop = useCallback(() => {
+        closeAddMagnetModal();
+        if (magnetLink && addQueue.length && addQueue[0] == magnetLink) {
+            setMagnetLink(undefined);
+            setAddQueue(addQueue.slice(1));
+        } else if (addQueue.length) {
+            // kick the queue again
+            setAddQueue([...addQueue]);
+        }
+    }, [closeAddMagnetModal, addQueue, magnetLink]);
+
+    const closeAddTorrentModalAndPop = useCallback(() => {
+        closeAddTorrentModal();
+        if (torrentPath && addQueue.length && addQueue[0] == torrentPath) {
+            setTorrentPath(undefined);
+            setAddQueue(addQueue.slice(1));
+        } else if (addQueue.length) {
+            // kick the queue again
+            setAddQueue([...addQueue]);
+        }
+    }, [closeAddTorrentModal, addQueue, torrentPath]);
 
     return <>
         <EditLabelsModal
@@ -158,15 +215,15 @@ function ServerModals(props: ServerModalsProps) {
             opened={showMoveModal} close={closeMoveModal} />
         <AddMagnet
             actionController={props.actionController}
-            opened={showAddMagnetModal} close={closeAddMagnetModal}
-            allLabels={props.allLabels} />
+            opened={showAddMagnetModal} close={closeAddMagnetModalAndPop}
+            allLabels={props.allLabels} uri={magnetLink} />
         <AddTorrent
             actionController={props.actionController}
-            opened={showAddTorrentModal} close={closeAddTorrentModal}
-            allLabels={props.allLabels} />
+            opened={showAddTorrentModal} close={closeAddTorrentModalAndPop}
+            allLabels={props.allLabels} uri={torrentPath} />
         <DaemonSettingsModal
             actionController={props.actionController}
-            opened={showDaemonSettingsModal} close={closeDaemonSettingsModal}/>
+            opened={showDaemonSettingsModal} close={closeDaemonSettingsModal} />
     </>;
 }
 

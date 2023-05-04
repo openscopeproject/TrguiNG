@@ -54,7 +54,7 @@ pub fn on_tray_event(app: &AppHandle, event: SystemTrayEvent) {
     }
 }
 
-fn toggle_main_window(app: AppHandle, window: Option<Window>) {
+pub fn toggle_main_window(app: AppHandle, window: Option<Window>) {
     match window {
         Some(window) => {
             async_runtime::spawn(async move {
@@ -88,7 +88,8 @@ fn exit(app: AppHandle) {
         }
 
         let listener_state: State<ListenerHandle> = app.state();
-        let mut listener = listener_state.0.lock().await;
+        let mut listener = listener_state.0.write().await;
+        println!("Stopping");
         listener.stop();
         app.exit(0);
     });
