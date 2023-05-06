@@ -22,7 +22,6 @@ import { appWindow, PhysicalPosition, PhysicalSize } from '@tauri-apps/api/windo
 import { Config, ConfigContext } from './config';
 import { createRoot, Root } from 'react-dom/client';
 import React from 'react';
-import { EventListener } from './event';
 import { App } from './components/app';
 import { CustomMantineProvider } from 'components/mantinetheme';
 import { invoke } from '@tauri-apps/api';
@@ -50,7 +49,7 @@ async function run(config: Config) {
         onCloseRequested(app, config);
     });
 
-    appWindow.listen("exit-requested", async(event) => {
+    appWindow.listen("exit-requested", async (event) => {
         onCloseRequested(app, config);
     });
 

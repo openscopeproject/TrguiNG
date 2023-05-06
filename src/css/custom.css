@@ -86,3 +86,8 @@ html, body {
     border-color: #999;
     cursor: pointer;
 }
+
+.selected {
+    background-color: royalblue;
+    color: white;
+}

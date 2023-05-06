@@ -21,6 +21,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
     padding: 0.05em 0.2em;
+    display: flex;
+    align-items: center;
 }
 
 .torrent-table .th {
@@ -56,11 +58,6 @@
     top: 0;
     left: 0;
     width: 100%;
-}
-
-.selected {
-    background-color: royalblue;
-    color: white;
 }
 
 .torrent-table .tr.odd {

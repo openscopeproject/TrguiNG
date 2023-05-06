@@ -99,7 +99,8 @@ function DownloadPanel({ form }: { form: UseFormReturnType<FormValues> }) {
             <Grid.Col>
                 <TextInput
                     label="Path for incomplete files"
-                    {...form.getInputProps("session.incomplete-dir")} />
+                    {...form.getInputProps("session.incomplete-dir")}
+                    disabled={form.values.session!["incomplete-dir-enabled"] !== true} />
             </Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
@@ -489,11 +490,11 @@ export function DaemonSettingsModal(props: DaemonSettingsProps) {
             onSave={onSave}
             saveLoading={mutation.isLoading}
             centered
-            title="Edit Server Connections"
+            title="Server Settings"
         >
             <Box pos="relative">
                 <LoadingOverlay visible={fetchStatus == "fetching"} overlayBlur={2} />
-                <Tabs orientation="vertical" defaultValue="polling" mih="30rem">
+                <Tabs defaultValue="polling" mih="25rem">
                     <Tabs.List>
                         <Tabs.Tab value="polling" p="lg">Polling</Tabs.Tab>
                         <Tabs.Tab value="download" p="lg">Download</Tabs.Tab>
@@ -502,23 +503,23 @@ export function DaemonSettingsModal(props: DaemonSettingsProps) {
                         <Tabs.Tab value="queue" p="lg">Queue</Tabs.Tab>
                     </Tabs.List>
                     {form.values.session !== undefined ? <>
-                        <Tabs.Panel value="polling" pl="md">
+                        <Tabs.Panel value="polling" pt="md">
                             <PollingPanel form={form} />
                         </Tabs.Panel>
 
-                        <Tabs.Panel value="download" pl="md">
+                        <Tabs.Panel value="download" pt="md">
                             <DownloadPanel form={form} />
                         </Tabs.Panel>
 
-                        <Tabs.Panel value="network" pl="md">
+                        <Tabs.Panel value="network" pt="md">
                             <NetworkPanel opened={props.opened} form={form} ac={props.actionController} />
                         </Tabs.Panel>
 
-                        <Tabs.Panel value="bandwidth" pl="md">
+                        <Tabs.Panel value="bandwidth" pt="md">
                             <BandwidthPanel form={form} />
                         </Tabs.Panel>
 
-                        <Tabs.Panel value="queue" pl="md">
+                        <Tabs.Panel value="queue" pt="md">
                             <QueuePanel form={form} />
                         </Tabs.Panel>
                     </> : <></>}

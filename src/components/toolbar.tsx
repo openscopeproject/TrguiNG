@@ -127,7 +127,7 @@ function Toolbar(props: ToolbarProps) {
     }, [debouncedSetSearchTerms]);
 
     return (
-        <Flex w="100%" py="md" align="stretch">
+        <Flex w="100%" align="stretch">
             <Button.Group mx="sm">
                 <ToolbarButton onClick={() => props.actionController.showModal("addTorrent")}>
                     <Icon.FileArrowDownFill size="1.5rem" color="seagreen" />

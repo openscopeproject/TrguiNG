@@ -18,7 +18,7 @@
 
 import 'css/torrenttable.css';
 import React, { memo, useCallback, useContext, useMemo } from 'react';
-import { Torrent, TrackerStats } from 'rpc/torrent';
+import { Torrent, TrackerStats, getTorrentError } from 'rpc/torrent';
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentAllFieldsType, TorrentFieldsType, TorrentMinimumFields } from 'rpc/transmission';
 import { ColumnDef, VisibilityState } from '@tanstack/react-table';
 import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from 'util';
@@ -26,8 +26,9 @@ import { ProgressBar } from '../progressbar';
 import { AccessorFn, CellContext } from '@tanstack/table-core';
 import { Table } from "./common";
 import { getTrackerAnnounceState } from "./trackertable";
-import { Badge } from "@mantine/core";
+import { Badge, Box } from "@mantine/core";
 import { ConfigContext } from 'config';
+import { StatusIconMap, Error as StatusIconError } from 'components/statusicons';
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -52,10 +53,13 @@ const TimeField = memo(function TimeField(props: TableFieldProps) {
 });
 
 const AllFields: readonly TableField[] = [
-    { name: "name", label: "Name", component: StringField },
+    {
+        name: "name", label: "Name", component: NameField,
+        requiredFields: ["name", "error", "trackerStats"] as TorrentFieldsType[],
+    },
     { name: "totalSize", label: "Size", component: ByteSizeField },
     { name: "sizeWhenDone", label: "Size to download", component: ByteSizeField },
-    { name: "leftUntilDone", label: "Size left", component: ByteSizeField},
+    { name: "leftUntilDone", label: "Size left", component: ByteSizeField },
     { name: "haveValid", label: "Downloaded", component: ByteSizeField },
     {
         name: "percentDone", label: "Done", component: PercentBarField,
@@ -85,6 +89,16 @@ const AllFields: readonly TableField[] = [
     { name: "labels", label: "Labels", component: LabelsField },
     { name: "group", label: "Bandwidth group", component: StringField },
 ] as const;
+
+function NameField(props: TableFieldProps) {
+    let StatusIcon = StatusIconMap[props.torrent.status];
+    if (props.torrent.error || !!getTorrentError(props.torrent))
+        StatusIcon = StatusIconError;
+    return <>
+        <Box pb="xs" sx={{ flexShrink: 0 }}><StatusIcon /></Box>
+        <Box pl="xs" sx={{ textOverflow: "ellipsis", overflow: "hidden" }}>{props.torrent[props.fieldName]}</Box>
+    </>
+}
 
 function StringField(props: TableFieldProps) {
     return <>
@@ -142,7 +156,7 @@ function ByteSizeField(props: TableFieldProps) {
         return bytesToHumanReadableStr(props.torrent[props.fieldName]);
     }, [props.torrent[props.fieldName]]);
 
-    return <div style={{textAlign: "right"}}>{stringValue}</div>;
+    return <div style={{ textAlign: "right" }}>{stringValue}</div>;
 }
 
 function ByteRateField(props: TableFieldProps) {
@@ -150,7 +164,7 @@ function ByteRateField(props: TableFieldProps) {
         return `${bytesToHumanReadableStr(props.torrent[props.fieldName])}/s`;
     }, [props.torrent[props.fieldName]]);
 
-    return <div style={{textAlign: "right"}}>{stringValue}</div>;
+    return <div style={{ textAlign: "right" }}>{stringValue}</div>;
 }
 
 function PercentBarField(props: TableFieldProps) {

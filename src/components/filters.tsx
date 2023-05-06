@@ -19,53 +19,72 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { getTorrentError, Torrent } from '../rpc/torrent';
 import { Status } from '../rpc/transmission';
-import * as Icon from "react-bootstrap-icons";
+import * as Icon from 'react-bootstrap-icons';
+import * as StatusIcons from './statusicons';
 import { useForceRender } from '../util';
 import { ServerConfigContext } from '../config';
-import { Divider } from '@mantine/core';
+import { Divider, Flex, Text } from '@mantine/core';
 
 export interface TorrentFilter {
-    id: string;
-    filter: (t: Torrent) => boolean;
+    id: string,
+    filter: (t: Torrent) => boolean,
 }
 
 interface LabeledFilter {
-    label: string;
-    filter: (t: Torrent) => boolean;
+    label: string,
+    filter: (t: Torrent) => boolean,
+    icon: React.ComponentType,
 }
 
 const statusFilters: LabeledFilter[] = [
-    { label: "All Torrents", filter: (t: Torrent) => true },
-    { label: "Downloading", filter: (t: Torrent) => t.status == Status.downloading },
+    {
+        label: "All Torrents", filter: (t: Torrent) => true,
+        icon: StatusIcons.All,
+    },
+    {
+        label: "Downloading", filter: (t: Torrent) => t.status == Status.downloading,
+        icon: StatusIcons.Downloading,
+    },
     {
         label: "Completed", filter: (t: Torrent) => {
             return t.status == Status.seeding ||
                 t.sizeWhenDone > 0 && Math.max(t.sizeWhenDone - t.haveValid, 0) == 0;
-        }
+        },
+        icon: StatusIcons.Completed,
     },
     {
         label: "Active", filter: (t: Torrent) => {
             return t.rateDownload > 0 || t.rateUpload > 0;
-        }
+        },
+        icon: StatusIcons.Active,
     },
     {
         label: "Inactive", filter: (t: Torrent) => {
             return t.rateDownload == 0 && t.rateUpload == 0 && t.status != Status.stopped;
-        }
+        },
+        icon: StatusIcons.Inactive,
     },
-    { label: "Stopped", filter: (t: Torrent) => t.status == Status.stopped },
-    { label: "Error", filter: (t: Torrent) => (t.error != 0 || !!getTorrentError(t)) },
+    {
+        label: "Stopped", filter: (t: Torrent) => t.status == Status.stopped,
+        icon: StatusIcons.Stopped,
+    },
+    {
+        label: "Error", filter: (t: Torrent) => (t.error != 0 || !!getTorrentError(t)),
+        icon: StatusIcons.Error,
+    },
     {
         label: "Waiting", filter: (t: Torrent) => [
             Status.verifying,
             Status.queuedToVerify,
-            Status.queuedToDownload].includes(t.status)
+            Status.queuedToDownload].includes(t.status),
+        icon: StatusIcons.Waiting,
     },
 ]
 
 const noLabelsFilter: LabeledFilter = {
     label: "<No labels>",
     filter: (t: Torrent) => t.labels.length == 0,
+    icon: StatusIcons.Label,
 }
 
 export const DefaultFilter = statusFilters[0].filter;
@@ -89,11 +108,12 @@ function FilterRow(props: FiltersProps & { id: string, filter: LabeledFilter }) 
         if (props.filter.filter(torrent)) count++;
     }
 
-    return <div
-        className={`px-1 ${props.currentFilter.id === props.id ? ' bg-primary text-white' : ''}`}
+    return <Flex align="center" gap="sm"
+        className={props.currentFilter.id === props.id ? 'selected' : ''} px="xs"
         onClick={() => props.setCurrentFilter({ id: props.id, filter: props.filter.filter })}>
-        {`${props.filter.label} (${count})`}
-    </div>;
+        <props.filter.icon />
+        <Text>{`${props.filter.label} (${count})`}</Text>
+    </Flex>;
 }
 
 interface DirFilterRowProps extends FiltersProps {
@@ -229,7 +249,8 @@ export function Filters(props: FiltersProps) {
         props.allLabels.forEach((label) => {
             labelFilters.push({
                 label,
-                filter: (t: Torrent) => t.labels.includes(label)
+                filter: (t: Torrent) => t.labels.includes(label),
+                icon: StatusIcons.Label,
             });
         });
         return {
