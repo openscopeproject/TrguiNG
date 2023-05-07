@@ -245,7 +245,7 @@ function TableRow<TData>(props: {
 
     return (
         <div
-            className={`tr ${props.selected ? " selected" : ""} ${props.index % 2 ? " odd" : ""}`}
+            className={`tr${props.selected ? " selected" : ""}`}
             style={{ height: `${props.height}px`, transform: `translateY(${props.start}px)` }}
             onClick={(e) => {
                 props.onRowClick(e, props.index, props.lastIndex);
@@ -328,7 +328,11 @@ export function Table<TData>(props: {
                     ))}
                 </Box>
 
-                {virtualizer.getVirtualItems().map((virtualRow) => {
+                {virtualizer.getVirtualItems()
+                    // drop first row if it odd one to keep nth-child(odd) selector stable
+                    // this prevents flickering row background on scroll
+                    .filter((virtualRow, virtual_index) => (virtual_index != 0 || virtualRow.index % 2 == 0))
+                    .map((virtualRow) => {
                     const row = table.getRowModel().rows[virtualRow.index];
                     return <MemoizedTableRow<TData> {...{
                         key: props.getRowId(row.original),
