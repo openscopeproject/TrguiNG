@@ -20,8 +20,8 @@ import React, { useMemo } from "react";
 import { byteRateToHumanReadableStr, bytesToHumanReadableStr } from "../util";
 import * as Icon from "react-bootstrap-icons";
 import { Container, Group } from "@mantine/core";
-import { SessionInfo } from "rpc/client";
-import { Torrent } from "rpc/torrent";
+import { type SessionInfo } from "rpc/client";
+import { type Torrent } from "rpc/torrent";
 
 export interface StatusbarProps {
     session: SessionInfo | undefined,
@@ -31,38 +31,38 @@ export interface StatusbarProps {
 }
 
 export function Statusbar({ session, filteredTorrents, selectedTorrents, hostname }: StatusbarProps) {
-    const serverFields = useMemo(() => {
-        return {
-            downRateLimit: session ?
-                session["alt-speed-enabled"] ?
-                    session["alt-speed-down"] :
-                    session["speed-limit-down-enabled"] ?
-                        session["speed-limit-down"] : -1
-                : -1,
-            upRateLimit: session ?
-                session["alt-speed-enabled"] ?
-                    session["alt-speed-up"] :
-                    session["speed-limit-up-enabled"] ?
-                        session["speed-limit-up"] : -1
-                : -1,
-            free: session?.["download-dir-free-space"] || 0,
-        }
-    }, [session]);
+    const serverFields = useMemo(() => ({
+        downRateLimit: session !== undefined
+            ? session["alt-speed-enabled"] === true
+                ? session["alt-speed-down"] as number
+                : session["speed-limit-down-enabled"] === true
+                    ? session["speed-limit-down"] as number
+                    : -1
+            : -1,
+        upRateLimit: session !== undefined
+            ? session["alt-speed-enabled"] === true
+                ? session["alt-speed-up"] as number
+                : session["speed-limit-up-enabled"] === true
+                    ? session["speed-limit-up"] as number
+                    : -1
+            : -1,
+        free: session?.["download-dir-free-space"] as number ?? 0,
+    }), [session]);
 
     const [downRate, upRate, sizeTotal] = useMemo(() => [
-        bytesToHumanReadableStr(filteredTorrents.reduce((p, t) => p + t.rateDownload, 0)),
-        bytesToHumanReadableStr(filteredTorrents.reduce((p, t) => p + t.rateUpload, 0)),
-        bytesToHumanReadableStr(filteredTorrents.reduce((p, t) => p + t.sizeWhenDone, 0)),
+        bytesToHumanReadableStr(filteredTorrents.reduce((p, t) => p + (t.rateDownload as number), 0)),
+        bytesToHumanReadableStr(filteredTorrents.reduce((p, t) => p + (t.rateUpload as number), 0)),
+        bytesToHumanReadableStr(filteredTorrents.reduce((p, t) => p + (t.sizeWhenDone as number), 0)),
     ], [filteredTorrents]);
 
     const [sizeSelected, sizeDone, sizeLeft] = useMemo(() => {
         const selected = filteredTorrents.filter((t) => selectedTorrents.has(t.id));
 
         return [
-            bytesToHumanReadableStr(selected.reduce((p, t) => p + t.sizeWhenDone, 0)),
-            bytesToHumanReadableStr(selected.reduce((p, t) => p + t.haveValid, 0)),
+            bytesToHumanReadableStr(selected.reduce((p, t) => p + (t.sizeWhenDone as number), 0)),
+            bytesToHumanReadableStr(selected.reduce((p, t) => p + (t.haveValid as number), 0)),
             bytesToHumanReadableStr(selected.reduce((p, t) => p + Math.max(t.sizeWhenDone - t.haveValid, 0), 0)),
-        ]
+        ];
     }, [filteredTorrents, selectedTorrents]);
 
     return (
@@ -70,7 +70,7 @@ export function Statusbar({ session, filteredTorrents, selectedTorrents, hostnam
             <Group className="statusbar" styles={{ root: { "flex-wrap": "nowrap" } }}>
                 <div>
                     <Icon.Diagram2 className="me-2" />
-                    <span>{`${session?.version || "<not connected>"} at ${hostname}`}</span>
+                    <span>{`${session?.version as string ?? "<not connected>"} at ${hostname}`}</span>
                 </div>
                 <div>
                     <Icon.ArrowDown className="me-2" />

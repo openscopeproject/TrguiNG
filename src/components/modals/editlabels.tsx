@@ -17,7 +17,7 @@
  */
 
 import { Text } from "@mantine/core";
-import { ActionModalState, SaveCancelModal, TorrentLabels, TorrentsNames } from "./common";
+import { type ActionModalState, SaveCancelModal, TorrentLabels, TorrentsNames } from "./common";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutateTorrent } from "queries";
 import { notifications } from "@mantine/notifications";
@@ -32,7 +32,7 @@ export function EditLabelsModal(props: EditLabelsProps) {
     const initialLabels = useMemo(() => {
         const selected = props.actionController.torrents.filter(
             (t) => props.actionController.selectedTorrents.has(t.id));
-        var labels: string[] = [];
+        const labels: string[] = [];
         selected.forEach((t) => t.labels.forEach((l: string) => {
             if (!labels.includes(l)) labels.push(l);
         }));
@@ -44,11 +44,12 @@ export function EditLabelsModal(props: EditLabelsProps) {
     }, [initialLabels]);
 
     const mutation = useMutateTorrent(props.actionController.client);
+    const { actionController: ac, close } = props;
 
     const onSave = useCallback(() => {
         mutation.mutate(
             {
-                torrentIds: Array.from(props.actionController.selectedTorrents),
+                torrentIds: Array.from(ac.selectedTorrents),
                 fields: { labels }
             },
             {
@@ -63,12 +64,12 @@ export function EditLabelsModal(props: EditLabelsProps) {
                         title: "Failed to update labels",
                         message: String(error),
                         color: "red",
-                    })
+                    });
                 }
             }
         );
-        props.close();
-    }, [props.actionController.selectedTorrents, labels, props.close]);
+        close();
+    }, [mutation, ac.selectedTorrents, labels, close]);
 
     return (
         <SaveCancelModal

@@ -16,19 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { AccessorFn, CellContext, ColumnDef } from "@tanstack/react-table";
-import React from "react";
-import { useCallback } from "react";
-import { Torrent, TrackerStats } from "rpc/torrent";
-import { TrackerStatsFieldsType } from "rpc/transmission";
+import { type AccessorFn, type CellContext, type ColumnDef } from "@tanstack/react-table";
+import React, { useCallback } from "react";
+import { type Torrent, type TrackerStats } from "rpc/torrent";
+import { type TrackerStatsFieldsType } from "rpc/transmission";
 import { secondsToHumanReadableStr } from "util";
-import { Table, useStandardSelect } from "./common";
+import { TransguiTable, useStandardSelect } from "./common";
 
 export function getTrackerAnnounceState(tracker: TrackerStats) {
-    if (tracker.announceState == 2 || tracker.announceState == 3) return "Working";
-    if (tracker.hasAnnounced) {
-        if (tracker.lastAnnounceSucceeded) return "Working";
-        if (tracker.lastAnnounceResult == "Success") return "Working";
+    if (tracker.announceState === 2 || tracker.announceState === 3) return "Working";
+    if (tracker.hasAnnounced as boolean) {
+        if (tracker.lastAnnounceSucceeded as boolean) return "Working";
+        if (tracker.lastAnnounceResult === "Success") return "Working";
         return tracker.lastAnnounceResult;
     }
     return "";
@@ -57,35 +56,33 @@ const AllFields: readonly TableField[] = [
 
 const Columns = AllFields.map((field): ColumnDef<TrackerStats> => {
     const cell = (props: CellContext<TrackerStats, unknown>) => {
-        if(field.component)
+        if (field.component !== undefined) {
             return <field.component entry={props.row.original} fieldName={field.name} />;
-        else
+        } else {
             return <>{props.getValue()}</>;
-    }
-    let column: ColumnDef<TrackerStats> = {
+        }
+    };
+    return {
         header: field.label,
         accessorKey: field.name,
         accessorFn: field.accessorFn,
-        cell
-    }
-    return column;
-})
+        cell,
+    };
+});
 
 function NextUpdateField(props: TableFieldProps) {
-    if(props.entry.announceState != 1) return <>-</>;
-    let seconds = props.entry[props.fieldName] - Math.floor(Date.now() / 1000);
-    if (seconds > 0)
-        return <>{secondsToHumanReadableStr(seconds)}</>;
+    if (props.entry.announceState !== 1) return <>-</>;
+    const seconds = props.entry[props.fieldName] - Math.floor(Date.now() / 1000);
+    if (seconds > 0) return <>{secondsToHumanReadableStr(seconds)}</>;
     return <>-</>;
 }
 
 export function TrackersTable(props: { torrent: Torrent }) {
-
     const getRowId = useCallback((t: TrackerStats) => String(t.id), []);
 
     const [selected, selectedReducer] = useStandardSelect();
 
-    return <Table<TrackerStats> {...{
+    return <TransguiTable<TrackerStats> {...{
         tablename: "trackers",
         columns: Columns,
         data: props.torrent.trackerStats,

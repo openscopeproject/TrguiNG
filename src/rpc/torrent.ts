@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { BandwidthGroupFieldType, PeerStatsFieldsType, Status, TorrentAllFieldsType, TrackerStatsFieldsType } from "./transmission";
+import { type BandwidthGroupFieldType, type PeerStatsFieldsType, Status, type TorrentAllFieldsType, type TrackerStatsFieldsType } from "./transmission";
 
 export type Torrent = Partial<Record<TorrentAllFieldsType, any>>;
 export type TrackerStats = Partial<Record<TrackerStatsFieldsType, any>>;
@@ -24,26 +24,28 @@ export type PeerStats = Partial<Record<PeerStatsFieldsType, any>>;
 export type BandwidthGroup = Record<BandwidthGroupFieldType, any>;
 
 export function getTorrentError(t: Torrent): string {
-    var torrentError = t.errorString;
-    var trackerError = "";
-    var noTrackerError = false;
+    let torrentError = t.errorString;
+    let trackerError = "";
+    let noTrackerError = false;
 
-    for (var trackerStat of t.trackerStats) {
-        var err = '';
-        if (trackerStat.hasAnnounced && !trackerStat.lastAnnounceSucceeded)
-            err = trackerStat.lastAnnounceResult;
-        if (!err || err == "Success") {
+    for (const trackerStat of t.trackerStats) {
+        let err = "";
+        if (trackerStat.hasAnnounced as boolean && !(trackerStat.lastAnnounceSucceeded as boolean)) {
+            err = trackerStat.lastAnnounceResult as string;
+        }
+        if (err === "" || err === "Success") {
             noTrackerError = true;
         } else {
             // If the torrent error string is equal to some tracker error string,
             // then igonore the global error string
-            if (err == torrentError) torrentError = "";
+            if (err === torrentError) torrentError = "";
             trackerError = `Tracker: ${err}`;
         }
     }
 
-    if (noTrackerError || t.status == Status.stopped)
+    if (noTrackerError || t.status === Status.stopped) {
         return torrentError;
-    else
+    } else {
         return trackerError;
+    }
 }

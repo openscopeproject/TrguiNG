@@ -16,40 +16,40 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Button, Checkbox, Divider, Group, Modal, Text, TextInput } from "@mantine/core";
+import { Button, Checkbox, Divider, Group, Modal, Text } from "@mantine/core";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ActionModalState, TorrentLocation, TorrentsNames, useTorrentLocation } from "./common";
+import { type ActionModalState, TorrentLocation, TorrentsNames, useTorrentLocation } from "./common";
 
 export function MoveModal(props: ActionModalState) {
     const [moveData, setMoveData] = useState<boolean>(true);
 
-    const location = useTorrentLocation();
+    const { path, setPath, browseHandler } = useTorrentLocation();
 
     const onMove = useCallback(() => {
-        props.actionController.run("changeDirectory", location.path, moveData).catch(console.log);
+        props.actionController.run("changeDirectory", path, moveData).catch(console.log);
         props.close();
-    }, [props.actionController, location.path, moveData]);
+    }, [props, path, moveData]);
 
     const initialLocation = useMemo(() => {
         const [id] = props.actionController.selectedTorrents;
-        const torrent = props.actionController.torrents.find((t) => t.id == id);
-        return torrent?.downloadDir || "";
+        const torrent = props.actionController.torrents.find((t) => t.id === id);
+        return torrent?.downloadDir ?? "";
     }, [props.actionController.torrents, props.actionController.selectedTorrents]);
 
     useEffect(() => {
-        location.setPath(initialLocation);
-    }, [initialLocation]);
+        setPath(initialLocation);
+    }, [setPath, initialLocation]);
 
     return (
         <Modal opened={props.opened} onClose={props.close} title="Move torrents" centered size="lg">
             <Divider my="sm" />
             <Text mb="md">Enter new location for</Text>
             <TorrentsNames actionController={props.actionController} />
-            <TorrentLocation {...location} />
+            <TorrentLocation {...{ path, setPath, browseHandler }} />
             <Checkbox
                 label="Move torrent data to new location"
                 checked={moveData}
-                onChange={(e) => setMoveData(e.currentTarget.checked)}
+                onChange={(e) => { setMoveData(e.currentTarget.checked); }}
                 my="xl" />
             <Divider my="sm" />
             <Group position="center" spacing="md">

@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Torrent } from "./rpc/torrent";
-import { PriorityNumberType } from "rpc/transmission";
+import { type Torrent } from "./rpc/torrent";
+import { type PriorityNumberType } from "rpc/transmission";
 
 interface Entry {
     name: string,
@@ -72,7 +72,7 @@ export class CachedFileTree {
             files: new Map(),
             expanded: true,
             isSelected: false,
-        }
+        };
         this.torrenthash = "";
         this.files = [];
         this.filePathToIndex = {};
@@ -81,28 +81,28 @@ export class CachedFileTree {
     destroy(dir: DirEntry) {
         // recurse into the tree and unlink everyone's parents
         // to allow gc to do it's work
-        dir.subdirs.forEach((d) => this.destroy(d));
+        dir.subdirs.forEach((d) => { this.destroy(d); });
         dir.subdirs.clear();
-        dir.files.forEach((f) => f.parent = undefined);
+        dir.files.forEach((f) => { f.parent = undefined; });
         dir.files.clear();
         dir.parent = undefined;
     }
 
     recalcTree(dir: DirEntry) {
         // recurse into the tree to recalculate sizes, percentages, priorities
-        dir.subdirs.forEach((d) => this.recalcTree(d));
+        dir.subdirs.forEach((d) => { this.recalcTree(d); });
 
-        var size = 0;
-        var done = 0;
-        var want: Set<boolean | undefined> = new Set();
-        var priority: Set<PriorityNumberType | undefined> = new Set();
+        let size = 0;
+        let done = 0;
+        const want = new Set<boolean | undefined>();
+        const priority = new Set<PriorityNumberType | undefined>();
 
         const update = (e: FileDirEntry) => {
             size += e.size;
             done += e.done;
             want.add(e.want);
             priority.add(e.priority);
-        }
+        };
 
         dir.subdirs.forEach(update);
         dir.files.forEach(update);
@@ -110,17 +110,19 @@ export class CachedFileTree {
         dir.size = size;
         dir.done = done;
         dir.percent = done * 100 / size;
-        dir.want = want.size == 1 ? [...want][0] : undefined;
-        dir.priority = priority.size == 1 ? [...priority][0] : undefined;
+        dir.want = want.size === 1 ? [...want][0] : undefined;
+        dir.priority = priority.size === 1 ? [...priority][0] : undefined;
     }
 
     parse(torrent: Torrent, fromFile: boolean) {
-        this.torrenthash = torrent.hashString || "";
+        this.torrenthash = torrent.hashString ?? "";
+        const name = torrent.name as string;
 
         this.files = torrent.files.map((entry: any, index: number): FileEntry => {
-            var path = (entry.name as string).replace("\\", "/");
-            if (path.startsWith(torrent.name + "/"))
-                path = path.substring(torrent.name.length + 1);
+            let path = (entry.name as string).replace("\\", "/");
+            if (path.startsWith(name + "/")) {
+                path = path.substring(name.length + 1);
+            }
             return {
                 index,
                 name: path.substring(path.lastIndexOf("/") + 1),
@@ -133,31 +135,34 @@ export class CachedFileTree {
                 percent: fromFile ? 0 : torrent.fileStats[index].bytesCompleted * 100 / entry.length,
                 priority: fromFile ? 0 : torrent.fileStats[index].priority,
                 isSelected: false,
-            }
+            };
         });
 
-        var filePathIndex: [string, number][] = this.files.map(
-            (f, i): [string, number] => [f.fullpath, i]).sort((a, b) => {
+        const filePathIndex: Array<[string, number]> = this.files
+            .map((f, i): [string, number] => [f.fullpath, i])
+            .sort((a, b) => {
                 if (a[0] < b[0]) return -1;
-                return 1;
+                if (a[0] > b[0]) return 1;
+                return 0;
             });
 
         this.filePathToIndex = {};
 
         filePathIndex.forEach(([path, index]) => {
             this.filePathToIndex[path] = index;
-            var parts = path.split("/");
-            var node = this.tree;
-            var currentPath = "";
-            for (var i = 0; i < parts.length - 1; i++) {
-                var subdir = parts[i];
-                currentPath = currentPath == "" ? subdir : currentPath + "/" + subdir;
-                if (!node.subdirs.has(subdir)) {
-                    node.subdirs.set(subdir, {
+            const parts = path.split("/");
+            let node = this.tree;
+            let currentPath = "";
+            for (let i = 0; i < parts.length - 1; i++) {
+                const subdir = parts[i];
+                currentPath = currentPath === "" ? subdir : currentPath + "/" + subdir;
+                const existingNode = node.subdirs.get(subdir);
+                if (existingNode === undefined) {
+                    const newNode = {
                         name: subdir,
                         level: i,
                         fullpath: currentPath,
-                        originalpath: torrent.name + "/" + currentPath,
+                        originalpath: torrent.name as string + "/" + currentPath,
                         size: 0,
                         done: 0,
                         percent: 0,
@@ -166,9 +171,12 @@ export class CachedFileTree {
                         expanded: false,
                         parent: node,
                         isSelected: false,
-                    });
+                    };
+                    node.subdirs.set(subdir, newNode);
+                    node = newNode;
+                } else {
+                    node = existingNode;
                 }
-                node = node.subdirs.get(subdir)!;
             }
             node.files.set(parts[parts.length - 1], this.files[index]);
             this.files[index].parent = node;
@@ -179,15 +187,15 @@ export class CachedFileTree {
     }
 
     update(torrent: Torrent) {
-        if (this.torrenthash == torrent.hashString) {
+        if (this.torrenthash === torrent.hashString) {
             // update done and percent fields in the tree
             torrent.files.forEach((entry: any, index: number) => {
-                var delta = torrent.fileStats[index].bytesCompleted - this.files[index].done;
+                const delta = torrent.fileStats[index].bytesCompleted - this.files[index].done;
 
                 this.files[index].done += delta;
                 this.files[index].percent = this.files[index].done * 100 / this.files[index].size;
 
-                var node: DirEntry | undefined = this.files[index].parent;
+                let node: DirEntry | undefined = this.files[index].parent;
 
                 while (node !== undefined) {
                     node.done += delta;
@@ -205,16 +213,15 @@ export class CachedFileTree {
     }
 
     flatten(): FileDirEntry[] {
-        var result: FileDirEntry[] = [];
+        const result: FileDirEntry[] = [];
 
         const append = (dir: DirEntry) => {
             dir.subdirs.forEach((d) => {
                 result.push(d);
-                if (d.expanded)
-                    append(d);
+                if (d.expanded) append(d);
             });
             dir.files.forEach((f) => result.push(f));
-        }
+        };
 
         append(this.tree);
 
@@ -230,27 +237,31 @@ export class CachedFileTree {
             dir.files.forEach((f) => {
                 f.want = state;
             });
-        }
+        };
 
-        if(isDirEntry(entry))
+        if (isDirEntry(entry)) {
             recurse(entry);
-        else
+        } else {
             entry.want = state;
+        }
 
         this.recalcTree(this.tree);
     }
 
     getUnwanted() {
-        let result: number[] = [];
+        const result: number[] = [];
+
         const recurse = (dir: DirEntry) => {
             dir.subdirs.forEach((d) => {
                 recurse(d);
             });
             dir.files.forEach((f) => {
-                if(!f.want) result.push(f.index);
+                if (!f.want) result.push(f.index);
             });
-        }
+        };
+
         recurse(this.tree);
+
         return result;
     }
 
@@ -258,36 +269,40 @@ export class CachedFileTree {
         let selected = 0;
         dir.subdirs.forEach((d) => {
             this.updateDirSelection(d);
-            if(d.isSelected) selected++;
+            if (d.isSelected) selected++;
         });
-        dir.files.forEach((f) => {if(f.isSelected) selected++});
-        if(selected == dir.subdirs.size + dir.files.size)
+        dir.files.forEach((f) => { if (f.isSelected) selected++; });
+        if (selected === dir.subdirs.size + dir.files.size) {
             dir.isSelected = true;
+        }
     }
 
     setSelection(dir: DirEntry, value: boolean) {
-        dir.subdirs.forEach((d) => this.setSelection(d, value));
-        dir.files.forEach((f) => {f.isSelected = value});
+        dir.subdirs.forEach((d) => { this.setSelection(d, value); });
+        dir.files.forEach((f) => { f.isSelected = value; });
         dir.isSelected = value;
     }
 
     selectAction({ verb, ids }: { verb: "add" | "set", ids: string[] }) {
-        if (verb == "set")
+        if (verb === "set") {
             this.setSelection(this.tree, false);
+        }
         ids.forEach((id) => {
-            let parts = id.split("/");
+            const parts = id.split("/");
             let i = 0;
             let node = this.tree;
-            while(node.subdirs.has(parts[i])) {
-                node = node.subdirs.get(parts[i])!;
+            while (node.subdirs.has(parts[i])) {
+                node = node.subdirs.get(parts[i]) as DirEntry;
                 i++;
             }
-            if( i < parts.length - 1)
+            if (i < parts.length - 1) {
                 console.log("What the horse?", id);
-            if( i < parts.length)
-                node.files.get(parts[i])!.isSelected = true;
-            else
+            }
+            if (i < parts.length) {
+                (node.files.get(parts[i]) as FileEntry).isSelected = true;
+            } else {
                 this.setSelection(node, true);
+            }
         });
         this.updateDirSelection(this.tree);
     }

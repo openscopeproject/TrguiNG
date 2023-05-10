@@ -18,8 +18,8 @@
 
 import { Box, Button, Checkbox, Divider, Group, Modal, SegmentedControl, Text, TextInput } from "@mantine/core";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ActionModalState, LabelsData, LocationData, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
-import { PriorityColors, PriorityNumberType, PriorityStrings } from "rpc/transmission";
+import { type ActionModalState, type LabelsData, type LocationData, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
+import { PriorityColors, type PriorityNumberType, PriorityStrings } from "rpc/transmission";
 import { dialog, tauri } from "@tauri-apps/api";
 import { CachedFileTree } from "cachedfiletree";
 import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable";
@@ -42,7 +42,7 @@ function AddCommon(props: AddCommonProps) {
             <Checkbox
                 label="Start torrent"
                 checked={props.start}
-                onChange={(e) => props.setStart(e.currentTarget.checked)}
+                onChange={(e) => { props.setStart(e.currentTarget.checked); }}
                 my="xl"
                 styles={{
                     root: {
@@ -52,7 +52,7 @@ function AddCommon(props: AddCommonProps) {
             <SegmentedControl
                 color={PriorityColors.get(props.priority)}
                 value={String(props.priority)}
-                onChange={(value) => props.setPriority(+value as PriorityNumberType)}
+                onChange={(value) => { props.setPriority(+value as PriorityNumberType); }}
                 data={Array.from(PriorityStrings.entries()).map(([k, v]) => ({
                     value: String(k),
                     label: v,
@@ -83,7 +83,7 @@ function useCommonProps(allLabels: string[]) {
         setStart,
         priority,
         setPriority,
-    }), [location.path, labels, allLabels, start, priority]);
+    }), [location, labels, allLabels, start, priority]);
 
     return {
         location,
@@ -91,33 +91,38 @@ function useCommonProps(allLabels: string[]) {
         start,
         priority,
         props,
-    }
+    };
 }
 
 export function AddMagnet(props: AddCommonModalProps) {
     const [magnet, setMagnet] = useState<string>("");
 
     useEffect(() => {
-        if (props.uri) setMagnet(props.uri);
+        if (props.uri !== undefined) setMagnet(props.uri);
     }, [props.uri]);
 
     const common = useCommonProps(props.allLabels);
+    const { actionController: ac, close } = props;
 
     const onAdd = useCallback(() => {
-        props.actionController.addTorrent({
+        // TODO handle errors
+        void ac.addTorrent({
             url: magnet,
             downloadDir: common.location.path,
             labels: common.labels,
             paused: !common.start,
             priority: common.priority,
         });
-        props.close();
-    }, [props.actionController, magnet, common]);
+        close();
+    }, [ac, magnet, common.location.path, common.labels, common.start, common.priority, close]);
 
     return (
-        <Modal opened={props.opened} onClose={props.close} title="Add torrent by magnet link or URL" centered size="lg">
+        <Modal opened={props.opened} onClose={close} title="Add torrent by magnet link or URL" centered size="lg">
             <Divider my="sm" />
-            <TextInput label="Link" w="100%" value={magnet} onChange={(e) => setMagnet(e.currentTarget.value)} />
+            <TextInput
+                label="Link" w="100%"
+                value={magnet}
+                onChange={(e) => { setMagnet(e.currentTarget.value); }} />
             <AddCommon {...common.props} />
             <Divider my="sm" />
             <Group position="center" spacing="md">
@@ -132,10 +137,10 @@ interface TorrentFileData {
     metadata: string,
     name: string,
     length: number,
-    files: {
+    files: Array<{
         name: string,
         length: number,
-    }[] | null,
+    }> | null,
 }
 
 export function AddTorrent(props: AddCommonModalProps) {
@@ -146,18 +151,19 @@ export function AddTorrent(props: AddCommonModalProps) {
         if (!props.opened) {
             setTorrentData(undefined);
             return;
-        };
-
-        const process = async (path: string | null) => {
-            if (!path) {
-                props.close();
-                return undefined;
-            };
-            return tauri.invoke("read_file", { path });
         }
 
-        let pathPromise = props.uri ? Promise.resolve(props.uri) :
-            dialog.open({
+        const process = async (path: string | null) => {
+            if (path === null) {
+                props.close();
+                return undefined;
+            }
+            return await tauri.invoke("read_file", { path });
+        };
+
+        const pathPromise = props.uri !== undefined
+            ? Promise.resolve(props.uri)
+            : dialog.open({
                 title: "Select torrent file",
                 filters: [{
                     name: "Torrent",
@@ -165,26 +171,31 @@ export function AddTorrent(props: AddCommonModalProps) {
                 }]
             }) as Promise<string | null>;
 
-        pathPromise.then(process).then((torrentData) => setTorrentData(torrentData as TorrentFileData)).catch((e) => {
-            notifications.show({
-                title: "Error reading torrent",
-                message: String(e),
-                color: "red",
+        pathPromise.then(process)
+            .then((torrentData) => { setTorrentData(torrentData as TorrentFileData); })
+            .catch((e) => {
+                notifications.show({
+                    title: "Error reading torrent",
+                    message: String(e),
+                    color: "red",
+                });
+                props.close();
             });
-            props.close();
-        });
-    }, [props.opened, props.uri]);
+    }, [props]);
 
     const fileTree = useMemo(() => {
         const ft = new CachedFileTree();
-        if (torrentData) ft.parse(torrentData, true);
+        if (torrentData !== undefined) ft.parse(torrentData, true);
         return ft;
     }, [torrentData]);
 
     const onCheckboxChange = useUnwantedFiles(fileTree);
 
+    const { actionController: ac, close } = props;
+
     const onAdd = useCallback(() => {
-        props.actionController.addTorrent({
+        // TODO handle errors
+        void ac.addTorrent({
             metainfo: torrentData?.metadata,
             downloadDir: common.location.path,
             labels: common.labels,
@@ -192,12 +203,13 @@ export function AddTorrent(props: AddCommonModalProps) {
             priority: common.priority,
             unwanted: fileTree.getUnwanted(),
         });
-        props.close();
-    }, [props.actionController, torrentData, common, fileTree]);
+        close();
+    }, [ac, close, torrentData, common, fileTree]);
 
     return (
-        torrentData === undefined ? <></> :
-            <Modal opened={props.opened} onClose={props.close} title="Add torrent" centered size="lg">
+        torrentData === undefined
+            ? <></>
+            : <Modal opened={props.opened} onClose={props.close} title="Add torrent" centered size="lg">
                 <Divider my="sm" />
                 <Text>Name: {torrentData.name}</Text>
                 <AddCommon {...common.props} />

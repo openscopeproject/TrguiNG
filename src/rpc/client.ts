@@ -16,11 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Buffer } from 'buffer';
+import { Buffer } from "buffer";
 
-import { PriorityNumberType, SessionAllFields, SessionAllFieldsType, SessionFields, SessionStatistics, TorrentAllFields, TorrentFieldsType } from './transmission';
-import { ServerConnection } from '../config';
-import { BandwidthGroup, Torrent } from './torrent';
+import { type PriorityNumberType, SessionAllFields, type SessionAllFieldsType, SessionFields, type SessionStatistics, TorrentAllFields, type TorrentFieldsType } from "./transmission";
+import { type ServerConnection } from "../config";
+import { type BandwidthGroup, type Torrent } from "./torrent";
 
 class ApiError extends Error {
 
@@ -37,7 +37,7 @@ export interface SessionInfo extends Partial<Record<SessionAllFieldsType, any>> 
 }
 
 function isApiResponse(response: any): response is ApiResponse {
-    return "result" in response && typeof response.result == "string";
+    return "result" in response && typeof response.result === "string";
 }
 
 const TorrentActionMethods = [
@@ -74,8 +74,8 @@ export class TransmissionClient {
 
     constructor(connection: ServerConnection, timeout = 15) {
         this.url = encodeURIComponent(connection.url);
-        this.auth = "Basic " + Buffer.from(connection.username + ":" + connection.password, 'utf-8').toString('base64');
-        this.headers = { "Authorization": this.auth };
+        this.auth = "Basic " + Buffer.from(connection.username + ":" + connection.password, "utf-8").toString("base64");
+        this.headers = { Authorization: this.auth };
         this.timeout = timeout;
         this.sessionInfo = {};
         this.hostname = "unknown";
@@ -87,28 +87,29 @@ export class TransmissionClient {
     }
 
     getHeader(headers: Record<string, string>, header: string) {
-        for (var h in headers) {
-            if (header.toLowerCase() == h.toLowerCase())
+        for (const h in headers) {
+            if (header.toLowerCase() === h.toLowerCase()) {
                 return headers[h];
+            }
         }
         return null;
     }
 
     async _sendRpc(data: Record<string, any>) {
-        let url = `http://127.123.45.67:8080/${data.method == "torrent-get" ? "torrentget" : "post"}?url=${this.url}`;
-        var data_str = JSON.stringify(data);
-        var response = await fetch(
-            url, { method: "POST", headers: this.headers, body: data_str });
+        const url = `http://127.123.45.67:8080/${data.method === "torrent-get" ? "torrentget" : "post"}?url=${this.url}`;
+        const body = JSON.stringify(data);
+        let response = await fetch(
+            url, { method: "POST", headers: this.headers, body });
 
-        if (response.status == 409) {
-            var sid = response.headers.get("X-Transmission-Session-Id");
-            if (!sid) {
-                throw new ApiError('Got 409 response without session id header');
+        if (response.status === 409) {
+            const sid = response.headers.get("X-Transmission-Session-Id");
+            if (sid == null) {
+                throw new ApiError("Got 409 response without session id header");
             }
             this.headers["X-Transmission-Session-Id"] = sid;
 
-            response = await await fetch(
-                url, { method: "POST", headers: this.headers, body: data_str });
+            response = await fetch(
+                url, { method: "POST", headers: this.headers, body });
         }
 
         if (response.ok) {
@@ -120,22 +121,22 @@ export class TransmissionClient {
     }
 
     async getTorrents(fields: TorrentFieldsType[]): Promise<Torrent[]> {
-        var request = {
+        const request = {
             method: "torrent-get",
             arguments: { fields }
         };
 
-        var response = await this._sendRpc(request);
+        const response = await this._sendRpc(request);
 
         if (!isApiResponse(response)) {
-            throw new ApiError('torrent-get response is not torrents');
+            throw new ApiError("torrent-get response is not torrents");
         }
 
         return response.arguments.torrents;
     }
 
     async getTorrentDetails(id: number): Promise<Torrent> {
-        var request = {
+        const request = {
             method: "torrent-get",
             arguments: {
                 fields: TorrentAllFields,
@@ -143,15 +144,15 @@ export class TransmissionClient {
             }
         };
 
-        var response = await this._sendRpc(request);
+        const response = await this._sendRpc(request);
 
         if (!isApiResponse(response)) {
-            throw new ApiError('torrent-get response is not torrents');
+            throw new ApiError("torrent-get response is not torrents");
         }
 
-        var torrent = response.arguments.torrents.find((torrent: Torrent) => torrent.id == id);
+        const torrent = response.arguments.torrents.find((torrent: Torrent) => torrent.id === id);
 
-        if (!torrent) {
+        if (torrent === undefined) {
             throw new ApiError(`Torrent with id ${id} was not found`);
         }
 
@@ -159,15 +160,15 @@ export class TransmissionClient {
     }
 
     async _getSession(fields: Readonly<string[]>): Promise<SessionInfo> {
-        var request = {
+        const request = {
             method: "session-get",
-            arguments: { fields: fields }
+            arguments: { fields }
         };
 
-        var response = await this._sendRpc(request);
+        const response = await this._sendRpc(request);
 
         if (!isApiResponse(response)) {
-            throw new ApiError('session-get response is not a session');
+            throw new ApiError("session-get response is not a session");
         }
 
         return response.arguments;
@@ -175,7 +176,7 @@ export class TransmissionClient {
 
     async getSession(): Promise<SessionInfo> {
         const session = await this._getSession(SessionFields);
-        this.sessionInfo = {...this.sessionInfo, ...session};
+        this.sessionInfo = { ...this.sessionInfo, ...session };
         return this.sessionInfo;
     }
 
@@ -186,52 +187,53 @@ export class TransmissionClient {
     }
 
     async setSession(fields: Record<string, any>): Promise<string> {
-        var request = {
+        const request = {
             method: "session-set",
             arguments: fields,
         };
 
-        let response = await this._sendRpc(request);
+        const response = await this._sendRpc(request);
 
-        if(response.result != "success")
-            throw new ApiError("Failed to update session: " + response.result);
+        if (response.result !== "success") {
+            throw new ApiError("Failed to update session: " + (response.result as string));
+        }
 
         return response.result;
     }
 
     async getSessionStats(): Promise<SessionStatistics> {
-        var request = {
+        const request = {
             method: "session-stats"
         };
 
-        let response = await this._sendRpc(request);
+        const response = await this._sendRpc(request);
 
         return response.arguments;
     }
 
     async setTorrents(torrentIds: number[], fields: Record<string, any>) {
-        var request = {
+        const request = {
             method: "torrent-set",
             arguments: { ...fields, ids: torrentIds },
-        }
+        };
 
         await this._sendRpc(request);
     }
 
     async torrentAction(method: TorrentActionMethodsType, torrentIds: number[]) {
-        var request = {
+        const request = {
             method,
             arguments: { ids: torrentIds },
-        }
+        };
 
         await this._sendRpc(request);
     }
 
     async torrentRemove(torrentIds: number[], deleteLocalData: boolean) {
-        var request = {
+        const request = {
             method: "torrent-remove",
             arguments: { ids: torrentIds, "delete-local-data": deleteLocalData },
-        }
+        };
 
         await this._sendRpc(request);
     }
@@ -243,56 +245,56 @@ export class TransmissionClient {
      * @param move if true, move from previous location. otherwise, search "location" for files
      */
     async torrentMove(torrentIds: number[], location: string, move: boolean) {
-        var request = {
+        const request = {
             method: "torrent-set-location",
             arguments: {
                 ids: torrentIds,
                 location,
                 move
             },
-        }
+        };
 
         await this._sendRpc(request);
     }
 
     async torrentAdd(params: TorrentAddParams) {
         const { url, unwanted, downloadDir, ...other } = params;
-        var request = {
+        const request = {
             method: "torrent-add",
             arguments: {
                 filename: url,
-                "download-dir": downloadDir != "" ? downloadDir : undefined,
+                "download-dir": downloadDir !== "" ? downloadDir : undefined,
                 "files-unwanted": unwanted,
                 ...other
             }
-        }
+        };
 
         return await this._sendRpc(request);
     }
 
     async testPort() {
-        var request = {
+        const request = {
             method: "port-test",
-        }
+        };
 
         return await this._sendRpc(request);
     }
 
     async getBandwidthGroups(): Promise<BandwidthGroup[]> {
-        var request = {
+        const request = {
             method: "group-get"
-        }
+        };
 
-        var response = await this._sendRpc(request);
+        const response = await this._sendRpc(request);
 
         return response.arguments.group;
     }
 
     async setBandwidthGroup(group: BandwidthGroup) {
-        var request = {
+        const request = {
             method: "group-set",
             arguments: group,
-        }
+        };
 
         return await this._sendRpc(request);
     }

@@ -17,13 +17,12 @@
  */
 
 import { ActionIcon, Grid, Group, PasswordInput, Textarea, TextInput } from "@mantine/core";
-import { ServerConfig } from "config";
+import { type ServerConfig } from "config";
 import cloneDeep from "lodash-es/cloneDeep";
 import React, { useCallback, useEffect, useState } from "react";
 import { swapElements, useForceRender } from "util";
-import { ModalState, SaveCancelModal } from "./common";
+import { type ModalState, SaveCancelModal } from "./common";
 import * as Icon from "react-bootstrap-icons";
-
 
 interface ServerListPanelProps {
     servers: string[],
@@ -40,7 +39,7 @@ function ServerListPanel(props: ServerListPanelProps) {
         <div className="d-flex flex-column pe-3">
             <div className="border border-secondary flex-grow-1 mb-2" style={{ minHeight: "20rem" }}>
                 {props.servers.map((s, i) => {
-                    return <div key={i} className={("p-1 " + (i == props.current ? "selected" : ""))} onClick={() => { props.onSelect(i) }}>{s}</div>;
+                    return <div key={i} className={("p-1 " + (i === props.current ? "selected" : ""))} onClick={() => { props.onSelect(i); }}>{s}</div>;
                 })}
             </div>
             <Group position="apart" noWrap>
@@ -65,7 +64,6 @@ function ServerPanel(props: ServerPanelProps) {
     useEffect(() => {
         setMappingsString(props.server.pathMappings.map((m) => `${m.from}=${m.to}`).join("\n"));
     }, [props.server]);
-
 
     return (
         <div className="flex-grow-1">
@@ -112,12 +110,12 @@ function ServerPanel(props: ServerPanelProps) {
 
                 <Grid.Col span={12}>
                     <Textarea
-                        label={'Path mappings in "remote=local" format, one per line'}
+                        label={"Path mappings in \"remote=local\" format, one per line"}
                         onChange={(e) => {
-                            var mappings = e.target.value.split("\n")
+                            const mappings = e.target.value.split("\n")
                                 .filter((line) => line.includes("="))
                                 .map((line) => {
-                                    var equalsPos = line.indexOf("=");
+                                    const equalsPos = line.indexOf("=");
                                     return { from: line.substring(0, equalsPos), to: line.substring(equalsPos + 1) };
                                 });
                             props.server.pathMappings = mappings;
@@ -143,12 +141,13 @@ export function ManageServersModal(props: ManageServerModalProps) {
 
     useEffect(() => {
         setServers(cloneDeep(props.servers));
-        if (currentServerIndex >= props.servers.length)
+        if (currentServerIndex >= props.servers.length) {
             setCurrentServerIndex(props.servers.length > 0 ? props.servers.length - 1 : 0);
-    }, [props.servers, props.opened]);
+        }
+    }, [props.servers, props.opened, currentServerIndex]);
 
     const onRenameCurrent = useCallback((name: string) => {
-        servers[currentServerIndex] = { ...servers[currentServerIndex], name: name };
+        servers[currentServerIndex] = { ...servers[currentServerIndex], name };
         setServers(servers.slice());
     }, [servers, currentServerIndex]);
 
@@ -156,7 +155,10 @@ export function ManageServersModal(props: ManageServerModalProps) {
         servers.push(
             {
                 connection: { url: "", useAuth: false, username: "", password: "" },
-                name: "new", pathMappings: [], expandedDirFilters: [], lastSaveDirs: [],
+                name: "new",
+                pathMappings: [],
+                expandedDirFilters: [],
+                lastSaveDirs: [],
                 intervals: { session: 60, torrents: 5, torrentsMinimized: 60, details: 5 },
             }
         );
@@ -168,8 +170,9 @@ export function ManageServersModal(props: ManageServerModalProps) {
         if (currentServerIndex < servers.length) {
             servers.splice(currentServerIndex, 1);
             setServers(servers.slice());
-            if (currentServerIndex == servers.length && currentServerIndex > 0)
+            if (currentServerIndex === servers.length && currentServerIndex > 0) {
                 setCurrentServerIndex(currentServerIndex - 1);
+            }
         }
     }, [servers, currentServerIndex]);
 
@@ -188,7 +191,6 @@ export function ManageServersModal(props: ManageServerModalProps) {
             setCurrentServerIndex(currentServerIndex + 1);
         }
     }, [servers, currentServerIndex]);
-
 
     const onSave = useCallback(() => {
         props.onSave(servers);
@@ -214,8 +216,9 @@ export function ManageServersModal(props: ManageServerModalProps) {
                     onUp={onUp}
                     onDown={onDown}
                 />
-                {currentServerIndex >= servers.length ? <></> :
-                    <ServerPanel server={servers[currentServerIndex]} onNameChange={onRenameCurrent} />}
+                {currentServerIndex >= servers.length
+                    ? <></>
+                    : <ServerPanel server={servers[currentServerIndex]} onNameChange={onRenameCurrent} />}
             </div>
         </SaveCancelModal>
     );

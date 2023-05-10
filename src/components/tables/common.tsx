@@ -18,12 +18,15 @@
 
 import { Box, Menu } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
-import { useReactTable, Table, ColumnDef, ColumnSizingState, SortingState, VisibilityState, getCoreRowModel, getSortedRowModel, flexRender, Row, Header, Column, RowSelectionState } from "@tanstack/react-table";
-import { useVirtualizer, Virtualizer } from "@tanstack/react-virtual";
+import {
+    useReactTable, type Table, type ColumnDef, type ColumnSizingState,
+    type SortingState, type VisibilityState, getCoreRowModel,
+    getSortedRowModel, flexRender, type Row, type Column, type RowSelectionState
+} from "@tanstack/react-table";
+import { useVirtualizer, type Virtualizer } from "@tanstack/react-virtual";
 import { ContextMenu, useContextMenu } from "components/contextmenu";
-import { ConfigContext, TableName } from "config";
-import React, { memo, useReducer } from "react";
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { ConfigContext, type TableName } from "config";
+import React, { memo, useReducer, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 const defaultColumn = {
     minSize: 30,
@@ -33,7 +36,7 @@ const defaultColumn = {
 
 function useTable<TData>(
     tablename: TableName,
-    columns: ColumnDef<TData, unknown>[],
+    columns: Array<ColumnDef<TData, unknown>>,
     data: TData[],
     selected: string[],
     getRowId: (r: TData) => string,
@@ -52,14 +55,16 @@ function useTable<TData>(
     useEffect(() => {
         config.setTableColumnVisibility(tablename, columnVisibility);
         onVisibilityChange?.(columnVisibility);
-    }, [config, columnVisibility, onVisibilityChange]);
-    useEffect(() => config.setTableColumnSizes(
-        tablename, columnSizing), [config, columnSizing]);
-    useEffect(() => config.setTableSortBy(
-        tablename, sorting), [config, sorting]);
+    }, [config, columnVisibility, onVisibilityChange, tablename]);
+    useEffect(() => {
+        config.setTableColumnSizes(tablename, columnSizing);
+    }, [config, columnSizing, tablename]);
+    useEffect(() => {
+        config.setTableSortBy(tablename, sorting);
+    }, [config, sorting, tablename]);
     useEffect(() => {
         setRowSelection(Object.fromEntries(selected.map((id) => [id, true])));
-    }, [selected])
+    }, [selected]);
 
     const table = useReactTable<TData>({
         columns,
@@ -100,19 +105,20 @@ function useSelectHandler<TData>(
         event.stopPropagation();
 
         function genIds() {
-            var minIndex = Math.min(index, lastIndex);
-            var maxIndex = Math.max(index, lastIndex);
-            var ids = [];
-            for (var i = minIndex; i <= maxIndex; i++)
+            const minIndex = Math.min(index, lastIndex);
+            const maxIndex = Math.max(index, lastIndex);
+            const ids = [];
+            for (let i = minIndex; i <= maxIndex; i++) {
                 ids.push(getRowId(rows[i].original));
+            }
             return ids;
         }
 
-        if (event.shiftKey && event.ctrlKey && lastIndex != -1) {
-            var ids = genIds();
+        if (event.shiftKey && event.ctrlKey && lastIndex !== -1) {
+            const ids = genIds();
             selectedReducer({ verb: "add", ids });
-        } else if (event.shiftKey && lastIndex != -1) {
-            var ids = genIds();
+        } else if (event.shiftKey && lastIndex !== -1) {
+            const ids = genIds();
             selectedReducer({ verb: "set", ids });
         } else if (event.ctrlKey) {
             selectedReducer({ verb: "add", ids: [getRowId(rows[index].original)] });
@@ -125,9 +131,10 @@ function useSelectHandler<TData>(
         } else {
             setLastIndex(index);
         }
-        if (setCurrent)
+        if (setCurrent !== undefined) {
             setCurrent(getRowId(rows[index].original));
-    }, [selectedReducer, setLastIndex, table]);
+        }
+    }, [getRowId, selectedReducer, setCurrent, table]);
 
     return [lastIndex, onRowClick];
 }
@@ -135,7 +142,7 @@ function useSelectHandler<TData>(
 function useTableVirtualizer(count: number): [React.MutableRefObject<null>, number, Virtualizer<Element, Element>] {
     const parentRef = useRef(null);
     const rowHeight = useMemo(() => {
-        const lineHeight = getComputedStyle(document.body).lineHeight.match(/[\d\.]+/);
+        const lineHeight = getComputedStyle(document.body).lineHeight.match(/[\d.]+/);
         return Math.ceil(Number(lineHeight) * 1.1);
     }, []);
 
@@ -144,7 +151,7 @@ function useTableVirtualizer(count: number): [React.MutableRefObject<null>, numb
         getScrollElement: () => parentRef.current,
         paddingStart: rowHeight,
         overscan: 3,
-        estimateSize: useCallback(() => rowHeight, []),
+        estimateSize: useCallback(() => rowHeight, [rowHeight]),
     });
 
     return [parentRef, rowHeight, rowVirtualizer];
@@ -153,30 +160,31 @@ function useTableVirtualizer(count: number): [React.MutableRefObject<null>, numb
 function useColumnMenu<TData>(
     columnVisibility: VisibilityState,
     setColumnVisibility: (v: VisibilityState) => void,
-    columns: Column<TData, unknown>[]
+    columns: Array<Column<TData, unknown>>
 ): [React.MouseEventHandler<HTMLDivElement>, React.ReactElement] {
-
     const [info, setInfo, handler] = useContextMenu();
 
     const onColumnMenuItemClick = useCallback((value: string, checked: boolean) => {
         setColumnVisibility({ ...columnVisibility, [value]: checked });
-    }, [columnVisibility]);
+    }, [columnVisibility, setColumnVisibility]);
 
     return [
         handler,
+        // eslint-disable-next-line react/jsx-key
         <ContextMenu
             contextMenuInfo={info}
             setContextMenuInfo={setInfo}
             closeOnItemClick={false}
         >
-            {columns.map(column =>
-                <Menu.Item key={column.id}
-                    icon={columnVisibility[column.id] !== false ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
-                    onClick={() => { onColumnMenuItemClick(column.id, columnVisibility[column.id] === false) }}
+            {columns.map(column => {
+                const visible = !(column.id in columnVisibility) || columnVisibility[column.id];
+                return <Menu.Item key={column.id}
+                    icon={visible ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                    onClick={() => { onColumnMenuItemClick(column.id, !visible); }}
                 >
-                    {column.columnDef.header! as string}
-                </Menu.Item >
-            )}
+                    {column.columnDef.header as string}
+                </Menu.Item>;
+            })}
         </ContextMenu >
     ];
 }
@@ -184,9 +192,9 @@ function useColumnMenu<TData>(
 export function useStandardSelect(): [string[], React.Dispatch<{ verb: "add" | "set", ids: string[] }>] {
     const [selected, selectedReducer] = useReducer(
         (old: string[], action: { verb: "add" | "set", ids: string[] }) => {
-            if (action.verb == "set") return action.ids;
+            if (action.verb === "set") return action.ids;
             else {
-                let newset = new Set(old);
+                const newset = new Set(old);
                 action.ids.forEach((id) => newset.add(id));
                 return Array.from(newset);
             }
@@ -204,25 +212,21 @@ function InnerRow<TData>(props: {
     return <>
         {props.row.getVisibleCells().map(cell => {
             return (
-                <div {...{
-                    key: cell.id,
-                    style: {
-                        width: cell.column.getSize(),
-                    },
-                    className: "td"
-                }} >
+                <div key={cell.id} className="td" style={{
+                    width: cell.column.getSize()
+                }}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </div>
-            )
+                </div >
+            );
         })}
     </>;
 }
 
 const MemoizedInnerRow = memo(InnerRow, (prev, next) => {
     return (
-        prev.row.original == next.row.original &&
-        prev.columnSizing == next.columnSizing &&
-        prev.columnVisibility == next.columnVisibility
+        prev.row.original === next.row.original &&
+        prev.columnSizing === next.columnSizing &&
+        prev.columnVisibility === next.columnVisibility
     );
 }) as typeof InnerRow;
 
@@ -236,12 +240,14 @@ function TableRow<TData>(props: {
     onRowDoubleClick?: (row: TData) => void,
     height: number,
     columnSizing: ColumnSizingState,
-    columnVisibility: VisibilityState
+    columnVisibility: VisibilityState,
 }) {
+    const { onRowDoubleClick: propsDblClick, row } = props;
     const onRowDoubleClick = useCallback(() => {
-        if (props.onRowDoubleClick)
-            props.onRowDoubleClick(props.row.original);
-    }, [props.onRowDoubleClick, props.row.original]);
+        if (propsDblClick !== undefined) {
+            propsDblClick(row.original);
+        }
+    }, [propsDblClick, row.original]);
 
     return (
         <div
@@ -259,9 +265,9 @@ function TableRow<TData>(props: {
 
 const MemoizedTableRow = memo(TableRow) as typeof TableRow;
 
-export function Table<TData>(props: {
+export function TransguiTable<TData>(props: {
     tablename: TableName,
-    columns: ColumnDef<TData, unknown>[]
+    columns: Array<ColumnDef<TData, unknown>>,
     data: TData[],
     selected: string[],
     getRowId: (r: TData) => string,
@@ -273,11 +279,13 @@ export function Table<TData>(props: {
     const [table, columnVisibility, setColumnVisibility, columnSizing] =
         useTable(props.tablename, props.columns, props.data, props.selected, props.getRowId, props.onVisibilityChange);
 
-    const [lastIndex, onRowClick] = useSelectHandler(table, props.selectedReducer, props.getRowId, props.setCurrent);
+    const [lastIndex, onRowClick] = useSelectHandler(
+        table, props.selectedReducer, props.getRowId, props.setCurrent);
 
     const [parentRef, rowHeight, virtualizer] = useTableVirtualizer(props.data.length);
 
-    const [menuContextHandler, columnMenu] = useColumnMenu(columnVisibility, setColumnVisibility, table.getAllLeafColumns());
+    const [menuContextHandler, columnMenu] = useColumnMenu(
+        columnVisibility, setColumnVisibility, table.getAllLeafColumns());
 
     return (
         <div ref={parentRef} className="torrent-table-container">
@@ -285,7 +293,7 @@ export function Table<TData>(props: {
                 style={{ height: `${virtualizer.getTotalSize()}px`, width: `${table.getTotalSize()}px` }}>
                 <Box sx={(theme) => ({
                     height: `${rowHeight}px`,
-                    backgroundColor: theme.colorScheme == "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
+                    backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
                     zIndex: 3,
                     position: "sticky",
                     top: 0,
@@ -296,15 +304,17 @@ export function Table<TData>(props: {
                         >
                             {columnMenu}
                             {headerGroup.headers.map(header => (
-                                <div {...{
-                                    key: header.id,
-                                    style: {
-                                        width: header.getSize(),
-                                    },
-                                    className: "th"
+                                <div key={header.id} className="th" style={{
+                                    width: header.getSize(),
                                 }}>
                                     <div onClick={header.column.getToggleSortingHandler()}>
-                                        <span>{header.column.getIsSorted() ? header.column.getIsSorted() == "desc" ? '▼ ' : '▲ ' : ''}</span>
+                                        <span>
+                                            {header.column.getIsSorted() !== false
+                                                ? header.column.getIsSorted() === "desc"
+                                                    ? "▼ "
+                                                    : "▲ "
+                                                : ""}
+                                        </span>
                                         {flexRender(
                                             header.column.columnDef.header,
                                             header.getContext()
@@ -313,13 +323,13 @@ export function Table<TData>(props: {
                                     <div {...{
                                         onMouseDown: header.getResizeHandler(),
                                         onTouchStart: header.getResizeHandler(),
-                                        className: `resizer ${header.column.getIsResizing() ? 'isResizing' : ''}`,
+                                        className: `resizer ${header.column.getIsResizing() ? "isResizing" : ""}`,
                                         style: {
                                             left: `${header.getStart() + header.getSize() - 3}px`,
                                             transform:
                                                 header.column.getIsResizing()
-                                                    ? `translateX(${table.getState().columnSizingInfo.deltaOffset}px)`
-                                                    : '',
+                                                    ? `translateX(${table.getState().columnSizingInfo.deltaOffset ?? 0}px)`
+                                                    : "",
                                         },
                                     }} />
                                 </div>
@@ -329,25 +339,24 @@ export function Table<TData>(props: {
                 </Box>
 
                 {virtualizer.getVirtualItems()
-                    // drop first row if it odd one to keep nth-child(odd) selector stable
-                    // this prevents flickering row background on scroll
-                    .filter((virtualRow, virtual_index) => (virtual_index != 0 || virtualRow.index % 2 == 0))
+                    // drop first row if it is odd one to keep nth-child(odd) selector
+                    // stable this prevents flickering row background on scroll
+                    .filter((virtualRow, virtualIndex) => (virtualIndex !== 0 || virtualRow.index % 2 === 0))
                     .map((virtualRow) => {
-                    const row = table.getRowModel().rows[virtualRow.index];
-                    return <MemoizedTableRow<TData> {...{
-                        key: props.getRowId(row.original),
-                        row,
-                        selected: row.getIsSelected(),
-                        index: virtualRow.index,
-                        lastIndex,
-                        start: virtualRow.start,
-                        onRowClick,
-                        onRowDoubleClick: props.onRowDoubleClick,
-                        height: rowHeight,
-                        columnSizing,
-                        columnVisibility,
-                    }} />;
-                })}
+                        const row = table.getRowModel().rows[virtualRow.index];
+                        return <MemoizedTableRow<TData> key={props.getRowId(row.original)} {...{
+                            row,
+                            selected: row.getIsSelected(),
+                            index: virtualRow.index,
+                            lastIndex,
+                            start: virtualRow.start,
+                            onRowClick,
+                            onRowDoubleClick: props.onRowDoubleClick,
+                            height: rowHeight,
+                            columnSizing,
+                            columnVisibility,
+                        }} />;
+                    })}
             </div >
         </div >
     );

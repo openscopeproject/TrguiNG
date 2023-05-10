@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Button, Menu, MenuProps, Portal, ScrollArea } from "@mantine/core";
+import { Button, Menu, type MenuProps, Portal, ScrollArea } from "@mantine/core";
 import React, { useCallback, useEffect, useState } from "react";
 
 interface ContextMenuInfo {
@@ -25,8 +25,7 @@ interface ContextMenuInfo {
     opened: boolean,
 }
 
-export function useContextMenu():
-    [ContextMenuInfo, React.Dispatch<ContextMenuInfo>, React.MouseEventHandler<HTMLElement>] {
+export function useContextMenu(): [ContextMenuInfo, React.Dispatch<ContextMenuInfo>, React.MouseEventHandler<HTMLElement>] {
     const [info, setInfo] = useState<ContextMenuInfo>({ x: 0, y: 0, opened: false });
 
     const contextMenuHandler = useCallback<React.MouseEventHandler<HTMLElement>>((e) => {
@@ -44,12 +43,12 @@ interface ContextMenuProps extends MenuProps {
 
 export function ContextMenu({ contextMenuInfo, setContextMenuInfo, children, ...other }: ContextMenuProps) {
     const onClose = useCallback(
-        () => setContextMenuInfo({ ...contextMenuInfo, opened: false }),
+        () => { setContextMenuInfo({ ...contextMenuInfo, opened: false }); },
         [contextMenuInfo, setContextMenuInfo]);
 
     const [opened, setOpened] = useState<boolean>(false);
 
-    useEffect(() => setOpened(contextMenuInfo.opened), [contextMenuInfo.opened]);
+    useEffect(() => { setOpened(contextMenuInfo.opened); }, [contextMenuInfo.opened]);
 
     return (
         <Menu {...other}
@@ -77,7 +76,7 @@ export function ContextMenu({ contextMenuInfo, setContextMenuInfo, children, ...
                 <Menu.Dropdown>
                     <ScrollArea.Autosize
                         type="auto"
-                        mah={`calc(${window.visualViewport!.height}px - 0.5rem)`}
+                        mah={"calc(100% - 0.5rem)"}
                         offsetScrollbars
                         styles={{
                             viewport: {

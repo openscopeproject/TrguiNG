@@ -16,14 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { AccessorFn, CellContext, ColumnDef } from "@tanstack/react-table";
-import React, { useMemo, useReducer } from "react";
-import { useCallback } from "react";
-import { Torrent, PeerStats } from "rpc/torrent";
-import { PeerStatsFieldsType } from "rpc/transmission";
+import { type AccessorFn, type CellContext, type ColumnDef } from "@tanstack/react-table";
+import React, { useMemo, useCallback } from "react";
+import { type Torrent, type PeerStats } from "rpc/torrent";
+import { type PeerStatsFieldsType } from "rpc/transmission";
 import { bytesToHumanReadableStr } from "util";
-import { Table, useStandardSelect } from "./common";
-
+import { TransguiTable, useStandardSelect } from "./common";
 
 interface TableFieldProps {
     entry: PeerStats,
@@ -49,9 +47,10 @@ const AllFields: readonly TableField[] = [
 ] as const;
 
 function ByteRateField(props: TableFieldProps) {
+    const field = props.entry[props.fieldName];
     const stringValue = useMemo(() => {
-        return `${bytesToHumanReadableStr(props.entry[props.fieldName])}/s`;
-    }, [props.entry[props.fieldName]]);
+        return `${bytesToHumanReadableStr(field)}/s`;
+    }, [field]);
 
     return <>{stringValue}</>;
 }
@@ -63,27 +62,27 @@ function PercentField(props: TableFieldProps) {
 
 const Columns = AllFields.map((field): ColumnDef<PeerStats> => {
     const cell = (props: CellContext<PeerStats, unknown>) => {
-        if (field.component)
+        if (field.component !== undefined) {
             return <field.component entry={props.row.original} fieldName={field.name} />;
-        else
+        } else {
             return <>{props.getValue()}</>;
-    }
-    let column: ColumnDef<PeerStats> = {
+        }
+    };
+    const column: ColumnDef<PeerStats> = {
         header: field.label,
         accessorKey: field.name,
         accessorFn: field.accessorFn,
         cell
-    }
+    };
     return column;
-})
+});
 
 export function PeersTable(props: { torrent: Torrent }) {
-
-    const getRowId = useCallback((t: PeerStats) => `${t.address}:${t.port}`, []);
+    const getRowId = useCallback((t: PeerStats) => `${t.address as string}:${t.port as number}`, []);
 
     const [selected, selectedReducer] = useStandardSelect();
 
-    return <Table<PeerStats> {...{
+    return <TransguiTable<PeerStats> {...{
         tablename: "peers",
         columns: Columns,
         data: props.torrent.peers,

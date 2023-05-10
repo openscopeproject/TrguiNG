@@ -17,11 +17,11 @@
  */
 
 import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
-import { ServerConfigContext } from "config"
-import { useCallback, useContext } from "react"
-import { SessionInfo, TransmissionClient } from "rpc/client";
-import { Torrent } from "rpc/torrent";
-import { TorrentFieldsType } from "rpc/transmission";
+import { ServerConfigContext } from "config";
+import { useCallback, useContext } from "react";
+import { type SessionInfo, type TransmissionClient } from "rpc/client";
+import { type Torrent } from "rpc/torrent";
+import { type TorrentFieldsType } from "rpc/transmission";
 
 export const queryClient = new QueryClient();
 
@@ -33,20 +33,20 @@ const TorrentKeys = {
         [...TorrentKeys.all(server), { fields, torrentIds }] as const,
     details: (server: string, torrentId: number) =>
         [...TorrentKeys.all(server), { torrentId }] as const,
-}
+};
 
 const SessionKeys = {
     all: (server: string) => [server, "session"] as const,
     full: (server: string) => [...SessionKeys.all(server), "full"] as const,
-}
+};
 
 const SessionStatsKeys = {
     all: (server: string) => [server, "sessionStats"] as const,
-}
+};
 
 const BandwidthGroupKeys = {
     all: (server: string,) => [server, "bandwidth-group"] as const,
-}
+};
 
 export function useTorrentList(client: TransmissionClient, enabled: boolean, fields: TorrentFieldsType[]) {
     const serverConfig = useContext(ServerConfigContext);
@@ -56,8 +56,8 @@ export function useTorrentList(client: TransmissionClient, enabled: boolean, fie
         refetchInterval: 1000 * serverConfig.intervals.torrents,
         staleTime: 1000 * 60,
         enabled,
-        queryFn: useCallback(() => {
-            return client.getTorrents(fields);
+        queryFn: useCallback(async () => {
+            return await client.getTorrents(fields);
         }, [client, fields]),
     });
 }
@@ -70,8 +70,8 @@ export function useTorrentDetails(client: TransmissionClient, torrentId: number,
         refetchInterval: 1000 * serverConfig.intervals.torrents,
         staleTime: 1000 * 60,
         enabled,
-        queryFn: useCallback(() => {
-            return client.getTorrentDetails(torrentId);
+        queryFn: useCallback(async () => {
+            return await client.getTorrentDetails(torrentId);
         }, [client, torrentId]),
     });
 }
@@ -85,8 +85,8 @@ export function useMutateTorrent(client: TransmissionClient) {
     const serverConfig = useContext(ServerConfigContext);
 
     return useMutation({
-        mutationFn: ({ torrentIds, fields }: TorrentMutationVariables) => {
-            return client.setTorrents(torrentIds, fields);
+        mutationFn: async ({ torrentIds, fields }: TorrentMutationVariables) => {
+            await client.setTorrents(torrentIds, fields);
         },
         onSuccess: (_, { torrentIds, fields }: TorrentMutationVariables) => {
             queryClient.setQueryData(
@@ -96,26 +96,27 @@ export function useMutateTorrent(client: TransmissionClient) {
                     return data.map((t) => {
                         if (!torrentIds.includes(t.id)) return t;
                         return { ...t, ...fields };
-                    })
+                    });
                 }
             );
-            queryClient.setQueriesData({
-                type: "active",
-                predicate: (query) => {
-                    let key = query.queryKey;
-                    return key.length == 3 &&
-                        key[0] == serverConfig.name &&
-                        key[1] == "torrent" &&
-                        torrentIds.includes((key[2] as { torrentId: number }).torrentId);
-                }
-            },
+            queryClient.setQueriesData(
+                {
+                    type: "active",
+                    predicate: (query) => {
+                        const key = query.queryKey;
+                        return key.length === 3 &&
+                            key[0] === serverConfig.name &&
+                            key[1] === "torrent" &&
+                            torrentIds.includes((key[2] as { torrentId: number }).torrentId);
+                    }
+                },
                 (t: Torrent | undefined) => {
                     return { ...t, ...fields };
                 }
-            )
-            queryClient.invalidateQueries(TorrentKeys.all(serverConfig.name));
+            );
+            void queryClient.invalidateQueries(TorrentKeys.all(serverConfig.name));
         }
-    })
+    });
 }
 
 export function useSession(client: TransmissionClient, enabled: boolean) {
@@ -126,8 +127,8 @@ export function useSession(client: TransmissionClient, enabled: boolean) {
         refetchInterval: 1000 * serverConfig.intervals.session,
         staleTime: 1000 * 60,
         enabled,
-        queryFn: useCallback(() => {
-            return client.getSession();
+        queryFn: useCallback(async () => {
+            return await client.getSession();
         }, [client]),
     });
 }
@@ -139,8 +140,8 @@ export function useSessionFull(client: TransmissionClient, enabled: boolean) {
         queryKey: SessionKeys.full(serverConfig.name),
         staleTime: 1000 * 60,
         enabled,
-        queryFn: useCallback(() => {
-            return client.getSessionFull();
+        queryFn: useCallback(async () => {
+            return await client.getSessionFull();
         }, [client]),
     });
 }
@@ -149,15 +150,15 @@ export function useMutateSession(client: TransmissionClient) {
     const serverConfig = useContext(ServerConfigContext);
 
     return useMutation({
-        mutationFn: (session: SessionInfo) => {
-            return client.setSession(session);
+        mutationFn: async (session: SessionInfo) => {
+            return await client.setSession(session);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({
+            void queryClient.invalidateQueries({
                 queryKey: SessionKeys.all(serverConfig.name)
-            })
+            });
         }
-    })
+    });
 }
 
 export function useSessionStats(client: TransmissionClient, enabled: boolean) {
@@ -168,8 +169,8 @@ export function useSessionStats(client: TransmissionClient, enabled: boolean) {
         refetchInterval: 1000 * serverConfig.intervals.session,
         staleTime: 1000 * 60,
         enabled,
-        queryFn: useCallback(() => {
-            return client.getSessionStats();
+        queryFn: useCallback(async() => {
+            return await client.getSessionStats();
         }, [client]),
     });
 }
@@ -181,8 +182,8 @@ export function useTestPort(client: TransmissionClient, enabled: boolean) {
         queryKey: [serverConfig.name, "test-port"],
         staleTime: 1,
         enabled,
-        queryFn: useCallback(() => {
-            return client.testPort();
+        queryFn: useCallback(async () => {
+            return await client.testPort();
         }, [client]),
     });
 }
@@ -194,8 +195,8 @@ export function useBandwidthGroups(client: TransmissionClient, enabled: boolean)
         queryKey: BandwidthGroupKeys.all(serverConfig.name),
         staleTime: 1000 * 60,
         enabled,
-        queryFn: useCallback(() => {
-            return client.getBandwidthGroups();
+        queryFn: useCallback(async () => {
+            return await client.getBandwidthGroups();
         }, [client]),
     });
 }

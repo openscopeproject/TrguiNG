@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { TorrentActionMethodsType, TorrentAddParams, TransmissionClient } from "./rpc/client";
-import { Torrent } from "rpc/torrent";
+import { type TorrentActionMethodsType, type TorrentAddParams, type TransmissionClient } from "./rpc/client";
+import { type Torrent } from "rpc/torrent";
 
 const ActionMethods = [
     "resume",
@@ -46,7 +46,7 @@ function mapSimpleAction(name: ActionMethodsType, method: TorrentActionMethodsTy
             await ac.client.torrentAction(method, torrentIds);
         },
         defaultShortcut: shortcut
-    }
+    };
 }
 
 const Actions: Action[] = [
@@ -95,9 +95,9 @@ export class ActionController {
     constructor(client: TransmissionClient) {
         this.client = client;
         this.methodMap = {};
-        for (var action of Actions) {
+        for (const action of Actions) {
             this.methodMap[action.name] = action.method;
-            //TODO shortcuts
+            // TODO shortcuts
         }
         this.selectedTorrents = new Set();
         this.torrents = [];
@@ -106,8 +106,9 @@ export class ActionController {
     async run(method: ActionMethodsType, ...args: any[]) {
         console.log("Running method", method);
         console.log("Args:", args);
-        if (method in this.methodMap)
+        if (method in this.methodMap) {
             await this.methodMap[method](this, ...args);
+        }
     }
 
     setSelected(selected: Set<number>) {

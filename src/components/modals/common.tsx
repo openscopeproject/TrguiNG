@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Badge, Button, CloseButton, Divider, Group, Loader, Modal, ModalProps, MultiSelect, MultiSelectValueProps, Text, TextInput } from "@mantine/core";
+import { Badge, Button, CloseButton, Divider, Group, Loader, Modal, type ModalProps, MultiSelect, type MultiSelectValueProps, Text, TextInput } from "@mantine/core";
 import { dialog } from "@tauri-apps/api";
-import { ActionController } from "actions";
+import { type ActionController } from "actions";
 import { ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { pathMapFromServer, pathMapToServer } from "util";
@@ -29,7 +29,7 @@ export interface ModalState {
 }
 
 export interface ActionModalState extends ModalState {
-    actionController: ActionController
+    actionController: ActionController,
 }
 
 interface SaveCancelModalProps extends ModalProps {
@@ -56,15 +56,16 @@ export function SaveCancelModal({ onSave, onClose, children, saveLoading, ...oth
 
 function useTorrentsNameString(actionController: ActionController) {
     return useMemo<string[]>(() => {
-        if (!actionController.selectedTorrents.size)
+        if (actionController.selectedTorrents.size === 0) {
             return ["No torrent selected"];
+        }
 
         const selected = actionController.torrents.filter(
             (t) => actionController.selectedTorrents.has(t.id));
 
-        let allNames: string[] = [];
+        const allNames: string[] = [];
         selected.forEach((t) => allNames.push(t.name));
-        let names: string[] = allNames.slice(0, 5);
+        const names: string[] = allNames.slice(0, 5);
 
         if (allNames.length > 5) names.push(`... and ${allNames.length - 5} more`);
 
@@ -91,16 +92,17 @@ export function useTorrentLocation(): LocationData {
     const serverConfig = useContext(ServerConfigContext);
     const [path, setPath] = useState<string>("");
 
-    const browseHandler = useCallback(async () => {
-        let mappedLocation = pathMapFromServer(path, serverConfig);
+    const browseHandler = useCallback(() => {
+        const mappedLocation = pathMapFromServer(path, serverConfig);
         console.log(mappedLocation);
-        let directory = await dialog.open({
+        dialog.open({
             title: "Select directory",
             defaultPath: mappedLocation,
             directory: true
-        }) as string | null;
-        if (!directory) return;
-        setPath(pathMapToServer(directory.replace("\\", "/"), serverConfig));
+        }).then((directory) => {
+            if (directory === null) return;
+            setPath(pathMapToServer((directory as string).replace("\\", "/"), serverConfig));
+        }).catch(console.error);
     }, [serverConfig, path, setPath]);
 
     return { path, setPath, browseHandler };
@@ -112,7 +114,7 @@ export function TorrentLocation(props: LocationData) {
             <TextInput
                 value={props.path}
                 label={props.inputLabel}
-                onChange={(e) => props.setPath(e.currentTarget.value)}
+                onChange={(e) => { props.setPath(e.currentTarget.value); }}
                 styles={{
                     root: {
                         flexGrow: 1
@@ -159,7 +161,7 @@ function Label({
 export function TorrentLabels(props: LabelsData) {
     const [data, setData] = useState<string[]>([]);
 
-    useEffect(() => setData(props.allLabels), [props.allLabels]);
+    useEffect(() => { setData(props.allLabels); }, [props.allLabels]);
 
     return (
         <MultiSelect

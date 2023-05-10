@@ -16,24 +16,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ServerConfig } from "config";
-import { Duration } from "luxon"
+import { type ServerConfig } from "config";
+import { Duration } from "luxon";
 import { useReducer } from "react";
 
 const SISuffixes = ["B", "KB", "MB", "GB", "TB"];
 
 export function bytesToHumanReadableStr(value: number): string {
-    var unit = "";
-    var divisor = 1.0;
+    let unit = "";
+    let divisor = 1.0;
 
-    for (var i in SISuffixes) {
+    // eslint-disable-next-line @typescript-eslint/no-for-in-array
+    for (const i in SISuffixes) {
         unit = SISuffixes[i];
         if (value < 1024 * divisor) break;
         divisor *= 1024;
     }
 
-    var tmp = String(value / divisor);
-    var result = tmp.includes(".") ? tmp.substring(0, 5) : tmp.substring(0, 3);
+    const tmp = String(value / divisor);
+    const result = tmp.includes(".") ? tmp.substring(0, 5) : tmp.substring(0, 3);
 
     return `${result} ${unit}`;
 }
@@ -44,16 +45,16 @@ export function byteRateToHumanReadableStr(value: number): string {
 }
 
 export function secondsToHumanReadableStr(value: number): string {
-    var duration = Duration.fromMillis(value * 1000).shiftTo("days", "hours", "minutes", "seconds");
+    let duration = Duration.fromMillis(value * 1000).shiftTo("days", "hours", "minutes", "seconds");
     // Make it coarse
     if (duration.days >= 100) duration = duration.set({ hours: 0, minutes: 0, seconds: 0 });
     else if (duration.days >= 10) duration = duration.set({ minutes: 0, seconds: 0 });
     else if (duration.days > 0 || duration.hours >= 10) duration = duration.set({ seconds: 0 });
-    var s = "";
-    if (duration.days) s = `${duration.days}d`;
-    if (duration.hours) s = (s ? s + " " : "") + `${duration.hours}hr`;
-    if (duration.minutes) s = (s ? s + " " : "") + `${duration.minutes}min`;
-    if (duration.seconds) s = (s ? s + " " : "") + `${duration.seconds}s`;
+    let s = "";
+    if (duration.days > 0) s = `${duration.days}d`;
+    if (duration.hours > 0) s = (s !== "" ? s + " " : "") + `${duration.hours}hr`;
+    if (duration.minutes > 0) s = (s !== "" ? s + " " : "") + `${duration.minutes}min`;
+    if (duration.seconds > 0) s = (s !== "" ? s + " " : "") + `${duration.seconds}s`;
     return s;
 }
 
@@ -62,34 +63,36 @@ export function timestampToDateString(value: number): string {
 }
 
 export function ensurePathDelimiter(path: string): string {
-    if (path.length == 0) return "";
-    var delimiter = '/';
-    if (path.indexOf('\\') >= 0) delimiter = '\\';
-    if (path.charAt(path.length - 1) != delimiter)
+    if (path.length === 0) return "";
+    let delimiter = "/";
+    if (path.includes("\\")) delimiter = "\\";
+    if (path.charAt(path.length - 1) !== delimiter) {
         return path + delimiter;
+    }
     return path;
 }
 
 export function useForceRender() {
-    const [, forceRender] = useReducer((oldVal) => oldVal + 1, 0);
+    const [, forceRender] = useReducer((oldVal: number) => oldVal + 1, 0);
     return forceRender;
 }
 
-export function swapElements(a: Array<Object>, i: number, j: number) {
-    if (i >= 0 && i < a.length && j >= 0 && j < a.length && i != j)
+export function swapElements(a: unknown[], i: number, j: number) {
+    if (i >= 0 && i < a.length && j >= 0 && j < a.length && i !== j) {
         [a[i], a[j]] = [a[j], a[i]];
+    }
 }
 
 function normalizePath(path: string) {
     let p = path.replace("\\", "/");
-    if(p.match(/^[a-zA-Z]:\//)) p = p.toLowerCase();
+    if (p.match(/^[a-zA-Z]:\//) != null) p = p.toLowerCase();
     return p;
 }
 
 export function pathMapFromServer(path: string, config: ServerConfig) {
     let mappedPath = path;
-    let normalizedPath = normalizePath(path);
-    for (let mapping of config.pathMappings) {
+    const normalizedPath = normalizePath(path);
+    for (const mapping of config.pathMappings) {
         if (mapping.from.length > 0 && normalizedPath.startsWith(normalizePath(mapping.from))) {
             mappedPath = mapping.to + mappedPath.substring(mapping.from.length);
             break;
@@ -100,8 +103,8 @@ export function pathMapFromServer(path: string, config: ServerConfig) {
 
 export function pathMapToServer(path: string, config: ServerConfig) {
     let mappedPath = path;
-    let normalizedPath = normalizePath(path);
-    for (let mapping of config.pathMappings) {
+    const normalizedPath = normalizePath(path);
+    for (const mapping of config.pathMappings) {
         if (mapping.to.length > 0 && normalizedPath.startsWith(normalizePath(mapping.to))) {
             mappedPath = mapping.from + mappedPath.substring(mapping.to.length);
             break;

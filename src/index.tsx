@@ -16,55 +16,56 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { appWindow, PhysicalPosition, PhysicalSize } from '@tauri-apps/api/window';
+import "bootstrap/dist/css/bootstrap.min.css";
+import { appWindow, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
 
-import { Config, ConfigContext } from './config';
-import { createRoot, Root } from 'react-dom/client';
-import React from 'react';
-import { App } from './components/app';
-import { CustomMantineProvider } from 'components/mantinetheme';
-import { invoke } from '@tauri-apps/api';
-import { emit } from '@tauri-apps/api/event';
+import { Config, ConfigContext } from "./config";
+import { createRoot, type Root } from "react-dom/client";
+import React from "react";
+import { App } from "./components/app";
+import { CustomMantineProvider } from "components/mantinetheme";
+import { invoke } from "@tauri-apps/api";
+import { emit } from "@tauri-apps/api/event";
 
 async function onCloseRequested(app: Root, config: Config) {
     await config.save();
     await emit("listener-pause", {});
     app.unmount();
-    let configs = config.getOpenServers().map((serverConfig) => ({
+    const configs = config.getOpenServers().map((serverConfig) => ({
         name: serverConfig.name,
         connection: serverConfig.connection,
         interval: serverConfig.intervals.torrentsMinimized,
     }
     ));
     await invoke("set_poller_config", { configs });
-    appWindow.emit("frontend-done");
+    void appWindow.emit("frontend-done");
 }
 
 async function run(config: Config) {
-    var appnode = document.getElementById("app")!;
+    const appnode = document.getElementById("app") as HTMLElement;
     const app = createRoot(appnode);
 
-    appWindow.onCloseRequested(async (event) => {
-        onCloseRequested(app, config);
+    void appWindow.onCloseRequested((event) => {
+        void onCloseRequested(app, config);
     });
 
-    appWindow.listen("exit-requested", async (event) => {
-        onCloseRequested(app, config);
+    void appWindow.listen("exit-requested", (event) => {
+        void onCloseRequested(app, config);
     });
 
-    appWindow.onResized(({ payload: size }) => {
+    void appWindow.onResized(({ payload: size }) => {
         config.values.app.window.size = [size.width, size.height];
     });
-    appWindow.onMoved(({ payload: size }) => {
+    void appWindow.onMoved(({ payload: size }) => {
         config.values.app.window.position = [size.x, size.y];
     });
 
     await appWindow.setSize(new PhysicalSize(...config.values.app.window.size));
-    if (config.values.app.window.position !== undefined)
+    if (config.values.app.window.position !== undefined) {
         await appWindow.setPosition(new PhysicalPosition(...config.values.app.window.position));
-    else
+    } else {
         await appWindow.center();
+    }
 
     app.render(
         <React.StrictMode>
@@ -78,5 +79,5 @@ async function run(config: Config) {
 }
 
 window.onload = (event) => {
-    new Config().read().then(run);
-}
+    new Config().read().then(run).catch(console.error);
+};

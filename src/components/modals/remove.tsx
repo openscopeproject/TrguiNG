@@ -17,7 +17,7 @@
  */
 
 import { Button, Checkbox, Divider, Group, Modal, Text } from "@mantine/core";
-import { ActionModalState, TorrentsNames } from "./common";
+import { type ActionModalState, TorrentsNames } from "./common";
 import React, { useCallback, useState } from "react";
 
 export function RemoveModal(props: ActionModalState) {
@@ -26,7 +26,7 @@ export function RemoveModal(props: ActionModalState) {
     const onDelete = useCallback(() => {
         props.actionController.run("remove", deleteData).catch(console.log);
         props.close();
-    }, [props.actionController, deleteData]);
+    }, [props, deleteData]);
 
     return (
         <Modal opened={props.opened} onClose={props.close} title="Remove torrents" centered size="lg">
@@ -36,7 +36,7 @@ export function RemoveModal(props: ActionModalState) {
             <Checkbox
                 label="Delete torrent data"
                 checked={deleteData}
-                onChange={(e) => setDeleteData(e.currentTarget.checked)}
+                onChange={(e) => { setDeleteData(e.currentTarget.checked); }}
                 my="xl" />
             <Divider my="sm" />
             <Group position="center" spacing="md">

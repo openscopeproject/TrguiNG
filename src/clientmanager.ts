@@ -16,15 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Config } from "./config";
+import { type ServerConfig, type Config } from "./config";
 import { TransmissionClient } from "./rpc/client";
 
-interface ServerEntry {
-    client: TransmissionClient;
-}
-
 export class ClientManager {
-    servers: Record<string, ServerEntry> = {};
+    clients = new Map<string, TransmissionClient>();
     config: Config;
 
     constructor(config: Config) {
@@ -32,25 +28,26 @@ export class ClientManager {
     }
 
     open(server: string) {
-        if (server in this.servers) return;
+        if (this.clients.has(server)) return;
 
-        var serverConfig = this.config.getServer(server)!;
-        this.servers[server] = {
-            client: new TransmissionClient(serverConfig.connection),
-        }
-        this.servers[server].client.getSessionFull();
+        const serverConfig = this.config.getServer(server) as ServerConfig;
+        const client = new TransmissionClient(serverConfig.connection);
+
+        this.clients.set(server, client);
+
+        void client.getSessionFull();
     }
 
     close(server: string) {
-        if (!(server in this.servers)) return;
-        delete this.servers[server];
+        if (this.clients.has(server)) return;
+        this.clients.delete(server);
     }
 
     getClient(server: string) {
-        return this.servers[server].client;
+        return this.clients.get(server) as TransmissionClient;
     }
 
     getHostname(server: string) {
-        return this.servers[server].client.hostname;
+        return this.getClient(server).hostname;
     }
 }

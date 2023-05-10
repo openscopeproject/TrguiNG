@@ -16,16 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Button, Checkbox, Grid, Group, Loader, LoadingOverlay, NativeSelect, NumberInput, NumberInputProps, Tabs, Text, TextInput } from "@mantine/core";
-import { ServerConfig, ServerConfigContext } from "config";
+import { Box, Button, Checkbox, Grid, Group, Loader, LoadingOverlay, NativeSelect, NumberInput, type NumberInputProps, Tabs, Text, TextInput } from "@mantine/core";
+import { type ServerConfig, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import { ModalState, SaveCancelModal } from "./common";
-import { useBandwidthGroups, useMutateSession, useSessionFull, useTestPort } from "queries";
-import { UseFormReturnType, useForm } from "@mantine/form";
-import { ActionController } from "actions";
-import { SessionInfo } from "rpc/client";
-import { ExtendedCustomColors } from "types/mantine";
-import { BandwidthGroup } from "rpc/torrent";
+import { type ModalState, SaveCancelModal } from "./common";
+import { useMutateSession, useSessionFull, useTestPort } from "queries";
+import { type UseFormReturnType, useForm } from "@mantine/form";
+import { type ActionController } from "actions";
+import { type SessionInfo } from "rpc/client";
+import { type ExtendedCustomColors } from "types/mantine";
+import { type BandwidthGroup } from "rpc/torrent";
 import { notifications } from "@mantine/notifications";
 
 interface DaemonSettingsProps extends ModalState {
@@ -78,7 +78,7 @@ function PollingPanel({ form }: { form: UseFormReturnType<FormValues> }) {
     );
 }
 
-function DownloadPanel({ form }: { form: UseFormReturnType<FormValues> }) {
+function DownloadPanel({ form, session }: { form: UseFormReturnType<FormValues>, session: SessionInfo }) {
     return (
         <Grid align="center">
             <Grid.Col>
@@ -100,7 +100,7 @@ function DownloadPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                 <TextInput
                     label="Path for incomplete files"
                     {...form.getInputProps("session.incomplete-dir")}
-                    disabled={form.values.session!["incomplete-dir-enabled"] !== true} />
+                    disabled={session["incomplete-dir-enabled"] !== true} />
             </Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
@@ -113,7 +113,7 @@ function DownloadPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                     precision={2}
                     step={0.05}
                     {...form.getInputProps("session.seedRatioLimit")}
-                    disabled={form.values.session!.seedRatioLimited !== true}
+                    disabled={session.seedRatioLimited !== true}
                 />
             </Grid.Col>
             <Grid.Col span={4}></Grid.Col>
@@ -126,7 +126,7 @@ function DownloadPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                 <NumberInput
                     min={0}
                     {...form.getInputProps("session.idle-seeding-limit")}
-                    disabled={form.values.session!["idle-seeding-limit-enabled"] !== true}
+                    disabled={session["idle-seeding-limit-enabled"] !== true}
                 />
             </Grid.Col>
             <Grid.Col span={4}>minutes</Grid.Col>
@@ -147,7 +147,14 @@ interface PortTestResult {
     color: ExtendedCustomColors,
 }
 
-function NetworkPanel({ opened, form, ac }: { opened: boolean, form: UseFormReturnType<FormValues>, ac: ActionController }) {
+function NetworkPanel(
+    { opened, form, ac, session }: {
+        opened: boolean,
+        form: UseFormReturnType<FormValues>,
+        ac: ActionController,
+        session: SessionInfo,
+    }
+) {
     const [testPortQueryEnbaled, setTestPortQueryEnabled] = useState(false);
     const [testPortResult, setTestPortResult] = useState<PortTestResult>({ label: "", color: "green" });
 
@@ -158,27 +165,31 @@ function NetworkPanel({ opened, form, ac }: { opened: boolean, form: UseFormRetu
     }, [setTestPortQueryEnabled]);
 
     useEffect(() => {
-        if (fetchStatus != "fetching")
+        if (fetchStatus !== "fetching") {
             setTestPortQueryEnabled(false);
-        if (status == "success")
-            setTestPortResult(testPort.arguments["port-is-open"] ? {
-                label: "Port is open",
-                color: "green",
-            } : {
-                label: "Port unreachable",
-                color: "red",
-            })
-        else if(status == "loading")
+        }
+        if (status === "success") {
+            setTestPortResult(testPort.arguments["port-is-open"] === true
+                ? {
+                    label: "Port is open",
+                    color: "green",
+                }
+                : {
+                    label: "Port unreachable",
+                    color: "red",
+                });
+        } else if (status === "loading") {
             setTestPortResult({
                 label: "",
                 color: "green",
-            })
-        else
+            });
+        } else {
             setTestPortResult({
                 label: "API error",
                 color: "red",
             });
-    }, [fetchStatus, status]);
+        }
+    }, [fetchStatus, status, testPort]);
 
     useEffect(() => {
         if (!opened) {
@@ -200,7 +211,7 @@ function NetworkPanel({ opened, form, ac }: { opened: boolean, form: UseFormRetu
                     min={1}
                     max={65535}
                     {...form.getInputProps("session.peer-port")}
-                    disabled={form.values.session!["peer-port-random-on-start"] === true}
+                    disabled={session["peer-port-random-on-start"] === true}
                 />
             </Grid.Col>
             <Grid.Col span={3}>
@@ -213,8 +224,8 @@ function NetworkPanel({ opened, form, ac }: { opened: boolean, form: UseFormRetu
                 </Button>
             </Grid.Col>
             <Grid.Col span={3}>
-                {fetchStatus == "fetching" ?
-                    <Loader key="pt" size="1.5rem" />
+                {fetchStatus === "fetching"
+                    ? <Loader key="pt" size="1.5rem" />
                     : <Text key="pt" color={testPortResult.color}>{testPortResult.label}</Text>
                 }
             </Grid.Col>
@@ -283,20 +294,20 @@ function NetworkPanel({ opened, form, ac }: { opened: boolean, form: UseFormRetu
             <Grid.Col span={6}>
                 <TextInput
                     {...form.getInputProps("session.blocklist-url")}
-                    disabled={form.values.session!["blocklist-enabled"] !== true} />
+                    disabled={session["blocklist-enabled"] !== true} />
             </Grid.Col>
         </Grid>
     );
 }
 
 function toTimeStr(time: string) {
-    let t = parseInt(time);
-    return (Math.floor(t / 60) + "").padStart(2, "0") + ":" + (t % 60 + "").padStart(2, "0");
+    const t = parseInt(time);
+    return String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0");
 }
 
 function fromTimeStr(time: string) {
     const parts = time.split(":");
-    if (parts.length != 2) return "";
+    if (parts.length !== 2) return "";
     const h = parseInt(parts[0]);
     const m = parseInt(parts[1]);
     if (isNaN(h) || isNaN(m)) return "";
@@ -313,20 +324,20 @@ function TimeInput(props: NumberInputProps) {
 
 const DaysOfTheWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
-function DayOfWeekCheckbox({ form, day }: { form: UseFormReturnType<FormValues>, day: number }) {
+function DayOfWeekCheckbox({ form, day, session }: { form: UseFormReturnType<FormValues>, day: number, session: SessionInfo }) {
     return <Checkbox
         label={DaysOfTheWeek[day]}
-        checked={(form.values.session!["alt-speed-time-day"] & (1 << day)) > 0}
+        checked={(session["alt-speed-time-day"] & (1 << day)) > 0}
         onChange={(event) => {
-            let val = form.values.session!["alt-speed-time-day"];
+            const val = session["alt-speed-time-day"];
             form.setFieldValue(
                 "session.alt-speed-time-day",
                 event.currentTarget.checked ? val | (1 << day) : val & ~(1 << day));
         }}
-        disabled={form.values.session!["alt-speed-time-enabled"] !== true} />
+        disabled={session["alt-speed-time-enabled"] !== true} />;
 }
 
-function BandwidthPanel({ form }: { form: UseFormReturnType<FormValues> }) {
+function BandwidthPanel({ form, session }: { form: UseFormReturnType<FormValues>, session: SessionInfo }) {
     return (
         <Grid align="center">
             <Grid.Col span={6}></Grid.Col>
@@ -341,7 +352,7 @@ function BandwidthPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                 <NumberInput
                     min={0}
                     {...form.getInputProps("session.speed-limit-down")}
-                    disabled={form.values.session!["speed-limit-down-enabled"] !== true} />
+                    disabled={session["speed-limit-down-enabled"] !== true} />
             </Grid.Col>
             <Grid.Col span={3}>
                 <NumberInput
@@ -357,7 +368,7 @@ function BandwidthPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                 <NumberInput
                     min={0}
                     {...form.getInputProps("session.speed-limit-up")}
-                    disabled={form.values.session!["speed-limit-up-enabled"] !== true} />
+                    disabled={session["speed-limit-up-enabled"] !== true} />
             </Grid.Col>
             <Grid.Col span={3}>
                 <NumberInput
@@ -380,7 +391,7 @@ function BandwidthPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                     min={0}
                     max={24 * 60 - 1}
                     {...form.getInputProps("session.alt-speed-time-begin")}
-                    disabled={form.values.session!["alt-speed-time-enabled"] !== true} />
+                    disabled={session["alt-speed-time-enabled"] !== true} />
             </Grid.Col>
             <Grid.Col span={2}>to:</Grid.Col>
             <Grid.Col span={3}>
@@ -388,14 +399,14 @@ function BandwidthPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                     min={0}
                     max={24 * 60 - 1}
                     {...form.getInputProps("session.alt-speed-time-end")}
-                    disabled={form.values.session!["alt-speed-time-enabled"] !== true} />
+                    disabled={session["alt-speed-time-enabled"] !== true} />
             </Grid.Col>
             <Grid.Col span={2}></Grid.Col>
             <Grid.Col span={2}>Days:</Grid.Col>
             <Grid.Col span={10}>
                 <Group>
                     {DaysOfTheWeek.map((_, day) =>
-                        <DayOfWeekCheckbox key={day} form={form} day={day} />
+                        <DayOfWeekCheckbox key={day} form={form} day={day} session={session}/>
                     )}
                 </Group>
             </Grid.Col>
@@ -403,7 +414,7 @@ function BandwidthPanel({ form }: { form: UseFormReturnType<FormValues> }) {
     );
 }
 
-function QueuePanel({ form }: { form: UseFormReturnType<FormValues> }) {
+function QueuePanel({ form, session }: { form: UseFormReturnType<FormValues>, session: SessionInfo }) {
     return (
         <Grid align="center">
             <Grid.Col span={8}>
@@ -415,7 +426,7 @@ function QueuePanel({ form }: { form: UseFormReturnType<FormValues> }) {
                 <NumberInput
                     min={0}
                     {...form.getInputProps("session.download-queue-size")}
-                    disabled={form.values.session!["download-queue-enabled"] !== true} />
+                    disabled={session["download-queue-enabled"] !== true} />
             </Grid.Col>
             <Grid.Col span={2}></Grid.Col>
             <Grid.Col span={8}>
@@ -427,7 +438,7 @@ function QueuePanel({ form }: { form: UseFormReturnType<FormValues> }) {
                 <NumberInput
                     min={0}
                     {...form.getInputProps("session.seed-queue-size")}
-                    disabled={form.values.session!["seed-queue-enabled"] !== true} />
+                    disabled={session["seed-queue-enabled"] !== true} />
             </Grid.Col>
             <Grid.Col span={2}></Grid.Col>
             <Grid.Col span={8}>
@@ -439,7 +450,7 @@ function QueuePanel({ form }: { form: UseFormReturnType<FormValues> }) {
                 <NumberInput
                     min={0}
                     {...form.getInputProps("session.queue-stalled-minutes")}
-                    disabled={form.values.session!["queue-stalled-enabled"] !== true} />
+                    disabled={session["queue-stalled-enabled"] !== true} />
             </Grid.Col>
             <Grid.Col span={2}>minutes</Grid.Col>
         </Grid>
@@ -458,10 +469,11 @@ export function DaemonSettingsModal(props: DaemonSettingsProps) {
         }
     });
 
-    useEffect(() => form.setFieldValue("session", session), [session]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => { form.setFieldValue("session", session); }, [session]);
 
     const onSave = useCallback(() => {
-        if(form.values.session != undefined)
+        if (form.values.session !== undefined) {
             mutation.mutate(form.values.session, {
                 onSuccess: () => {
                     notifications.show({
@@ -477,10 +489,11 @@ export function DaemonSettingsModal(props: DaemonSettingsProps) {
                         color: "red",
                     });
                 }
-            })
-        else
+            });
+        } else {
             props.close();
-    }, [mutation, props.close])
+        }
+    }, [form.values.session, mutation, props]);
 
     return (
         <SaveCancelModal
@@ -493,7 +506,7 @@ export function DaemonSettingsModal(props: DaemonSettingsProps) {
             title="Server Settings"
         >
             <Box pos="relative">
-                <LoadingOverlay visible={fetchStatus == "fetching"} overlayBlur={2} />
+                <LoadingOverlay visible={fetchStatus === "fetching"} overlayBlur={2} />
                 <Tabs defaultValue="polling" mih="25rem">
                     <Tabs.List>
                         <Tabs.Tab value="polling" p="lg">Polling</Tabs.Tab>
@@ -502,27 +515,29 @@ export function DaemonSettingsModal(props: DaemonSettingsProps) {
                         <Tabs.Tab value="bandwidth" p="lg">Bandwidth</Tabs.Tab>
                         <Tabs.Tab value="queue" p="lg">Queue</Tabs.Tab>
                     </Tabs.List>
-                    {form.values.session !== undefined ? <>
-                        <Tabs.Panel value="polling" pt="md">
-                            <PollingPanel form={form} />
-                        </Tabs.Panel>
+                    {form.values.session !== undefined
+                        ? <>
+                            <Tabs.Panel value="polling" pt="md">
+                                <PollingPanel form={form} />
+                            </Tabs.Panel>
 
-                        <Tabs.Panel value="download" pt="md">
-                            <DownloadPanel form={form} />
-                        </Tabs.Panel>
+                            <Tabs.Panel value="download" pt="md">
+                                <DownloadPanel form={form} session={form.values.session} />
+                            </Tabs.Panel>
 
-                        <Tabs.Panel value="network" pt="md">
-                            <NetworkPanel opened={props.opened} form={form} ac={props.actionController} />
-                        </Tabs.Panel>
+                            <Tabs.Panel value="network" pt="md">
+                                <NetworkPanel opened={props.opened} form={form} ac={props.actionController} session={form.values.session} />
+                            </Tabs.Panel>
 
-                        <Tabs.Panel value="bandwidth" pt="md">
-                            <BandwidthPanel form={form} />
-                        </Tabs.Panel>
+                            <Tabs.Panel value="bandwidth" pt="md">
+                                <BandwidthPanel form={form} session={form.values.session} />
+                            </Tabs.Panel>
 
-                        <Tabs.Panel value="queue" pt="md">
-                            <QueuePanel form={form} />
-                        </Tabs.Panel>
-                    </> : <></>}
+                            <Tabs.Panel value="queue" pt="md">
+                                <QueuePanel form={form} session={form.values.session} />
+                            </Tabs.Panel>
+                        </>
+                        : <></>}
                 </Tabs>
             </Box>
         </SaveCancelModal>

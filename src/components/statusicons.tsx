@@ -16,53 +16,53 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useMantineTheme } from '@mantine/core';
-import React from 'react';
+import { useMantineTheme } from "@mantine/core";
+import React from "react";
 import * as Icon from "react-bootstrap-icons";
 import { Status } from "rpc/transmission";
 
 export function All() {
-    let theme = useMantineTheme();
+    const theme = useMantineTheme();
     return <Icon.Asterisk size="1rem" stroke={theme.colors.orange[3]} fill={theme.colors.yellow[3]} />;
 }
 
 export function Downloading() {
-    let theme = useMantineTheme();
+    const theme = useMantineTheme();
     return <Icon.CaretDownSquareFill size="1rem" fill={theme.colors.indigo[5]} />;
 }
 
 export function Completed() {
-    let theme = useMantineTheme();
+    const theme = useMantineTheme();
     return <Icon.CaretUpSquareFill size="1rem" fill={theme.colors.green[7]} />;
 }
 
 export function Active() {
-    let theme = useMantineTheme();
+    const theme = useMantineTheme();
     return <Icon.Activity size="1rem" fill={theme.colors.red[6]} />;
 }
 
 export function Inactive() {
-    let theme = useMantineTheme();
+    const theme = useMantineTheme();
     return <Icon.Snow size="1rem" fill={theme.colors.cyan[4]} />;
 }
 
 export function Stopped() {
-    let theme = useMantineTheme();
+    const theme = useMantineTheme();
     return <Icon.PauseBtnFill size="1rem" fill={theme.colors.yellow[5]} />;
 }
 
 export function Error() {
-    let theme = useMantineTheme();
+    const theme = useMantineTheme();
     return <Icon.XSquareFill size="1rem" fill={theme.colors.red[9]} />;
 }
 
 export function Waiting() {
-    let theme = useMantineTheme();
+    const theme = useMantineTheme();
     return <Icon.ClockFill size="1rem" fill={theme.colors.cyan[4]} />;
 }
 
 export function Label() {
-    let theme = useMantineTheme();
+    const theme = useMantineTheme();
     return <Icon.TagsFill size="1rem" stroke={theme.colors.indigo[9]} fill={theme.colors.blue[4]} />;
 }
 

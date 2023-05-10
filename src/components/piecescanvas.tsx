@@ -16,10 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from "react";
-import { CSSProperties, useEffect, useMemo, useRef } from "react";
+import React, { type CSSProperties, useEffect, useMemo, useRef } from "react";
 import { useResizeDetector } from "react-resize-detector";
-import { Torrent } from "../rpc/torrent";
+import { type Torrent } from "../rpc/torrent";
 
 export function PiecesCanvas(props: { torrent: Torrent }) {
     const { width, height, ref } = useResizeDetector({
@@ -31,24 +30,24 @@ export function PiecesCanvas(props: { torrent: Torrent }) {
     const gridRef = useRef<HTMLCanvasElement>(null);
 
     const wantedPieces = useMemo(() => {
-        var result: Array<boolean> = new Array(props.torrent.pieceCount);
+        const result = new Array<boolean>(props.torrent.pieceCount);
 
         const pieceSize = props.torrent.pieceSize;
         const lengths = props.torrent.files.map((f: any) => f.length);
         const wanted = props.torrent.fileStats.map((f: any) => f.wanted);
 
-        var fileIndex = 0;
-        var pieceIndex = 0;
-        var totalLength = 0;
+        let fileIndex = 0;
+        let pieceIndex = 0;
+        let totalLength = 0;
 
         while (totalLength < props.torrent.totalSize) {
-            totalLength += lengths[fileIndex];
+            totalLength += lengths[fileIndex] as number;
             while ((pieceIndex + 1) * pieceSize < totalLength) {
                 result[pieceIndex] = result[pieceIndex] || wanted[fileIndex];
                 pieceIndex++;
             }
             result[pieceIndex] = result[pieceIndex] || wanted[fileIndex];
-            if ((pieceIndex + 1) * pieceSize == totalLength) pieceIndex++;
+            if ((pieceIndex + 1) * pieceSize === totalLength) pieceIndex++;
             fileIndex++;
         }
 
@@ -59,19 +58,19 @@ export function PiecesCanvas(props: { torrent: Torrent }) {
         if (width === undefined || height === undefined) return [5, 1, 1];
 
         const check = (size: number) => {
-            var cols = Math.floor(width / size);
-            var rows = Math.ceil(props.torrent.pieceCount / cols);
+            const cols = Math.floor(width / size);
+            const rows = Math.ceil(props.torrent.pieceCount / cols);
             if (rows * size < height) return [rows, cols];
             else return [-1, -1];
-        }
-        var right = 20;
-        var left = 0.0;
-        var mid = 10;
-        var rows = 1;
-        var cols = 1;
+        };
+
+        let right = 20;
+        let left = 0.0;
+        let mid = 10;
+        let rows = 1;
 
         while (right - left > 0.2) {
-            [rows, cols] = check(mid);
+            [rows] = check(mid);
             if (rows < 0) right = mid;
             else left = mid;
             mid = (right + left) * 0.5;
@@ -81,67 +80,70 @@ export function PiecesCanvas(props: { torrent: Torrent }) {
 
     const pieces = useMemo(() => {
         const bstr = window.atob(props.torrent.pieces);
-        var bytes = new Uint8Array(bstr.length);
-        for (var i = 0; i < bstr.length; i++) {
+        const bytes = new Uint8Array(bstr.length);
+        for (let i = 0; i < bstr.length; i++) {
             bytes[i] = bstr.charCodeAt(i);
         }
         return bytes;
     }, [props]);
 
     useEffect(() => {
-        var canvas = gridRef.current!;
-        var ctx = canvas.getContext("2d")!;
+        const canvas = gridRef.current as HTMLCanvasElement;
+        const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const remainder = rows * cols - props.torrent.pieceCount;
 
         ctx.beginPath();
         ctx.lineWidth = pieceSize > 5 ? 1 : 0.5;
         ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
-        for (var i = 0; i < rows; i++) {
+        for (let i = 0; i < rows; i++) {
             ctx.moveTo(0, i * pieceSize);
             ctx.lineTo(cols * pieceSize, i * pieceSize);
         }
         ctx.moveTo(0, rows * pieceSize);
-        ctx.lineTo((cols - remainder) * pieceSize, i * pieceSize);
-        for (var i = 0; i <= cols - remainder; i++) {
+        ctx.lineTo((cols - remainder) * pieceSize, rows * pieceSize);
+        for (let i = 0; i <= cols - remainder; i++) {
             ctx.moveTo(i * pieceSize, 0);
             ctx.lineTo(i * pieceSize, rows * pieceSize);
         }
-        for (var i = cols - remainder + 1; i <= cols; i++) {
+        for (let i = cols - remainder + 1; i <= cols; i++) {
             ctx.moveTo(i * pieceSize, 0);
             ctx.lineTo(i * pieceSize, (rows - 1) * pieceSize);
         }
         ctx.stroke();
-    }, [gridRef, rows, cols, width, height]);
+    }, [gridRef, rows, cols, width, height, props.torrent.pieceCount, pieceSize]);
 
     useEffect(() => {
-        const canvas = piecesRef.current!;
-        const ctx = canvas.getContext("2d")!;
+        const canvas = piecesRef.current as HTMLCanvasElement;
+        const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        for (var r = 0; r < rows; r++) {
-            var index = 0;
-            for (var c = 0; c < cols; c++) {
+        for (let r = 0; r < rows; r++) {
+            let index = 0;
+            for (let c = 0; c < cols; c++) {
                 index = r * cols + c;
                 if (index >= props.torrent.pieceCount) break;
-                var have = pieces[Math.floor(index / 8)] & (0b10000000 >> (index % 8));
-                ctx.fillStyle = have ? "steelblue" : wantedPieces[index] ? "paleturquoise" : "silver";
+                const have = pieces[Math.floor(index / 8)] & (0b10000000 >> (index % 8));
+                ctx.fillStyle = have > 0
+                    ? "steelblue"
+                    : wantedPieces[index]
+                        ? "paleturquoise"
+                        : "silver";
                 ctx.fillRect(c * pieceSize, r * pieceSize, pieceSize, pieceSize);
             }
             if (index >= props.torrent.pieceCount) break;
         }
+    }, [piecesRef, rows, cols, pieceSize, pieces, wantedPieces, props.torrent.pieceCount]);
 
-    }, [piecesRef, rows, cols, pieceSize, pieces, wantedPieces]);
-
-    const dw = Math.floor(window.devicePixelRatio * (width || 1));
-    const dh = Math.floor(window.devicePixelRatio * (height || 1));
+    const dw = Math.floor(window.devicePixelRatio * (width ?? 1));
+    const dh = Math.floor(window.devicePixelRatio * (height ?? 1));
     const style: CSSProperties = {
-        width: width || 1, height: height || 1, position: "absolute", top: 0, left: 0
+        width: width ?? 1, height: height ?? 1, position: "absolute", top: 0, left: 0
     };
     return (
         <div ref={ref} className="w-100 h-100 position-relative" style={{ overflow: "hidden" }}>
             <canvas ref={piecesRef} width={dw} height={dh} style={style} />
             <canvas ref={gridRef} width={dw} height={dh} style={style} />
         </div>
-    )
+    );
 }

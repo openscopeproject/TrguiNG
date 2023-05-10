@@ -16,18 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useContext, useMemo, useReducer, useState } from "react";
-import { Row, ColumnDef, CellContext } from '@tanstack/react-table';
-import { CachedFileTree, DirEntry, FileDirEntry, isDirEntry } from "../../cachedfiletree";
+import React, { useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
+import { type Row, type ColumnDef, type CellContext } from "@tanstack/react-table";
+import { type CachedFileTree, type DirEntry, type FileDirEntry, isDirEntry } from "../../cachedfiletree";
 import { ServerConfigContext } from "../../config";
 import { PriorityColors, PriorityStrings } from "../../rpc/transmission";
 import { bytesToHumanReadableStr, pathMapFromServer } from "../../util";
 import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
-import { tauri } from '@tauri-apps/api'
-import { Table } from "./common";
+import { tauri } from "@tauri-apps/api";
+import { TransguiTable } from "./common";
 import { Badge, Box, Checkbox, Flex } from "@mantine/core";
-
 
 type FileDirEntryKey = keyof FileDirEntry;
 type EntryWantedChangeHandler = (entry: FileDirEntry, state: boolean) => void;
@@ -60,28 +59,28 @@ function NameField(props: TableFieldProps) {
         e.stopPropagation();
         if (isDirEntry(props.entry)) props.entry.expanded = true;
         props.forceRender();
-    }, [props.entry]);
+    }, [props]);
     const onCollapse = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
         if (isDirEntry(props.entry)) props.entry.expanded = false;
         props.forceRender();
-    }, [props.entry]);
+    }, [props]);
 
     return (
         <Flex wrap="nowrap" gap="0.3rem" align="flex-end" sx={{ paddingLeft: `${props.entry.level * 2}em`, cursor: "default" }}>
             <Checkbox
-                checked={props.entry.want || props.entry.want === undefined}
+                checked={props.entry.want === true || props.entry.want === undefined}
                 indeterminate={props.entry.want === undefined}
                 onChange={(e) => {
                     props.onCheckboxChange(props.entry, e.currentTarget.checked);
                     props.forceRender();
                 }}
-                onClick={(e) => e.stopPropagation()}
-                onDoubleClick={(e) => e.stopPropagation()} />
+                onClick={(e) => { e.stopPropagation(); }}
+                onDoubleClick={(e) => { e.stopPropagation(); }} />
             <Box>
-                {isDir ?
-                    (props.entry as DirEntry).expanded ?
-                        <Icon.DashSquare size={16} onClick={onCollapse} style={{ cursor: "pointer" }} />
+                {isDir
+                    ? (props.entry as DirEntry).expanded
+                        ? <Icon.DashSquare size={16} onClick={onCollapse} style={{ cursor: "pointer" }} />
                         : <Icon.PlusSquare size={16} onClick={onExpand} style={{ cursor: "pointer" }} />
                     : <Icon.FileEarmark size={16} />
                 }
@@ -94,20 +93,25 @@ function NameField(props: TableFieldProps) {
 function ByteSizeField(props: TableFieldProps) {
     const stringValue = useMemo(() => {
         return bytesToHumanReadableStr(props.entry[props.fieldName] as number);
-    }, [props.entry[props.fieldName]]);
+    }, [props]);
 
     return <>{stringValue}</>;
 }
 
 function PercentBarField(props: TableFieldProps) {
-    const now = props.entry.percent || 0;
+    const now = props.entry.percent ?? 0;
 
-    return <ProgressBar now={now} className="white-outline" />
+    return <ProgressBar now={now} className="white-outline" />;
 }
 
 function PriorityField(props: TableFieldProps) {
-    const priority = props.entry.priority || 0;
-    return <Badge radius="md" variant="filled" bg={PriorityColors.get(priority)!}>{PriorityStrings.get(priority)}</Badge>;
+    const priority = props.entry.priority ?? 0;
+    return <Badge
+        radius="md"
+        variant="filled"
+        bg={PriorityColors.get(priority)}>
+        {PriorityStrings.get(priority)}
+    </Badge>;
 }
 
 interface FileTreeTableProps {
@@ -128,7 +132,7 @@ export function useUnwantedFiles(ft: CachedFileTree): EntryWantedChangeHandler {
 
 export function FileTreeTable(props: FileTreeTableProps) {
     const serverConfig = useContext(ServerConfigContext);
-    const [renderVal, forceRender] = useReducer((oldVal) => oldVal + 1, 0);
+    const [renderVal, forceRender] = useReducer((oldVal: number) => oldVal + 1, 0);
     const onCheckboxChange = props.onCheckboxChange;
 
     const nameSortFunc = useCallback(
@@ -142,28 +146,35 @@ export function FileTreeTable(props: FileTreeTableProps) {
         }, []);
 
     const columns = useMemo(() => AllFields
-        .filter((field) => field.briefField || !props.brief)
+        .filter((field) => field.briefField === true || props.brief !== true)
         .map((field): ColumnDef<FileDirEntry> => {
-            const cell = (props: CellContext<FileDirEntry, unknown>) => {
+            const cell = (cellProps: CellContext<FileDirEntry, unknown>) => {
                 return <field.component
                     fieldName={field.name}
-                    entry={props.row.original}
+                    entry={cellProps.row.original}
                     forceRender={forceRender}
-                    onCheckboxChange={onCheckboxChange} />
-            }
-            var column: ColumnDef<FileDirEntry> = {
+                    onCheckboxChange={onCheckboxChange} />;
+            };
+            const column: ColumnDef<FileDirEntry> = {
                 header: field.label,
                 accessorKey: field.name,
                 cell,
-            }
-            if (field.name == "name") column.sortingFn = nameSortFunc;
+            };
+            if (field.name === "name") column.sortingFn = nameSortFunc;
             return column;
-        }), [forceRender, props.brief, onCheckboxChange]);
+        }), [props.brief, nameSortFunc, onCheckboxChange]);
 
     const getRowId = useCallback((row: FileDirEntry) => row.fullpath, []);
 
-    const data = useMemo(() => props.fileTree.flatten(), [renderVal, props.renderVal, props.fileTree]);
-    const selected = useMemo(() => data.filter((e) => e.isSelected).map(getRowId), [data]);
+    const [data, setData] = useState<FileDirEntry[]>([]);
+
+    useEffect(
+        () => {
+            setData(props.fileTree.flatten());
+        },
+        [renderVal, props.renderVal, props.fileTree]);
+
+    const selected = useMemo(() => data.filter((e) => e.isSelected).map(getRowId), [data, getRowId]);
 
     const selectedReducer = useCallback((action: { verb: "add" | "set", ids: string[] }) => {
         props.fileTree.selectAction(action);
@@ -171,14 +182,14 @@ export function FileTreeTable(props: FileTreeTableProps) {
     }, [props.fileTree, forceRender]);
 
     const onRowDoubleClick = useCallback((row: FileDirEntry) => {
-        if (!props.downloadDir) return;
+        if (props.downloadDir === undefined || props.downloadDir === "") return;
         let path = `${props.downloadDir}/${row.originalpath}`;
         path = pathMapFromServer(path, serverConfig);
-        tauri.invoke('shell_open', { path }).catch((e) => console.error("Error opening", path, e));
+        tauri.invoke("shell_open", { path }).catch((e) => { console.error("Error opening", path, e); });
     }, [props.downloadDir, serverConfig]);
 
-    return <Table<FileDirEntry> {...{
-        tablename: props.brief ? "filetreebrief" : "filetree",
+    return <TransguiTable<FileDirEntry> {...{
+        tablename: props.brief === true ? "filetreebrief" : "filetree",
         columns,
         data,
         selected,

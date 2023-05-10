@@ -16,45 +16,56 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import 'css/torrenttable.css';
-import React, { memo, useCallback, useContext, useMemo } from 'react';
-import { Torrent, TrackerStats, getTorrentError } from 'rpc/torrent';
-import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentAllFieldsType, TorrentFieldsType, TorrentMinimumFields } from 'rpc/transmission';
-import { ColumnDef, VisibilityState } from '@tanstack/react-table';
-import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from 'util';
-import { ProgressBar } from '../progressbar';
-import { AccessorFn, CellContext } from '@tanstack/table-core';
-import { Table } from "./common";
+import "css/torrenttable.css";
+import React, { memo, useCallback, useContext, useMemo } from "react";
+import { type Torrent, type TrackerStats, getTorrentError } from "rpc/torrent";
+import { PriorityColors, PriorityStrings, Status, StatusStrings, type TorrentAllFieldsType, type TorrentFieldsType, TorrentMinimumFields } from "rpc/transmission";
+import { type ColumnDef, type VisibilityState } from "@tanstack/react-table";
+import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from "util";
+import { ProgressBar } from "../progressbar";
+import { type AccessorFn, type CellContext } from "@tanstack/table-core";
+import { TransguiTable } from "./common";
 import { getTrackerAnnounceState } from "./trackertable";
 import { Badge, Box } from "@mantine/core";
-import { ConfigContext } from 'config';
-import { StatusIconMap, Error as StatusIconError } from 'components/statusicons';
+import { ConfigContext } from "config";
+import { StatusIconMap, Error as StatusIconError } from "components/statusicons";
 
 interface TableFieldProps {
     torrent: Torrent,
     fieldName: TorrentAllFieldsType,
 }
 
-interface TableField {
+interface TableFieldSimple {
     name: TorrentFieldsType,
     label: string,
     component: React.FunctionComponent<TableFieldProps> | React.NamedExoticComponent<TableFieldProps>,
-    columnId?: string,
-    accessorFn?: AccessorFn<Torrent>,
     requiredFields?: TorrentFieldsType[],
+}
+
+interface TableFieldWithAccessor extends TableFieldSimple {
+    columnId: string,
+    accessorFn: AccessorFn<Torrent>,
+}
+
+type TableField = TableFieldSimple | TableFieldWithAccessor;
+
+function isTableFieldWithAccessor(f: TableField): f is TableFieldWithAccessor {
+    return (f as TableFieldWithAccessor).accessorFn !== undefined;
 }
 
 const TimeField = memo(function TimeField(props: TableFieldProps) {
     return <>{secondsToHumanReadableStr(props.torrent[props.fieldName])}</>;
 }, (prev, next) => {
-    let previousValue = prev.torrent[prev.fieldName] as number;
-    let nextValue = next.torrent[next.fieldName] as number;
+    const previousValue = prev.torrent[prev.fieldName] as number;
+    const nextValue = next.torrent[next.fieldName] as number;
     return Math.abs((previousValue - nextValue) / nextValue) < 1 / 60 / 60;
 });
 
 const AllFields: readonly TableField[] = [
     {
-        name: "name", label: "Name", component: NameField,
+        name: "name",
+        label: "Name",
+        component: NameField,
         requiredFields: ["name", "error", "trackerStats"] as TorrentFieldsType[],
     },
     { name: "totalSize", label: "Size", component: ByteSizeField },
@@ -62,7 +73,9 @@ const AllFields: readonly TableField[] = [
     { name: "leftUntilDone", label: "Size left", component: ByteSizeField },
     { name: "haveValid", label: "Downloaded", component: ByteSizeField },
     {
-        name: "percentDone", label: "Done", component: PercentBarField,
+        name: "percentDone",
+        label: "Done",
+        component: PercentBarField,
         requiredFields: ["percentDone", "rateDownload", "rateUpload"] as TorrentFieldsType[],
     },
     { name: "rateDownload", label: "Down speed", component: ByteRateField },
@@ -75,8 +88,11 @@ const AllFields: readonly TableField[] = [
     { name: "uploadRatio", label: "Ratio", component: StringField },
     { name: "trackerStats", label: "Tracker", component: TrackerField },
     {
-        name: "trackerStats", label: "Tracker status", component: TrackerStatusField,
-        columnId: "trackerStatus", accessorFn: getTrackerStatus
+        name: "trackerStats",
+        label: "Tracker status",
+        component: TrackerStatusField,
+        columnId: "trackerStatus",
+        accessorFn: getTrackerStatus,
     },
     { name: "doneDate", label: "Completed on", component: DateField },
     { name: "activityDate", label: "Last active", component: DateField },
@@ -92,12 +108,14 @@ const AllFields: readonly TableField[] = [
 
 function NameField(props: TableFieldProps) {
     let StatusIcon = StatusIconMap[props.torrent.status];
-    if (props.torrent.error || !!getTorrentError(props.torrent))
+    if ((props.torrent.error !== undefined && props.torrent.error > 0) ||
+        getTorrentError(props.torrent) !== "") {
         StatusIcon = StatusIconError;
+    }
     return <>
         <Box pb="xs" sx={{ flexShrink: 0 }}><StatusIcon /></Box>
         <Box pl="xs" sx={{ textOverflow: "ellipsis", overflow: "hidden" }}>{props.torrent[props.fieldName]}</Box>
-    </>
+    </>;
 }
 
 function StringField(props: TableFieldProps) {
@@ -107,20 +125,20 @@ function StringField(props: TableFieldProps) {
 }
 
 export function EtaField(props: TableFieldProps) {
-    var seconds = props.torrent[props.fieldName];
+    const seconds = props.torrent[props.fieldName];
     if (seconds >= 0) return <TimeField {...props} />;
-    else if (seconds == -1) return <></>;
+    else if (seconds === -1) return <></>;
     else return <>Unknown</>;
 }
 
 export function TrackerField(props: TableFieldProps) {
     const trackers = props.torrent.trackerStats;
-    return <>{trackers.length ? trackers[0].host : "No tracker"}</>;
+    return <>{trackers.length > 0 ? trackers[0].host : "No tracker"}</>;
 }
 
 function getTrackerStatus(torrent: Torrent): string {
-    var trackers = torrent.trackerStats as TrackerStats[];
-    if (torrent.status == Status.stopped || trackers.length == 0) return "";
+    const trackers = torrent.trackerStats as TrackerStats[];
+    if (torrent.status === Status.stopped || trackers.length === 0) return "";
     return getTrackerAnnounceState(trackers[0]);
 }
 
@@ -130,7 +148,7 @@ function TrackerStatusField(props: TableFieldProps) {
 
 function PriorityField(props: TableFieldProps) {
     const priority = props.torrent[props.fieldName];
-    return <Badge radius="md" variant="filled" bg={PriorityColors.get(priority)!}>{PriorityStrings.get(priority)}</Badge>;
+    return <Badge radius="md" variant="filled" bg={PriorityColors.get(priority)}>{PriorityStrings.get(priority)}</Badge>;
 }
 
 export function LabelsField(props: TableFieldProps) {
@@ -146,23 +164,26 @@ export function StatusField(props: TableFieldProps) {
 }
 
 export function DateField(props: TableFieldProps) {
-    const date = props.torrent[props.fieldName] > 0 ?
-        timestampToDateString(props.torrent[props.fieldName]) : "";
+    const date = props.torrent[props.fieldName] > 0
+        ? timestampToDateString(props.torrent[props.fieldName])
+        : "";
     return <>{date}</>;
 }
 
 function ByteSizeField(props: TableFieldProps) {
+    const field = props.torrent[props.fieldName];
     const stringValue = useMemo(() => {
-        return bytesToHumanReadableStr(props.torrent[props.fieldName]);
-    }, [props.torrent[props.fieldName]]);
+        return bytesToHumanReadableStr(field);
+    }, [field]);
 
     return <div style={{ textAlign: "right" }}>{stringValue}</div>;
 }
 
 function ByteRateField(props: TableFieldProps) {
+    const field = props.torrent[props.fieldName];
     const stringValue = useMemo(() => {
-        return `${bytesToHumanReadableStr(props.torrent[props.fieldName])}/s`;
-    }, [props.torrent[props.fieldName]]);
+        return `${bytesToHumanReadableStr(field)}/s`;
+    }, [field]);
 
     return <div style={{ textAlign: "right" }}>{stringValue}</div>;
 }
@@ -174,36 +195,38 @@ function PercentBarField(props: TableFieldProps) {
     return <ProgressBar
         now={now}
         className="white-outline"
-        animate={active}
-    />
+        animate={active} />;
 }
 
 const Columns = AllFields.map((f): ColumnDef<Torrent> => {
     const cell = (props: CellContext<Torrent, unknown>) => {
-        return <f.component fieldName={f.name} torrent={props.row.original} />
+        return <f.component fieldName={f.name} torrent={props.row.original} />;
     };
-    if (f.accessorFn) return {
-        header: f.label,
-        accessorFn: f.accessorFn,
-        id: f.columnId!,
-        cell
+    if (isTableFieldWithAccessor(f)) {
+        return {
+            header: f.label,
+            accessorFn: f.accessorFn,
+            id: f.columnId,
+            cell,
+        };
     }
     return {
         header: f.label,
         accessorKey: f.name,
-        cell
+        cell,
     };
 });
 
 const ColumnRequiredFields = AllFields.map(
-    (f) => ({ id: f.columnId || f.name, requires: f.requiredFields || [f.name] })
+    (f) => ({ id: (f as TableFieldWithAccessor).columnId ?? f.name, requires: f.requiredFields ?? [f.name] })
 );
 
 function getRequiredFields(visibilityState: VisibilityState): TorrentFieldsType[] {
     const set = ColumnRequiredFields.reduce(
         (set: Set<TorrentFieldsType>, f) => {
-            if (visibilityState[f.id] !== false)
+            if (!(f.id in visibilityState) || visibilityState[f.id]) {
                 f.requires.forEach((r) => set.add(r));
+            }
             return set;
         },
         new Set<TorrentFieldsType>());
@@ -223,22 +246,23 @@ export function useInitialTorrentRequiredFields() {
 }
 
 export function TorrentTable(props: {
-    torrents: Torrent[];
-    setCurrentTorrent: (id: string) => void;
+    torrents: Torrent[],
+    setCurrentTorrent: (id: string) => void,
     selectedTorrents: Set<number>,
-    selectedReducer: React.Dispatch<{ verb: string; ids: string[]; }>,
+    selectedReducer: React.Dispatch<{ verb: string, ids: string[] }>,
     onColumnVisibilityChange: React.Dispatch<TorrentFieldsType[]>,
 }) {
     const getRowId = useCallback((t: Torrent) => String(t.id), []);
     const selected = useMemo(
         () => Array.from(props.selectedTorrents).map(String), [props.selectedTorrents]);
 
+    const { onColumnVisibilityChange } = props;
     const onVisibilityChange = useCallback(
-        (visibility: VisibilityState) => props.onColumnVisibilityChange(getRequiredFields(visibility)),
-        [props.onColumnVisibilityChange]
-    )
+        (visibility: VisibilityState) => { onColumnVisibilityChange(getRequiredFields(visibility)); },
+        [onColumnVisibilityChange]
+    );
 
-    return <Table<Torrent> {...{
+    return <TransguiTable<Torrent> {...{
         tablename: "torrents",
         columns: Columns,
         data: props.torrents,

@@ -16,20 +16,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Button, Flex, MantineTheme, Menu, TextInput } from "@mantine/core";
+import { Button, Flex, type MantineTheme, Menu, TextInput } from "@mantine/core";
 import { debounce } from "lodash-es";
 import React, { forwardRef, memo, useCallback, useEffect, useMemo, useState } from "react";
 import * as Icon from "react-bootstrap-icons";
-import { ActionController, ActionMethodsType } from "../actions";
-import { BandwidthPriority, PriorityNumberType } from "rpc/transmission";
-import { TorrentMutationVariables, useMutateSession, useMutateTorrent } from "queries";
-import { UseMutationResult } from "@tanstack/react-query";
+import { type ActionController, type ActionMethodsType } from "../actions";
+import { BandwidthPriority, type PriorityNumberType } from "rpc/transmission";
+import { type TorrentMutationVariables, useMutateSession, useMutateTorrent } from "queries";
+import { type UseMutationResult } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 
 interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {
-    depressed?: boolean
+    depressed?: boolean,
 }
 
+// eslint-disable-next-line react/display-name
 const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
     { children, depressed, ...other }: ToolbarButtonProps, ref
 ) => {
@@ -37,10 +38,10 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
         <Button variant="light" color="gray" compact h="2.5rem" {...other} ref={ref}
             styles={(theme: MantineTheme) => ({
                 root: {
-                    backgroundColor: theme.colorScheme == "dark" ?
-                        theme.colors.gray[depressed ? 8 : 9]
-                        : theme.colors.gray[depressed ? 3 : 1],
-                    transform: depressed ? "scale(-1, 1)" : "none",
+                    backgroundColor: theme.colorScheme === "dark"
+                        ? theme.colors.gray[depressed === true ? 8 : 9]
+                        : theme.colors.gray[depressed === true ? 3 : 1],
+                    transform: depressed === true ? "scale(-1, 1)" : "none",
                 }
             })}
         >
@@ -55,7 +56,7 @@ interface ToolbarProps {
     altSpeedMode: boolean,
 }
 
-function simpleActionHandler(action: ActionMethodsType, props: ToolbarProps) {
+function useSimpleActionHandler(action: ActionMethodsType, props: ToolbarProps) {
     return useCallback(() => {
         props.actionController.run(action).catch((e) => {
             console.log("Error for action", action, e);
@@ -63,7 +64,7 @@ function simpleActionHandler(action: ActionMethodsType, props: ToolbarProps) {
     }, [props.actionController, action]);
 }
 
-function priorityHandler(
+function usePriorityHandler(
     priority: PriorityNumberType,
     props: ToolbarProps,
     mutation: UseMutationResult<void, unknown, TorrentMutationVariables>
@@ -86,7 +87,7 @@ function priorityHandler(
                         title: "Failed to update priority",
                         message: String(error),
                         color: "red",
-                    })
+                    });
                 }
             }
         );
@@ -103,17 +104,16 @@ function Toolbar(props: ToolbarProps) {
     const sessioMutation = useMutateSession(props.actionController.client);
 
     const toggleAltSpeedMode = useCallback(() => {
-        sessioMutation.mutate({ "alt-speed-enabled": !altSpeedMode }, {
+        sessioMutation.mutate({ "alt-speed-enabled": altSpeedMode !== true }, {
             onError: (_, session) => {
-                setAltSpeedMode(!session["alt-speed-enabled"]);
+                setAltSpeedMode(session["alt-speed-enabled"] !== true);
             }
         });
-        setAltSpeedMode(!altSpeedMode);
-    }, [altSpeedMode]);
+        setAltSpeedMode(altSpeedMode !== true);
+    }, [altSpeedMode, sessioMutation]);
 
     useEffect(() => {
-        if (props.altSpeedMode !== undefined)
-            setAltSpeedMode(props.altSpeedMode);
+        if (props.altSpeedMode !== undefined) setAltSpeedMode(props.altSpeedMode);
     }, [props.altSpeedMode]);
 
     const torrentMutation = useMutateTorrent(props.actionController.client);
@@ -123,46 +123,46 @@ function Toolbar(props: ToolbarProps) {
             (e.target as HTMLInputElement).value
                 .split(" ")
                 .map((s) => s.trim().toLowerCase())
-                .filter((s) => s != ""));
+                .filter((s) => s !== ""));
     }, [debouncedSetSearchTerms]);
 
     return (
         <Flex w="100%" align="stretch">
             <Button.Group mx="sm">
-                <ToolbarButton onClick={() => props.actionController.showModal("addTorrent")}>
+                <ToolbarButton onClick={() => { props.actionController.showModal("addTorrent"); }}>
                     <Icon.FileArrowDownFill size="1.5rem" color="seagreen" />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => props.actionController.showModal("addMagnet")}>
+                <ToolbarButton onClick={() => { props.actionController.showModal("addMagnet"); }}>
                     <Icon.MagnetFill size="1.5rem" color="seagreen" />
                 </ToolbarButton>
             </Button.Group>
 
             <Button.Group mx="sm">
-                <ToolbarButton onClick={simpleActionHandler("resume", props)} >
+                <ToolbarButton onClick={useSimpleActionHandler("resume", props)} >
                     <Icon.PlayCircleFill size="1.5rem" color="steelblue" />
                 </ToolbarButton>
-                <ToolbarButton onClick={simpleActionHandler("pause", props)} >
+                <ToolbarButton onClick={useSimpleActionHandler("pause", props)} >
                     <Icon.PauseCircleFill size="1.5rem" color="steelblue" />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => props.actionController.showModal("remove")}>
+                <ToolbarButton onClick={() => { props.actionController.showModal("remove"); }}>
                     <Icon.XCircleFill size="1.5rem" color="tomato" />
                 </ToolbarButton>
             </Button.Group>
 
             <Button.Group mx="sm">
-                <ToolbarButton onClick={simpleActionHandler("moveQueueUp", props)} >
+                <ToolbarButton onClick={useSimpleActionHandler("moveQueueUp", props)} >
                     <Icon.ArrowUpCircleFill size="1.5rem" color="seagreen" />
                 </ToolbarButton>
-                <ToolbarButton onClick={simpleActionHandler("moveQueueDown", props)} >
+                <ToolbarButton onClick={useSimpleActionHandler("moveQueueDown", props)} >
                     <Icon.ArrowDownCircleFill size="1.5rem" color="seagreen" />
                 </ToolbarButton>
             </Button.Group>
 
             <Button.Group mx="sm">
-                <ToolbarButton onClick={() => props.actionController.showModal("move")}>
+                <ToolbarButton onClick={() => { props.actionController.showModal("move"); }}>
                     <Icon.FolderFill size="1.5rem" color="gold" />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => props.actionController.showModal("setLabels")} >
+                <ToolbarButton onClick={() => { props.actionController.showModal("setLabels"); }} >
                     <Icon.TagsFill size="1.5rem" color="steelblue" />
                 </ToolbarButton>
 
@@ -174,15 +174,15 @@ function Toolbar(props: ToolbarProps) {
                     <Menu.Dropdown>
                         <Menu.Label>Set priority</Menu.Label>
                         <Menu.Item icon={<Icon.CircleFill color="tomato" />}
-                            onClick={priorityHandler(BandwidthPriority.high, props, torrentMutation)}>
+                            onClick={usePriorityHandler(BandwidthPriority.high, props, torrentMutation)}>
                             High
                         </Menu.Item>
                         <Menu.Item icon={<Icon.CircleFill color="seagreen" />}
-                            onClick={priorityHandler(BandwidthPriority.normal, props, torrentMutation)}>
+                            onClick={usePriorityHandler(BandwidthPriority.normal, props, torrentMutation)}>
                             Normal
                         </Menu.Item>
                         <Menu.Item icon={<Icon.CircleFill color="gold" />}
-                            onClick={priorityHandler(BandwidthPriority.low, props, torrentMutation)}>
+                            onClick={usePriorityHandler(BandwidthPriority.low, props, torrentMutation)}>
                             Low
                         </Menu.Item>
                     </Menu.Dropdown>
@@ -190,7 +190,7 @@ function Toolbar(props: ToolbarProps) {
             </Button.Group>
 
             <ToolbarButton
-                title={`Turn alternative bandwidth mode ${altSpeedMode ? "off" : "on"}`}
+                title={`Turn alternative bandwidth mode ${altSpeedMode === true ? "off" : "on"}`}
                 onClick={toggleAltSpeedMode}
                 depressed={altSpeedMode}
             >
@@ -204,7 +204,7 @@ function Toolbar(props: ToolbarProps) {
                 styles={{ input: { height: "auto" } }}
             />
 
-            <ToolbarButton onClick={() => props.actionController.showModal("daemonSettings")}>
+            <ToolbarButton onClick={() => { props.actionController.showModal("daemonSettings"); }}>
                 <Icon.Tools size="1.5rem" />
             </ToolbarButton>
         </Flex >

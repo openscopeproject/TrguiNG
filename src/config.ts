@@ -19,8 +19,8 @@
 import * as fs from "@tauri-apps/api/fs";
 import React from "react";
 import { merge } from "lodash-es";
-import { SortingState, ColumnSizingState, VisibilityState } from "@tanstack/react-table";
-import { ColorScheme } from "@mantine/core";
+import { type SortingState, type ColumnSizingState, type VisibilityState } from "@tanstack/react-table";
+import { type ColorScheme } from "@mantine/core";
 
 export interface ServerConnection {
     url: string,
@@ -45,7 +45,7 @@ export interface ServerConfig {
         torrents: number,
         torrentsMinimized: number,
         details: number,
-    }
+    },
 }
 
 export interface SortByConfig {
@@ -76,8 +76,8 @@ interface Settings {
             size: [number, number],
             position: [number, number] | undefined,
             theme: ColorScheme | undefined,
-        }
-    }
+        },
+    },
 }
 
 const DefaultSettings: Settings = {
@@ -100,14 +100,14 @@ const DefaultSettings: Settings = {
             theme: undefined,
         },
     }
-}
+};
 
 export class Config {
     fileName = "transgui-ng.json";
     values = DefaultSettings;
 
     async read() {
-        let text = await fs.readTextFile(
+        const text = await fs.readTextFile(
             this.fileName,
             { dir: fs.BaseDirectory.Config }
         );
@@ -115,15 +115,15 @@ export class Config {
 
         // sanitize data
         this.values.openTabs = this.values.openTabs.filter(
-            (name) => this.values.servers.find((s) => s.name == name) !== undefined
+            (name) => this.values.servers.find((s) => s.name === name) !== undefined
         );
 
         return this;
     }
 
     async save() {
-        var configText = JSON.stringify(this.values, null, '    ');
-        return fs.writeFile(
+        const configText = JSON.stringify(this.values, null, "    ");
+        await fs.writeFile(
             { path: this.fileName, contents: configText },
             { dir: fs.BaseDirectory.Config }
         );
@@ -142,7 +142,7 @@ export class Config {
     }
 
     getServer(name: string): ServerConfig | undefined {
-        return this.values.servers.find((s) => s.name == name);
+        return this.values.servers.find((s) => s.name === name);
     }
 
     getOpenTabs() {
@@ -182,7 +182,10 @@ export const ConfigContext = React.createContext(new Config());
 export const ServerConfigContext = React.createContext<ServerConfig>(
     {
         connection: { url: "", useAuth: false, username: "", password: "" },
-        name: "", pathMappings: [], expandedDirFilters: [], lastSaveDirs: [],
-        intervals: {session: 0, torrents: 0, torrentsMinimized: 0, details: 0},
+        name: "",
+        pathMappings: [],
+        expandedDirFilters: [],
+        lastSaveDirs: [],
+        intervals: { session: 0, torrents: 0, torrentsMinimized: 0, details: 0 },
     }
 );

@@ -16,15 +16,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, CSSObject } from "@mantine/core";
+import "../css/custom.css";
+import { Box, type CSSObject } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import Split from "react-split";
 import { ActionController } from "../actions";
-import { ClientManager } from "../clientmanager";
+import { type ClientManager } from "../clientmanager";
 import { ConfigContext, ServerConfigContext } from "../config";
-import '../css/custom.css';
-import { Torrent } from "../rpc/torrent";
+import { type Torrent } from "../rpc/torrent";
 import { MemoizedDetails } from "./details";
 import { DefaultFilter, Filters } from "./filters";
 import { EditLabelsModal } from "./modals/editlabels";
@@ -35,7 +35,7 @@ import { RemoveModal } from "./modals/remove";
 import { MoveModal } from "./modals/move";
 import { AddMagnet, AddTorrent } from "./modals/add";
 import { useSession, useTorrentList } from "queries";
-import { TorrentFieldsType } from "rpc/transmission";
+import { type TorrentFieldsType } from "rpc/transmission";
 import { DaemonSettingsModal } from "./modals/daemon";
 import { emit, listen } from "@tauri-apps/api/event";
 
@@ -54,26 +54,24 @@ function usePausingModalState(runUpdates: (run: boolean) => void): [boolean, () 
     const closeResume = useCallback(() => {
         close();
         runUpdates(true);
-    }, [runUpdates, open]);
+    }, [runUpdates, close]);
 
     return [opened, pauseOpen, closeResume];
 }
 
 function selectedTorrentsReducer(selected: Set<number>, action: { verb: string, ids: string[] }) {
-    var selected = new Set(selected);
-    var ids = action.ids.map((t) => +t);
-    if (action.verb == "set") {
+    const ids = action.ids.map((t) => +t);
+    if (action.verb === "set") {
         selected.clear();
-        for (var id of ids) selected.add(id);
-    } else if (action.verb == "add") {
-        for (var id of ids) selected.add(id);
-    } else if (action.verb == "filter") {
+        for (const id of ids) selected.add(id);
+    } else if (action.verb === "add") {
+        for (const id of ids) selected.add(id);
+    } else if (action.verb === "filter") {
         selected = new Set(Array.from(selected).filter((t) => ids.includes(t)));
-    } else if (action.verb == "toggle") {
-        if (!selected.delete(ids[0]))
-            selected.add(ids[0]);
+    } else if (action.verb === "toggle") {
+        if (!selected.delete(ids[0])) selected.add(ids[0]);
     }
-    return selected;
+    return new Set(selected);
 }
 
 function SplitLayout({ left, right, bottom }: { left: React.ReactNode, right: React.ReactNode, bottom: React.ReactNode }) {
@@ -90,7 +88,7 @@ function SplitLayout({ left, right, bottom }: { left: React.ReactNode, right: Re
         <Box sx={(theme): CSSObject => ({
             flexGrow: 1,
             "& .gutter": {
-                backgroundColor: theme.colorScheme == "dark" ? theme.colors.gray[7] : theme.colors.gray[3],
+                backgroundColor: theme.colorScheme === "dark" ? theme.colors.gray[7] : theme.colors.gray[3],
             }
         })
         } >
@@ -124,7 +122,7 @@ interface ServerModalsProps {
     filteredTorrents: Torrent[],
     selectedTorrents: Set<number>,
     allLabels: string[],
-    runUpdates: (run: boolean) => void
+    runUpdates: (run: boolean) => void,
 }
 
 function ServerModals(props: ServerModalsProps) {
@@ -153,23 +151,23 @@ function ServerModals(props: ServerModalsProps) {
     const [addQueue, setAddQueue] = useState<string[]>([]);
 
     useEffect(() => {
-        let listenResult = listen<string>("app-arg", (event) => {
-            let args = JSON.parse(event.payload) as string[];
+        const listenResult = listen<string>("app-arg", (event) => {
+            const args = JSON.parse(event.payload) as string[];
             console.log("Got app-arg:", args);
             setAddQueue([...addQueue, ...args]);
         }).then((unlisten) => {
-            emit("listener-start", {});
+            void emit("listener-start", {});
             return unlisten;
         });
 
         return () => {
-            listenResult.then((unlisten) => unlisten());
-        }
+            void listenResult.then((unlisten) => { unlisten(); });
+        };
     }, [addQueue]);
 
     useEffect(() => {
-        if (addQueue.length && !showAddMagnetModal && !showAddTorrentModal) {
-            var item = addQueue[0];
+        if (addQueue.length > 0 && !showAddMagnetModal && !showAddTorrentModal) {
+            const item = addQueue[0];
             if (item.startsWith("magnet:?")) {
                 setMagnetLink(item);
                 openAddMagnetModal();
@@ -182,10 +180,10 @@ function ServerModals(props: ServerModalsProps) {
 
     const closeAddMagnetModalAndPop = useCallback(() => {
         closeAddMagnetModal();
-        if (magnetLink && addQueue.length && addQueue[0] == magnetLink) {
+        if (magnetLink !== undefined && addQueue.length > 0 && addQueue[0] === magnetLink) {
             setMagnetLink(undefined);
             setAddQueue(addQueue.slice(1));
-        } else if (addQueue.length) {
+        } else if (addQueue.length > 0) {
             // kick the queue again
             setAddQueue([...addQueue]);
         }
@@ -193,10 +191,10 @@ function ServerModals(props: ServerModalsProps) {
 
     const closeAddTorrentModalAndPop = useCallback(() => {
         closeAddTorrentModal();
-        if (torrentPath && addQueue.length && addQueue[0] == torrentPath) {
+        if (torrentPath !== undefined && addQueue.length > 0 && addQueue[0] === torrentPath) {
             setTorrentPath(undefined);
             setAddQueue(addQueue.slice(1));
-        } else if (addQueue.length) {
+        } else if (addQueue.length > 0) {
             // kick the queue again
             setAddQueue([...addQueue]);
         }
@@ -234,15 +232,16 @@ export function Server(props: ServerProps) {
 
     const actionController = useMemo(
         () => new ActionController(client),
-        [props.clientManager, serverConfig.name]);
+        [client]);
 
     const [currentFilter, setCurrentFilter] = useState({ id: "", filter: DefaultFilter });
 
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
     const searchFilter = useCallback((t: Torrent) => {
-        const name = t.name.toLowerCase();
-        for (var term of searchTerms)
+        const name = t.name.toLowerCase() as string;
+        for (const term of searchTerms) {
             if (!name.includes(term)) return false;
+        }
         return true;
     }, [searchTerms]);
 
@@ -250,35 +249,35 @@ export function Server(props: ServerProps) {
 
     const [tableRequiredFields, setTableRequiredFields] = useState<TorrentFieldsType[]>(useInitialTorrentRequiredFields());
 
-    const { data: torrents, error: torrentsError } = useTorrentList(client, updates, tableRequiredFields);
-    const { data: session, error: sessionError } = useSession(client, updates);
+    const { data: torrents } = useTorrentList(client, updates, tableRequiredFields);
+    const { data: session } = useSession(client, updates);
 
     const [currentTorrent, setCurrentTorrentInt] = useState<number>();
     const setCurrentTorrent = useCallback(
-        (id: string) => setCurrentTorrentInt(+id),
+        (id: string) => { setCurrentTorrentInt(+id); },
         [setCurrentTorrentInt]);
 
-    const [selectedTorrents, selectedReducer] = useReducer(useCallback(
-        (selected: Set<number>, action: { verb: string, ids: string[] }) =>
+    const [selectedTorrents, selectedReducer] = useReducer(
+        useCallback((selected: Set<number>, action: { verb: string, ids: string[] }) =>
             selectedTorrentsReducer(selected, action), []),
         new Set<number>());
 
-    useEffect(() => actionController.setSelected(selectedTorrents), [actionController, selectedTorrents]);
+    useEffect(() => { actionController.setSelected(selectedTorrents); }, [actionController, selectedTorrents]);
 
     const [filteredTorrents, setFilteredTorrents] = useState<Torrent[]>([]);
     useEffect(
         () => {
-            var filtered = torrents?.filter(currentFilter.filter).filter(searchFilter) || [];
+            const filtered = torrents?.filter(currentFilter.filter).filter(searchFilter) ?? [];
             const ids: string[] = filtered.map((t) => t.id);
             selectedReducer({ verb: "filter", ids });
             setFilteredTorrents(filtered);
         },
         [torrents, currentFilter, searchFilter]);
 
-    useEffect(() => actionController.setTorrents(filteredTorrents), [actionController, filteredTorrents]);
+    useEffect(() => { actionController.setTorrents(filteredTorrents); }, [actionController, filteredTorrents]);
 
     const allLabels = useMemo(() => {
-        var labels = new Set<string>();
+        const labels = new Set<string>();
         torrents?.forEach((t) => t.labels.forEach((l: string) => labels.add(l)));
         return Array.from(labels).sort();
     }, [torrents]);
@@ -290,14 +289,14 @@ export function Server(props: ServerProps) {
                 <MemoizedToolbar
                     setSearchTerms={setSearchTerms}
                     actionController={actionController}
-                    altSpeedMode={session?.["alt-speed-enabled"] || false}
+                    altSpeedMode={session?.["alt-speed-enabled"] ?? false}
                 />
             </div>
             <SplitLayout
                 left={
                     <div className="scrollable">
                         <Filters
-                            torrents={torrents || []}
+                            torrents={torrents ?? []}
                             allLabels={allLabels}
                             currentFilter={currentFilter}
                             setCurrentFilter={setCurrentFilter} />
