@@ -17,8 +17,9 @@
  */
 
 import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import { type CachedFileTree } from "cachedfiletree";
 import { ServerConfigContext } from "config";
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { type SessionInfo, type TransmissionClient } from "rpc/client";
 import { type Torrent } from "rpc/torrent";
 import { type TorrentFieldsType } from "rpc/transmission";
@@ -67,7 +68,7 @@ export function useTorrentDetails(client: TransmissionClient, torrentId: number,
 
     return useQuery({
         queryKey: TorrentKeys.details(serverConfig.name, torrentId),
-        refetchInterval: 1000 * serverConfig.intervals.torrents,
+        refetchInterval: 1000 * serverConfig.intervals.details,
         staleTime: 1000 * 60,
         enabled,
         queryFn: useCallback(async () => {
@@ -169,7 +170,7 @@ export function useSessionStats(client: TransmissionClient, enabled: boolean) {
         refetchInterval: 1000 * serverConfig.intervals.session,
         staleTime: 1000 * 60,
         enabled,
-        queryFn: useCallback(async() => {
+        queryFn: useCallback(async () => {
             return await client.getSessionStats();
         }, [client]),
     });
@@ -199,4 +200,17 @@ export function useBandwidthGroups(client: TransmissionClient, enabled: boolean)
             return await client.getBandwidthGroups();
         }, [client]),
     });
+}
+
+export function useFileTree(name: string, fileTree: CachedFileTree) {
+    return useQuery({
+        queryKey: [name],
+        initialData: useMemo(() => fileTree.flatten(), [fileTree]),
+        staleTime: 0,
+        queryFn: () => fileTree.flatten(),
+    });
+}
+
+export function refreshFileTree(name: string) {
+    void queryClient.refetchQueries({ queryKey: [name] });
 }

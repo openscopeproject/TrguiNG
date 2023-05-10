@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { memo, useContext, useEffect, useMemo, useReducer } from "react";
+import React, { memo, useContext, useEffect, useMemo } from "react";
 import { type ClientManager } from "../clientmanager";
 import { ServerConfigContext } from "../config";
 import { getTorrentError, type Torrent, type TrackerStats } from "../rpc/torrent";
@@ -31,7 +31,7 @@ import { type SessionStatEntry } from "rpc/transmission";
 import { Box, Container, Group, type MantineTheme, Table, Tabs, TextInput } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
 import { CachedFileTree } from "cachedfiletree";
-import { useSessionStats, useTorrentDetails } from "queries";
+import { useFileTree, useSessionStats, useTorrentDetails } from "queries";
 
 interface DetailsProps {
     torrentId?: number,
@@ -259,22 +259,23 @@ function GeneralPane(props: { torrent: Torrent }) {
 }
 
 function FileTreePane(props: { torrent: Torrent }) {
-    const [renderVal, forceRender] = useReducer((oldVal: number) => oldVal + 1, 0);
     const fileTree = useMemo(() => new CachedFileTree(), []);
+
+    const { data, refetch } = useFileTree("filetree", fileTree);
 
     useEffect(() => {
         fileTree.update(props.torrent);
-        forceRender();
-    }, [props.torrent, forceRender, fileTree]);
+        void refetch();
+    }, [props.torrent, fileTree, refetch]);
 
     const onCheckboxChange = useUnwantedFiles(fileTree);
 
     return (
         <FileTreeTable
             fileTree={fileTree}
+            data={data}
             downloadDir={props.torrent.downloadDir}
-            onCheckboxChange={onCheckboxChange}
-            renderVal={renderVal} />
+            onCheckboxChange={onCheckboxChange} />
     );
 }
 

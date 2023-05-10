@@ -241,7 +241,8 @@ export function Filters(props: FiltersProps) {
 
     useEffect(() => {
         if (paths.length > 0) setTree(buildDirTree(paths, tree, false));
-    }, [tree, paths]);
+        // TODO fix this
+    }, [paths]);
 
     const dirs = useMemo(() => flattenTree(tree), [tree]);
 

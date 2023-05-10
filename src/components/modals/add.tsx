@@ -24,6 +24,7 @@ import { dialog, tauri } from "@tauri-apps/api";
 import { CachedFileTree } from "cachedfiletree";
 import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable";
 import { notifications } from "@mantine/notifications";
+import { useFileTree } from "queries";
 
 interface AddCommonProps {
     location: LocationData,
@@ -183,11 +184,15 @@ export function AddTorrent(props: AddCommonModalProps) {
             });
     }, [props]);
 
-    const fileTree = useMemo(() => {
-        const ft = new CachedFileTree();
-        if (torrentData !== undefined) ft.parse(torrentData, true);
-        return ft;
-    }, [torrentData]);
+    const fileTree = useMemo(() => new CachedFileTree(), []);
+
+    const { data, refetch } = useFileTree("filetreebrief", fileTree);
+    useEffect(() => {
+        if (torrentData?.files != null) {
+            fileTree.parse(torrentData, true);
+            void refetch();
+        }
+    }, [torrentData, fileTree, refetch]);
 
     const onCheckboxChange = useUnwantedFiles(fileTree);
 
@@ -201,7 +206,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             labels: common.labels,
             paused: !common.start,
             priority: common.priority,
-            unwanted: fileTree.getUnwanted(),
+            unwanted: torrentData?.files != null ? [] : fileTree.getUnwanted(),
         });
         close();
     }, [ac, close, torrentData, common, fileTree]);
@@ -213,9 +218,16 @@ export function AddTorrent(props: AddCommonModalProps) {
                 <Divider my="sm" />
                 <Text>Name: {torrentData.name}</Text>
                 <AddCommon {...common.props} />
-                <Box w="100%" h="15rem">
-                    <FileTreeTable fileTree={fileTree} brief onCheckboxChange={onCheckboxChange} />
-                </Box>
+                {torrentData.files == null
+                    ? <></>
+                    : <Box w="100%" h="15rem">
+                        <FileTreeTable
+                            fileTree={fileTree}
+                            data={data}
+                            brief
+                            onCheckboxChange={onCheckboxChange} />
+                    </Box>
+                }
                 <Divider my="sm" />
                 <Group position="center" spacing="md">
                     <Button onClick={onAdd} variant="filled">Add</Button>

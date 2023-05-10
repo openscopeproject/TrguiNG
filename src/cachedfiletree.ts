@@ -78,6 +78,21 @@ export class CachedFileTree {
         this.filePathToIndex = {};
     }
 
+    _findEntry(path: string): FileDirEntry | undefined {
+        const parts = path.split("/");
+        let node = this.tree;
+        for (let i = 0; i < parts.length; i++) {
+            if (node.subdirs.has(parts[i])) {
+                node = node.subdirs.get(parts[i]) as DirEntry;
+            } else if (node.files.has(parts[i])) {
+                return node.files.get(parts[i]) as FileEntry;
+            } else {
+                return undefined;
+            }
+        }
+        return node;
+    }
+
     destroy(dir: DirEntry) {
         // recurse into the tree and unlink everyone's parents
         // to allow gc to do it's work
@@ -115,6 +130,8 @@ export class CachedFileTree {
     }
 
     parse(torrent: Torrent, fromFile: boolean) {
+        this.destroy(this.tree);
+
         this.torrenthash = torrent.hashString ?? "";
         const name = torrent.name as string;
 
@@ -206,8 +223,6 @@ export class CachedFileTree {
             });
         } else {
             // rebuild the tree from scratch
-            this.destroy(this.tree);
-
             this.parse(torrent, false);
         }
     }
@@ -217,10 +232,10 @@ export class CachedFileTree {
 
         const append = (dir: DirEntry) => {
             dir.subdirs.forEach((d) => {
-                result.push(d);
+                result.push({ ...d });
                 if (d.expanded) append(d);
             });
-            dir.files.forEach((f) => result.push(f));
+            dir.files.forEach((f) => result.push({ ...f }));
         };
 
         append(this.tree);
@@ -228,7 +243,10 @@ export class CachedFileTree {
         return result;
     }
 
-    setWanted(entry: FileDirEntry, state: boolean) {
+    setWanted(path: string, state: boolean) {
+        const entry = this._findEntry(path);
+        if (entry === undefined) return;
+
         const recurse = (dir: DirEntry) => {
             dir.subdirs.forEach((d) => {
                 recurse(d);
@@ -246,6 +264,12 @@ export class CachedFileTree {
         }
 
         this.recalcTree(this.tree);
+    }
+
+    expand(path: string, state: boolean) {
+        const entry = this._findEntry(path);
+        if (entry === undefined || !isDirEntry(entry)) return;
+        entry.expanded = state;
     }
 
     getUnwanted() {
@@ -288,20 +312,15 @@ export class CachedFileTree {
             this.setSelection(this.tree, false);
         }
         ids.forEach((id) => {
-            const parts = id.split("/");
-            let i = 0;
-            let node = this.tree;
-            while (node.subdirs.has(parts[i])) {
-                node = node.subdirs.get(parts[i]) as DirEntry;
-                i++;
-            }
-            if (i < parts.length - 1) {
+            const entry = this._findEntry(id);
+            if (entry === undefined) {
                 console.log("What the horse?", id);
+                return;
             }
-            if (i < parts.length) {
-                (node.files.get(parts[i]) as FileEntry).isSelected = true;
+            if (isDirEntry(entry)) {
+                this.setSelection(entry, true);
             } else {
-                this.setSelection(node, true);
+                entry.isSelected = true;
             }
         });
         this.updateDirSelection(this.tree);

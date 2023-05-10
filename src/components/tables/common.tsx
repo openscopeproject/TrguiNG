@@ -357,7 +357,7 @@ export function TransguiTable<TData>(props: {
                             columnVisibility,
                         }} />;
                     })}
-            </div >
-        </div >
+            </div>
+        </div>
     );
 }
