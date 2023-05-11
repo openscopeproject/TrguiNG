@@ -22,7 +22,7 @@ import { ServerConfigContext } from "config";
 import { useCallback, useContext, useMemo } from "react";
 import { type SessionInfo, type TransmissionClient } from "rpc/client";
 import { type Torrent } from "rpc/torrent";
-import { type TorrentFieldsType } from "rpc/transmission";
+import { type TorrentMutableFieldsType, type TorrentFieldsType } from "rpc/transmission";
 
 export const queryClient = new QueryClient();
 
@@ -79,7 +79,7 @@ export function useTorrentDetails(client: TransmissionClient, torrentId: number,
 
 export interface TorrentMutationVariables {
     torrentIds: number[],
-    fields: Torrent,
+    fields: Partial<Record<TorrentMutableFieldsType, any>>,
 }
 
 export function useMutateTorrent(client: TransmissionClient) {
@@ -90,6 +90,8 @@ export function useMutateTorrent(client: TransmissionClient) {
             await client.setTorrents(torrentIds, fields);
         },
         onSuccess: (_, { torrentIds, fields }: TorrentMutationVariables) => {
+            // some mutable fields like "files-unwanted" don't map directly to
+            // proper torrent fields but it's ok to have some extra entrie in the object
             queryClient.setQueryData(
                 TorrentKeys.all(serverConfig.name),
                 (data: Torrent[] | undefined) => {

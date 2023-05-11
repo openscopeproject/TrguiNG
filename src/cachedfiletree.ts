@@ -29,6 +29,7 @@ interface Entry {
     done: number,
     percent: number,
     isSelected: boolean,
+    wantedUpdating: boolean,
 }
 
 export interface FileEntry extends Entry {
@@ -56,8 +57,9 @@ export class CachedFileTree {
     torrenthash: string;
     files: FileEntry[];
     filePathToIndex: Record<string, number>;
+    initialized: boolean;
 
-    constructor() {
+    constructor(hash: string) {
         this.tree = {
             name: "",
             level: 0,
@@ -72,10 +74,12 @@ export class CachedFileTree {
             files: new Map(),
             expanded: true,
             isSelected: false,
+            wantedUpdating: false,
         };
-        this.torrenthash = "";
+        this.torrenthash = hash;
         this.files = [];
         this.filePathToIndex = {};
+        this.initialized = false;
     }
 
     _findEntry(path: string): FileDirEntry | undefined {
@@ -91,16 +95,6 @@ export class CachedFileTree {
             }
         }
         return node;
-    }
-
-    destroy(dir: DirEntry) {
-        // recurse into the tree and unlink everyone's parents
-        // to allow gc to do it's work
-        dir.subdirs.forEach((d) => { this.destroy(d); });
-        dir.subdirs.clear();
-        dir.files.forEach((f) => { f.parent = undefined; });
-        dir.files.clear();
-        dir.parent = undefined;
     }
 
     recalcTree(dir: DirEntry) {
@@ -130,8 +124,6 @@ export class CachedFileTree {
     }
 
     parse(torrent: Torrent, fromFile: boolean) {
-        this.destroy(this.tree);
-
         this.torrenthash = torrent.hashString ?? "";
         const name = torrent.name as string;
 
@@ -152,6 +144,7 @@ export class CachedFileTree {
                 percent: fromFile ? 0 : torrent.fileStats[index].bytesCompleted * 100 / entry.length,
                 priority: fromFile ? 0 : torrent.fileStats[index].priority,
                 isSelected: false,
+                wantedUpdating: false,
             };
         });
 
@@ -175,7 +168,7 @@ export class CachedFileTree {
                 currentPath = currentPath === "" ? subdir : currentPath + "/" + subdir;
                 const existingNode = node.subdirs.get(subdir);
                 if (existingNode === undefined) {
-                    const newNode = {
+                    const newNode: DirEntry = {
                         name: subdir,
                         level: i,
                         fullpath: currentPath,
@@ -188,6 +181,7 @@ export class CachedFileTree {
                         expanded: false,
                         parent: node,
                         isSelected: false,
+                        wantedUpdating: false,
                     };
                     node.subdirs.set(subdir, newNode);
                     node = newNode;
@@ -201,30 +195,25 @@ export class CachedFileTree {
         });
 
         this.recalcTree(this.tree);
+
+        this.initialized = true;
     }
 
     update(torrent: Torrent) {
-        if (this.torrenthash === torrent.hashString) {
-            // update done and percent fields in the tree
-            torrent.files.forEach((entry: any, index: number) => {
-                const delta = torrent.fileStats[index].bytesCompleted - this.files[index].done;
+        // update wanted, done and percent fields in the tree
+        torrent.files.forEach((entry: any, index: number) => {
+            this.files[index].done = torrent.fileStats[index].bytesCompleted as number;
+            this.files[index].percent = this.files[index].done * 100 / this.files[index].size;
+            this.files[index].want = torrent.fileStats[index].wanted;
+        });
+        const clearWantedUpdating = (node: DirEntry) => {
+            node.wantedUpdating = false;
+            node.files.forEach((f) => { f.wantedUpdating = false; });
+            node.subdirs.forEach(clearWantedUpdating);
+        };
+        clearWantedUpdating(this.tree);
 
-                this.files[index].done += delta;
-                this.files[index].percent = this.files[index].done * 100 / this.files[index].size;
-
-                let node: DirEntry | undefined = this.files[index].parent;
-
-                while (node !== undefined) {
-                    node.done += delta;
-                    node.percent = node.done * 100 / node.size;
-
-                    node = node.parent;
-                }
-            });
-        } else {
-            // rebuild the tree from scratch
-            this.parse(torrent, false);
-        }
+        this.recalcTree(this.tree);
     }
 
     flatten(): FileDirEntry[] {
@@ -243,17 +232,20 @@ export class CachedFileTree {
         return result;
     }
 
-    setWanted(path: string, state: boolean) {
+    setWanted(path: string, state: boolean, updating: boolean) {
         const entry = this._findEntry(path);
         if (entry === undefined) return;
+        console.log("SetWanted", path, state, updating);
 
         const recurse = (dir: DirEntry) => {
             dir.subdirs.forEach((d) => {
                 recurse(d);
             });
             dir.want = state;
+            dir.wantedUpdating = updating;
             dir.files.forEach((f) => {
                 f.want = state;
+                f.wantedUpdating = updating;
             });
         };
 
@@ -261,6 +253,7 @@ export class CachedFileTree {
             recurse(entry);
         } else {
             entry.want = state;
+            entry.wantedUpdating = updating;
         }
 
         this.recalcTree(this.tree);
@@ -270,6 +263,25 @@ export class CachedFileTree {
         const entry = this._findEntry(path);
         if (entry === undefined || !isDirEntry(entry)) return;
         entry.expanded = state;
+    }
+
+    getChildFilesIndexes(path: string) {
+        const result: number[] = [];
+        const entry = this._findEntry(path);
+        if (entry === undefined || !isDirEntry(entry)) return result;
+
+        const recurse = (dir: DirEntry) => {
+            dir.subdirs.forEach((d) => {
+                recurse(d);
+            });
+            dir.files.forEach((f) => {
+                result.push(f.index);
+            });
+        };
+
+        recurse(entry);
+
+        return result;
     }
 
     getUnwanted() {

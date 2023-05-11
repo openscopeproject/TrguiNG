@@ -33,6 +33,7 @@ pub struct TorrentReadResult {
     metadata: String,
     name: String,
     length: i64,
+    hash: String,
     files: Option<Vec<TorrentFileEntry>>,
 }
 
@@ -60,8 +61,9 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
 
             Ok(TorrentReadResult {
                 metadata: b64,
-                name: torrent.name,
+                name: torrent.name.clone(),
                 length: torrent.length,
+                hash: torrent.info_hash(),
                 files: torrent.files.map(|v| {
                     v.into_iter()
                         .map(|f| TorrentFileEntry {

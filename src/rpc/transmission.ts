@@ -156,6 +156,37 @@ export const TorrentAllFields = [
 
 export type TorrentAllFieldsType = typeof TorrentAllFields[number];
 
+export const TorrentMutableFields = [
+    "bandwidthPriority", // number this torrent's bandwidth tr_priority_t
+    "downloadLimit", // number maximum download speed (KBps)
+    "downloadLimited", // boolean true if downloadLimit is honored
+    "files-unwanted", // array indices of file(s) to not download
+    "files-wanted", // array indices of file(s) to download
+    "group", // string The name of this torrent's bandwidth group
+    "honorsSessionLimits", // boolean true if session upload limits are honored
+    "ids", // array torrent list, as described in 3.1
+    "labels", // array array of string labels
+    "location", // string new location of the torrent's content
+    "peer-limit", // number maximum number of peers
+    "priority-high", // array indices of high-priority file(s)
+    "priority-low", // array indices of low-priority file(s)
+    "priority-normal", // array indices of normal-priority file(s)
+    "queuePosition", // number position of this torrent in its queue [0...n)
+    "seedIdleLimit", // number torrent-level number of minutes of seeding inactivity
+    "seedIdleMode", // number which seeding inactivity to use. See tr_idlelimit
+    "seedRatioLimit", // double torrent-level seeding ratio
+    "seedRatioMode", // number which ratio to use. See tr_ratiolimit
+    "sequentialDownload", // boolean download torrent pieces sequentially
+    "trackerAdd", // array DEPRECATED use trackerList instead
+    "trackerList", // string string of announce URLs, one per line, and a blank line between tiers.
+    "trackerRemove", // array DEPRECATED use trackerList instead
+    "trackerReplace", // array DEPRECATED use trackerList instead
+    "uploadLimit", // number maximum upload speed (KBps)
+    "uploadLimited", // boolean true if uploadLimit is honored
+] as const;
+
+export type TorrentMutableFieldsType = typeof TorrentMutableFields[number];
+
 // These fields are polled regularlly with torrent list
 export const SessionFields = [
     "alt-speed-down", // number: max global download speed (KBps)

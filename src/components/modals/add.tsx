@@ -138,6 +138,7 @@ interface TorrentFileData {
     metadata: string,
     name: string,
     length: number,
+    hash: string,
     files: Array<{
         name: string,
         length: number,
@@ -184,7 +185,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             });
     }, [props]);
 
-    const fileTree = useMemo(() => new CachedFileTree(), []);
+    const fileTree = useMemo(() => new CachedFileTree(torrentData?.hash ?? ""), [torrentData]);
 
     const { data, refetch } = useFileTree("filetreebrief", fileTree);
     useEffect(() => {
@@ -194,7 +195,7 @@ export function AddTorrent(props: AddCommonModalProps) {
         }
     }, [torrentData, fileTree, refetch]);
 
-    const onCheckboxChange = useUnwantedFiles(fileTree);
+    const onCheckboxChange = useUnwantedFiles(fileTree, false);
 
     const { actionController: ac, close } = props;
 
@@ -206,7 +207,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             labels: common.labels,
             paused: !common.start,
             priority: common.priority,
-            unwanted: torrentData?.files != null ? [] : fileTree.getUnwanted(),
+            unwanted: torrentData?.files == null ? [] : fileTree.getUnwanted(),
         });
         close();
     }, [ac, close, torrentData, common, fileTree]);

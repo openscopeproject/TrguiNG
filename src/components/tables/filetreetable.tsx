@@ -26,7 +26,7 @@ import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
 import { tauri } from "@tauri-apps/api";
 import { TransguiTable } from "./common";
-import { Badge, Box, Checkbox, Flex } from "@mantine/core";
+import { Badge, Box, Checkbox, Flex, Loader, useMantineTheme } from "@mantine/core";
 import { refreshFileTree } from "queries";
 
 type FileDirEntryKey = keyof FileDirEntry;
@@ -68,17 +68,24 @@ function NameField(props: TableFieldProps) {
         refreshFileTree(props.treeName);
     }, [props]);
 
+    const theme = useMantineTheme();
+
     return (
         <Flex wrap="nowrap" gap="0.3rem" align="flex-end" sx={{ paddingLeft: `${props.entry.level * 2}em`, cursor: "default" }}>
-            <Checkbox
-                checked={props.entry.want === true || props.entry.want === undefined}
-                indeterminate={props.entry.want === undefined}
-                onChange={(e) => {
-                    props.onCheckboxChange(props.entry, e.currentTarget.checked);
-                    refreshFileTree(props.treeName);
-                }}
-                onClick={(e) => { e.stopPropagation(); }}
-                onDoubleClick={(e) => { e.stopPropagation(); }} />
+            <Box w="1.4rem" mx="auto">
+                {props.entry.wantedUpdating
+                    ? <Loader size="1.2rem" color={theme.colorScheme === "dark" ? theme.colors.cyan[4] : theme.colors.cyan[9]} />
+                    : <Checkbox
+                        checked={props.entry.want === true || props.entry.want === undefined}
+                        indeterminate={props.entry.want === undefined}
+                        onChange={(e) => {
+                            props.onCheckboxChange(props.entry, e.currentTarget.checked);
+                            refreshFileTree(props.treeName);
+                        }}
+                        onClick={(e) => { e.stopPropagation(); }}
+                        onDoubleClick={(e) => { e.stopPropagation(); }} />
+                }
+            </Box>
             <Box>
                 {isDir
                     ? (props.entry as DirEntry).expanded
@@ -124,10 +131,10 @@ interface FileTreeTableProps {
     brief?: boolean,
 }
 
-export function useUnwantedFiles(ft: CachedFileTree): EntryWantedChangeHandler {
+export function useUnwantedFiles(ft: CachedFileTree, setUpdating: boolean): EntryWantedChangeHandler {
     const changeHandler = useCallback((entry: FileDirEntry, state: boolean) => {
-        ft.setWanted(entry.fullpath, state);
-    }, [ft]);
+        ft.setWanted(entry.fullpath, state, setUpdating);
+    }, [ft, setUpdating]);
 
     return changeHandler;
 }

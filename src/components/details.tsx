@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { memo, useContext, useEffect, useMemo } from "react";
+import React, { memo, useCallback, useContext, useEffect, useMemo } from "react";
 import { type ClientManager } from "../clientmanager";
 import { ServerConfigContext } from "../config";
 import { getTorrentError, type Torrent, type TrackerStats } from "../rpc/torrent";
@@ -30,8 +30,9 @@ import { PeersTable } from "./tables/peerstable";
 import { type SessionStatEntry } from "rpc/transmission";
 import { Box, Container, Group, type MantineTheme, Table, Tabs, TextInput } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
-import { CachedFileTree } from "cachedfiletree";
-import { useFileTree, useSessionStats, useTorrentDetails } from "queries";
+import { CachedFileTree, type FileDirEntry } from "cachedfiletree";
+import { useFileTree, useMutateTorrent, useSessionStats, useTorrentDetails } from "queries";
+import { type TransmissionClient } from "rpc/client";
 
 interface DetailsProps {
     torrentId?: number,
@@ -258,24 +259,37 @@ function GeneralPane(props: { torrent: Torrent }) {
     );
 }
 
-function FileTreePane(props: { torrent: Torrent }) {
-    const fileTree = useMemo(() => new CachedFileTree(), []);
+function FileTreePane(props: { torrent: Torrent, client: TransmissionClient }) {
+    const fileTree = useMemo(() => new CachedFileTree(props.torrent.hashString), [props.torrent.hashString]);
 
     const { data, refetch } = useFileTree("filetree", fileTree);
 
     useEffect(() => {
-        fileTree.update(props.torrent);
+        if (fileTree.initialized) {
+            fileTree.update(props.torrent);
+        } else {
+            fileTree.parse(props.torrent, false);
+        }
         void refetch();
     }, [props.torrent, fileTree, refetch]);
 
-    const onCheckboxChange = useUnwantedFiles(fileTree);
+    const mutation = useMutateTorrent(props.client);
+
+    const onCheckboxChange = useUnwantedFiles(fileTree, true);
+    const updateUnwanted = useCallback((entry: FileDirEntry, state: boolean) => {
+        onCheckboxChange(entry, state);
+        mutation.mutate({
+            torrentIds: [props.torrent.id],
+            fields: { [state ? "files-wanted" : "files-unwanted"]: fileTree.getChildFilesIndexes(entry.fullpath) },
+        });
+    }, [fileTree, mutation, onCheckboxChange, props.torrent.id]);
 
     return (
         <FileTreeTable
             fileTree={fileTree}
             data={data}
             downloadDir={props.torrent.downloadDir}
-            onCheckboxChange={onCheckboxChange} />
+            onCheckboxChange={updateUnwanted} />
     );
 }
 
@@ -376,7 +390,7 @@ function Details(props: DetailsProps) {
                 </Tabs.Panel>
                 <Tabs.Panel value="files" className="h-100">
                     {torrent !== undefined
-                        ? <FileTreePane torrent={torrent} />
+                        ? <FileTreePane torrent={torrent} client={client} />
                         : <></>}
                 </Tabs.Panel>
                 <Tabs.Panel value="pieces" className="h-100">
