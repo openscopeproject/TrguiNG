@@ -406,7 +406,7 @@ function BandwidthPanel({ form, session }: { form: UseFormReturnType<FormValues>
             <Grid.Col span={10}>
                 <Group>
                     {DaysOfTheWeek.map((_, day) =>
-                        <DayOfWeekCheckbox key={day} form={form} day={day} session={session}/>
+                        <DayOfWeekCheckbox key={day} form={form} day={day} session={session} />
                     )}
                 </Group>
             </Grid.Col>
@@ -473,6 +473,7 @@ export function DaemonSettingsModal(props: DaemonSettingsProps) {
     useEffect(() => { form.setFieldValue("session", session); }, [session]);
 
     const onSave = useCallback(() => {
+        serverConfig.intervals = { ...form.values.intervals };
         if (form.values.session !== undefined) {
             mutation.mutate(form.values.session, {
                 onSuccess: () => {
@@ -493,7 +494,7 @@ export function DaemonSettingsModal(props: DaemonSettingsProps) {
         } else {
             props.close();
         }
-    }, [form.values.session, mutation, props]);
+    }, [form.values, mutation, props, serverConfig]);
 
     return (
         <SaveCancelModal

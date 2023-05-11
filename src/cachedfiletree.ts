@@ -235,7 +235,6 @@ export class CachedFileTree {
     setWanted(path: string, state: boolean, updating: boolean) {
         const entry = this._findEntry(path);
         if (entry === undefined) return;
-        console.log("SetWanted", path, state, updating);
 
         const recurse = (dir: DirEntry) => {
             dir.subdirs.forEach((d) => {
