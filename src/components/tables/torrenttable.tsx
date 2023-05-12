@@ -17,7 +17,7 @@
  */
 
 import "css/torrenttable.css";
-import React, { memo, useCallback, useContext, useMemo } from "react";
+import React, { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { type Torrent, type TrackerStats, getTorrentError } from "rpc/torrent";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, type TorrentAllFieldsType, type TorrentFieldsType, TorrentMinimumFields } from "rpc/transmission";
 import { type ColumnDef, type VisibilityState } from "@tanstack/react-table";
@@ -26,9 +26,10 @@ import { ProgressBar } from "../progressbar";
 import { type AccessorFn, type CellContext } from "@tanstack/table-core";
 import { TransguiTable } from "./common";
 import { getTrackerAnnounceState } from "./trackertable";
-import { Badge, Box } from "@mantine/core";
+import { ActionIcon, Badge, Box, TextInput } from "@mantine/core";
 import { ConfigContext } from "config";
 import { StatusIconMap, Error as StatusIconError } from "components/statusicons";
+import * as Icon from "react-bootstrap-icons";
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -54,7 +55,11 @@ function isTableFieldWithAccessor(f: TableField): f is TableFieldWithAccessor {
 }
 
 const TimeField = memo(function TimeField(props: TableFieldProps) {
-    return <>{secondsToHumanReadableStr(props.torrent[props.fieldName])}</>;
+    if (props.fieldName in props.torrent) {
+        return <>{secondsToHumanReadableStr(props.torrent[props.fieldName])}</>;
+    } else {
+        return <></>;
+    }
 }, (prev, next) => {
     const previousValue = prev.torrent[prev.fieldName] as number;
     const nextValue = next.torrent[next.fieldName] as number;
@@ -107,15 +112,74 @@ const AllFields: readonly TableField[] = [
 ] as const;
 
 function NameField(props: TableFieldProps) {
+    const [isHover, setHover] = useState(false);
+
     let StatusIcon = StatusIconMap[props.torrent.status];
     if ((props.torrent.error !== undefined && props.torrent.error > 0) ||
         getTorrentError(props.torrent) !== "") {
         StatusIcon = StatusIconError;
     }
-    return <>
-        <Box pb="xs" sx={{ flexShrink: 0 }}><StatusIcon /></Box>
-        <Box pl="xs" sx={{ textOverflow: "ellipsis", overflow: "hidden" }}>{props.torrent[props.fieldName]}</Box>
-    </>;
+
+    const currentName = useMemo(() => props.torrent[props.fieldName], [props.fieldName, props.torrent]);
+    const textRef = useRef<HTMLInputElement>(null);
+
+    const [newName, setNewName] = useState("");
+    const [isRenaming, setRenaming] = useState(false);
+
+    const renameHandler = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setRenaming(true);
+        setNewName(currentName);
+    }, [currentName]);
+
+    useEffect(() => {
+        if (isRenaming && textRef.current != null) {
+            textRef.current.focus();
+            textRef.current.select();
+        }
+    }, [isRenaming]);
+
+    // TODO need client in context manager
+    // const mutation = useMutateTorrent(client);
+
+    const updateTorrentName = useCallback((name: string) => {
+        // TODO
+        // mutation.mutate(...)
+        setRenaming(false);
+    }, []);
+
+    return (
+        <Box onMouseEnter={() => { setHover(true); }} onMouseLeave={() => { setHover(false); }}
+            sx={{ display: "flex", alignItems: "center", width: "100%" }}>
+            <Box pb="xs" sx={{ flexShrink: 0 }}>
+                <StatusIcon />
+            </Box>
+            {isRenaming
+                ? <TextInput ref={textRef} value={newName} sx={{ flexGrow: 1, height: "100%" }}
+                    styles={{
+                        input: {
+                            height: "1.5rem",
+                            minHeight: "1.5rem",
+                            lineHeight: "1.3rem",
+                        }
+                    }}
+                    onChange={(e) => { setNewName(e.target.value); }}
+                    onBlur={() => { setRenaming(false); }}
+                    onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                            updateTorrentName(newName);
+                        }
+                    }} />
+                : <Box pl="xs" sx={{ flexGrow: 1, textOverflow: "ellipsis", overflow: "hidden" }}>
+                    {currentName}
+                </Box>}
+            {isHover && !isRenaming
+                ? <ActionIcon sx={{ flexShrink: 0 }} onClick={renameHandler}>
+                    <Icon.InputCursorText size="1rem" />
+                </ActionIcon>
+                : <></>}
+        </Box>
+    );
 }
 
 function StringField(props: TableFieldProps) {
@@ -218,7 +282,10 @@ const Columns = AllFields.map((f): ColumnDef<Torrent> => {
 });
 
 const ColumnRequiredFields = AllFields.map(
-    (f) => ({ id: (f as TableFieldWithAccessor).columnId ?? f.name, requires: f.requiredFields ?? [f.name] })
+    (f) => ({
+        id: (f as TableFieldWithAccessor).columnId ?? f.name,
+        requires: f.requiredFields ?? [f.name]
+    })
 );
 
 function getRequiredFields(visibilityState: VisibilityState): TorrentFieldsType[] {

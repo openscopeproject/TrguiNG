@@ -267,7 +267,8 @@ export class CachedFileTree {
     getChildFilesIndexes(path: string) {
         const result: number[] = [];
         const entry = this._findEntry(path);
-        if (entry === undefined || !isDirEntry(entry)) return result;
+        if (entry === undefined) return result;
+        if (!isDirEntry(entry)) return [entry.index];
 
         const recurse = (dir: DirEntry) => {
             dir.subdirs.forEach((d) => {
