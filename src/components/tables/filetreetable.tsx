@@ -25,9 +25,10 @@ import { bytesToHumanReadableStr, pathMapFromServer } from "../../util";
 import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
 import { tauri } from "@tauri-apps/api";
-import { TransguiTable } from "./common";
-import { Badge, Box, Checkbox, Flex, Loader, useMantineTheme } from "@mantine/core";
-import { refreshFileTree } from "queries";
+import { EditableNameField, TransguiTable } from "./common";
+import { Badge, Box, Checkbox, Loader, useMantineTheme } from "@mantine/core";
+import { refreshFileTree, useMutateTorrentPath } from "queries";
+import { notifications } from "@mantine/notifications";
 
 type FileDirEntryKey = keyof FileDirEntry;
 type EntryWantedChangeHandler = (entry: FileDirEntry, state: boolean) => void;
@@ -56,23 +57,44 @@ const AllFields: readonly TableField[] = [
 ] as const;
 
 function NameField(props: TableFieldProps) {
-    const isDir = isDirEntry(props.entry);
+    const { entry, fileTree } = props;
+    const isDir = isDirEntry(entry);
+
     const onExpand = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
         if (isDirEntry(props.entry)) props.fileTree.expand(props.entry.fullpath, true);
         refreshFileTree(props.treeName);
     }, [props]);
+
     const onCollapse = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
-        if (isDirEntry(props.entry)) props.fileTree.expand(props.entry.fullpath, false);
+        if (isDir) fileTree.expand(entry.fullpath, false);
         refreshFileTree(props.treeName);
-    }, [props]);
+    }, [isDir, props.treeName, fileTree, entry.fullpath]);
 
     const theme = useMantineTheme();
 
+    const mutation = useMutateTorrentPath();
+
+    const updatePath = useCallback((name: string, onStart: () => void, onEnd: () => void) => {
+        onStart();
+
+        mutation.mutate(
+            { torrentId: props.fileTree.torrentId, path: props.entry.fullpath, name },
+            {
+                onSettled: onEnd,
+                onError: () => { notifications.show({ color: "red", message: "Failed to update file path" }); },
+                onSuccess: () => {
+                    props.fileTree.updatePath(props.entry.fullpath, name);
+                    refreshFileTree(props.treeName);
+                },
+            });
+    }, [mutation, props.fileTree, props.entry.fullpath, props.treeName]);
+
     return (
-        <Flex wrap="nowrap" gap="0.3rem" align="flex-end" sx={{ paddingLeft: `${props.entry.level * 2}em`, cursor: "default" }}>
-            <Box w="1.4rem" mx="auto">
+        <EditableNameField currentName={props.entry.name} onUpdate={updatePath}>
+            <Box sx={{ width: `${props.entry.level * 2}rem`, flexShrink: 0 }} />
+            <Box w="1.4rem" mx="auto" sx={{ flexShrink: 0 }}>
                 {props.entry.wantedUpdating
                     ? <Loader size="1.2rem" color={theme.colorScheme === "dark" ? theme.colors.cyan[4] : theme.colors.cyan[9]} />
                     : <Checkbox
@@ -86,7 +108,7 @@ function NameField(props: TableFieldProps) {
                         onDoubleClick={(e) => { e.stopPropagation(); }} />
                 }
             </Box>
-            <Box>
+            <Box ml="xs" sx={{ flexShrink: 0, height: "100%" }}>
                 {isDir
                     ? (props.entry as DirEntry).expanded
                         ? <Icon.DashSquare size={16} onClick={onCollapse} style={{ cursor: "pointer" }} />
@@ -94,8 +116,7 @@ function NameField(props: TableFieldProps) {
                     : <Icon.FileEarmark size={16} />
                 }
             </Box>
-            <Box sx={{ overflow: "hidden", textOverflow: "ellipsis" }}>{props.entry.name}</Box>
-        </Flex>
+        </EditableNameField>
     );
 }
 
@@ -184,7 +205,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
 
     const onRowDoubleClick = useCallback((row: FileDirEntry) => {
         if (props.downloadDir === undefined || props.downloadDir === "") return;
-        let path = `${props.downloadDir}/${row.originalpath}`;
+        let path = `${props.downloadDir}/${row.fullpath}`;
         path = pathMapFromServer(path, serverConfig);
         tauri.invoke("shell_open", { path }).catch((e) => { console.error("Error opening", path, e); });
     }, [props.downloadDir, serverConfig]);

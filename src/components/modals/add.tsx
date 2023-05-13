@@ -185,7 +185,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             });
     }, [props]);
 
-    const fileTree = useMemo(() => new CachedFileTree(torrentData?.hash ?? ""), [torrentData]);
+    const fileTree = useMemo(() => new CachedFileTree(torrentData?.hash ?? "", -1), [torrentData]);
 
     const { data, refetch } = useFileTree("filetreebrief", fileTree);
     useEffect(() => {

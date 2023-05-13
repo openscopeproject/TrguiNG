@@ -23,7 +23,6 @@ interface Entry {
     name: string,
     level: number,
     fullpath: string,
-    originalpath: string,
     parent?: DirEntry,
     size: number,
     done: number,
@@ -53,18 +52,24 @@ export function isDirEntry(entry: FileDirEntry): entry is DirEntry {
 }
 
 export class CachedFileTree {
-    tree: DirEntry;
+    tree!: DirEntry;
     torrenthash: string;
-    files: FileEntry[];
-    filePathToIndex: Record<string, number>;
-    initialized: boolean;
+    torrentId: number;
+    files!: FileEntry[];
+    filePathToIndex!: Record<string, number>;
+    initialized!: boolean;
 
-    constructor(hash: string) {
+    constructor(hash: string, id: number) {
+        this.torrenthash = hash;
+        this.torrentId = id;
+        this._reset();
+    }
+
+    _reset() {
         this.tree = {
             name: "",
             level: 0,
-            fullpath: "/",
-            originalpath: "/",
+            fullpath: "",
             size: 0,
             want: true,
             priority: 0,
@@ -76,7 +81,6 @@ export class CachedFileTree {
             isSelected: false,
             wantedUpdating: false,
         };
-        this.torrenthash = hash;
         this.files = [];
         this.filePathToIndex = {};
         this.initialized = false;
@@ -85,6 +89,7 @@ export class CachedFileTree {
     _findEntry(path: string): FileDirEntry | undefined {
         const parts = path.split("/");
         let node = this.tree;
+        if (parts[0] === this.tree.fullpath) parts.shift();
         for (let i = 0; i < parts.length; i++) {
             if (node.subdirs.has(parts[i])) {
                 node = node.subdirs.get(parts[i]) as DirEntry;
@@ -124,20 +129,16 @@ export class CachedFileTree {
     }
 
     parse(torrent: Torrent, fromFile: boolean) {
-        this.torrenthash = torrent.hashString ?? "";
-        const name = torrent.name as string;
+        this.torrenthash = torrent.hashString;
 
         this.files = torrent.files.map((entry: any, index: number): FileEntry => {
-            let path = (entry.name as string).replace("\\", "/");
-            if (path.startsWith(name + "/")) {
-                path = path.substring(name.length + 1);
-            }
+            const path = (entry.name as string).replace("\\", "/");
+
             return {
                 index,
                 name: path.substring(path.lastIndexOf("/") + 1),
                 level: 0,
                 fullpath: path,
-                originalpath: entry.name as string,
                 size: entry.length as number,
                 want: fromFile ? true : torrent.fileStats[index].wanted as boolean,
                 done: fromFile ? 0 : torrent.fileStats[index].bytesCompleted,
@@ -147,6 +148,10 @@ export class CachedFileTree {
                 wantedUpdating: false,
             };
         });
+
+        if (this.files.length > 1) {
+            this.tree.fullpath = torrent.name;
+        }
 
         const filePathIndex: Array<[string, number]> = this.files
             .map((f, i): [string, number] => [f.fullpath, i])
@@ -162,7 +167,8 @@ export class CachedFileTree {
             this.filePathToIndex[path] = index;
             const parts = path.split("/");
             let node = this.tree;
-            let currentPath = "";
+            let currentPath = node.fullpath;
+            if (parts[0] === currentPath) parts.shift();
             for (let i = 0; i < parts.length - 1; i++) {
                 const subdir = parts[i];
                 currentPath = currentPath === "" ? subdir : currentPath + "/" + subdir;
@@ -172,7 +178,6 @@ export class CachedFileTree {
                         name: subdir,
                         level: i,
                         fullpath: currentPath,
-                        originalpath: torrent.name as string + "/" + currentPath,
                         size: 0,
                         done: 0,
                         percent: 0,
@@ -202,6 +207,12 @@ export class CachedFileTree {
     update(torrent: Torrent) {
         // update wanted, done and percent fields in the tree
         torrent.files.forEach((entry: any, index: number) => {
+            const path = (entry.name as string).replace("\\", "/");
+            if (this.files[index].fullpath !== path) {
+                this._reset();
+                this.parse(torrent, false);
+                return;
+            }
             this.files[index].done = torrent.fileStats[index].bytesCompleted as number;
             this.files[index].percent = this.files[index].done * 100 / this.files[index].size;
             this.files[index].want = torrent.fileStats[index].wanted;
@@ -214,6 +225,25 @@ export class CachedFileTree {
         clearWantedUpdating(this.tree);
 
         this.recalcTree(this.tree);
+    }
+
+    updatePath(path: string, name: string) {
+        const entry = this._findEntry(path);
+        if (entry === undefined) return;
+
+        const pathParts = entry.fullpath.split("/");
+        pathParts.pop();
+        pathParts.push(name);
+
+        const newEntry: FileDirEntry = { ...entry, name, fullpath: pathParts.join("/") };
+
+        if (isDirEntry(entry)) {
+            (entry.parent as DirEntry).subdirs.delete(entry.name);
+            (entry.parent as DirEntry).subdirs.set(name, newEntry as DirEntry);
+        } else {
+            (entry.parent as DirEntry).files.delete(entry.name);
+            (entry.parent as DirEntry).files.set(name, newEntry as FileEntry);
+        }
     }
 
     flatten(): FileDirEntry[] {

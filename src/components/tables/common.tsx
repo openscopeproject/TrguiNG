@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Menu } from "@mantine/core";
+import { ActionIcon, Box, Menu, TextInput } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
 import {
     useReactTable, type Table, type ColumnDef, type ColumnSizingState,
@@ -359,5 +359,70 @@ export function TransguiTable<TData>(props: {
                     })}
             </div>
         </div>
+    );
+}
+
+interface EditableNameFieldProps extends React.PropsWithChildren {
+    currentName: string,
+    onUpdate: (newName: string, onStart: () => void, onEnd: () => void) => void,
+}
+
+export function EditableNameField(props: EditableNameFieldProps) {
+    const textRef = useRef<HTMLInputElement>(null);
+
+    const [newName, setNewName] = useState("");
+    const [isHover, setHover] = useState(false);
+    const [isRenaming, setRenaming] = useState(false);
+
+    const renameHandler = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setRenaming(true);
+        setNewName(props.currentName);
+    }, [props.currentName]);
+
+    const onEnter = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === "Enter") {
+            props.onUpdate(
+                newName,
+                () => {
+                    if (textRef.current != null) textRef.current.readOnly = true;
+                },
+                () => { setRenaming(false); });
+        }
+    }, [newName, props]);
+
+    useEffect(() => {
+        if (isRenaming && textRef.current != null) {
+            textRef.current.focus();
+            textRef.current.select();
+        }
+    }, [isRenaming]);
+
+    return (
+        <Box onMouseEnter={() => { setHover(true); }} onMouseLeave={() => { setHover(false); }}
+            sx={{ display: "flex", alignItems: "center", width: "100%", height: "100%" }}>
+            {props.children}
+            {isRenaming
+                ? <TextInput ref={textRef} value={newName} sx={{ flexGrow: 1, height: "100%" }}
+                    styles={{
+                        input: {
+                            height: "1.5rem",
+                            minHeight: "1.5rem",
+                            lineHeight: "1.3rem",
+                        }
+                    }}
+                    onChange={(e) => { setNewName(e.target.value); }}
+                    onBlur={() => { setRenaming(false); }}
+                    onKeyDown={onEnter}
+                    onClick={(e) => { e.stopPropagation(); }} />
+                : <Box pl="xs" sx={{ flexGrow: 1, textOverflow: "ellipsis", overflow: "hidden" }}>
+                    {props.currentName}
+                </Box>}
+            {isHover && !isRenaming
+                ? <ActionIcon sx={{ flexShrink: 0 }} onClick={renameHandler}>
+                    <Icon.InputCursorText size="1rem" />
+                </ActionIcon>
+                : <></>}
+        </Box>
     );
 }

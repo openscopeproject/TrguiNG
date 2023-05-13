@@ -17,19 +17,18 @@
  */
 
 import "css/torrenttable.css";
-import React, { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { memo, useCallback, useContext, useMemo } from "react";
 import { type Torrent, type TrackerStats, getTorrentError } from "rpc/torrent";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, type TorrentAllFieldsType, type TorrentFieldsType, TorrentMinimumFields } from "rpc/transmission";
 import { type ColumnDef, type VisibilityState } from "@tanstack/react-table";
 import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from "util";
 import { ProgressBar } from "../progressbar";
 import { type AccessorFn, type CellContext } from "@tanstack/table-core";
-import { TransguiTable } from "./common";
+import { EditableNameField, TransguiTable } from "./common";
 import { getTrackerAnnounceState } from "./trackertable";
-import { ActionIcon, Badge, Box, TextInput } from "@mantine/core";
+import { Badge, Box } from "@mantine/core";
 import { ConfigContext } from "config";
 import { StatusIconMap, Error as StatusIconError } from "components/statusicons";
-import * as Icon from "react-bootstrap-icons";
 import { useMutateTorrentPath } from "queries";
 import { notifications } from "@mantine/notifications";
 
@@ -114,8 +113,6 @@ const AllFields: readonly TableField[] = [
 ] as const;
 
 function NameField(props: TableFieldProps) {
-    const [isHover, setHover] = useState(false);
-
     let StatusIcon = StatusIconMap[props.torrent.status];
     if ((props.torrent.error !== undefined && props.torrent.error > 0) ||
         getTorrentError(props.torrent) !== "") {
@@ -123,67 +120,26 @@ function NameField(props: TableFieldProps) {
     }
 
     const currentName = useMemo(() => props.torrent[props.fieldName], [props.fieldName, props.torrent]);
-    const textRef = useRef<HTMLInputElement>(null);
-
-    const [newName, setNewName] = useState("");
-    const [isRenaming, setRenaming] = useState(false);
-
-    const renameHandler = useCallback((e: React.MouseEvent) => {
-        e.stopPropagation();
-        setRenaming(true);
-        setNewName(currentName);
-    }, [currentName]);
-
-    useEffect(() => {
-        if (isRenaming && textRef.current != null) {
-            textRef.current.focus();
-            textRef.current.select();
-        }
-    }, [isRenaming]);
 
     const mutation = useMutateTorrentPath();
 
-    const updateTorrentName = useCallback((name: string) => {
-        if (textRef.current != null) textRef.current.readOnly = true;
+    const updateTorrentName = useCallback((name: string, onStart: () => void, onEnd: () => void) => {
+        onStart();
+
         mutation.mutate(
             { torrentId: props.torrent.id, path: props.torrent.name, name },
             {
-                onSettled: () => { setRenaming(false); },
-                onError: () => { notifications.show({ message: "Failed to rename torrent" }); }
+                onSettled: onEnd,
+                onError: () => { notifications.show({ color: "red", message: "Failed to rename torrent" }); }
             });
     }, [mutation, props.torrent.id, props.torrent.name]);
 
     return (
-        <Box onMouseEnter={() => { setHover(true); }} onMouseLeave={() => { setHover(false); }}
-            sx={{ display: "flex", alignItems: "center", width: "100%" }}>
+        <EditableNameField currentName={currentName} onUpdate={updateTorrentName}>
             <Box pb="xs" sx={{ flexShrink: 0 }}>
                 <StatusIcon />
             </Box>
-            {isRenaming
-                ? <TextInput ref={textRef} value={newName} sx={{ flexGrow: 1, height: "100%" }}
-                    styles={{
-                        input: {
-                            height: "1.5rem",
-                            minHeight: "1.5rem",
-                            lineHeight: "1.3rem",
-                        }
-                    }}
-                    onChange={(e) => { setNewName(e.target.value); }}
-                    onBlur={() => { setRenaming(false); }}
-                    onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                            updateTorrentName(newName);
-                        }
-                    }} />
-                : <Box pl="xs" sx={{ flexGrow: 1, textOverflow: "ellipsis", overflow: "hidden" }}>
-                    {currentName}
-                </Box>}
-            {isHover && !isRenaming
-                ? <ActionIcon sx={{ flexShrink: 0 }} onClick={renameHandler}>
-                    <Icon.InputCursorText size="1rem" />
-                </ActionIcon>
-                : <></>}
-        </Box>
+        </EditableNameField>
     );
 }
 

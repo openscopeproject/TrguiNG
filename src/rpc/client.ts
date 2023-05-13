@@ -81,7 +81,8 @@ export class TransmissionClient {
         try {
             this.hostname = new URL(connection.url).hostname;
         } catch {
-            console.log("Invalid URL", connection.url);
+            // TODO handle errors
+            // console.log("Invalid URL", connection.url);
         }
     }
 

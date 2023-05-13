@@ -256,7 +256,9 @@ function GeneralPane(props: { torrent: Torrent }) {
 }
 
 function FileTreePane(props: { torrent: Torrent }) {
-    const fileTree = useMemo(() => new CachedFileTree(props.torrent.hashString), [props.torrent.hashString]);
+    const fileTree = useMemo(
+        () => new CachedFileTree(props.torrent.hashString, props.torrent.id),
+        [props.torrent.hashString, props.torrent.id]);
 
     const { data, refetch } = useFileTree("filetree", fileTree);
 
