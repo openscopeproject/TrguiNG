@@ -43,7 +43,7 @@ export function EditLabelsModal(props: EditLabelsProps) {
         setLabels(initialLabels);
     }, [initialLabels]);
 
-    const mutation = useMutateTorrent(props.actionController.client);
+    const mutation = useMutateTorrent();
     const { actionController: ac, close } = props;
 
     const onSave = useCallback(() => {

@@ -24,7 +24,6 @@ import { type ColorScheme } from "@mantine/core";
 
 export interface ServerConnection {
     url: string,
-    useAuth: boolean,
     username: string,
     password: string,
 }
@@ -181,7 +180,7 @@ export class Config {
 export const ConfigContext = React.createContext(new Config());
 export const ServerConfigContext = React.createContext<ServerConfig>(
     {
-        connection: { url: "", useAuth: false, username: "", password: "" },
+        connection: { url: "", username: "", password: "" },
         name: "",
         pathMappings: [],
         expandedDirFilters: [],

@@ -21,6 +21,7 @@ import { Buffer } from "buffer";
 import { type PriorityNumberType, SessionAllFields, type SessionAllFieldsType, SessionFields, type SessionStatistics, TorrentAllFields, type TorrentFieldsType } from "./transmission";
 import { type ServerConnection } from "../config";
 import { type BandwidthGroup, type Torrent } from "./torrent";
+import React, { useContext } from "react";
 
 class ApiError extends Error {
 
@@ -32,9 +33,7 @@ class ApiResponse {
     tag?: number;
 }
 
-export interface SessionInfo extends Partial<Record<SessionAllFieldsType, any>> {
-
-}
+export type SessionInfo = Partial<Record<SessionAllFieldsType, any>>;
 
 function isApiResponse(response: any): response is ApiResponse {
     return "result" in response && typeof response.result === "string";
@@ -298,4 +297,10 @@ export class TransmissionClient {
 
         return await this._sendRpc(request);
     }
+}
+
+export const ClientContext = React.createContext(new TransmissionClient({ url: "", username: "", password: "" }));
+
+export function useTransmissionClient() {
+    return useContext(ClientContext);
 }

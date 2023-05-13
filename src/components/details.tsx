@@ -16,9 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { memo, useCallback, useContext, useEffect, useMemo } from "react";
-import { type ClientManager } from "../clientmanager";
-import { ServerConfigContext } from "../config";
+import React, { memo, useCallback, useEffect, useMemo } from "react";
 import { getTorrentError, type Torrent, type TrackerStats } from "../rpc/torrent";
 import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr, timestampToDateString } from "../util";
 import { FileTreeTable, useUnwantedFiles } from "./tables/filetreetable";
@@ -32,12 +30,10 @@ import { Box, Container, Group, type MantineTheme, Table, Tabs, TextInput } from
 import * as Icon from "react-bootstrap-icons";
 import { CachedFileTree, type FileDirEntry } from "cachedfiletree";
 import { useFileTree, useMutateTorrent, useSessionStats, useTorrentDetails } from "queries";
-import { type TransmissionClient } from "rpc/client";
 
 interface DetailsProps {
     torrentId?: number,
     updates: boolean,
-    clientManager: ClientManager,
 }
 
 function DownloadBar(props: { torrent: Torrent }) {
@@ -259,7 +255,7 @@ function GeneralPane(props: { torrent: Torrent }) {
     );
 }
 
-function FileTreePane(props: { torrent: Torrent, client: TransmissionClient }) {
+function FileTreePane(props: { torrent: Torrent }) {
     const fileTree = useMemo(() => new CachedFileTree(props.torrent.hashString), [props.torrent.hashString]);
 
     const { data, refetch } = useFileTree("filetree", fileTree);
@@ -273,7 +269,7 @@ function FileTreePane(props: { torrent: Torrent, client: TransmissionClient }) {
         void refetch();
     }, [props.torrent, fileTree, refetch]);
 
-    const mutation = useMutateTorrent(props.client);
+    const mutation = useMutateTorrent();
 
     const onCheckboxChange = useUnwantedFiles(fileTree, true);
     const updateUnwanted = useCallback((entry: FileDirEntry, state: boolean) => {
@@ -311,10 +307,8 @@ function Stats(props: { stats: SessionStatEntry }) {
     </Table>;
 }
 
-function ServerStats(props: { clientManager: ClientManager }) {
-    const serverConfig = useContext(ServerConfigContext);
-    const client = props.clientManager.getClient(serverConfig.name);
-    const { data: sessionStats } = useSessionStats(client, true);
+function ServerStats() {
+    const { data: sessionStats } = useSessionStats(true);
 
     return (
         <div className="d-flex flex-column h-100 w-100">
@@ -336,11 +330,8 @@ function ServerStats(props: { clientManager: ClientManager }) {
 }
 
 function Details(props: DetailsProps) {
-    const serverConfig = useContext(ServerConfigContext);
-    const client = props.clientManager.getClient(serverConfig.name);
-
     const { data: torrent } = useTorrentDetails(
-        client, props.torrentId ?? -1, props.torrentId !== undefined && props.updates);
+        props.torrentId ?? -1, props.torrentId !== undefined && props.updates);
 
     return (
         <Tabs variant="outline" defaultValue="general" keepMounted={false} className="h-100 d-flex flex-column">
@@ -390,7 +381,7 @@ function Details(props: DetailsProps) {
                 </Tabs.Panel>
                 <Tabs.Panel value="files" className="h-100">
                     {torrent !== undefined
-                        ? <FileTreePane torrent={torrent} client={client} />
+                        ? <FileTreePane torrent={torrent} />
                         : <></>}
                 </Tabs.Panel>
                 <Tabs.Panel value="pieces" className="h-100">
@@ -409,7 +400,7 @@ function Details(props: DetailsProps) {
                         : <></>}
                 </Tabs.Panel>
                 <Tabs.Panel value="serverstats" className="h-100">
-                    <ServerStats clientManager={props.clientManager} />
+                    <ServerStats />
                 </Tabs.Panel>
             </div>
         </Tabs>

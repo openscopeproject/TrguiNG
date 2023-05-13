@@ -22,8 +22,7 @@ import { useDisclosure } from "@mantine/hooks";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import Split from "react-split";
 import { ActionController } from "../actions";
-import { type ClientManager } from "../clientmanager";
-import { ConfigContext, ServerConfigContext } from "../config";
+import { ConfigContext } from "../config";
 import { type Torrent } from "../rpc/torrent";
 import { MemoizedDetails } from "./details";
 import { DefaultFilter, Filters } from "./filters";
@@ -38,10 +37,7 @@ import { useSession, useTorrentList } from "queries";
 import { type TorrentFieldsType } from "rpc/transmission";
 import { DaemonSettingsModal } from "./modals/daemon";
 import { emit, listen } from "@tauri-apps/api/event";
-
-interface ServerProps {
-    clientManager: ClientManager,
-}
+import { useTransmissionClient } from "rpc/client";
 
 function usePausingModalState(runUpdates: (run: boolean) => void): [boolean, () => void, () => void] {
     const [opened, { open, close }] = useDisclosure(false);
@@ -220,15 +216,12 @@ function ServerModals(props: ServerModalsProps) {
             opened={showAddTorrentModal} close={closeAddTorrentModalAndPop}
             allLabels={props.allLabels} uri={torrentPath} />
         <DaemonSettingsModal
-            actionController={props.actionController}
             opened={showDaemonSettingsModal} close={closeDaemonSettingsModal} />
     </>;
 }
 
-export function Server(props: ServerProps) {
-    const serverConfig = useContext(ServerConfigContext);
-
-    const client = props.clientManager.getClient(serverConfig.name);
+export function Server({ hostname }: { hostname: string }) {
+    const client = useTransmissionClient();
 
     const actionController = useMemo(
         () => new ActionController(client),
@@ -249,8 +242,8 @@ export function Server(props: ServerProps) {
 
     const [tableRequiredFields, setTableRequiredFields] = useState<TorrentFieldsType[]>(useInitialTorrentRequiredFields());
 
-    const { data: torrents } = useTorrentList(client, updates, tableRequiredFields);
-    const { data: session } = useSession(client, updates);
+    const { data: torrents } = useTorrentList(updates, tableRequiredFields);
+    const { data: session } = useSession(updates);
 
     const [currentTorrent, setCurrentTorrentInt] = useState<number>();
     const setCurrentTorrent = useCallback(
@@ -312,7 +305,7 @@ export function Server(props: ServerProps) {
                 }
                 bottom={
                     <div className="w-100">
-                        <MemoizedDetails torrentId={currentTorrent} updates={updates} {...props} />
+                        <MemoizedDetails torrentId={currentTorrent} updates={updates} />
                     </div>
                 }
             />
@@ -321,7 +314,7 @@ export function Server(props: ServerProps) {
                     session,
                     filteredTorrents,
                     selectedTorrents,
-                    hostname: props.clientManager.getHostname(serverConfig.name)
+                    hostname,
                 }} />
             </div>
         </div>

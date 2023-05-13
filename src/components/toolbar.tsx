@@ -101,7 +101,7 @@ function Toolbar(props: ToolbarProps) {
 
     const [altSpeedMode, setAltSpeedMode] = useState<boolean>();
 
-    const sessioMutation = useMutateSession(props.actionController.client);
+    const sessioMutation = useMutateSession();
 
     const toggleAltSpeedMode = useCallback(() => {
         sessioMutation.mutate({ "alt-speed-enabled": altSpeedMode !== true }, {
@@ -116,7 +116,7 @@ function Toolbar(props: ToolbarProps) {
         if (props.altSpeedMode !== undefined) setAltSpeedMode(props.altSpeedMode);
     }, [props.altSpeedMode]);
 
-    const torrentMutation = useMutateTorrent(props.actionController.client);
+    const torrentMutation = useMutateTorrent();
 
     const onSearchInput = useCallback((e: React.FormEvent) => {
         debouncedSetSearchTerms(

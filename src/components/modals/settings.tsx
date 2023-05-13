@@ -154,7 +154,7 @@ export function ManageServersModal(props: ManageServerModalProps) {
     const onAdd = useCallback(() => {
         servers.push(
             {
-                connection: { url: "", useAuth: false, username: "", password: "" },
+                connection: { url: "", username: "", password: "" },
                 name: "new",
                 pathMappings: [],
                 expandedDirFilters: [],

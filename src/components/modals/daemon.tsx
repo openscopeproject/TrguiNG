@@ -22,15 +22,10 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import { type ModalState, SaveCancelModal } from "./common";
 import { useMutateSession, useSessionFull, useTestPort } from "queries";
 import { type UseFormReturnType, useForm } from "@mantine/form";
-import { type ActionController } from "actions";
 import { type SessionInfo } from "rpc/client";
 import { type ExtendedCustomColors } from "types/mantine";
 import { type BandwidthGroup } from "rpc/torrent";
 import { notifications } from "@mantine/notifications";
-
-interface DaemonSettingsProps extends ModalState {
-    actionController: ActionController,
-}
 
 interface FormValues {
     intervals: ServerConfig["intervals"],
@@ -148,17 +143,16 @@ interface PortTestResult {
 }
 
 function NetworkPanel(
-    { opened, form, ac, session }: {
+    { opened, form, session }: {
         opened: boolean,
         form: UseFormReturnType<FormValues>,
-        ac: ActionController,
         session: SessionInfo,
     }
 ) {
     const [testPortQueryEnbaled, setTestPortQueryEnabled] = useState(false);
     const [testPortResult, setTestPortResult] = useState<PortTestResult>({ label: "", color: "green" });
 
-    const { data: testPort, status, fetchStatus, remove: removeQuery } = useTestPort(ac.client, testPortQueryEnbaled);
+    const { data: testPort, status, fetchStatus, remove: removeQuery } = useTestPort(testPortQueryEnbaled);
 
     const onTestPort = useCallback(() => {
         setTestPortQueryEnabled(true);
@@ -457,9 +451,9 @@ function QueuePanel({ form, session }: { form: UseFormReturnType<FormValues>, se
     );
 }
 
-export function DaemonSettingsModal(props: DaemonSettingsProps) {
-    const { data: session, fetchStatus } = useSessionFull(props.actionController.client, props.opened);
-    const mutation = useMutateSession(props.actionController.client);
+export function DaemonSettingsModal(props: ModalState) {
+    const { data: session, fetchStatus } = useSessionFull(props.opened);
+    const mutation = useMutateSession();
     const serverConfig = useContext(ServerConfigContext);
 
     const form = useForm<FormValues>({
@@ -527,7 +521,7 @@ export function DaemonSettingsModal(props: DaemonSettingsProps) {
                             </Tabs.Panel>
 
                             <Tabs.Panel value="network" pt="md">
-                                <NetworkPanel opened={props.opened} form={form} ac={props.actionController} session={form.values.session} />
+                                <NetworkPanel opened={props.opened} form={form} session={form.values.session} />
                             </Tabs.Panel>
 
                             <Tabs.Panel value="bandwidth" pt="md">

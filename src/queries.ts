@@ -20,7 +20,7 @@ import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { type CachedFileTree } from "cachedfiletree";
 import { ServerConfigContext } from "config";
 import { useCallback, useContext, useMemo } from "react";
-import { type SessionInfo, type TransmissionClient } from "rpc/client";
+import { useTransmissionClient, type SessionInfo } from "rpc/client";
 import { type Torrent } from "rpc/torrent";
 import { type TorrentMutableFieldsType, type TorrentFieldsType } from "rpc/transmission";
 
@@ -49,8 +49,9 @@ const BandwidthGroupKeys = {
     all: (server: string,) => [server, "bandwidth-group"] as const,
 };
 
-export function useTorrentList(client: TransmissionClient, enabled: boolean, fields: TorrentFieldsType[]) {
+export function useTorrentList(enabled: boolean, fields: TorrentFieldsType[]) {
     const serverConfig = useContext(ServerConfigContext);
+    const client = useTransmissionClient();
 
     return useQuery({
         queryKey: TorrentKeys.listAll(serverConfig.name, fields),
@@ -63,8 +64,9 @@ export function useTorrentList(client: TransmissionClient, enabled: boolean, fie
     });
 }
 
-export function useTorrentDetails(client: TransmissionClient, torrentId: number, enabled: boolean) {
+export function useTorrentDetails(torrentId: number, enabled: boolean) {
     const serverConfig = useContext(ServerConfigContext);
+    const client = useTransmissionClient();
 
     return useQuery({
         queryKey: TorrentKeys.details(serverConfig.name, torrentId),
@@ -82,8 +84,9 @@ export interface TorrentMutationVariables {
     fields: Partial<Record<TorrentMutableFieldsType, any>>,
 }
 
-export function useMutateTorrent(client: TransmissionClient) {
+export function useMutateTorrent() {
     const serverConfig = useContext(ServerConfigContext);
+    const client = useTransmissionClient();
 
     return useMutation({
         mutationFn: async ({ torrentIds, fields }: TorrentMutationVariables) => {
@@ -122,8 +125,9 @@ export function useMutateTorrent(client: TransmissionClient) {
     });
 }
 
-export function useSession(client: TransmissionClient, enabled: boolean) {
+export function useSession(enabled: boolean) {
     const serverConfig = useContext(ServerConfigContext);
+    const client = useTransmissionClient();
 
     return useQuery({
         queryKey: SessionKeys.all(serverConfig.name),
@@ -136,8 +140,9 @@ export function useSession(client: TransmissionClient, enabled: boolean) {
     });
 }
 
-export function useSessionFull(client: TransmissionClient, enabled: boolean) {
+export function useSessionFull(enabled: boolean) {
     const serverConfig = useContext(ServerConfigContext);
+    const client = useTransmissionClient();
 
     return useQuery({
         queryKey: SessionKeys.full(serverConfig.name),
@@ -149,8 +154,9 @@ export function useSessionFull(client: TransmissionClient, enabled: boolean) {
     });
 }
 
-export function useMutateSession(client: TransmissionClient) {
+export function useMutateSession() {
     const serverConfig = useContext(ServerConfigContext);
+    const client = useTransmissionClient();
 
     return useMutation({
         mutationFn: async (session: SessionInfo) => {
@@ -164,8 +170,9 @@ export function useMutateSession(client: TransmissionClient) {
     });
 }
 
-export function useSessionStats(client: TransmissionClient, enabled: boolean) {
+export function useSessionStats(enabled: boolean) {
     const serverConfig = useContext(ServerConfigContext);
+    const client = useTransmissionClient();
 
     return useQuery({
         queryKey: SessionStatsKeys.all(serverConfig.name),
@@ -178,8 +185,9 @@ export function useSessionStats(client: TransmissionClient, enabled: boolean) {
     });
 }
 
-export function useTestPort(client: TransmissionClient, enabled: boolean) {
+export function useTestPort(enabled: boolean) {
     const serverConfig = useContext(ServerConfigContext);
+    const client = useTransmissionClient();
 
     return useQuery({
         queryKey: [serverConfig.name, "test-port"],
@@ -191,8 +199,9 @@ export function useTestPort(client: TransmissionClient, enabled: boolean) {
     });
 }
 
-export function useBandwidthGroups(client: TransmissionClient, enabled: boolean) {
+export function useBandwidthGroups(enabled: boolean) {
     const serverConfig = useContext(ServerConfigContext);
+    const client = useTransmissionClient();
 
     return useQuery({
         queryKey: BandwidthGroupKeys.all(serverConfig.name),

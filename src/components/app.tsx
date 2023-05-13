@@ -31,6 +31,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { invoke } from "@tauri-apps/api";
 import { queryClient } from "queries";
 import { Notifications } from "@mantine/notifications";
+import { ClientContext } from "rpc/client";
 
 interface ServerTabsProps {
     openTabs: string[],
@@ -219,7 +220,9 @@ export function App() {
                     servers={servers} onServersSave={onServerSave} />
                 {server.current !== undefined
                     ? <ServerConfigContext.Provider value={server.current}>
-                        <Server clientManager={clientManager} />
+                        <ClientContext.Provider value={clientManager.getClient(server.current.name)}>
+                            <Server hostname={clientManager.getHostname(server.current.name)} />
+                        </ClientContext.Provider>
                     </ServerConfigContext.Provider>
                     : <div className="d-flex justify-content-center align-items-center w-100 h-100">
                         <div className="d-flex flex-column" style={{ minHeight: "10rem", height: "75vh" }}>
