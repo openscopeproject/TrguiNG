@@ -30,6 +30,8 @@ import { ActionIcon, Badge, Box, TextInput } from "@mantine/core";
 import { ConfigContext } from "config";
 import { StatusIconMap, Error as StatusIconError } from "components/statusicons";
 import * as Icon from "react-bootstrap-icons";
+import { useMutateTorrentPath } from "queries";
+import { notifications } from "@mantine/notifications";
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -139,14 +141,17 @@ function NameField(props: TableFieldProps) {
         }
     }, [isRenaming]);
 
-    // TODO need client in context manager
-    // const mutation = useMutateTorrent(client);
+    const mutation = useMutateTorrentPath();
 
     const updateTorrentName = useCallback((name: string) => {
-        // TODO
-        // mutation.mutate(...)
-        setRenaming(false);
-    }, []);
+        if (textRef.current != null) textRef.current.readOnly = true;
+        mutation.mutate(
+            { torrentId: props.torrent.id, path: props.torrent.name, name },
+            {
+                onSettled: () => { setRenaming(false); },
+                onError: () => { notifications.show({ message: "Failed to rename torrent" }); }
+            });
+    }, [mutation, props.torrent.id, props.torrent.name]);
 
     return (
         <Box onMouseEnter={() => { setHover(true); }} onMouseLeave={() => { setHover(false); }}

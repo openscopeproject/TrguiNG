@@ -30,8 +30,6 @@ const TorrentKeys = {
     all: (server: string,) => [server, "torrent"] as const,
     listAll: (server: string, fields: TorrentFieldsType[]) =>
         [...TorrentKeys.all(server), "list", { fields }] as const,
-    list: (server: string, torrentIds: number[], fields: TorrentFieldsType[]) =>
-        [...TorrentKeys.all(server), { fields, torrentIds }] as const,
     details: (server: string, torrentId: number) =>
         [...TorrentKeys.all(server), { torrentId }] as const,
 };
@@ -84,6 +82,42 @@ export interface TorrentMutationVariables {
     fields: Partial<Record<TorrentMutableFieldsType, any>>,
 }
 
+function updateCachedTorrentFields(serverName: string, torrentIds: number[], fields: Torrent) {
+    queryClient.setQueriesData(
+        {
+            predicate: (query) => {
+                const key = query.queryKey;
+                return key.length === 4 &&
+                    key[0] === serverName &&
+                    key[1] === "torrent" &&
+                    key[2] === "list";
+            }
+        },
+        (data: Torrent[] | undefined) => {
+            if (data === undefined) return undefined;
+            return data.map((t) => {
+                if (!torrentIds.includes(t.id)) return t;
+                return { ...t, ...fields };
+            });
+        }
+    );
+    queryClient.setQueriesData(
+        {
+            type: "active",
+            predicate: (query) => {
+                const key = query.queryKey;
+                return key.length === 3 &&
+                    key[0] === serverName &&
+                    key[1] === "torrent" &&
+                    torrentIds.includes((key[2] as { torrentId: number }).torrentId);
+            }
+        },
+        (t: Torrent | undefined) => {
+            return { ...t, ...fields };
+        }
+    );
+}
+
 export function useMutateTorrent() {
     const serverConfig = useContext(ServerConfigContext);
     const client = useTransmissionClient();
@@ -95,32 +129,33 @@ export function useMutateTorrent() {
         onSuccess: (_, { torrentIds, fields }: TorrentMutationVariables) => {
             // some mutable fields like "files-unwanted" don't map directly to
             // proper torrent fields but it's ok to have some extra entrie in the object
-            queryClient.setQueryData(
-                TorrentKeys.all(serverConfig.name),
-                (data: Torrent[] | undefined) => {
-                    if (data === undefined) return undefined;
-                    return data.map((t) => {
-                        if (!torrentIds.includes(t.id)) return t;
-                        return { ...t, ...fields };
-                    });
-                }
-            );
-            queryClient.setQueriesData(
-                {
-                    type: "active",
-                    predicate: (query) => {
-                        const key = query.queryKey;
-                        return key.length === 3 &&
-                            key[0] === serverConfig.name &&
-                            key[1] === "torrent" &&
-                            torrentIds.includes((key[2] as { torrentId: number }).torrentId);
-                    }
-                },
-                (t: Torrent | undefined) => {
-                    return { ...t, ...fields };
-                }
-            );
+            updateCachedTorrentFields(serverConfig.name, torrentIds, fields);
             void queryClient.invalidateQueries(TorrentKeys.all(serverConfig.name));
+        }
+    });
+}
+
+export interface TorrentPathMutationVariables {
+    torrentId: number,
+    path: string,
+    name: string,
+}
+
+export function useMutateTorrentPath() {
+    const serverConfig = useContext(ServerConfigContext);
+    const client = useTransmissionClient();
+
+    return useMutation({
+        mutationFn: async ({ torrentId, path, name }: TorrentPathMutationVariables) => {
+            await client.torrentRenamePath(torrentId, path, name);
+        },
+        onSuccess: (_, { torrentId, path, name }: TorrentPathMutationVariables) => {
+            if (path.includes("/")) {
+                void queryClient.invalidateQueries(TorrentKeys.details(serverConfig.name, torrentId));
+            } else {
+                updateCachedTorrentFields(serverConfig.name, [torrentId], { name });
+                void queryClient.invalidateQueries(TorrentKeys.all(serverConfig.name));
+            }
         }
     });
 }
@@ -160,12 +195,10 @@ export function useMutateSession() {
 
     return useMutation({
         mutationFn: async (session: SessionInfo) => {
-            return await client.setSession(session);
+            await client.setSession(session);
         },
         onSuccess: () => {
-            void queryClient.invalidateQueries({
-                queryKey: SessionKeys.all(serverConfig.name)
-            });
+            void queryClient.invalidateQueries(SessionKeys.all(serverConfig.name));
         }
     });
 }

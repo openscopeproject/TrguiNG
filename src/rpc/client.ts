@@ -112,7 +112,14 @@ export class TransmissionClient {
         }
 
         if (response.ok) {
-            return await response.json();
+            const responseJson = await response.json();
+
+            if (responseJson.result !== "success") {
+                console.log("Full response with error:", responseJson);
+                throw new ApiError(responseJson.result as string);
+            }
+
+            return responseJson;
         } else {
             console.log(response);
             throw new Error("Server returned error");
@@ -185,19 +192,13 @@ export class TransmissionClient {
         return this.sessionInfo;
     }
 
-    async setSession(fields: Record<string, any>): Promise<string> {
+    async setSession(fields: Record<string, any>) {
         const request = {
             method: "session-set",
             arguments: fields,
         };
 
-        const response = await this._sendRpc(request);
-
-        if (response.result !== "success") {
-            throw new ApiError("Failed to update session: " + (response.result as string));
-        }
-
-        return response.result;
+        await this._sendRpc(request);
     }
 
     async getSessionStats(): Promise<SessionStatistics> {
@@ -251,6 +252,19 @@ export class TransmissionClient {
                 location,
                 move
             },
+        };
+
+        await this._sendRpc(request);
+    }
+
+    async torrentRenamePath(torrentId: number, path: string, name: string) {
+        const request = {
+            method: "torrent-rename-path",
+            arguments: {
+                ids: [torrentId],
+                path,
+                name,
+            }
         };
 
         await this._sendRpc(request);
