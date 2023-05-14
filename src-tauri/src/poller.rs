@@ -29,7 +29,6 @@ use crate::torrentcache::process_torrents;
 #[serde(rename_all = "camelCase")]
 struct Connection {
     url: String,
-    use_auth: bool,
     username: String,
     password: String,
 }
@@ -172,7 +171,7 @@ async fn poll(
             HeaderValue::from_str(session.as_str()).unwrap(),
         );
     }
-    if connection.use_auth {
+    if !connection.username.is_empty() || !connection.password.is_empty() {
         let b64_value =
             b64engine.encode(format!("{}:{}", connection.username, connection.password).as_bytes());
         let value = format!("Basic {}", b64_value);

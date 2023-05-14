@@ -55,7 +55,7 @@ export function ContextMenu({ contextMenuInfo, setContextMenuInfo, children, ...
             opened={opened}
             onClose={onClose}
             offset={0}
-            middlewares={{ shift: true, flip: false }}
+            middlewares={{ shift: true, flip: true }}
             position="right-start"
         >
             <Portal>
@@ -76,7 +76,7 @@ export function ContextMenu({ contextMenuInfo, setContextMenuInfo, children, ...
                 <Menu.Dropdown>
                     <ScrollArea.Autosize
                         type="auto"
-                        mah={"calc(100% - 0.5rem)"}
+                        mah="calc(100vh - 0.5rem)"
                         offsetScrollbars
                         styles={{
                             viewport: {

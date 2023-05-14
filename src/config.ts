@@ -76,6 +76,7 @@ interface Settings {
             position: [number, number] | undefined,
             theme: ColorScheme | undefined,
         },
+        numLastSaveDirs: number,
     },
 }
 
@@ -98,6 +99,7 @@ const DefaultSettings: Settings = {
             position: undefined,
             theme: undefined,
         },
+        numLastSaveDirs: 20,
     }
 };
 
@@ -174,6 +176,16 @@ export class Config {
 
     getTableSortBy(table: TableName): SortingState {
         return this.values.app.tables[table].sortBy;
+    }
+
+    addSaveDir(serverName: string, dir: string) {
+        const saveDirs = this.getServer(serverName)?.lastSaveDirs;
+        if (saveDirs === undefined) return;
+        const index = saveDirs.findIndex((d) => d === dir);
+        if (index > 0) saveDirs.splice(index, 1);
+        if (saveDirs.unshift(dir) > this.values.app.numLastSaveDirs) {
+            saveDirs.pop();
+        }
     }
 }
 

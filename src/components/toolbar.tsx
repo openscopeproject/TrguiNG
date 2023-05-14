@@ -166,7 +166,7 @@ function Toolbar(props: ToolbarProps) {
                     <Icon.TagsFill size="1.5rem" color="steelblue" />
                 </ToolbarButton>
 
-                <Menu shadow="md" width={200} withinPortal>
+                <Menu shadow="md" width={200} withinPortal middlewares={{ shift: true, flip: false }}>
                     <Menu.Target>
                         <ToolbarButton><Icon.ExclamationDiamondFill size="1.5rem" color="gold" /></ToolbarButton>
                     </Menu.Target>

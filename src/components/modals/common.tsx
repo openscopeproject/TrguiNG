@@ -16,12 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Badge, Button, CloseButton, Divider, Group, Loader, Modal, type ModalProps, MultiSelect, type MultiSelectValueProps, Text, TextInput } from "@mantine/core";
+import {
+    Badge, Button, CloseButton, Divider, Group, Loader, Modal,
+    type ModalProps, MultiSelect, type MultiSelectValueProps,
+    Text, TextInput, ActionIcon, Menu, ScrollArea
+} from "@mantine/core";
 import { dialog } from "@tauri-apps/api";
 import { type ActionController } from "actions";
-import { ServerConfigContext } from "config";
+import { ConfigContext, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { pathMapFromServer, pathMapToServer } from "util";
+import * as Icon from "react-bootstrap-icons";
 
 export interface ModalState {
     opened: boolean,
@@ -84,13 +89,18 @@ export function TorrentsNames({ actionController }: { actionController: ActionCo
 export interface LocationData {
     path: string,
     setPath: (s: string) => void,
+    lastPaths: string[],
+    addPath: (dir: string) => void,
     browseHandler: () => void,
     inputLabel?: string,
 }
 
 export function useTorrentLocation(): LocationData {
+    const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
-    const [path, setPath] = useState<string>("");
+    const lastPaths = useMemo(() => serverConfig.lastSaveDirs, [serverConfig]);
+
+    const [path, setPath] = useState<string>(lastPaths.length > 0 ? lastPaths[0] : "");
 
     const browseHandler = useCallback(() => {
         const mappedLocation = pathMapFromServer(path, serverConfig);
@@ -105,7 +115,11 @@ export function useTorrentLocation(): LocationData {
         }).catch(console.error);
     }, [serverConfig, path, setPath]);
 
-    return { path, setPath, browseHandler };
+    const addPath = useCallback(
+        (dir: string) => { config.addSaveDir(serverConfig.name, dir); },
+        [config, serverConfig.name]);
+
+    return { path, setPath, lastPaths, addPath, browseHandler };
 }
 
 export function TorrentLocation(props: LocationData) {
@@ -119,7 +133,34 @@ export function TorrentLocation(props: LocationData) {
                     root: {
                         flexGrow: 1
                     }
-                }} />
+                }}
+                rightSection={
+                    <Menu position="left-start" withinPortal
+                        middlewares={{ shift: true, flip: false }} offset={{ mainAxis: -20, crossAxis: 30 }}>
+                        <Menu.Target>
+                            <ActionIcon py="md">
+                                <Icon.ClockHistory size="16" />
+                            </ActionIcon>
+                        </Menu.Target>
+                        <Menu.Dropdown>
+                            <ScrollArea.Autosize
+                                type="auto"
+                                mah="calc(100vh - 0.5rem)"
+                                miw="30rem"
+                                offsetScrollbars
+                                styles={{
+                                    viewport: {
+                                        paddingBottom: 0
+                                    }
+                                }}
+                            >
+                                {props.lastPaths.map((path) => (
+                                    <Menu.Item key={path} onClick={() => { props.setPath(path); }}>{path}</Menu.Item>
+                                ))}
+                            </ScrollArea.Autosize>
+                        </Menu.Dropdown>
+                    </Menu>
+                } />
             <Button onClick={props.browseHandler}>Browse</Button>
         </Group>
     );

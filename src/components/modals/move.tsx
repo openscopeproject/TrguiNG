@@ -23,12 +23,13 @@ import { type ActionModalState, TorrentLocation, TorrentsNames, useTorrentLocati
 export function MoveModal(props: ActionModalState) {
     const [moveData, setMoveData] = useState<boolean>(true);
 
-    const { path, setPath, browseHandler } = useTorrentLocation();
+    const location = useTorrentLocation();
+    const { setPath } = location;
 
     const onMove = useCallback(() => {
-        props.actionController.run("changeDirectory", path, moveData).catch(console.log);
+        props.actionController.run("changeDirectory", location.path, moveData).catch(console.log);
         props.close();
-    }, [props, path, moveData]);
+    }, [props, location.path, moveData]);
 
     const initialLocation = useMemo(() => {
         const [id] = props.actionController.selectedTorrents;
@@ -45,7 +46,7 @@ export function MoveModal(props: ActionModalState) {
             <Divider my="sm" />
             <Text mb="md">Enter new location for</Text>
             <TorrentsNames actionController={props.actionController} />
-            <TorrentLocation {...{ path, setPath, browseHandler }} />
+            <TorrentLocation {...location} />
             <Checkbox
                 label="Move torrent data to new location"
                 checked={moveData}

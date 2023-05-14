@@ -114,8 +114,9 @@ export function AddMagnet(props: AddCommonModalProps) {
             paused: !common.start,
             priority: common.priority,
         });
+        common.location.addPath(common.location.path);
         close();
-    }, [ac, magnet, common.location.path, common.labels, common.start, common.priority, close]);
+    }, [ac, magnet, common.location, common.labels, common.start, common.priority, close]);
 
     return (
         <Modal opened={props.opened} onClose={close} title="Add torrent by magnet link or URL" centered size="lg">
@@ -209,6 +210,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             priority: common.priority,
             unwanted: torrentData?.files == null ? [] : fileTree.getUnwanted(),
         });
+        common.location.addPath(common.location.path);
         close();
     }, [ac, close, torrentData, common, fileTree]);
 
