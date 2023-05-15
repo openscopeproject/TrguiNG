@@ -5,9 +5,10 @@
   ],
   "scripts": {
     "tauri dev": "tauri dev",
-    "webpack serve": "webpack serve",
     "build": "tauri build",
-    "webpack": "webpack build",
+    "webpack serve": "webpack serve --config webpack.dev.js",
+    "webpack-dev": "webpack --config webpack.dev.js",
+    "webpack-prod": "webpack --config webpack.prod.js",
     "info": "tauri info",
     "react-devtools": "npx react-devtools"
   },
@@ -35,7 +36,8 @@
     "webpack": "^5.82.1",
     "webpack-bundle-analyzer": "^4.8.0",
     "webpack-cli": "^5.1.1",
-    "webpack-dev-server": "^4.15.0"
+    "webpack-dev-server": "^4.15.0",
+    "webpack-merge": "^5.8.0"
   },
   "dependencies": {
     "@emotion/react": "^11.11.0",

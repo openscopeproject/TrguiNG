@@ -7,7 +7,7 @@
     "distDir": "../dist",
     "devPath": "http://localhost:8080/",
     "beforeDevCommand": "",
-    "beforeBuildCommand": "npx webpack"
+    "beforeBuildCommand": "npm run webpack-prod"
   },
   "tauri": {
     "bundle": {

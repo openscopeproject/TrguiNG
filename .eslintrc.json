@@ -27,15 +27,27 @@
     "rules": {
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "error",
+        "indent": [
+            "error",
+            4
+        ],
         "@typescript-eslint/indent": [
             "error",
             4
+        ],
+        "semi": [
+            "error",
+            "always"
         ],
         "@typescript-eslint/semi": [
             "error",
             "always"
         ],
         "@typescript-eslint/no-extra-semi": "error",
+        "quotes": [
+            "error",
+            "double"
+        ],
         "@typescript-eslint/quotes": [
             "error",
             "double"
@@ -56,6 +68,7 @@
         ],
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/space-before-function-paren": "off",
+        "comma-dangle": "off",
         "@typescript-eslint/comma-dangle": "off"
     }
 }
