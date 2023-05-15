@@ -16,17 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ActionIcon, Box, Menu, TextInput } from "@mantine/core";
+import { ActionIcon, Box, Group, Menu, TextInput } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
 import {
     useReactTable, type Table, type ColumnDef, type ColumnSizingState,
     type SortingState, type VisibilityState, getCoreRowModel,
-    getSortedRowModel, flexRender, type Row, type Column, type RowSelectionState
+    getSortedRowModel, flexRender, type Row, type Column, type RowSelectionState, type ColumnOrderState, type AccessorKeyColumnDef
 } from "@tanstack/react-table";
 import { useVirtualizer, type Virtualizer } from "@tanstack/react-virtual";
 import { ContextMenu, useContextMenu } from "components/contextmenu";
 import { ConfigContext, type TableName } from "config";
 import React, { memo, useReducer, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { DragDropContext, Draggable, type DropResult } from "react-beautiful-dnd";
+import { StrictModeDroppable } from "components/strictmodedroppable";
+import { reorderElements } from "util";
 
 const defaultColumn = {
     minSize: 30,
@@ -36,16 +39,25 @@ const defaultColumn = {
 
 function useTable<TData>(
     tablename: TableName,
-    columns: Array<ColumnDef<TData, unknown>>,
+    columns: Array<ColumnDef<TData, unknown> | AccessorKeyColumnDef<TData>>,
     data: TData[],
     selected: string[],
     getRowId: (r: TData) => string,
     onVisibilityChange?: React.Dispatch<VisibilityState>,
-): [Table<TData>, VisibilityState, (v: VisibilityState) => void, ColumnSizingState] {
+): [
+        Table<TData>,
+        VisibilityState,
+        (v: VisibilityState) => void,
+        ColumnOrderState,
+        (o: ColumnOrderState) => void,
+        ColumnSizingState
+    ] {
     const config = useContext(ConfigContext);
 
     const [columnVisibility, setColumnVisibility] =
         useState<VisibilityState>(config.getTableColumnVisibility(tablename));
+    const [columnOrder, setColumnOrder] =
+        useState<ColumnOrderState>(config.getTableColumnOrder(tablename));
     const [columnSizing, setColumnSizing] =
         useState<ColumnSizingState>(config.getTableColumnSizes(tablename));
     const [sorting, setSorting] =
@@ -56,6 +68,9 @@ function useTable<TData>(
         config.setTableColumnVisibility(tablename, columnVisibility);
         onVisibilityChange?.(columnVisibility);
     }, [config, columnVisibility, onVisibilityChange, tablename]);
+    useEffect(() => {
+        config.setTableColumnOrder(tablename, columnOrder);
+    }, [config, columnOrder, tablename]);
     useEffect(() => {
         config.setTableColumnSizes(tablename, columnSizing);
     }, [config, columnSizing, tablename]);
@@ -73,6 +88,7 @@ function useTable<TData>(
         getRowId,
         enableHiding: true,
         onColumnVisibilityChange: setColumnVisibility,
+        onColumnOrderChange: setColumnOrder,
         enableColumnResizing: true,
         onColumnSizingChange: setColumnSizing,
         enableSorting: true,
@@ -80,6 +96,7 @@ function useTable<TData>(
         enableRowSelection: true,
         state: {
             columnVisibility,
+            columnOrder,
             columnSizing,
             sorting,
             rowSelection,
@@ -88,7 +105,11 @@ function useTable<TData>(
         getSortedRowModel: getSortedRowModel(),
     });
 
-    return [table, columnVisibility, setColumnVisibility, columnSizing];
+    useEffect(() => {
+        if (columnOrder.length === 0) setColumnOrder(table.getAllLeafColumns().map((c) => c.id));
+    }, [columnOrder, table]);
+
+    return [table, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columnSizing];
 }
 
 function useSelectHandler<TData>(
@@ -160,6 +181,8 @@ function useTableVirtualizer(count: number): [React.MutableRefObject<null>, numb
 function useColumnMenu<TData>(
     columnVisibility: VisibilityState,
     setColumnVisibility: (v: VisibilityState) => void,
+    columnOrder: ColumnOrderState,
+    setColumnOrder: (s: ColumnOrderState) => void,
     columns: Array<Column<TData, unknown>>
 ): [React.MouseEventHandler<HTMLDivElement>, React.ReactElement] {
     const [info, setInfo, handler] = useContextMenu();
@@ -167,6 +190,22 @@ function useColumnMenu<TData>(
     const onColumnMenuItemClick = useCallback((value: string, checked: boolean) => {
         setColumnVisibility({ ...columnVisibility, [value]: checked });
     }, [columnVisibility, setColumnVisibility]);
+
+    const columnIds = useMemo(() => columns.map((c) => c.id), [columns]);
+
+    const onDragEnd = useCallback((result: DropResult) => {
+        if (result.destination != null) {
+            // sanitize columnOrder in case there are non-existing columns
+            // (can happen with bad config)
+            let newOrder = columnOrder.filter((f) => columnIds.includes(f));
+            columnIds.forEach((f) => {
+                if (!newOrder.includes(f)) newOrder.push(f);
+            });
+            // reorder
+            newOrder = reorderElements(newOrder, result.source.index, result.destination.index);
+            setColumnOrder(newOrder);
+        }
+    }, [columnIds, columnOrder, setColumnOrder]);
 
     return [
         handler,
@@ -176,15 +215,35 @@ function useColumnMenu<TData>(
             setContextMenuInfo={setInfo}
             closeOnItemClick={false}
         >
-            {columns.map(column => {
-                const visible = !(column.id in columnVisibility) || columnVisibility[column.id];
-                return <Menu.Item key={column.id}
-                    icon={visible ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
-                    onClick={() => { onColumnMenuItemClick(column.id, !visible); }}
-                >
-                    {column.columnDef.header as string}
-                </Menu.Item>;
-            })}
+            <DragDropContext onDragEnd={onDragEnd}>
+                <StrictModeDroppable droppableId="tableheadercontextmenu">
+                    {provided => (
+                        <div ref={provided.innerRef} {...provided.droppableProps}>
+                            {columns.map((column, index) => {
+                                const visible = !(column.id in columnVisibility) || columnVisibility[column.id];
+                                return (
+                                    <Draggable draggableId={column.id} index={index} key={column.id}>
+                                        {(provided) => (
+                                            <Group ref={provided.innerRef} {...provided.draggableProps} noWrap>
+                                                <Menu.Item
+                                                    icon={visible ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                                                    onClick={() => { onColumnMenuItemClick(column.id, !visible); }}
+                                                >
+                                                    {column.columnDef.header as string}
+                                                </Menu.Item>
+                                                <div {...provided.dragHandleProps}>
+                                                    <Icon.GripVertical size="12" />
+                                                </div>
+                                            </Group>
+                                        )}
+                                    </Draggable>
+                                );
+                            })}
+                            {provided.placeholder}
+                        </div>
+                    )}
+                </StrictModeDroppable>
+            </DragDropContext>
         </ContextMenu >
     ];
 }
@@ -208,6 +267,7 @@ function InnerRow<TData>(props: {
     row: Row<TData>,
     columnSizing: ColumnSizingState,
     columnVisibility: VisibilityState,
+    columnOrder: ColumnOrderState,
 }) {
     return <>
         {props.row.getVisibleCells().map(cell => {
@@ -226,7 +286,8 @@ const MemoizedInnerRow = memo(InnerRow, (prev, next) => {
     return (
         prev.row.original === next.row.original &&
         prev.columnSizing === next.columnSizing &&
-        prev.columnVisibility === next.columnVisibility
+        prev.columnVisibility === next.columnVisibility &&
+        prev.columnOrder === next.columnOrder
     );
 }) as typeof InnerRow;
 
@@ -241,6 +302,7 @@ function TableRow<TData>(props: {
     height: number,
     columnSizing: ColumnSizingState,
     columnVisibility: VisibilityState,
+    columnOrder: ColumnOrderState,
 }) {
     const { onRowDoubleClick: propsDblClick, row } = props;
     const onRowDoubleClick = useCallback(() => {
@@ -276,7 +338,7 @@ export function TransguiTable<TData>(props: {
     onRowDoubleClick?: (row: TData) => void,
     onVisibilityChange?: React.Dispatch<VisibilityState>,
 }) {
-    const [table, columnVisibility, setColumnVisibility, columnSizing] =
+    const [table, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columnSizing] =
         useTable(props.tablename, props.columns, props.data, props.selected, props.getRowId, props.onVisibilityChange);
 
     const [lastIndex, onRowClick] = useSelectHandler(
@@ -285,7 +347,7 @@ export function TransguiTable<TData>(props: {
     const [parentRef, rowHeight, virtualizer] = useTableVirtualizer(props.data.length);
 
     const [menuContextHandler, columnMenu] = useColumnMenu(
-        columnVisibility, setColumnVisibility, table.getAllLeafColumns());
+        columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, table.getAllLeafColumns());
 
     return (
         <div ref={parentRef} className="torrent-table-container">
@@ -355,6 +417,7 @@ export function TransguiTable<TData>(props: {
                             height: rowHeight,
                             columnSizing,
                             columnVisibility,
+                            columnOrder,
                         }} />;
                     })}
             </div>

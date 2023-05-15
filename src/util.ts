@@ -83,6 +83,14 @@ export function swapElements(a: unknown[], i: number, j: number) {
     }
 }
 
+export function reorderElements<T>(list: T[], startIndex: number, endIndex: number): T[] {
+    const result = Array.from(list);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+
+    return result;
+}
+
 function normalizePath(path: string) {
     let p = path.replace("\\", "/");
     if (p.match(/^[a-zA-Z]:\//) != null) p = p.toLowerCase();

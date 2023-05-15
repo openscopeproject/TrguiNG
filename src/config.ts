@@ -19,7 +19,10 @@
 import * as fs from "@tauri-apps/api/fs";
 import React from "react";
 import { merge } from "lodash-es";
-import { type SortingState, type ColumnSizingState, type VisibilityState } from "@tanstack/react-table";
+import {
+    type SortingState, type ColumnSizingState,
+    type VisibilityState, type ColumnOrderState
+} from "@tanstack/react-table";
 import { type ColorScheme } from "@mantine/core";
 
 export interface ServerConnection {
@@ -55,6 +58,7 @@ export interface SortByConfig {
 interface TableSettings {
     columns: string[],
     columnVisibility: Record<string, boolean>,
+    columnOrder: string[],
     columnSizes: Record<string, number>,
     sortBy: SortByConfig[],
 }
@@ -87,6 +91,7 @@ const DefaultSettings: Settings = {
         tables: Object.fromEntries(TableNames.map((table) => [table, {
             columns: [],
             columnVisibility: {},
+            columnOrder: [],
             columnSizes: {},
             sortBy: [],
         }])) as unknown as Record<TableName, TableSettings>,
@@ -168,6 +173,14 @@ export class Config {
 
     getTableColumnVisibility(table: TableName): VisibilityState {
         return this.values.app.tables[table].columnVisibility;
+    }
+
+    setTableColumnOrder(table: TableName, order: ColumnOrderState) {
+        this.values.app.tables[table].columnOrder = order;
+    }
+
+    getTableColumnOrder(table: TableName): ColumnOrderState {
+        return this.values.app.tables[table].columnOrder;
     }
 
     setTableSortBy(table: TableName, sortBy: SortingState) {
