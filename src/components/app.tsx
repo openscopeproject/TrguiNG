@@ -18,13 +18,15 @@
 
 import "bootstrap/dist/css/bootstrap.min.css";
 
-import { ConfigContext, type ServerConfig, ServerConfigContext } from "../config";
+import { ConfigContext, ServerConfigContext } from "../config";
+import type { ServerConfig } from "../config";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Server } from "../components/server";
 import * as Icon from "react-bootstrap-icons";
 import { ManageServersModal } from "./modals/settings";
 import { ClientManager } from "../clientmanager";
-import { ActionIcon, Menu, Tabs, type TabsValue, useMantineColorScheme } from "@mantine/core";
+import { ActionIcon, Menu, Tabs, useMantineColorScheme } from "@mantine/core";
+import type { TabsValue } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -131,7 +133,7 @@ function ServerTabs(props: ServerTabsProps) {
     </>);
 }
 
-export function App() {
+export default function App() {
     const config = useContext(ConfigContext);
     const [servers, setServers] = useState(config.getServers());
     const [openTabs, setOpenTabs] = useState<string[]>(config.getOpenTabs());

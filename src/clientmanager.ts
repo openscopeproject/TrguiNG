@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { type ServerConfig, type Config } from "./config";
+import type { ServerConfig, Config } from "./config";
 import { TransmissionClient } from "./rpc/client";
 
 export class ClientManager {

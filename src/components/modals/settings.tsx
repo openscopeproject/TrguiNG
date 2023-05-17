@@ -17,11 +17,12 @@
  */
 
 import { ActionIcon, Grid, Group, PasswordInput, Textarea, TextInput } from "@mantine/core";
-import { type ServerConfig } from "config";
+import type { ServerConfig } from "config";
 import cloneDeep from "lodash-es/cloneDeep";
 import React, { useCallback, useEffect, useState } from "react";
 import { swapElements, useForceRender } from "util";
-import { type ModalState, SaveCancelModal } from "./common";
+import type { ModalState} from "./common";
+import { SaveCancelModal } from "./common";
 import * as Icon from "react-bootstrap-icons";
 
 interface ServerListPanelProps {

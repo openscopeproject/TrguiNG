@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { type BandwidthGroupFieldType, type PeerStatsFieldsType, Status, type TorrentAllFieldsType, type TrackerStatsFieldsType } from "./transmission";
+import type { BandwidthGroupFieldType, PeerStatsFieldsType, TorrentAllFieldsType, TrackerStatsFieldsType } from "./transmission";
+import { Status } from "./transmission";
 
 export type Torrent = Partial<Record<TorrentAllFieldsType, any>>;
 export type TrackerStats = Partial<Record<TrackerStatsFieldsType, any>>;

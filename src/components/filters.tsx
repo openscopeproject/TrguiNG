@@ -17,7 +17,8 @@
  */
 
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { getTorrentError, type Torrent } from "../rpc/torrent";
+import type { Torrent } from "../rpc/torrent";
+import { getTorrentError } from "../rpc/torrent";
 import { Status } from "../rpc/transmission";
 import * as Icon from "react-bootstrap-icons";
 import * as StatusIcons from "./statusicons";

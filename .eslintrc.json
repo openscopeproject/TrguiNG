@@ -69,6 +69,14 @@
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/space-before-function-paren": "off",
         "comma-dangle": "off",
-        "@typescript-eslint/comma-dangle": "off"
+        "@typescript-eslint/comma-dangle": "off",
+        "@typescript-eslint/consistent-type-imports": [
+            "error",
+            {
+                "prefer": "type-imports",
+                "disallowTypeAnnotations": true,
+                "fixStyle": "separate-type-imports"
+            }
+        ]
     }
 }

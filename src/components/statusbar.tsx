@@ -20,8 +20,8 @@ import React, { useMemo } from "react";
 import { byteRateToHumanReadableStr, bytesToHumanReadableStr } from "../util";
 import * as Icon from "react-bootstrap-icons";
 import { Container, Group } from "@mantine/core";
-import { type SessionInfo } from "rpc/client";
-import { type Torrent } from "rpc/torrent";
+import type { SessionInfo } from "rpc/client";
+import type { Torrent } from "rpc/torrent";
 
 export interface StatusbarProps {
     session: SessionInfo | undefined,

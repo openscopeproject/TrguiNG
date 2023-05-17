@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { type ColorScheme, ColorSchemeProvider, MantineProvider, type MantineThemeOverride } from "@mantine/core";
+import { ColorSchemeProvider, MantineProvider } from "@mantine/core";
+import type { ColorScheme, MantineThemeOverride } from "@mantine/core";
 import { useColorScheme } from "@mantine/hooks";
 import { ConfigContext } from "config";
 import React, { useCallback, useContext, useState } from "react";
@@ -69,7 +70,7 @@ const Theme: (colorScheme: ColorScheme) => MantineThemeOverride = (colorScheme) 
     },
 });
 
-export function CustomMantineProvider({ children }: { children: React.ReactNode }) {
+export default function CustomMantineProvider({ children }: { children: React.ReactNode }) {
     const config = useContext(ConfigContext);
 
     const preferredColorScheme = useColorScheme();

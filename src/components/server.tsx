@@ -17,13 +17,14 @@
  */
 
 import "../css/custom.css";
-import { Box, type CSSObject } from "@mantine/core";
+import type { CSSObject } from "@mantine/core";
+import { Box } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import Split from "react-split";
 import { ActionController } from "../actions";
 import { ConfigContext } from "../config";
-import { type Torrent } from "../rpc/torrent";
+import type { Torrent } from "../rpc/torrent";
 import { MemoizedDetails } from "./details";
 import { DefaultFilter, Filters } from "./filters";
 import { EditLabelsModal } from "./modals/editlabels";
@@ -34,7 +35,7 @@ import { RemoveModal } from "./modals/remove";
 import { MoveModal } from "./modals/move";
 import { AddMagnet, AddTorrent } from "./modals/add";
 import { useSession, useTorrentList } from "queries";
-import { type TorrentFieldsType } from "rpc/transmission";
+import type { TorrentFieldsType } from "rpc/transmission";
 import { DaemonSettingsModal } from "./modals/daemon";
 import { emit, listen } from "@tauri-apps/api/event";
 import { useTransmissionClient } from "rpc/client";

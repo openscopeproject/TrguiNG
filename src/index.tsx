@@ -16,16 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "bootstrap/dist/css/bootstrap.min.css";
 import { appWindow, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
 
 import { Config, ConfigContext } from "./config";
-import { createRoot, type Root } from "react-dom/client";
-import React from "react";
-import { App } from "./components/app";
-import { CustomMantineProvider } from "components/mantinetheme";
+import { createRoot } from "react-dom/client";
+import type { Root } from "react-dom/client";
+import React, { lazy, Suspense } from "react";
 import { invoke } from "@tauri-apps/api";
 import { emit } from "@tauri-apps/api/event";
+
+const App = lazy(async () => await import(/* webpackChunkName: "app" */ "components/app"));
+const CustomMantineProvider = lazy(
+    async () => await import(/* webpackChunkName: "app" */ "components/mantinetheme"));
 
 async function onCloseRequested(app: Root, config: Config) {
     await config.save();
@@ -70,9 +72,11 @@ async function run(config: Config) {
     app.render(
         <React.StrictMode>
             <ConfigContext.Provider value={config}>
-                <CustomMantineProvider>
-                    <App />
-                </CustomMantineProvider>
+                <Suspense fallback={<div />}>
+                    <CustomMantineProvider>
+                        <App />
+                    </CustomMantineProvider>
+                </Suspense>
             </ConfigContext.Provider>
         </React.StrictMode>
     );

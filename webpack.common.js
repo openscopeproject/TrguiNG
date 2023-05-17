@@ -80,15 +80,19 @@ module.exports = {
                     test: /[\\/]node_modules[\\/]@mantine[\\/]/,
                     name: "mantine",
                 },
+                tauri: {
+                    test: /[\\/]node_modules[\\/]@tauri-apps[\\/]/,
+                    name: "tauri",
+                },
                 icons: {
                     test: /[\\/]node_modules[\\/]react-bootstrap-icons[\\/]/,
                     name: "bootstrap-icons",
                 },
-                other: {
-                    test: /[\\/]node_modules[\\/]/,
-                    priority: -1,
-                    name: "other",
-                },
+                // other: {
+                //     test: /[\\/]node_modules[\\/]/,
+                //     priority: -1,
+                //     name: "other",
+                // },
             },
         },
     },

@@ -17,12 +17,13 @@
  */
 
 import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
-import { type CachedFileTree } from "cachedfiletree";
+import type { CachedFileTree } from "cachedfiletree";
 import { ServerConfigContext } from "config";
 import { useCallback, useContext, useMemo } from "react";
-import { useTransmissionClient, type SessionInfo } from "rpc/client";
-import { type Torrent } from "rpc/torrent";
-import { type TorrentMutableFieldsType, type TorrentFieldsType } from "rpc/transmission";
+import type { SessionInfo } from "rpc/client";
+import { useTransmissionClient } from "rpc/client";
+import type { Torrent } from "rpc/torrent";
+import type { TorrentMutableFieldsType, TorrentFieldsType } from "rpc/transmission";
 
 export const queryClient = new QueryClient();
 

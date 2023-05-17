@@ -17,7 +17,8 @@
  */
 
 import React, { memo, useCallback, useEffect, useMemo } from "react";
-import { getTorrentError, type Torrent, type TrackerStats } from "../rpc/torrent";
+import type { Torrent, TrackerStats } from "../rpc/torrent";
+import { getTorrentError } from "../rpc/torrent";
 import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr, timestampToDateString } from "../util";
 import { FileTreeTable, useUnwantedFiles } from "./tables/filetreetable";
 import { PiecesCanvas } from "./piecescanvas";
@@ -25,10 +26,12 @@ import { ProgressBar } from "./progressbar";
 import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./tables/torrenttable";
 import { TrackersTable } from "./tables/trackertable";
 import { PeersTable } from "./tables/peerstable";
-import { type SessionStatEntry } from "rpc/transmission";
-import { Box, Container, Group, type MantineTheme, Table, Tabs, TextInput } from "@mantine/core";
+import type { SessionStatEntry } from "rpc/transmission";
+import type { MantineTheme} from "@mantine/core";
+import { Box, Container, Group, Table, Tabs, TextInput } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
-import { CachedFileTree, type FileDirEntry } from "cachedfiletree";
+import type { FileDirEntry } from "cachedfiletree";
+import { CachedFileTree } from "cachedfiletree";
 import { useFileTree, useMutateTorrent, useSessionStats, useTorrentDetails } from "queries";
 
 interface DetailsProps {

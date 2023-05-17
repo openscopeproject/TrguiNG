@@ -18,12 +18,14 @@
 
 import "css/torrenttable.css";
 import React, { memo, useCallback, useContext, useMemo } from "react";
-import { type Torrent, type TrackerStats, getTorrentError } from "rpc/torrent";
-import { PriorityColors, PriorityStrings, Status, StatusStrings, type TorrentAllFieldsType, type TorrentFieldsType, TorrentMinimumFields } from "rpc/transmission";
-import { type ColumnDef, type VisibilityState } from "@tanstack/react-table";
+import type { Torrent, TrackerStats} from "rpc/torrent";
+import { getTorrentError } from "rpc/torrent";
+import type { TorrentAllFieldsType, TorrentFieldsType} from "rpc/transmission";
+import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
+import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from "util";
 import { ProgressBar } from "../progressbar";
-import { type AccessorFn, type CellContext } from "@tanstack/table-core";
+import type { AccessorFn, CellContext } from "@tanstack/table-core";
 import { EditableNameField, TransguiTable } from "./common";
 import { getTrackerAnnounceState } from "./trackertable";
 import { Badge, Box } from "@mantine/core";

@@ -16,14 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Button, Flex, type MantineTheme, Menu, TextInput } from "@mantine/core";
-import { debounce } from "lodash-es";
+import type { MantineTheme } from "@mantine/core";
+import { Button, Flex, Menu, TextInput } from "@mantine/core";
+import debounce from "lodash-es/debounce";
 import React, { forwardRef, memo, useCallback, useEffect, useMemo, useState } from "react";
 import * as Icon from "react-bootstrap-icons";
-import { type ActionController, type ActionMethodsType } from "../actions";
-import { BandwidthPriority, type PriorityNumberType } from "rpc/transmission";
-import { type TorrentMutationVariables, useMutateSession, useMutateTorrent } from "queries";
-import { type UseMutationResult } from "@tanstack/react-query";
+import type { ActionController, ActionMethodsType } from "../actions";
+import type { PriorityNumberType } from "rpc/transmission";
+import { BandwidthPriority } from "rpc/transmission";
+import type { TorrentMutationVariables } from "queries";
+import { useMutateSession, useMutateTorrent } from "queries";
+import type { UseMutationResult } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 
 interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {

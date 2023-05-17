@@ -16,15 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Button, Checkbox, Grid, Group, Loader, LoadingOverlay, NativeSelect, NumberInput, type NumberInputProps, Tabs, Text, TextInput } from "@mantine/core";
-import { type ServerConfig, ServerConfigContext } from "config";
+import type { NumberInputProps} from "@mantine/core";
+import { Box, Button, Checkbox, Grid, Group, Loader, LoadingOverlay, NativeSelect, NumberInput, Tabs, Text, TextInput } from "@mantine/core";
+import type { ServerConfig} from "config";
+import { ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import { type ModalState, SaveCancelModal } from "./common";
+import type { ModalState} from "./common";
+import { SaveCancelModal } from "./common";
 import { useMutateSession, useSessionFull, useTestPort } from "queries";
-import { type UseFormReturnType, useForm } from "@mantine/form";
-import { type SessionInfo } from "rpc/client";
-import { type ExtendedCustomColors } from "types/mantine";
-import { type BandwidthGroup } from "rpc/torrent";
+import type { UseFormReturnType} from "@mantine/form";
+import { useForm } from "@mantine/form";
+import type { SessionInfo } from "rpc/client";
+import type { ExtendedCustomColors } from "types/mantine";
+import type { BandwidthGroup } from "rpc/torrent";
 import { notifications } from "@mantine/notifications";
 
 interface FormValues {

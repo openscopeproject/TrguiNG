@@ -18,9 +18,10 @@
 
 import { Buffer } from "buffer";
 
-import { type PriorityNumberType, SessionAllFields, type SessionAllFieldsType, SessionFields, type SessionStatistics, TorrentAllFields, type TorrentFieldsType } from "./transmission";
-import { type ServerConnection } from "../config";
-import { type BandwidthGroup, type Torrent } from "./torrent";
+import type { PriorityNumberType, SessionAllFieldsType, SessionStatistics, TorrentFieldsType } from "./transmission";
+import { SessionAllFields, SessionFields, TorrentAllFields } from "./transmission";
+import type { ServerConnection } from "../config";
+import type { BandwidthGroup, Torrent } from "./torrent";
 import React, { useContext } from "react";
 
 class ApiError extends Error {

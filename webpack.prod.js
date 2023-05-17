@@ -16,10 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+const path = require("path");
+const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
 const { merge } = require("webpack-merge");
+
 const common = require("./webpack.common.js");
 
 module.exports = merge(common, {
     mode: "production",
+    plugins: [
+        new BundleAnalyzerPlugin({
+            analyzerMode: "static",
+            openAnalyzer: false,
+            reportFilename: path.resolve(__dirname, "webpack-report.html")
+        }),
+    ],
     devtool: "source-map",
 });

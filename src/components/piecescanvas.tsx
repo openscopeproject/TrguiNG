@@ -16,9 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { type CSSProperties, useEffect, useMemo, useRef } from "react";
+import type { CSSProperties } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { useResizeDetector } from "react-resize-detector";
-import { type Torrent } from "../rpc/torrent";
+import type { Torrent } from "../rpc/torrent";
 
 export function PiecesCanvas(props: { torrent: Torrent }) {
     const { width, height, ref } = useResizeDetector({

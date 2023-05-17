@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { type Torrent } from "./rpc/torrent";
-import { type PriorityNumberType } from "rpc/transmission";
+import type { Torrent } from "./rpc/torrent";
+import type { PriorityNumberType } from "rpc/transmission";
 
 interface Entry {
     name: string,
@@ -132,7 +132,7 @@ export class CachedFileTree {
         this.torrenthash = torrent.hashString;
 
         this.files = torrent.files.map((entry: any, index: number): FileEntry => {
-            const path = (entry.name as string).replace("\\", "/");
+            const path = (entry.name as string).replace(/\\/g, "/");
 
             return {
                 index,
@@ -207,7 +207,7 @@ export class CachedFileTree {
     update(torrent: Torrent) {
         // update wanted, done and percent fields in the tree
         torrent.files.forEach((entry: any, index: number) => {
-            const path = (entry.name as string).replace("\\", "/");
+            const path = (entry.name as string).replace(/\\/g, "/");
             if (this.files[index].fullpath !== path) {
                 this._reset();
                 this.parse(torrent, false);

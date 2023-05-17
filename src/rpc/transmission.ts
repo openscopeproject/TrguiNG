@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { type ExtendedCustomColors } from "types/mantine";
+import type { ExtendedCustomColors } from "types/mantine";
 
 // See https://github.com/transmission/transmission/blob/main/docs/rpc-spec.md
 // and https://github.com/transmission/transmission/blob/main/libtransmission/transmission.h

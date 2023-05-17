@@ -18,8 +18,10 @@
 
 import { Box, Button, Checkbox, Divider, Group, Modal, SegmentedControl, Text, TextInput } from "@mantine/core";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { type ActionModalState, type LabelsData, type LocationData, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
-import { PriorityColors, type PriorityNumberType, PriorityStrings } from "rpc/transmission";
+import type { ActionModalState, LabelsData, LocationData } from "./common";
+import { TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
+import type { PriorityNumberType } from "rpc/transmission";
+import { PriorityColors, PriorityStrings } from "rpc/transmission";
 import { dialog, tauri } from "@tauri-apps/api";
 import { CachedFileTree } from "cachedfiletree";
 import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable";

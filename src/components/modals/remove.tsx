@@ -17,7 +17,8 @@
  */
 
 import { Button, Checkbox, Divider, Group, Modal, Text } from "@mantine/core";
-import { type ActionModalState, TorrentsNames } from "./common";
+import type { ActionModalState} from "./common";
+import { TorrentsNames } from "./common";
 import React, { useCallback, useState } from "react";
 
 export function RemoveModal(props: ActionModalState) {

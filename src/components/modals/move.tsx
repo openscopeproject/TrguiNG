@@ -18,7 +18,8 @@
 
 import { Button, Checkbox, Divider, Group, Modal, Text } from "@mantine/core";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { type ActionModalState, TorrentLocation, TorrentsNames, useTorrentLocation } from "./common";
+import type { ActionModalState} from "./common";
+import { TorrentLocation, TorrentsNames, useTorrentLocation } from "./common";
 
 export function MoveModal(props: ActionModalState) {
     const [moveData, setMoveData] = useState<boolean>(true);

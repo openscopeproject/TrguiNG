@@ -18,16 +18,21 @@
 
 import { ActionIcon, Box, Group, Menu, TextInput } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
-import {
-    useReactTable, type Table, type ColumnDef, type ColumnSizingState,
-    type SortingState, type VisibilityState, getCoreRowModel,
-    getSortedRowModel, flexRender, type Row, type Column, type RowSelectionState, type ColumnOrderState, type AccessorKeyColumnDef
+import type {
+    Table, ColumnDef, ColumnSizingState,
+    SortingState, VisibilityState, Row, Column, RowSelectionState, ColumnOrderState, AccessorKeyColumnDef
 } from "@tanstack/react-table";
-import { useVirtualizer, type Virtualizer } from "@tanstack/react-virtual";
+import {
+    useReactTable, getCoreRowModel, getSortedRowModel, flexRender
+} from "@tanstack/react-table";
+import type { Virtualizer } from "@tanstack/react-virtual";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { ContextMenu, useContextMenu } from "components/contextmenu";
-import { ConfigContext, type TableName } from "config";
+import type { TableName } from "config";
+import { ConfigContext } from "config";
 import React, { memo, useReducer, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { DragDropContext, Draggable, type DropResult } from "react-beautiful-dnd";
+import type { DropResult } from "react-beautiful-dnd";
+import { DragDropContext, Draggable } from "react-beautiful-dnd";
 import { StrictModeDroppable } from "components/strictmodedroppable";
 import { reorderElements } from "util";
 

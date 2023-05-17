@@ -64,5 +64,18 @@
     "react-resize-detector": "^8.1.0",
     "react-split": "^2.0.14",
     "split.js": "^1.6.5"
-  }
+  },
+  "madge": {
+		"webpackConfig": "./webpack.prod.js",
+    "tsConfig": "./tsconfig.json",
+    "fileExtensions": ["ts", "tsx"],
+    "detectiveOptions": {
+      "ts": {
+        "skipTypeImports": true
+      },
+      "tsx": {
+        "skipTypeImports": true
+      }
+    }
+	}
 }

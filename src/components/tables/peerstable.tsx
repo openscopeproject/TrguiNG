@@ -16,10 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { type AccessorFn, type CellContext, type ColumnDef } from "@tanstack/react-table";
+import type { AccessorFn, CellContext, ColumnDef } from "@tanstack/react-table";
 import React, { useMemo, useCallback } from "react";
-import { type Torrent, type PeerStats } from "rpc/torrent";
-import { type PeerStatsFieldsType } from "rpc/transmission";
+import type { Torrent, PeerStats } from "rpc/torrent";
+import type { PeerStatsFieldsType } from "rpc/transmission";
 import { bytesToHumanReadableStr } from "util";
 import { TransguiTable, useStandardSelect } from "./common";
 

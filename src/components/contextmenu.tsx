@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Button, Menu, type MenuProps, Portal, ScrollArea } from "@mantine/core";
+import type { MenuProps } from "@mantine/core";
+import { Button, Menu, Portal, ScrollArea } from "@mantine/core";
 import React, { useCallback, useEffect, useState } from "react";
 
 interface ContextMenuInfo {

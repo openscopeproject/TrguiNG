@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import type { ModalProps, MultiSelectValueProps } from "@mantine/core";
 import {
-    Badge, Button, CloseButton, Divider, Group, Loader, Modal,
-    type ModalProps, MultiSelect, type MultiSelectValueProps,
+    Badge, Button, CloseButton, Divider, Group, Loader, Modal, MultiSelect,
     Text, TextInput, ActionIcon, Menu, ScrollArea
 } from "@mantine/core";
 import { dialog } from "@tauri-apps/api";
-import { type ActionController } from "actions";
+import type { ActionController } from "actions";
 import { ConfigContext, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { pathMapFromServer, pathMapToServer } from "util";
@@ -104,14 +104,14 @@ export function useTorrentLocation(): LocationData {
 
     const browseHandler = useCallback(() => {
         const mappedLocation = pathMapFromServer(path, serverConfig);
-        console.log(mappedLocation);
         dialog.open({
             title: "Select directory",
             defaultPath: mappedLocation,
             directory: true
         }).then((directory) => {
             if (directory === null) return;
-            setPath(pathMapToServer((directory as string).replace("\\", "/"), serverConfig));
+            const mappedPath = pathMapToServer((directory as string).replace(/\\/g, "/"), serverConfig);
+            setPath(mappedPath.replace(/\\/g, "/"));
         }).catch(console.error);
     }, [serverConfig, path, setPath]);
 

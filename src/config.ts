@@ -18,12 +18,10 @@
 
 import * as fs from "@tauri-apps/api/fs";
 import React from "react";
-import { merge } from "lodash-es";
-import {
-    type SortingState, type ColumnSizingState,
-    type VisibilityState, type ColumnOrderState
+import type {
+    SortingState, ColumnSizingState, VisibilityState, ColumnOrderState
 } from "@tanstack/react-table";
-import { type ColorScheme } from "@mantine/core";
+import type { ColorScheme } from "@mantine/core";
 
 export interface ServerConnection {
     url: string,
@@ -117,6 +115,7 @@ export class Config {
             this.fileName,
             { dir: fs.BaseDirectory.Config }
         );
+        const merge = (await import(/* webpackChunkName: "lodash" */ "lodash-es/merge")).default;
         merge(this.values, JSON.parse(text));
 
         // sanitize data
@@ -195,7 +194,7 @@ export class Config {
         const saveDirs = this.getServer(serverName)?.lastSaveDirs;
         if (saveDirs === undefined) return;
         const index = saveDirs.findIndex((d) => d === dir);
-        if (index > 0) saveDirs.splice(index, 1);
+        if (index >= 0) saveDirs.splice(index, 1);
         if (saveDirs.unshift(dir) > this.values.app.numLastSaveDirs) {
             saveDirs.pop();
         }

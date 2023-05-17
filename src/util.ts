@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { type ServerConfig } from "config";
+import type { ServerConfig } from "config";
 import { Duration } from "luxon";
 import { useReducer } from "react";
 
@@ -92,7 +92,7 @@ export function reorderElements<T>(list: T[], startIndex: number, endIndex: numb
 }
 
 function normalizePath(path: string) {
-    let p = path.replace("\\", "/");
+    let p = path.replace(/\\/g, "/");
     if (p.match(/^[a-zA-Z]:\//) != null) p = p.toLowerCase();
     return p;
 }

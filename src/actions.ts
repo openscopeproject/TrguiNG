@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { type TorrentActionMethodsType, type TorrentAddParams, type TransmissionClient } from "./rpc/client";
-import { type Torrent } from "rpc/torrent";
+import type { TorrentActionMethodsType, TorrentAddParams, TransmissionClient } from "./rpc/client";
+import type { Torrent } from "rpc/torrent";
 
 const ActionMethods = [
     "resume",
