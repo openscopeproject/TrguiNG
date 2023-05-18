@@ -31,6 +31,7 @@ mod ipc;
 mod poller;
 mod torrentcache;
 mod tray;
+mod integrations;
 
 struct ListenerHandle(Arc<RwLock<ipc::Ipc>>);
 
@@ -113,7 +114,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             commands::read_file,
             commands::shell_open,
-            commands::set_poller_config
+            commands::set_poller_config,
+            commands::app_integration
         ])
         .manage(ListenerHandle(Arc::new(RwLock::new(ipc))))
         .manage(TorrentCacheHandle::default())

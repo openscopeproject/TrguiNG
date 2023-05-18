@@ -16,14 +16,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ActionIcon, Grid, Group, PasswordInput, Textarea, TextInput } from "@mantine/core";
+import { ActionIcon, Button, Grid, Group, PasswordInput, Switch, Tabs, Textarea, TextInput } from "@mantine/core";
 import type { ServerConfig } from "config";
 import cloneDeep from "lodash-es/cloneDeep";
 import React, { useCallback, useEffect, useState } from "react";
 import { swapElements, useForceRender } from "util";
-import type { ModalState} from "./common";
+import type { ModalState } from "./common";
 import { SaveCancelModal } from "./common";
 import * as Icon from "react-bootstrap-icons";
+import { invoke } from "@tauri-apps/api";
 
 interface ServerListPanelProps {
     servers: string[],
@@ -131,12 +132,57 @@ function ServerPanel(props: ServerPanelProps) {
     );
 }
 
-interface ManageServerModalProps extends ModalState {
+function IntegrationsPanel() {
+    const [autostart, setAutostart] = useState(false);
+
+    const associateTorrent = useCallback(() => {
+        void invoke("app_integration", { mode: "torrent" });
+    }, []);
+    const associateMagnet = useCallback(() => {
+        void invoke("app_integration", { mode: "magnet" });
+    }, []);
+
+    useEffect(() => {
+        invoke("app_integration", { mode: "getautostart" })
+            .then((result) => { setAutostart(result as boolean); })
+            .catch(console.error);
+    }, []);
+
+    const onChangeAutostart = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const state = e.target.checked;
+        setAutostart(state);
+        void invoke("app_integration", { mode: state ? "autostart" : "noautostart" });
+    }, []);
+
+    return (
+        <Grid align="center">
+            <Grid.Col span={6}>Launch on startup</Grid.Col>
+            <Grid.Col span={2}>
+                <Switch onLabel="ON" offLabel="OFF" size="xl" checked={autostart} onChange={onChangeAutostart}
+                    styles={{
+                        track: {
+                            flexGrow: 1
+                        }
+                    }}
+                />
+            </Grid.Col>
+            <Grid.Col span={4}></Grid.Col>
+            <Grid.Col span={6}>Associate with .torrent files</Grid.Col>
+            <Grid.Col span={2}><Button onClick={associateTorrent}>Associate</Button></Grid.Col>
+            <Grid.Col span={4}></Grid.Col>
+            <Grid.Col span={6}>Associate with magnet links</Grid.Col>
+            <Grid.Col span={2}><Button onClick={associateMagnet}>Associate</Button></Grid.Col>
+            <Grid.Col span={4}></Grid.Col>
+        </Grid>
+    );
+}
+
+interface AppSettingsModalProps extends ModalState {
     servers: ServerConfig[],
     onSave: (servers: ServerConfig[]) => void,
 }
 
-export function ManageServersModal(props: ManageServerModalProps) {
+export function AppSettingsModal(props: AppSettingsModalProps) {
     const [servers, setServers] = useState(cloneDeep(props.servers));
     const [currentServerIndex, setCurrentServerIndex] = useState(0);
 
@@ -205,22 +251,33 @@ export function ManageServersModal(props: ManageServerModalProps) {
             onClose={props.close}
             onSave={onSave}
             centered
-            title="Edit Server Connections"
+            title="Application Settings"
         >
-            <div className="d-flex w-100">
-                <ServerListPanel
-                    servers={servers.map((s) => s.name)}
-                    current={currentServerIndex}
-                    onSelect={setCurrentServerIndex}
-                    onAdd={onAdd}
-                    onRemove={onRemove}
-                    onUp={onUp}
-                    onDown={onDown}
-                />
-                {currentServerIndex >= servers.length
-                    ? <></>
-                    : <ServerPanel server={servers[currentServerIndex]} onNameChange={onRenameCurrent} />}
-            </div>
+            <Tabs mih="25rem" defaultValue="servers">
+                <Tabs.List>
+                    <Tabs.Tab value="servers" p="lg">Servers</Tabs.Tab>
+                    <Tabs.Tab value="integrations" p="lg">Integrations</Tabs.Tab>
+                </Tabs.List>
+                <Tabs.Panel value="servers" pt="md">
+                    <div className="d-flex w-100">
+                        <ServerListPanel
+                            servers={servers.map((s) => s.name)}
+                            current={currentServerIndex}
+                            onSelect={setCurrentServerIndex}
+                            onAdd={onAdd}
+                            onRemove={onRemove}
+                            onUp={onUp}
+                            onDown={onDown}
+                        />
+                        {currentServerIndex >= servers.length
+                            ? <></>
+                            : <ServerPanel server={servers[currentServerIndex]} onNameChange={onRenameCurrent} />}
+                    </div>
+                </Tabs.Panel>
+                <Tabs.Panel value="integrations" pt="md">
+                    <IntegrationsPanel />
+                </Tabs.Panel>
+            </Tabs>
         </SaveCancelModal>
     );
 }

@@ -23,7 +23,7 @@ import type { ServerConfig } from "../config";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Server } from "../components/server";
 import * as Icon from "react-bootstrap-icons";
-import { ManageServersModal } from "./modals/settings";
+import { AppSettingsModal } from "./modals/settings";
 import { ClientManager } from "../clientmanager";
 import { ActionIcon, Menu, Tabs, useMantineColorScheme } from "@mantine/core";
 import type { TabsValue } from "@mantine/core";
@@ -61,7 +61,7 @@ function ServerTabs(props: ServerTabsProps) {
     }, [onTabSwitch]);
 
     return (<>
-        <ManageServersModal
+        <AppSettingsModal
             servers={props.servers} onSave={props.onServersSave}
             opened={showServerConfig} close={serverConfigHandlers.close} />
         <Tabs
