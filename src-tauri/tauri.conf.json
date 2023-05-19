@@ -12,7 +12,7 @@
   "tauri": {
     "bundle": {
       "active": true,
-      "targets": "all",
+      "targets": ["app", "deb", "nsis"],
       "identifier": "org.openscopeproject.transgui-ng",
       "icon": [
         "icons/32x32.png",
