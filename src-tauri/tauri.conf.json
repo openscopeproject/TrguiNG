@@ -73,7 +73,8 @@
         "setTitle": true,
         "close": true,
         "setSize": true,
-        "setPosition": true
+        "setPosition": true,
+        "setFocus": true
       },
       "dialog": {
         "all": true

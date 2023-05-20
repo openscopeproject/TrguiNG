@@ -39,6 +39,7 @@ import type { TorrentFieldsType } from "rpc/transmission";
 import { DaemonSettingsModal } from "./modals/daemon";
 import { emit, listen } from "@tauri-apps/api/event";
 import { useTransmissionClient } from "rpc/client";
+import { appWindow } from "@tauri-apps/api/window";
 
 function usePausingModalState(runUpdates: (run: boolean) => void): [boolean, () => void, () => void] {
     const [opened, { open, close }] = useDisclosure(false);
@@ -152,6 +153,7 @@ function ServerModals(props: ServerModalsProps) {
             const args = JSON.parse(event.payload) as string[];
             console.log("Got app-arg:", args);
             setAddQueue([...addQueue, ...args]);
+            void appWindow.setFocus();
         }).then((unlisten) => {
             void emit("listener-start", {});
             return unlisten;
