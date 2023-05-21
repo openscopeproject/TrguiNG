@@ -17,7 +17,7 @@
  */
 
 import { Box, Button, Checkbox, Divider, Group, Modal, SegmentedControl, Text, TextInput } from "@mantine/core";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ActionModalState, LabelsData, LocationData } from "./common";
 import { TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
 import type { PriorityNumberType } from "rpc/transmission";
@@ -27,6 +27,7 @@ import { CachedFileTree } from "cachedfiletree";
 import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable";
 import { notifications } from "@mantine/notifications";
 import { useFileTree } from "queries";
+import { ConfigContext } from "config";
 
 interface AddCommonProps {
     location: LocationData,
@@ -138,6 +139,7 @@ export function AddMagnet(props: AddCommonModalProps) {
 }
 
 interface TorrentFileData {
+    torrentPath: string,
     metadata: string,
     name: string,
     length: number,
@@ -149,6 +151,7 @@ interface TorrentFileData {
 }
 
 export function AddTorrent(props: AddCommonModalProps) {
+    const config = useContext(ConfigContext);
     const common = useCommonProps(props.allLabels);
     const [torrentData, setTorrentData] = useState<TorrentFileData>();
 
@@ -158,7 +161,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             return;
         }
 
-        const process = async (path: string | null) => {
+        const readFile = async (path: string | null) => {
             if (path === null) {
                 props.close();
                 return undefined;
@@ -176,7 +179,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 }]
             }) as Promise<string | null>;
 
-        pathPromise.then(process)
+        pathPromise.then(readFile)
             .then((torrentData) => { setTorrentData(torrentData as TorrentFileData); })
             .catch((e) => {
                 notifications.show({
@@ -203,18 +206,30 @@ export function AddTorrent(props: AddCommonModalProps) {
     const { actionController: ac, close } = props;
 
     const onAdd = useCallback(() => {
-        // TODO handle errors
-        void ac.addTorrent({
+        const path = torrentData?.torrentPath;
+
+        ac.addTorrent({
             metainfo: torrentData?.metadata,
             downloadDir: common.location.path,
             labels: common.labels,
             paused: !common.start,
             priority: common.priority,
             unwanted: torrentData?.files == null ? [] : fileTree.getUnwanted(),
+        }).then(() => {
+            if (config.values.app.deleteAdded && path !== undefined) {
+                void tauri.invoke("remove_file", { path });
+            }
+        }).catch((e) => {
+            console.error("Failed to add torrent:", e);
+            notifications.show({
+                title: "Error adding torrent",
+                message: String(e),
+                color: "red",
+            });
         });
         common.location.addPath(common.location.path);
         close();
-    }, [ac, close, torrentData, common, fileTree]);
+    }, [ac, close, torrentData, common, fileTree, config]);
 
     return (
         torrentData === undefined

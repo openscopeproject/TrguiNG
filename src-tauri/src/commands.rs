@@ -29,7 +29,9 @@ pub struct TorrentFileEntry {
     length: i64,
 }
 #[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TorrentReadResult {
+    torrent_path: String,
     metadata: String,
     name: String,
     length: i64,
@@ -60,6 +62,7 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
             let b64 = b64engine.encode(read_result.unwrap());
 
             Ok(TorrentReadResult {
+                torrent_path: path,
                 metadata: b64,
                 name: torrent.name.clone(),
                 length: torrent.length,
@@ -73,6 +76,15 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
                         .collect()
                 }),
             })
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn remove_file(path: String) {
+    if path.to_lowercase().ends_with(".torrent") {
+        if let Err(_) = std::fs::remove_file(path.clone()) {
+            println!("Unable to remove file {}", path);
         }
     }
 }

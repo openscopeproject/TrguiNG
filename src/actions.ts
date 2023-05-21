@@ -129,6 +129,6 @@ export class ActionController {
 
     async addTorrent(params: TorrentAddParams) {
         console.log("Torrent add params", params);
-        await this.client.torrentAdd(params).then(console.log).catch(console.error);
+        return await this.client.torrentAdd(params);
     }
 }

@@ -16,10 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ActionIcon, Button, Grid, Group, PasswordInput, Switch, Tabs, Textarea, TextInput } from "@mantine/core";
+import { ActionIcon, Button, Grid, Group, PasswordInput, SegmentedControl, Switch, Tabs, Text, Textarea, TextInput } from "@mantine/core";
 import type { ServerConfig } from "config";
+import { ConfigContext } from "config";
 import cloneDeep from "lodash-es/cloneDeep";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useReducer, useState } from "react";
 import { swapElements, useForceRender } from "util";
 import type { ModalState } from "./common";
 import { SaveCancelModal } from "./common";
@@ -132,7 +133,38 @@ function ServerPanel(props: ServerPanelProps) {
     );
 }
 
+const bigSwitchStyles = {
+    track: {
+        flexGrow: 1
+    }
+};
+
+const MinimizeOptions = ["minimize", "hide"];
+const CloseOptions = ["hide", "close", "exit"];
+
 function IntegrationsPanel() {
+    const config = useContext(ConfigContext);
+
+    const [deleteAdded, setDeleteAdded] = useReducer((_: boolean, newVal: boolean) => {
+        config.values.app.deleteAdded = newVal;
+        return newVal;
+    }, config.values.app.deleteAdded);
+
+    const [toastNotifications, setToastNotifications] = useReducer((_: boolean, newVal: boolean) => {
+        config.values.app.toastNotifications = newVal;
+        return newVal;
+    }, config.values.app.toastNotifications);
+
+    const [onMinimize, setOnMinimize] = useReducer((_: string, newVal: string) => {
+        config.values.app.onMinimize = newVal;
+        return newVal;
+    }, config.values.app.onMinimize);
+
+    const [onClose, setOnClose] = useReducer((_: string, newVal: string) => {
+        config.values.app.onClose = newVal;
+        return newVal;
+    }, config.values.app.onClose);
+
     const [autostart, setAutostart] = useState(false);
 
     const associateTorrent = useCallback(() => {
@@ -156,15 +188,22 @@ function IntegrationsPanel() {
 
     return (
         <Grid align="center">
+            <Grid.Col span={6}>Delete successfully added torrent files</Grid.Col>
+            <Grid.Col span={2}>
+                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                    checked={deleteAdded} onChange={(e) => { setDeleteAdded(e.target.checked); }} />
+            </Grid.Col>
+            <Grid.Col span={4}></Grid.Col>
+            <Grid.Col span={6}>Show system notifications for completed torrents</Grid.Col>
+            <Grid.Col span={2}>
+                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                    checked={toastNotifications} onChange={(e) => { setToastNotifications(e.target.checked); }} />
+            </Grid.Col>
+            <Grid.Col span={4}></Grid.Col>
             <Grid.Col span={6}>Launch on startup</Grid.Col>
             <Grid.Col span={2}>
-                <Switch onLabel="ON" offLabel="OFF" size="xl" checked={autostart} onChange={onChangeAutostart}
-                    styles={{
-                        track: {
-                            flexGrow: 1
-                        }
-                    }}
-                />
+                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                    checked={autostart} onChange={onChangeAutostart} />
             </Grid.Col>
             <Grid.Col span={4}></Grid.Col>
             <Grid.Col span={6}>Associate with .torrent files</Grid.Col>
@@ -173,6 +212,21 @@ function IntegrationsPanel() {
             <Grid.Col span={6}>Associate with magnet links</Grid.Col>
             <Grid.Col span={2}><Button onClick={associateMagnet}>Associate</Button></Grid.Col>
             <Grid.Col span={4}></Grid.Col>
+            <Grid.Col span={6}>When minimized</Grid.Col>
+            <Grid.Col span={6}>
+                <SegmentedControl data={MinimizeOptions} value={onMinimize} onChange={setOnMinimize} />
+            </Grid.Col>
+            <Grid.Col span={6}>When closed</Grid.Col>
+            <Grid.Col span={6}>
+                <SegmentedControl data={CloseOptions} value={onClose} onChange={setOnClose} />
+            </Grid.Col>
+            <Grid.Col>
+                <Text fz="sm" fs="italic">
+                    Hiding the window keeps frontend running, this uses more RAM but reopening the window is nearly instant.
+                    Closing the window shuts down the webview. In this mode reopening the window is slower.
+                    You can always access the window through the system tray icon.
+                </Text>
+            </Grid.Col>
         </Grid>
     );
 }

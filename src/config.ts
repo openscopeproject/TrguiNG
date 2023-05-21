@@ -79,6 +79,10 @@ interface Settings {
             theme: ColorScheme | undefined,
         },
         numLastSaveDirs: number,
+        deleteAdded: boolean,
+        toastNotifications: boolean,
+        onMinimize: string,
+        onClose: string,
     },
 }
 
@@ -103,6 +107,10 @@ const DefaultSettings: Settings = {
             theme: undefined,
         },
         numLastSaveDirs: 20,
+        deleteAdded: false,
+        toastNotifications: true,
+        onMinimize: "minimize",
+        onClose: "exit",
     }
 };
 

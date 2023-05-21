@@ -113,6 +113,7 @@ fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             commands::read_file,
+            commands::remove_file,
             commands::shell_open,
             commands::set_poller_config,
             commands::app_integration
