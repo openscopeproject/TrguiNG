@@ -46,19 +46,17 @@ async function onCloseRequested(app: Root, config: Config) {
 async function onFocusChange(focused: boolean, config: Config) {
     if (!focused && config.values.app.onMinimize === "hide") {
         if (await appWindow.isMinimized()) {
-            console.log("Hiding window");
+            void appWindow.emit("window-hidden");
             void appWindow.hide();
         }
     }
 }
 
-async function run(config: Config) {
-    const appnode = document.getElementById("app") as HTMLElement;
-    const app = createRoot(appnode);
-
+function setupEvents(config: Config, app: Root) {
     void appWindow.onCloseRequested((event) => {
         if (config.values.app.onClose === "hide") {
             event.preventDefault();
+            void appWindow.emit("window-hidden");
             void appWindow.hide();
         } else if (config.values.app.onClose === "quit") {
             event.preventDefault();
@@ -81,9 +79,17 @@ async function run(config: Config) {
     void appWindow.onResized(({ payload: size }) => {
         config.values.app.window.size = [size.width, size.height];
     });
+
     void appWindow.onMoved(({ payload: size }) => {
         config.values.app.window.position = [size.x, size.y];
     });
+}
+
+async function run(config: Config) {
+    const appnode = document.getElementById("app") as HTMLElement;
+    const app = createRoot(appnode);
+
+    setupEvents(config, app);
 
     await appWindow.setSize(new PhysicalSize(...config.values.app.window.size));
     if (config.values.app.window.position !== undefined) {

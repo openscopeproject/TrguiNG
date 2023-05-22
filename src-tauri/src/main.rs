@@ -89,6 +89,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
             });
             let main_window = app.get_window("main").unwrap();
             main_window.show().ok();
+            main_window.emit("window-shown", "").ok();
         }
         drop(listener);
 

@@ -17,9 +17,10 @@
  */
 
 import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import { appWindow } from "@tauri-apps/api/window";
 import type { CachedFileTree } from "cachedfiletree";
 import { ServerConfigContext } from "config";
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { SessionInfo } from "rpc/client";
 import { useTransmissionClient } from "rpc/client";
 import type { Torrent } from "rpc/torrent";
@@ -52,9 +53,24 @@ export function useTorrentList(enabled: boolean, fields: TorrentFieldsType[]) {
     const serverConfig = useContext(ServerConfigContext);
     const client = useTransmissionClient();
 
+    const [refetchInterval, setRefetchInterval] = useState(1000 * serverConfig.intervals.torrents);
+
+    useEffect(() => {
+        const unlisten1 = appWindow.listen("window-hidden",
+            () => { setRefetchInterval(1000 * serverConfig.intervals.torrentsMinimized); });
+        const unlisten2 = appWindow.listen("window-shown",
+            () => { setRefetchInterval(1000 * serverConfig.intervals.torrents); });
+
+        return () => {
+            unlisten1.then((unlisten) => { unlisten(); }).catch(() => { });
+            unlisten2.then((unlisten) => { unlisten(); }).catch(() => { });
+        };
+    }, [serverConfig.intervals.torrents, serverConfig.intervals.torrentsMinimized]);
+
     return useQuery({
         queryKey: TorrentKeys.listAll(serverConfig.name, fields),
-        refetchInterval: 1000 * serverConfig.intervals.torrents,
+        refetchInterval,
+        refetchIntervalInBackground: true,
         staleTime: 1000 * 60,
         enabled,
         queryFn: useCallback(async () => {

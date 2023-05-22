@@ -156,6 +156,7 @@ function ServerModals(props: ServerModalsProps) {
             void appWindow.show();
             void appWindow.unminimize();
             void appWindow.setFocus();
+            void appWindow.emit("window-shown");
         }).then((unlisten) => {
             void emit("listener-start", {});
             return unlisten;

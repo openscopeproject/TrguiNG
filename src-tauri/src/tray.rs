@@ -44,6 +44,7 @@ pub fn on_tray_event(app: &AppHandle, event: SystemTrayEvent) {
                     window.show().ok();
                     window.unminimize().ok();
                     window.set_focus().ok();
+                    window.emit("window-shown", "").ok();
                     return;
                 }
             }
