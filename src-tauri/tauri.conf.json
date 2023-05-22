@@ -74,7 +74,11 @@
         "close": true,
         "setSize": true,
         "setPosition": true,
-        "setFocus": true
+        "setFocus": true,
+        "center": true,
+        "hide": true,
+        "show": true,
+        "unminimize": true
       },
       "dialog": {
         "all": true

@@ -140,7 +140,7 @@ const bigSwitchStyles = {
 };
 
 const MinimizeOptions = ["minimize", "hide"];
-const CloseOptions = ["hide", "close", "exit"];
+const CloseOptions = ["hide", "close", "quit"];
 
 function IntegrationsPanel() {
     const config = useContext(ConfigContext);
@@ -223,7 +223,7 @@ function IntegrationsPanel() {
             <Grid.Col>
                 <Text fz="sm" fs="italic">
                     Hiding the window keeps frontend running, this uses more RAM but reopening the window is nearly instant.
-                    Closing the window shuts down the webview. In this mode reopening the window is slower.
+                    Closing the window shuts down the webview, in this mode reopening the window is slower.
                     You can always access the window through the system tray icon.
                 </Text>
             </Grid.Col>

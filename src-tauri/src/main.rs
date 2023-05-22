@@ -92,13 +92,19 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         }
         drop(listener);
 
-        let app = app.clone();
+        let app_clone = app.clone();
         async_runtime::spawn(async move {
             let listener = listener_lock.read().await;
-            if let Err(e) = listener.send(&torrents, app).await {
+            if let Err(e) = listener.send(&torrents, app_clone).await {
                 println!("Unable to send args to listener: {:?}", e);
             }
         });
+
+        let app_clone = app.clone();
+        app.listen_global("app-exit", move |_| {
+            println!("Exiting");
+            app_clone.exit(0);
+        })
     });
 
     Ok(())

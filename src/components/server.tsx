@@ -153,6 +153,8 @@ function ServerModals(props: ServerModalsProps) {
             const args = JSON.parse(event.payload) as string[];
             console.log("Got app-arg:", args);
             setAddQueue([...addQueue, ...args]);
+            void appWindow.show();
+            void appWindow.unminimize();
             void appWindow.setFocus();
         }).then((unlisten) => {
             void emit("listener-start", {});

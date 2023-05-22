@@ -43,16 +43,39 @@ async function onCloseRequested(app: Root, config: Config) {
     void appWindow.emit("frontend-done");
 }
 
+async function onFocusChange(focused: boolean, config: Config) {
+    if (!focused && config.values.app.onMinimize === "hide") {
+        if (await appWindow.isMinimized()) {
+            console.log("Hiding window");
+            void appWindow.hide();
+        }
+    }
+}
+
 async function run(config: Config) {
     const appnode = document.getElementById("app") as HTMLElement;
     const app = createRoot(appnode);
 
     void appWindow.onCloseRequested((event) => {
-        void onCloseRequested(app, config);
+        if (config.values.app.onClose === "hide") {
+            event.preventDefault();
+            void appWindow.hide();
+        } else if (config.values.app.onClose === "quit") {
+            event.preventDefault();
+            config.save().finally(() => {
+                void emit("app-exit");
+            });
+        } else {
+            void onCloseRequested(app, config);
+        }
     });
 
     void appWindow.listen("exit-requested", (event) => {
         void onCloseRequested(app, config);
+    });
+
+    void appWindow.onFocusChanged(({ payload: focused }) => {
+        void onFocusChange(focused, config);
     });
 
     void appWindow.onResized(({ payload: size }) => {

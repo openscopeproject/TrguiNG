@@ -39,6 +39,14 @@ pub fn on_tray_event(app: &AppHandle, event: SystemTrayEvent) {
     let main_window = app.get_window("main");
     match event {
         SystemTrayEvent::LeftClick { .. } => {
+            if let Some(window) = main_window.as_ref() {
+                if !window.is_visible().unwrap() {
+                    window.show().ok();
+                    window.unminimize().ok();
+                    window.set_focus().ok();
+                    return;
+                }
+            }
             toggle_main_window(app.clone(), main_window);
         }
         SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
