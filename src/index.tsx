@@ -91,9 +91,14 @@ async function run(config: Config) {
 
     setupEvents(config, app);
 
-    await appWindow.setSize(new PhysicalSize(...config.values.app.window.size));
-    if (config.values.app.window.position !== undefined) {
-        await appWindow.setPosition(new PhysicalPosition(...config.values.app.window.position));
+    const size = config.values.app.window.size;
+    if (size.length === 2 && size[0] > 100 && size[1] > 100) {
+        await appWindow.setSize(new PhysicalSize(...config.values.app.window.size));
+    }
+
+    const pos = config.values.app.window.position;
+    if (pos?.length === 2 && pos?.[0] > -32000 && pos?.[1] > -32000) {
+        await appWindow.setPosition(new PhysicalPosition(...pos));
     } else {
         await appWindow.center();
     }
