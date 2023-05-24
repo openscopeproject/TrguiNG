@@ -17,7 +17,7 @@
  */
 
 import { Text } from "@mantine/core";
-import type { ActionModalState} from "./common";
+import type { ActionModalState } from "./common";
 import { SaveCancelModal, TorrentLabels, TorrentsNames } from "./common";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutateTorrent } from "queries";

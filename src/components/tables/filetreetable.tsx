@@ -18,7 +18,7 @@
 
 import React, { useCallback, useContext, useMemo } from "react";
 import type { Row, ColumnDef, CellContext } from "@tanstack/react-table";
-import type { CachedFileTree, DirEntry, FileDirEntry} from "../../cachedfiletree";
+import type { CachedFileTree, DirEntry, FileDirEntry } from "../../cachedfiletree";
 import { isDirEntry } from "../../cachedfiletree";
 import { ServerConfigContext } from "../../config";
 import { PriorityColors, PriorityStrings } from "../../rpc/transmission";

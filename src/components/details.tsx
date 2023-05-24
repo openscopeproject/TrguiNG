@@ -27,7 +27,7 @@ import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./t
 import { TrackersTable } from "./tables/trackertable";
 import { PeersTable } from "./tables/peerstable";
 import type { SessionStatEntry } from "rpc/transmission";
-import type { MantineTheme} from "@mantine/core";
+import type { MantineTheme } from "@mantine/core";
 import { Box, Container, Group, Table, Tabs, TextInput } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
 import type { FileDirEntry } from "cachedfiletree";
