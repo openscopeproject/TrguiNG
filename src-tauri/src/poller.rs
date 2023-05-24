@@ -23,7 +23,7 @@ use tauri::{
     AppHandle, Manager, State,
 };
 
-use crate::torrentcache::process_torrents;
+use crate::torrentcache::process_response;
 
 #[derive(Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -201,7 +201,7 @@ async fn poll(
                     f.to_str().unwrap_or_default().to_string()
                 });
                 if response.status().is_success() {
-                    let _ = process_torrents(app, response).await;
+                    let _ = process_response(app, response).await;
                     Ok(session_str)
                 } else {
                     Err(Some(session_str))

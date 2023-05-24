@@ -27,7 +27,7 @@ use hyper::{Body, Client, HeaderMap, Method, Request, Response, Server, StatusCo
 use tauri::{async_runtime, AppHandle, Manager};
 use tokio::sync::{oneshot, Semaphore, OwnedSemaphorePermit};
 
-use crate::torrentcache::process_torrents;
+use crate::torrentcache::process_response;
 use crate::tray::toggle_main_window;
 
 const ADDRESS: &str = "127.123.45.67:8080";
@@ -108,7 +108,7 @@ async fn http_response(
         (&Method::POST, "/torrentget") => match proxy_fetch(req).await {
             Ok(response) => {
                 if response.status().is_success() {
-                    process_torrents(&app, response).await
+                    process_response(&app, response).await
                 } else {
                     Ok(response)
                 }

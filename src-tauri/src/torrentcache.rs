@@ -48,7 +48,7 @@ pub struct TorrentCache {
 #[derive(Default)]
 pub struct TorrentCacheHandle(Arc<Mutex<TorrentCache>>);
 
-pub async fn process_torrents(
+pub async fn process_response(
     app: &AppHandle,
     response: Response<Body>,
 ) -> hyper::Result<Response<Body>> {
@@ -65,23 +65,8 @@ pub async fn process_torrents(
                 println!("Server returned error {:?}", server_response.result);
             }
             match server_response.arguments {
-                Some(Arguments { mut torrents }) => {
-                    let cache_handle: State<TorrentCacheHandle> = app.state();
-                    let mut cache = cache_handle.0.lock().await;
-                    let mut map = HashMap::<i64, Torrent>::new();
-                    torrents.drain(..).for_each(|t| {
-                        map.insert(t.id, t);
-                    });
-                    if let Some(old_map) = cache.server_data.insert(original_url.into(), map) {
-                        let new_map = cache.server_data.get(&String::from(original_url)).unwrap();
-                        old_map.iter().for_each(|(id, old_torrent)| {
-                            if let Some(new_torrent) = new_map.get(id) {
-                                if new_torrent.status == 6 && old_torrent.status == 4 {
-                                    show_notification(app, &new_torrent.name);
-                                }
-                            }
-                        });
-                    }
+                Some(Arguments { torrents }) => {
+                    process_torrents(app, torrents, original_url).await;
                 }
                 None => println!("Server returned success but no arguments!"),
             }
@@ -98,6 +83,44 @@ pub async fn process_torrents(
     });
     let body = Body::from(bytes);
     Ok(response_builder.body(body).unwrap())
+}
+
+async fn process_torrents(app: &AppHandle, mut torrents: Vec<Torrent>, original_url: &str) {
+    // This is a hacky way to determine if details of a single torrent were
+    // requested or a full update. Proper way would be to inspect the request.
+    let partial_update = torrents.len() <= 1;
+
+    let mut map = HashMap::<i64, Torrent>::new();
+
+    torrents.drain(..).for_each(|t| {
+        map.insert(t.id, t);
+    });
+
+    let cache_handle: State<TorrentCacheHandle> = app.state();
+    let mut cache = cache_handle.0.lock().await;
+
+    if let Some(old_map) = cache.server_data.get::<str>(original_url) {
+        old_map.iter().for_each(|(id, old_torrent)| {
+            if let Some(new_torrent) = map.get(id) {
+                // If status switches from downloading (4) to seeding (6) or queued to seed (5)
+                // then show a "download complete" notification
+                if new_torrent.status > 4 && old_torrent.status == 4 {
+                    show_notification(app, &new_torrent.name);
+                }
+            } else if partial_update {
+                map.insert(
+                    *id,
+                    Torrent {
+                        id: *id,
+                        name: old_torrent.name.clone(),
+                        status: old_torrent.status,
+                    },
+                );
+            }
+        });
+    }
+
+    cache.server_data.insert(original_url.into(), map);
 }
 
 fn show_notification(app: &AppHandle, name: &String) {
