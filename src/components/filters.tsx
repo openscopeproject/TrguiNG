@@ -22,9 +22,9 @@ import { getTorrentError } from "../rpc/torrent";
 import { Status } from "../rpc/transmission";
 import * as Icon from "react-bootstrap-icons";
 import * as StatusIcons from "./statusicons";
-import { useForceRender } from "../util";
 import { ServerConfigContext } from "../config";
 import { Divider, Flex, Text } from "@mantine/core";
+import { useForceRender } from "util";
 
 export interface TorrentFilter {
     id: string,
@@ -128,7 +128,7 @@ function FilterRow(props: FiltersProps & { id: string, filter: LabeledFilter }) 
 interface DirFilterRowProps extends FiltersProps {
     id: string,
     dir: Directory,
-    forceRender: () => void,
+    expandedReducer: ({ verb, value }: { verb: "add" | "remove", value: string }) => void,
 }
 
 function DirFilterRow(props: DirFilterRowProps) {
@@ -140,11 +140,11 @@ function DirFilterRow(props: DirFilterRowProps) {
 
     const onExpand = useCallback(() => {
         props.dir.expanded = true;
-        props.forceRender();
+        props.expandedReducer({ verb: "add", value: props.dir.path });
     }, [props]);
     const onCollapse = useCallback(() => {
         props.dir.expanded = false;
-        props.forceRender();
+        props.expandedReducer({ verb: "remove", value: props.dir.path });
     }, [props]);
 
     const expandable = props.dir.subdirs.size > 0;
@@ -187,13 +187,12 @@ const DefaultRoot: Directory = {
     level: -1,
 };
 
-function buildDirTree(paths: string[], oldtree: Directory | undefined, expanded: boolean): Directory {
+function buildDirTree(paths: string[], expanded: string[]): Directory {
     const root: Directory = { ...DefaultRoot, subdirs: new Map() };
 
     paths.forEach((path) => {
         const parts = path.split("/");
         let dir = root;
-        let olddir = oldtree;
         let currentPath = "/";
         for (const part of parts) {
             if (part === "") continue;
@@ -203,14 +202,12 @@ function buildDirTree(paths: string[], oldtree: Directory | undefined, expanded:
                     name: part,
                     path: currentPath,
                     subdirs: new Map(),
-                    expanded,
+                    expanded: expanded.includes(currentPath),
                     count: 0,
                     level: dir.level + 1,
                 });
             }
-            olddir = olddir?.subdirs.get(part);
             dir = dir.subdirs.get(part) as Directory;
-            if (olddir?.expanded === true) dir.expanded = true;
             dir.count++;
         }
     });
@@ -234,18 +231,30 @@ export function Filters(props: FiltersProps) {
     const serverConfig = useContext(ServerConfigContext);
     const forceRender = useForceRender();
 
-    const [tree, setTree] = useState(buildDirTree(serverConfig.expandedDirFilters, undefined, true));
+    const expandedReducer = useCallback(
+        ({ verb, value }: { verb: "add" | "remove" | "set", value: string | string[] }) => {
+            if (verb === "add") {
+                serverConfig.expandedDirFilters = [...serverConfig.expandedDirFilters, value as string];
+            } else {
+                const idx = serverConfig.expandedDirFilters.indexOf(value as string);
+                serverConfig.expandedDirFilters = [
+                    ...serverConfig.expandedDirFilters.slice(0, idx),
+                    ...serverConfig.expandedDirFilters.slice(idx + 1)
+                ];
+            }
+            forceRender();
+        }, [forceRender, serverConfig]);
 
     const paths = useMemo(
         () => props.torrents.map((t) => t.downloadDir as string).sort(),
         [props.torrents]);
 
-    useEffect(() => {
-        if (paths.length > 0) setTree(buildDirTree(paths, tree, false));
-        // TODO fix this
-    }, [paths]);
+    const [dirs, setDirs] = useState<Directory[]>([]);
 
-    const dirs = useMemo(() => flattenTree(tree), [tree]);
+    useEffect(() => {
+        const tree = buildDirTree(paths, serverConfig.expandedDirFilters);
+        setDirs(flattenTree(tree));
+    }, [paths, serverConfig.expandedDirFilters]);
 
     const allFilters = useMemo<AllFilters>(() => {
         const labelFilters: LabeledFilter[] = [noLabelsFilter];
@@ -262,10 +271,6 @@ export function Filters(props: FiltersProps) {
         };
     }, [props.allLabels]);
 
-    useEffect(() => () => {
-        serverConfig.expandedDirFilters = dirs.filter((d) => d.expanded).map((d) => d.path);
-    }, [dirs, serverConfig]);
-
     return (
         <div className='w-100 filter-container'>
             <Divider mx="sm" label="Status" labelPosition="center" />
@@ -276,7 +281,7 @@ export function Filters(props: FiltersProps) {
             {paths.length > 0
                 ? dirs.map((d) =>
                     <DirFilterRow key={`dir-${d.path}`} id={`dir-${d.path}`}
-                        dir={d} forceRender={forceRender} {...props} />
+                        dir={d} expandedReducer={expandedReducer} {...props} />
                 )
                 : <></>
             }
