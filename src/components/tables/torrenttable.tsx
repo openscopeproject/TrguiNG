@@ -18,21 +18,22 @@
 
 import "css/torrenttable.css";
 import React, { memo, useCallback, useContext, useMemo } from "react";
-import type { Torrent, TrackerStats} from "rpc/torrent";
+import type { Torrent, TrackerStats } from "rpc/torrent";
 import { getTorrentError } from "rpc/torrent";
-import type { TorrentAllFieldsType, TorrentFieldsType} from "rpc/transmission";
+import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
-import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from "util";
+import { bytesToHumanReadableStr, pathMapFromServer, secondsToHumanReadableStr, timestampToDateString } from "util";
 import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
 import { EditableNameField, TransguiTable } from "./common";
 import { getTrackerAnnounceState } from "./trackertable";
 import { Badge, Box } from "@mantine/core";
-import { ConfigContext } from "config";
+import { ConfigContext, ServerConfigContext } from "config";
 import { StatusIconMap, Error as StatusIconError } from "components/statusicons";
 import { useMutateTorrentPath } from "queries";
 import { notifications } from "@mantine/notifications";
+import { tauri } from "@tauri-apps/api";
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -282,6 +283,8 @@ export function TorrentTable(props: {
     selectedReducer: React.Dispatch<{ verb: string, ids: string[] }>,
     onColumnVisibilityChange: React.Dispatch<TorrentFieldsType[]>,
 }) {
+    const serverConfig = useContext(ServerConfigContext);
+
     const getRowId = useCallback((t: Torrent) => String(t.id), []);
     const selected = useMemo(
         () => Array.from(props.selectedTorrents).map(String), [props.selectedTorrents]);
@@ -292,6 +295,13 @@ export function TorrentTable(props: {
         [onColumnVisibilityChange]
     );
 
+    const onRowDoubleClick = useCallback((torrent: Torrent) => {
+        if (torrent.downloadDir === undefined || torrent.downloadDir === "") return;
+        let path = `${torrent.downloadDir as string}/${torrent.name as string}`;
+        path = pathMapFromServer(path, serverConfig);
+        tauri.invoke("shell_open", { path }).catch((e) => { console.error("Error opening", path, e); });
+    }, [serverConfig]);
+
     return <TransguiTable<Torrent> {...{
         tablename: "torrents",
         columns: Columns,
@@ -301,5 +311,6 @@ export function TorrentTable(props: {
         selectedReducer: props.selectedReducer,
         setCurrent: props.setCurrentTorrent,
         onVisibilityChange,
+        onRowDoubleClick,
     }} />;
 }
