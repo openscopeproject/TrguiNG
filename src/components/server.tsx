@@ -281,6 +281,12 @@ export function Server({ hostname }: { hostname: string }) {
         return Array.from(labels).sort();
     }, [torrents]);
 
+    const [scrollToRow, setScrollToRow] = useState<{ id: string }>();
+
+    useEffect(() => {
+        if (currentTorrent !== undefined) setScrollToRow({ id: `${currentTorrent}` });
+    }, [currentFilter, currentTorrent]);
+
     return (<>
         <ServerModals {...{ actionController, filteredTorrents, selectedTorrents, runUpdates, allLabels }} />
         <div className="d-flex flex-column h-100 w-100">
@@ -307,7 +313,8 @@ export function Server({ hostname }: { hostname: string }) {
                         setCurrentTorrent={setCurrentTorrent}
                         selectedTorrents={selectedTorrents}
                         selectedReducer={selectedReducer}
-                        onColumnVisibilityChange={setTableRequiredFields} />
+                        onColumnVisibilityChange={setTableRequiredFields}
+                        scrollToRow={scrollToRow} />
                 }
                 bottom={
                     <div className="w-100">

@@ -20,7 +20,7 @@ import { ActionIcon, Box, Group, Menu, TextInput } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
 import type {
     Table, ColumnDef, ColumnSizingState,
-    SortingState, VisibilityState, Row, Column, RowSelectionState, ColumnOrderState, AccessorKeyColumnDef
+    SortingState, VisibilityState, Row, Column, RowSelectionState, ColumnOrderState, AccessorKeyColumnDef, Header
 } from "@tanstack/react-table";
 import {
     useReactTable, getCoreRowModel, getSortedRowModel, flexRender
@@ -175,7 +175,6 @@ function useTableVirtualizer(count: number): [React.MutableRefObject<null>, numb
     const rowVirtualizer = useVirtualizer({
         count,
         getScrollElement: () => parentRef.current,
-        paddingStart: rowHeight,
         overscan: 3,
         estimateSize: useCallback(() => rowHeight, [rowHeight]),
     });
@@ -332,6 +331,38 @@ function TableRow<TData>(props: {
 
 const MemoizedTableRow = memo(TableRow) as typeof TableRow;
 
+function HeaderCell<TData>({ header, table }: { header: Header<TData, unknown>, table: Table<TData> }) {
+    return (
+        <div className="th" style={{
+            width: header.getSize(),
+        }}>
+            <div onClick={header.column.getToggleSortingHandler()} style={{ flexGrow: 1 }}>
+                <span>
+                    {header.column.getIsSorted() !== false
+                        ? header.column.getIsSorted() === "desc"
+                            ? "▼ "
+                            : "▲ "
+                        : ""}
+                </span>
+                {flexRender(
+                    header.column.columnDef.header,
+                    header.getContext()
+                )}
+            </div>
+            <div {...{
+                onMouseDown: header.getResizeHandler(),
+                onTouchStart: header.getResizeHandler(),
+                className: `resizer ${header.column.getIsResizing() ? "isResizing" : ""}`,
+                style: {
+                    transform: header.column.getIsResizing()
+                        ? `translateX(${table.getState().columnSizingInfo.deltaOffset ?? 0}px)`
+                        : "",
+                },
+            }} />
+        </div>
+    );
+}
+
 export function TransguiTable<TData>(props: {
     tablename: TableName,
     columns: Array<ColumnDef<TData, unknown>>,
@@ -342,6 +373,7 @@ export function TransguiTable<TData>(props: {
     setCurrent?: (id: string) => void,
     onRowDoubleClick?: (row: TData) => void,
     onVisibilityChange?: React.Dispatch<VisibilityState>,
+    scrollToRow?: { id: string },
 }) {
     const [table, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columnSizing] =
         useTable(props.tablename, props.columns, props.data, props.selected, props.getRowId, props.onVisibilityChange);
@@ -354,77 +386,65 @@ export function TransguiTable<TData>(props: {
     const [menuContextHandler, columnMenu] = useColumnMenu(
         columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, table.getAllLeafColumns());
 
-    return (
-        <div ref={parentRef} className="torrent-table-container">
-            <div className="torrent-table"
-                style={{ height: `${virtualizer.getTotalSize()}px`, width: `${table.getTotalSize()}px` }}>
-                <Box sx={(theme) => ({
-                    height: `${rowHeight}px`,
-                    backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
-                    zIndex: 3,
-                    position: "sticky",
-                    top: 0,
-                })}>
-                    {table.getHeaderGroups().map(headerGroup => (
-                        <div className="tr" key={headerGroup.id}
-                            onContextMenu={menuContextHandler}
-                        >
-                            {columnMenu}
-                            {headerGroup.headers.map(header => (
-                                <div key={header.id} className="th" style={{
-                                    width: header.getSize(),
-                                }}>
-                                    <div onClick={header.column.getToggleSortingHandler()}>
-                                        <span>
-                                            {header.column.getIsSorted() !== false
-                                                ? header.column.getIsSorted() === "desc"
-                                                    ? "▼ "
-                                                    : "▲ "
-                                                : ""}
-                                        </span>
-                                        {flexRender(
-                                            header.column.columnDef.header,
-                                            header.getContext()
-                                        )}
-                                    </div>
-                                    <div {...{
-                                        onMouseDown: header.getResizeHandler(),
-                                        onTouchStart: header.getResizeHandler(),
-                                        className: `resizer ${header.column.getIsResizing() ? "isResizing" : ""}`,
-                                        style: {
-                                            left: `${header.getStart() + header.getSize() - 3}px`,
-                                            transform:
-                                                header.column.getIsResizing()
-                                                    ? `translateX(${table.getState().columnSizingInfo.deltaOffset ?? 0}px)`
-                                                    : "",
-                                        },
-                                    }} />
-                                </div>
-                            ))}
-                        </div>
-                    ))}
-                </Box>
+    const scrollToId = useMemo(() => {
+        return table.getRowModel().rows.findIndex(
+            (row) => props.getRowId(row.original) === props.scrollToRow?.id);
+    }, [props, table]);
 
-                {virtualizer.getVirtualItems()
-                    // drop first row if it is odd one to keep nth-child(odd) selector
-                    // stable this prevents flickering row background on scroll
-                    .filter((virtualRow, virtualIndex) => (virtualIndex !== 0 || virtualRow.index % 2 === 0))
-                    .map((virtualRow) => {
-                        const row = table.getRowModel().rows[virtualRow.index];
-                        return <MemoizedTableRow<TData> key={props.getRowId(row.original)} {...{
-                            row,
-                            selected: row.getIsSelected(),
-                            index: virtualRow.index,
-                            lastIndex,
-                            start: virtualRow.start,
-                            onRowClick,
-                            onRowDoubleClick: props.onRowDoubleClick,
-                            height: rowHeight,
-                            columnSizing,
-                            columnVisibility,
-                            columnOrder,
-                        }} />;
-                    })}
+    useEffect(() => {
+        if (scrollToId >= 0) {
+            virtualizer.scrollToIndex(scrollToId, { align: "auto" });
+        }
+    }, [scrollToId, virtualizer]);
+
+    const width = table.getTotalSize();
+
+    const [horizScroll, setHorizScroll] = useState(0);
+    const onTableScroll = useCallback((e: React.UIEvent) => {
+        setHorizScroll(e.currentTarget.scrollLeft);
+    }, []);
+
+    return (
+        <div className="torrent-table-container">
+            <Box sx={(theme) => ({
+                height: `${rowHeight}px`,
+                width: `${width}px`,
+                backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
+                flexShrink: 0,
+                position: "relative",
+                translate: `${-horizScroll}px`,
+            })}>
+                {table.getHeaderGroups().map(headerGroup => (
+                    <Box className="tr" key={headerGroup.id} onContextMenu={menuContextHandler} h={`${rowHeight}px`}>
+                        {columnMenu}
+                        {headerGroup.headers.map(header => <HeaderCell key={header.id} header={header} table={table} />)}
+                    </Box>
+                ))}
+            </Box>
+            <div ref={parentRef} className="torrent-table-rows" onScroll={onTableScroll}>
+                <div className="torrent-table"
+                    style={{ height: `calc(${virtualizer.getTotalSize()}px + 0.75em)`, width: `${width}px` }}>
+                    {virtualizer.getVirtualItems()
+                        // drop first row if it is odd one to keep nth-child(odd) selector
+                        // stable this prevents flickering row background on scroll
+                        .filter((virtualRow, virtualIndex) => (virtualIndex !== 0 || virtualRow.index % 2 === 0))
+                        .map((virtualRow) => {
+                            const row = table.getRowModel().rows[virtualRow.index];
+                            return <MemoizedTableRow<TData> key={props.getRowId(row.original)} {...{
+                                row,
+                                selected: row.getIsSelected(),
+                                index: virtualRow.index,
+                                lastIndex,
+                                start: virtualRow.start,
+                                onRowClick,
+                                onRowDoubleClick: props.onRowDoubleClick,
+                                height: rowHeight,
+                                columnSizing,
+                                columnVisibility,
+                                columnOrder,
+                            }} />;
+                        })}
+                </div>
             </div>
         </div>
     );

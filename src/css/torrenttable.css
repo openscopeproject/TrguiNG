@@ -16,18 +16,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-.torrent-table .th, .torrent-table .td {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.torrent-table-container .th, .torrent-table-container .td {
     padding: 0.05em 0.2em;
     display: flex;
     align-items: center;
 }
 
-.torrent-table .th {
+.torrent-table-container .th {
     cursor: pointer;
     user-select: none;
+}
+
+.torrent-table-container .th div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .torrent-label {
@@ -41,8 +44,20 @@
 .torrent-table-container {
     width: 100%;
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.torrent-table-rows {
+    flex-grow: 1;
     position: relative;
-    overflow: auto;
+    overflow-y: overlay;
+    overflow-x: hidden;
+}
+
+.torrent-table-rows:hover {
+    overflow-x: overlay;
 }
 
 .torrent-table {
@@ -52,8 +67,9 @@
     top: 0;
 }
 
-.torrent-table .tr {
+.torrent-table-container .tr {
     display: flex;
+    flex-shrink: 0;
     position: absolute;
     top: 0;
     left: 0;
@@ -66,28 +82,26 @@
 
 .resizer {
     display: block;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(124, 124, 124, 0.4);
     cursor: col-resize;
-    width: 0.3em;
     height: 100%;
-    position: absolute;
-    left: 0;
-    top: 0;
     /* prevents from scrolling while dragging on touch devices */
     touch-action: none;
 }
 
 .resizer.isResizing {
-    background: blue;
+    background: rgba(122, 122, 122, 0.8);
     opacity: 1;
 }
 
 @media (hover: hover) {
     .resizer {
-        opacity: 0;
+        opacity: 0.3;
+        width: 2px;
     }
 
     *:hover>.resizer {
         opacity: 1;
+        width: 0.3em;
     }
 }

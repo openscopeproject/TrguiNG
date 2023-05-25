@@ -272,6 +272,7 @@ export function useInitialTorrentRequiredFields() {
     const config = useContext(ConfigContext);
 
     return useMemo(
+        // TODO this is sketch, should map to values of ColumnRequiredFields
         () => getRequiredFields(config.getTableColumnVisibility("torrents")),
         [config]);
 }
@@ -282,6 +283,7 @@ export function TorrentTable(props: {
     selectedTorrents: Set<number>,
     selectedReducer: React.Dispatch<{ verb: string, ids: string[] }>,
     onColumnVisibilityChange: React.Dispatch<TorrentFieldsType[]>,
+    scrollToRow?: { id: string },
 }) {
     const serverConfig = useContext(ServerConfigContext);
 
@@ -312,5 +314,6 @@ export function TorrentTable(props: {
         setCurrent: props.setCurrentTorrent,
         onVisibilityChange,
         onRowDoubleClick,
+        scrollToRow: props.scrollToRow,
     }} />;
 }

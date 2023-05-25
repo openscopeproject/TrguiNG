@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ColorSchemeProvider, MantineProvider } from "@mantine/core";
+import { ColorSchemeProvider, Global, MantineProvider } from "@mantine/core";
 import type { ColorScheme, MantineThemeOverride } from "@mantine/core";
 import { useColorScheme } from "@mantine/hooks";
 import { ConfigContext } from "config";
@@ -70,6 +70,39 @@ const Theme: (colorScheme: ColorScheme) => MantineThemeOverride = (colorScheme) 
     },
 });
 
+function GlobalStyles() {
+    return (
+        <Global styles={(theme) => ({
+            "::-webkit-scrollbar": {
+                width: "0.75em",
+                height: "0.75em",
+            },
+            "::-webkit-scrollbar-track": {
+                backgroundColor: theme.colorScheme === "dark"
+                    ? theme.fn.rgba(theme.colors.gray[7], 0.4)
+                    : theme.fn.rgba(theme.colors.gray[5], 0.4),
+            },
+            "::-webkit-scrollbar-thumb": {
+                backgroundColor: theme.colorScheme === "dark"
+                    ? theme.fn.rgba(theme.colors.gray[7], 0.5)
+                    : theme.fn.rgba(theme.colors.gray[6], 0.4),
+                borderRadius: "0.375em",
+            },
+            "::-webkit-scrollbar-thumb:hover": {
+                backgroundColor: theme.colorScheme === "dark"
+                    ? theme.fn.rgba(theme.colors.gray[7], 0.9)
+                    : theme.fn.rgba(theme.colors.gray[5], 0.9),
+                border: "1px solid #77777744"
+            },
+            "::-webkit-scrollbar-corner": {
+                backgroundColor: theme.colorScheme === "dark"
+                    ? theme.fn.rgba(theme.colors.gray[7], 0.5)
+                    : theme.fn.rgba(theme.colors.gray[5], 0.5),
+            },
+        })} />
+    );
+}
+
 export default function CustomMantineProvider({ children }: { children: React.ReactNode }) {
     const config = useContext(ConfigContext);
 
@@ -86,6 +119,7 @@ export default function CustomMantineProvider({ children }: { children: React.Re
     return (
         <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
             <MantineProvider withGlobalStyles withNormalizeCSS theme={Theme(colorScheme)}>
+                <GlobalStyles />
                 {children}
             </MantineProvider>
         </ColorSchemeProvider>

@@ -52,9 +52,13 @@ html, body {
 
 .scrollable {
     position: relative;
-    overflow: auto;
+    overflow: hidden;
     height: 100%;
     width: 100%;
+}
+
+.scrollable:hover {
+    overflow: overlay;
 }
 
 .scrollable>* {
