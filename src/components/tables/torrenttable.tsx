@@ -272,7 +272,6 @@ export function useInitialTorrentRequiredFields() {
     const config = useContext(ConfigContext);
 
     return useMemo(
-        // TODO this is sketch, should map to values of ColumnRequiredFields
         () => getRequiredFields(config.getTableColumnVisibility("torrents")),
         [config]);
 }
