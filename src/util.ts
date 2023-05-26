@@ -26,17 +26,18 @@ export function bytesToHumanReadableStr(value: number): string {
     let unit = "";
     let divisor = 1.0;
 
-    // eslint-disable-next-line @typescript-eslint/no-for-in-array
-    for (const i in SISuffixes) {
-        unit = SISuffixes[i];
+    for (unit of SISuffixes) {
         if (value < 1024 * divisor) break;
         divisor *= 1024;
     }
 
-    const tmp = String(value / divisor);
-    const result = tmp.includes(".") ? tmp.substring(0, 5) : tmp.substring(0, 3);
+    const tmp = value / divisor;
 
-    return `${result} ${unit}`;
+    let fp = 2;
+    if (tmp > 100) fp = 1;
+    if (tmp > 1000) fp = 0;
+
+    return `${tmp.toFixed(fp)} ${unit}`;
 }
 
 export function byteRateToHumanReadableStr(value: number): string {

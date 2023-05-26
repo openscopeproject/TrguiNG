@@ -19,6 +19,7 @@
 .torrent-table-container .th, .torrent-table-container .td {
     padding: 0.05em 0.2em;
     display: flex;
+    min-width: 0;
     align-items: center;
 }
 

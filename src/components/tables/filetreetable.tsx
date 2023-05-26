@@ -126,7 +126,7 @@ function ByteSizeField(props: TableFieldProps) {
         return bytesToHumanReadableStr(props.entry[props.fieldName] as number);
     }, [props]);
 
-    return <>{stringValue}</>;
+    return <div>{stringValue}</div>;
 }
 
 function PercentBarField(props: TableFieldProps) {

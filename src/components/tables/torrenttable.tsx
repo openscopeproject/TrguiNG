@@ -60,7 +60,7 @@ function isTableFieldWithAccessor(f: TableField): f is TableFieldWithAccessor {
 
 const TimeField = memo(function TimeField(props: TableFieldProps) {
     if (props.fieldName in props.torrent) {
-        return <>{secondsToHumanReadableStr(props.torrent[props.fieldName])}</>;
+        return <div>{secondsToHumanReadableStr(props.torrent[props.fieldName])}</div>;
     } else {
         return <></>;
     }
@@ -147,21 +147,23 @@ function NameField(props: TableFieldProps) {
 }
 
 function StringField(props: TableFieldProps) {
-    return <>
-        {props.torrent[props.fieldName]}
-    </>;
+    return (
+        <div>
+            {props.torrent[props.fieldName]}
+        </div>
+    );
 }
 
 export function EtaField(props: TableFieldProps) {
     const seconds = props.torrent[props.fieldName];
     if (seconds >= 0) return <TimeField {...props} />;
     else if (seconds === -1) return <></>;
-    else return <>Unknown</>;
+    else return <div>Unknown</div>;
 }
 
 export function TrackerField(props: TableFieldProps) {
     const trackers = props.torrent.trackerStats;
-    return <>{trackers.length > 0 ? trackers[0].host : "No tracker"}</>;
+    return <div>{trackers.length > 0 ? trackers[0].host : "No tracker"}</div>;
 }
 
 function getTrackerStatus(torrent: Torrent): string {
@@ -171,7 +173,7 @@ function getTrackerStatus(torrent: Torrent): string {
 }
 
 function TrackerStatusField(props: TableFieldProps) {
-    return <>{getTrackerStatus(props.torrent)}</>;
+    return <div>{getTrackerStatus(props.torrent)}</div>;
 }
 
 function PriorityField(props: TableFieldProps) {
@@ -188,14 +190,14 @@ export function LabelsField(props: TableFieldProps) {
 
 export function StatusField(props: TableFieldProps) {
     const status = StatusStrings[props.torrent.status];
-    return <>{status}</>;
+    return <div>{status}</div>;
 }
 
 export function DateField(props: TableFieldProps) {
     const date = props.torrent[props.fieldName] > 0
         ? timestampToDateString(props.torrent[props.fieldName])
         : "";
-    return <>{date}</>;
+    return <div>{date}</div>;
 }
 
 function ByteSizeField(props: TableFieldProps) {
@@ -204,7 +206,7 @@ function ByteSizeField(props: TableFieldProps) {
         return bytesToHumanReadableStr(field);
     }, [field]);
 
-    return <div style={{ textAlign: "right" }}>{stringValue}</div>;
+    return <div style={{ width: "100%", textAlign: "right" }}>{stringValue}</div>;
 }
 
 function ByteRateField(props: TableFieldProps) {
@@ -213,7 +215,7 @@ function ByteRateField(props: TableFieldProps) {
         return `${bytesToHumanReadableStr(field)}/s`;
     }, [field]);
 
-    return <div style={{ textAlign: "right" }}>{stringValue}</div>;
+    return <div style={{ width: "100%", textAlign: "right" }}>{stringValue}</div>;
 }
 
 function PercentBarField(props: TableFieldProps) {

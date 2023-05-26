@@ -59,7 +59,7 @@ const Columns = AllFields.map((field): ColumnDef<TrackerStats> => {
         if (field.component !== undefined) {
             return <field.component entry={props.row.original} fieldName={field.name} />;
         } else {
-            return <>{props.getValue()}</>;
+            return <div>{props.getValue() as string}</div>;
         }
     };
     return {
@@ -71,10 +71,10 @@ const Columns = AllFields.map((field): ColumnDef<TrackerStats> => {
 });
 
 function NextUpdateField(props: TableFieldProps) {
-    if (props.entry.announceState !== 1) return <>-</>;
+    if (props.entry.announceState !== 1) return <div>-</div>;
     const seconds = props.entry[props.fieldName] - Math.floor(Date.now() / 1000);
-    if (seconds > 0) return <>{secondsToHumanReadableStr(seconds)}</>;
-    return <>-</>;
+    if (seconds > 0) return <div>{secondsToHumanReadableStr(seconds)}</div>;
+    return <div>-</div>;
 }
 
 export function TrackersTable(props: { torrent: Torrent }) {

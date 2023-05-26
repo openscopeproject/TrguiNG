@@ -52,12 +52,12 @@ function ByteRateField(props: TableFieldProps) {
         return `${bytesToHumanReadableStr(field)}/s`;
     }, [field]);
 
-    return <>{stringValue}</>;
+    return <div>{stringValue}</div>;
 }
 
 function PercentField(props: TableFieldProps) {
     const value = props.entry[props.fieldName];
-    return <>{`${Math.round(value * 1000) / 10}%`}</>;
+    return <div>{`${Math.round(value * 1000) / 10}%`}</div>;
 }
 
 const Columns = AllFields.map((field): ColumnDef<PeerStats> => {
@@ -65,7 +65,7 @@ const Columns = AllFields.map((field): ColumnDef<PeerStats> => {
         if (field.component !== undefined) {
             return <field.component entry={props.row.original} fieldName={field.name} />;
         } else {
-            return <>{props.getValue()}</>;
+            return <div>{props.getValue() as string}</div>;
         }
     };
     const column: ColumnDef<PeerStats> = {

@@ -406,14 +406,17 @@ export function TransguiTable<TData>(props: {
 
     return (
         <div className="torrent-table-container">
-            <Box sx={(theme) => ({
-                height: `${rowHeight}px`,
-                width: `${width}px`,
-                backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
-                flexShrink: 0,
-                position: "relative",
-                translate: `${-horizScroll}px`,
-            })}>
+            <Box
+                sx={(theme) => ({
+                    height: `${rowHeight}px`,
+                    width: `${width}px`,
+                    backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
+                    flexShrink: 0,
+                    position: "relative",
+                })}
+                style={{
+                    translate: `${-horizScroll}px`,
+                }}>
                 {table.getHeaderGroups().map(headerGroup => (
                     <Box className="tr" key={headerGroup.id} onContextMenu={menuContextHandler} h={`${rowHeight}px`}>
                         {columnMenu}
