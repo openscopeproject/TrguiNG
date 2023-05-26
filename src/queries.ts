@@ -191,6 +191,20 @@ export function useAddTorrent() {
     });
 }
 
+export function useRemoveTorrents() {
+    const serverConfig = useContext(ServerConfigContext);
+    const client = useTransmissionClient();
+
+    return useMutation({
+        mutationFn: async ({ torrentIds, deleteData }: { torrentIds: number[], deleteData: boolean }) => {
+            await client.torrentRemove(torrentIds, deleteData);
+        },
+        onSettled: () => {
+            void queryClient.invalidateQueries(TorrentKeys.all(serverConfig.name));
+        },
+    });
+}
+
 export function useSession(enabled: boolean) {
     const serverConfig = useContext(ServerConfigContext);
     const client = useTransmissionClient();

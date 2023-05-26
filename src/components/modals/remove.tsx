@@ -20,14 +20,32 @@ import { Button, Checkbox, Divider, Group, Modal, Text } from "@mantine/core";
 import type { ActionModalState } from "./common";
 import { TorrentsNames } from "./common";
 import React, { useCallback, useState } from "react";
+import { useRemoveTorrents } from "queries";
+import { notifications } from "@mantine/notifications";
 
 export function RemoveModal(props: ActionModalState) {
     const [deleteData, setDeleteData] = useState<boolean>(false);
 
+    const mutation = useRemoveTorrents();
+
     const onDelete = useCallback(() => {
-        props.actionController.run("remove", deleteData).catch(console.log);
+        mutation.mutate(
+            {
+                torrentIds: Array.from(props.actionController.selectedTorrents),
+                deleteData,
+            },
+            {
+                onError: (e) => {
+                    console.log("Error removing torrents", e);
+                    notifications.show({
+                        message: "Error removing torrents",
+                        color: "red",
+                    });
+                }
+            }
+        );
         props.close();
-    }, [props, deleteData]);
+    }, [mutation, props, deleteData]);
 
     return (
         <Modal opened={props.opened} onClose={props.close} title="Remove torrents" centered size="lg">

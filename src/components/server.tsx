@@ -264,12 +264,13 @@ export function Server({ hostname }: { hostname: string }) {
     const [filteredTorrents, setFilteredTorrents] = useState<Torrent[]>([]);
     useEffect(
         () => {
+            if ((torrents?.findIndex((t) => t.id === currentTorrent) ?? -1) === -1) setCurrentTorrentInt(undefined);
             const filtered = torrents?.filter(currentFilter.filter).filter(searchFilter) ?? [];
             const ids: string[] = filtered.map((t) => t.id);
             selectedReducer({ verb: "filter", ids });
             setFilteredTorrents(filtered);
         },
-        [torrents, currentFilter, searchFilter]);
+        [torrents, currentFilter, searchFilter, currentTorrent]);
 
     useEffect(() => { actionController.setTorrents(filteredTorrents); }, [actionController, filteredTorrents]);
 

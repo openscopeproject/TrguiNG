@@ -27,7 +27,7 @@
     user-select: none;
 }
 
-.torrent-table-container .th div {
+.torrent-table-container .th div, .torrent-table-container .td div {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

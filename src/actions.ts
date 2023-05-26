@@ -22,7 +22,6 @@ import type { Torrent } from "rpc/torrent";
 const ActionMethods = [
     "resume",
     "pause",
-    "remove",
     "moveQueueUp",
     "moveQueueDown",
     "changeDirectory",
@@ -52,14 +51,6 @@ function mapSimpleAction(name: ActionMethodsType, method: TorrentActionMethodsTy
 const Actions: Action[] = [
     mapSimpleAction("resume", "torrent-start", ""),
     mapSimpleAction("pause", "torrent-stop", ""),
-    {
-        name: "remove",
-        method: async (ac: ActionController, deleteLocalData: boolean) => {
-            const torrentIds = Array.from(ac.selectedTorrents);
-            await ac.client.torrentRemove(torrentIds, deleteLocalData);
-        },
-        defaultShortcut: "",
-    },
     mapSimpleAction("moveQueueUp", "queue-move-up", ""),
     mapSimpleAction("moveQueueDown", "queue-move-down", ""),
     {
