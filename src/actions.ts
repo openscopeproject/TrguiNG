@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { TorrentActionMethodsType, TorrentAddParams, TransmissionClient } from "./rpc/client";
+import type { TorrentActionMethodsType, TransmissionClient } from "./rpc/client";
 import type { Torrent } from "rpc/torrent";
 
 const ActionMethods = [
@@ -125,10 +125,5 @@ export class ActionController {
 
     showModal(modal: ActionModalCallback) {
         this.modalCallbacks?.[modal]();
-    }
-
-    async addTorrent(params: TorrentAddParams) {
-        console.log("Torrent add params", params);
-        return await this.client.torrentAdd(params);
     }
 }

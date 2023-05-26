@@ -21,7 +21,7 @@ import { appWindow } from "@tauri-apps/api/window";
 import type { CachedFileTree } from "cachedfiletree";
 import { ServerConfigContext } from "config";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import type { SessionInfo } from "rpc/client";
+import type { SessionInfo, TorrentAddParams } from "rpc/client";
 import { useTransmissionClient } from "rpc/client";
 import type { Torrent } from "rpc/torrent";
 import type { TorrentMutableFieldsType, TorrentFieldsType } from "rpc/transmission";
@@ -174,6 +174,20 @@ export function useMutateTorrentPath() {
                 void queryClient.invalidateQueries(TorrentKeys.all(serverConfig.name));
             }
         }
+    });
+}
+
+export function useAddTorrent() {
+    const serverConfig = useContext(ServerConfigContext);
+    const client = useTransmissionClient();
+
+    return useMutation({
+        mutationFn: async (params: TorrentAddParams) => {
+            return await client.torrentAdd(params);
+        },
+        onSuccess: () => {
+            void queryClient.invalidateQueries(TorrentKeys.all(serverConfig.name));
+        },
     });
 }
 

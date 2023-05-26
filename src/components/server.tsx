@@ -131,9 +131,6 @@ function ServerModals(props: ServerModalsProps) {
     const [showAddTorrentModal, openAddTorrentModal, closeAddTorrentModal] = usePausingModalState(props.runUpdates);
     const [showDaemonSettingsModal, openDaemonSettingsModal, closeDaemonSettingsModal] = usePausingModalState(props.runUpdates);
 
-    const [magnetLink, setMagnetLink] = useState<string>();
-    const [torrentPath, setTorrentPath] = useState<string>();
-
     useEffect(() => {
         props.actionController.setModalCallbacks({
             setLabels: openLabelsModal,
@@ -145,6 +142,9 @@ function ServerModals(props: ServerModalsProps) {
         });
     }, [props.actionController, openLabelsModal, openRemoveModal, openMoveModal,
         openAddMagnetModal, openAddTorrentModal, openDaemonSettingsModal]);
+
+    const [magnetLink, setMagnetLink] = useState<string>();
+    const [torrentPath, setTorrentPath] = useState<string>();
 
     const [addQueue, setAddQueue] = useState<string[]>([]);
 
@@ -214,11 +214,9 @@ function ServerModals(props: ServerModalsProps) {
             actionController={props.actionController}
             opened={showMoveModal} close={closeMoveModal} />
         <AddMagnet
-            actionController={props.actionController}
             opened={showAddMagnetModal} close={closeAddMagnetModalAndPop}
             allLabels={props.allLabels} uri={magnetLink} />
         <AddTorrent
-            actionController={props.actionController}
             opened={showAddTorrentModal} close={closeAddTorrentModalAndPop}
             allLabels={props.allLabels} uri={torrentPath} />
         <DaemonSettingsModal
