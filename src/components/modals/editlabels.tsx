@@ -19,38 +19,34 @@
 import { Text } from "@mantine/core";
 import type { ActionModalState } from "./common";
 import { SaveCancelModal, TorrentLabels, TorrentsNames } from "./common";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useMutateTorrent } from "queries";
 import { notifications } from "@mantine/notifications";
 
-interface EditLabelsProps extends ActionModalState {
-    allLabels: string[],
-}
-
-export function EditLabelsModal(props: EditLabelsProps) {
+export function EditLabelsModal(props: ActionModalState) {
+    const { opened, close } = props;
     const [labels, setLabels] = useState<string[]>([]);
 
-    const initialLabels = useMemo(() => {
-        const selected = props.actionController.torrents.filter(
-            (t) => props.actionController.selectedTorrents.has(t.id));
+    const calculateInitialLabels = useCallback(() => {
+        const selected = props.serverData.current?.torrents.filter(
+            (t) => props.serverData.current?.selected.has(t.id)) ?? [];
         const labels: string[] = [];
         selected.forEach((t) => t.labels.forEach((l: string) => {
             if (!labels.includes(l)) labels.push(l);
         }));
         return labels;
-    }, [props.actionController.torrents, props.actionController.selectedTorrents]);
+    }, [props.serverData]);
 
     useEffect(() => {
-        setLabels(initialLabels);
-    }, [initialLabels]);
+        if (opened) setLabels(calculateInitialLabels());
+    }, [calculateInitialLabels, opened]);
 
     const mutation = useMutateTorrent();
-    const { actionController: ac, close } = props;
 
     const onSave = useCallback(() => {
         mutation.mutate(
             {
-                torrentIds: Array.from(ac.selectedTorrents),
+                torrentIds: Array.from(props.serverData.current.selected),
                 fields: { labels },
             },
             {
@@ -70,7 +66,7 @@ export function EditLabelsModal(props: EditLabelsProps) {
             },
         );
         close();
-    }, [mutation, ac.selectedTorrents, labels, close]);
+    }, [mutation, props.serverData, labels, close]);
 
     return (
         <SaveCancelModal
@@ -82,8 +78,8 @@ export function EditLabelsModal(props: EditLabelsProps) {
             title="Edit torrent labels"
         >
             <Text mb="md">Enter new labels for</Text>
-            <TorrentsNames actionController={props.actionController} />
-            <TorrentLabels allLabels={props.allLabels} labels={labels} setLabels={setLabels} />
+            <TorrentsNames serverData={props.serverData} />
+            <TorrentLabels allLabels={props.serverData.current.allLabels} labels={labels} setLabels={setLabels} />
         </SaveCancelModal>
     );
 }

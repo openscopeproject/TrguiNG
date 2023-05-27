@@ -18,7 +18,7 @@
 
 import { Box, Button, Checkbox, Divider, Group, Modal, SegmentedControl, Text, TextInput } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import type { LabelsData, LocationData, ModalState } from "./common";
+import type { ActionModalState, LabelsData, LocationData } from "./common";
 import { TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
 import type { PriorityNumberType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings } from "rpc/transmission";
@@ -61,29 +61,39 @@ function AddCommon(props: AddCommonProps) {
     </>;
 }
 
-interface AddCommonModalProps extends ModalState {
-    allLabels: string[],
+interface AddCommonModalProps extends ActionModalState {
     uri: string | undefined,
 }
 
-function useCommonProps(allLabels: string[]) {
+function useCommonProps(modalProps: AddCommonModalProps) {
     const location = useTorrentLocation();
     const [labels, setLabels] = useState<string[]>([]);
+    const [labelData, setLabelData] = useState<LabelsData>({
+        labels,
+        setLabels,
+        allLabels: modalProps.serverData.current.allLabels,
+    });
     const [start, setStart] = useState<boolean>(true);
     const [priority, setPriority] = useState<PriorityNumberType>(0);
 
+    useEffect(() => {
+        if (modalProps.opened) {
+            setLabelData({
+                labels,
+                setLabels,
+                allLabels: modalProps.serverData.current.allLabels,
+            });
+        }
+    }, [labels, modalProps.opened, modalProps.serverData]);
+
     const props = useMemo<AddCommonProps>(() => ({
         location,
-        labels: {
-            labels,
-            setLabels,
-            allLabels,
-        },
+        labels: labelData,
         start,
         setStart,
         priority,
         setPriority,
-    }), [location, labels, allLabels, start, priority]);
+    }), [location, labelData, start, priority]);
 
     return {
         location,
@@ -101,7 +111,7 @@ export function AddMagnet(props: AddCommonModalProps) {
         if (props.uri !== undefined) setMagnet(props.uri);
     }, [props.uri]);
 
-    const common = useCommonProps(props.allLabels);
+    const common = useCommonProps(props);
     const { close } = props;
     const mutation = useAddTorrent();
 
@@ -160,7 +170,7 @@ interface TorrentFileData {
 
 export function AddTorrent(props: AddCommonModalProps) {
     const config = useContext(ConfigContext);
-    const common = useCommonProps(props.allLabels);
+    const common = useCommonProps(props);
     const [torrentData, setTorrentData] = useState<TorrentFileData>();
 
     useEffect(() => {

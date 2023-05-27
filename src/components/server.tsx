@@ -19,43 +19,20 @@
 import "../css/custom.css";
 import type { CSSObject } from "@mantine/core";
 import { Box } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import React, { useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import Split from "react-split";
-import { ActionController } from "../actions";
 import { ConfigContext } from "../config";
 import type { Torrent } from "../rpc/torrent";
+import { useServerTorrentData } from "../rpc/torrent";
 import { MemoizedDetails } from "./details";
 import { DefaultFilter, Filters } from "./filters";
-import { EditLabelsModal } from "./modals/editlabels";
 import { Statusbar } from "./statusbar";
 import { TorrentTable, useInitialTorrentRequiredFields } from "./tables/torrenttable";
 import { MemoizedToolbar } from "./toolbar";
-import { RemoveModal } from "./modals/remove";
-import { MoveModal } from "./modals/move";
-import { AddMagnet, AddTorrent } from "./modals/add";
 import { useSession, useTorrentList } from "queries";
 import type { TorrentFieldsType } from "rpc/transmission";
-import { DaemonSettingsModal } from "./modals/daemon";
-import { emit, listen } from "@tauri-apps/api/event";
-import { useTransmissionClient } from "rpc/client";
-import { appWindow } from "@tauri-apps/api/window";
-
-function usePausingModalState(runUpdates: (run: boolean) => void): [boolean, () => void, () => void] {
-    const [opened, { open, close }] = useDisclosure(false);
-
-    const pauseOpen = useCallback(() => {
-        runUpdates(false);
-        open();
-    }, [runUpdates, open]);
-
-    const closeResume = useCallback(() => {
-        close();
-        runUpdates(true);
-    }, [runUpdates, close]);
-
-    return [opened, pauseOpen, closeResume];
-}
+import type { ModalCallbacks } from "./modals/servermodals";
+import { ServerModals } from "./modals/servermodals";
 
 function selectedTorrentsReducer(selected: Set<number>, action: { verb: string, ids: string[] }) {
     const ids = action.ids.map((t) => +t);
@@ -115,122 +92,7 @@ function SplitLayout({ left, right, bottom }: { left: React.ReactNode, right: Re
     );
 }
 
-interface ServerModalsProps {
-    actionController: ActionController,
-    filteredTorrents: Torrent[],
-    selectedTorrents: Set<number>,
-    allLabels: string[],
-    runUpdates: (run: boolean) => void,
-}
-
-function ServerModals(props: ServerModalsProps) {
-    const [showLabelsModal, openLabelsModal, closeLabelsModal] = usePausingModalState(props.runUpdates);
-    const [showRemoveModal, openRemoveModal, closeRemoveModal] = usePausingModalState(props.runUpdates);
-    const [showMoveModal, openMoveModal, closeMoveModal] = usePausingModalState(props.runUpdates);
-    const [showAddMagnetModal, openAddMagnetModal, closeAddMagnetModal] = usePausingModalState(props.runUpdates);
-    const [showAddTorrentModal, openAddTorrentModal, closeAddTorrentModal] = usePausingModalState(props.runUpdates);
-    const [showDaemonSettingsModal, openDaemonSettingsModal, closeDaemonSettingsModal] = usePausingModalState(props.runUpdates);
-
-    useEffect(() => {
-        props.actionController.setModalCallbacks({
-            setLabels: openLabelsModal,
-            remove: openRemoveModal,
-            move: openMoveModal,
-            addMagnet: openAddMagnetModal,
-            addTorrent: openAddTorrentModal,
-            daemonSettings: openDaemonSettingsModal,
-        });
-    }, [props.actionController, openLabelsModal, openRemoveModal, openMoveModal,
-        openAddMagnetModal, openAddTorrentModal, openDaemonSettingsModal]);
-
-    const [magnetLink, setMagnetLink] = useState<string>();
-    const [torrentPath, setTorrentPath] = useState<string>();
-
-    const [addQueue, setAddQueue] = useState<string[]>([]);
-
-    useEffect(() => {
-        const listenResult = listen<string>("app-arg", (event) => {
-            const args = JSON.parse(event.payload) as string[];
-            console.log("Got app-arg:", args);
-            setAddQueue([...addQueue, ...args]);
-            void appWindow.show();
-            void appWindow.unminimize();
-            void appWindow.setFocus();
-            void appWindow.emit("window-shown");
-        }).then((unlisten) => {
-            void emit("listener-start", {});
-            return unlisten;
-        });
-
-        return () => {
-            void listenResult.then((unlisten) => { unlisten(); });
-        };
-    }, [addQueue]);
-
-    useEffect(() => {
-        if (addQueue.length > 0 && !showAddMagnetModal && !showAddTorrentModal) {
-            const item = addQueue[0];
-            if (item.startsWith("magnet:?")) {
-                setMagnetLink(item);
-                openAddMagnetModal();
-            } else {
-                setTorrentPath(item);
-                openAddTorrentModal();
-            }
-        }
-    }, [addQueue, showAddMagnetModal, showAddTorrentModal, setMagnetLink, setTorrentPath, openAddMagnetModal, openAddTorrentModal]);
-
-    const closeAddMagnetModalAndPop = useCallback(() => {
-        closeAddMagnetModal();
-        if (magnetLink !== undefined && addQueue.length > 0 && addQueue[0] === magnetLink) {
-            setMagnetLink(undefined);
-            setAddQueue(addQueue.slice(1));
-        } else if (addQueue.length > 0) {
-            // kick the queue again
-            setAddQueue([...addQueue]);
-        }
-    }, [closeAddMagnetModal, addQueue, magnetLink]);
-
-    const closeAddTorrentModalAndPop = useCallback(() => {
-        closeAddTorrentModal();
-        if (torrentPath !== undefined && addQueue.length > 0 && addQueue[0] === torrentPath) {
-            setTorrentPath(undefined);
-            setAddQueue(addQueue.slice(1));
-        } else if (addQueue.length > 0) {
-            // kick the queue again
-            setAddQueue([...addQueue]);
-        }
-    }, [closeAddTorrentModal, addQueue, torrentPath]);
-
-    return <>
-        <EditLabelsModal
-            actionController={props.actionController}
-            opened={showLabelsModal} close={closeLabelsModal}
-            allLabels={props.allLabels} />
-        <RemoveModal
-            actionController={props.actionController}
-            opened={showRemoveModal} close={closeRemoveModal} />
-        <MoveModal
-            actionController={props.actionController}
-            opened={showMoveModal} close={closeMoveModal} />
-        <AddMagnet
-            opened={showAddMagnetModal} close={closeAddMagnetModalAndPop}
-            allLabels={props.allLabels} uri={magnetLink} />
-        <AddTorrent
-            opened={showAddTorrentModal} close={closeAddTorrentModalAndPop}
-            allLabels={props.allLabels} uri={torrentPath} />
-        <DaemonSettingsModal
-            opened={showDaemonSettingsModal} close={closeDaemonSettingsModal} />
-    </>;
-}
-
 export function Server({ hostname }: { hostname: string }) {
-    const client = useTransmissionClient();
-
-    const actionController = useMemo(
-        () => new ActionController(client),
-        [client]);
-
     const [currentFilter, setCurrentFilter] = useState({ id: "", filter: DefaultFilter });
 
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
@@ -259,7 +121,13 @@ export function Server({ hostname }: { hostname: string }) {
             selectedTorrentsReducer(selected, action), []),
         new Set<number>());
 
-    useEffect(() => { actionController.setSelected(selectedTorrents); }, [actionController, selectedTorrents]);
+    const allLabels = useMemo(() => {
+        const labels = new Set<string>();
+        torrents?.forEach((t) => t.labels.forEach((l: string) => labels.add(l)));
+        return Array.from(labels).sort();
+    }, [torrents]);
+
+    const serverData = useServerTorrentData(torrents ?? [], selectedTorrents, currentTorrent, allLabels);
 
     const [filteredTorrents, setFilteredTorrents] = useState<Torrent[]>([]);
     useEffect(
@@ -272,27 +140,22 @@ export function Server({ hostname }: { hostname: string }) {
         },
         [torrents, currentFilter, searchFilter, currentTorrent]);
 
-    useEffect(() => { actionController.setTorrents(filteredTorrents); }, [actionController, filteredTorrents]);
-
-    const allLabels = useMemo(() => {
-        const labels = new Set<string>();
-        torrents?.forEach((t) => t.labels.forEach((l: string) => labels.add(l)));
-        return Array.from(labels).sort();
-    }, [torrents]);
-
     const [scrollToRow, setScrollToRow] = useState<{ id: string }>();
 
     useEffect(() => {
         if (currentTorrent !== undefined) setScrollToRow({ id: `${currentTorrent}` });
     }, [currentFilter, currentTorrent]);
 
+    const modals = useRef<ModalCallbacks>(null);
+
     return (<>
-        <ServerModals {...{ actionController, filteredTorrents, selectedTorrents, runUpdates, allLabels }} />
+        <ServerModals ref={modals} {...{ serverData, runUpdates }} />
         <div className="d-flex flex-column h-100 w-100">
             <div className="border-bottom border-dark p-2">
                 <MemoizedToolbar
                     setSearchTerms={setSearchTerms}
-                    actionController={actionController}
+                    modals={modals}
+                    serverData={serverData}
                     altSpeedMode={session?.["alt-speed-enabled"] ?? false}
                 />
             </div>

@@ -22,11 +22,11 @@ import {
     Text, TextInput, ActionIcon, Menu, ScrollArea,
 } from "@mantine/core";
 import { dialog } from "@tauri-apps/api";
-import type { ActionController } from "actions";
 import { ConfigContext, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { pathMapFromServer, pathMapToServer } from "util";
 import * as Icon from "react-bootstrap-icons";
+import type { ServerTorrentData } from "rpc/torrent";
 
 export interface ModalState {
     opened: boolean,
@@ -34,7 +34,7 @@ export interface ModalState {
 }
 
 export interface ActionModalState extends ModalState {
-    actionController: ActionController,
+    serverData: React.MutableRefObject<ServerTorrentData>,
 }
 
 interface SaveCancelModalProps extends ModalProps {
@@ -59,14 +59,14 @@ export function SaveCancelModal({ onSave, onClose, children, saveLoading, ...oth
     );
 }
 
-function useTorrentsNameString(actionController: ActionController) {
+function useTorrentsNameString(serverData: React.RefObject<ServerTorrentData>) {
     return useMemo<string[]>(() => {
-        if (actionController.selectedTorrents.size === 0) {
+        if (serverData.current == null || serverData.current.selected.size === 0) {
             return ["No torrent selected"];
         }
 
-        const selected = actionController.torrents.filter(
-            (t) => actionController.selectedTorrents.has(t.id));
+        const selected = serverData.current.torrents.filter(
+            (t) => serverData.current?.selected.has(t.id));
 
         const allNames: string[] = [];
         selected.forEach((t) => allNames.push(t.name));
@@ -75,11 +75,11 @@ function useTorrentsNameString(actionController: ActionController) {
         if (allNames.length > 5) names.push(`... and ${allNames.length - 5} more`);
 
         return names;
-    }, [actionController.selectedTorrents, actionController.torrents]);
+    }, [serverData]);
 }
 
-export function TorrentsNames({ actionController }: { actionController: ActionController }) {
-    const names = useTorrentsNameString(actionController);
+export function TorrentsNames({ serverData }: { serverData: React.RefObject<ServerTorrentData> }) {
+    const names = useTorrentsNameString(serverData);
 
     return <>
         {names.map((s, i) => <Text key={i} ml="xl" mb="md">{s}</Text>)}

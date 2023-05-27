@@ -31,7 +31,7 @@ export function RemoveModal(props: ActionModalState) {
     const onDelete = useCallback(() => {
         mutation.mutate(
             {
-                torrentIds: Array.from(props.actionController.selectedTorrents),
+                torrentIds: Array.from(props.serverData.current.selected),
                 deleteData,
             },
             {
@@ -51,7 +51,7 @@ export function RemoveModal(props: ActionModalState) {
         <Modal opened={props.opened} onClose={props.close} title="Remove torrents" centered size="lg">
             <Divider my="sm" />
             <Text mb="md">Are you sure you want to remove following torrents?</Text>
-            <TorrentsNames actionController={props.actionController} />
+            <TorrentsNames serverData={props.serverData} />
             <Checkbox
                 label="Delete torrent data"
                 checked={deleteData}

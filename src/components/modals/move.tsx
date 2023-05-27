@@ -17,9 +17,11 @@
  */
 
 import { Button, Checkbox, Divider, Group, Modal, Text } from "@mantine/core";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import type { ActionModalState } from "./common";
 import { TorrentLocation, TorrentsNames, useTorrentLocation } from "./common";
+import { useTorrentChangeDirectory } from "queries";
+import { notifications } from "@mantine/notifications";
 
 export function MoveModal(props: ActionModalState) {
     const [moveData, setMoveData] = useState<boolean>(true);
@@ -27,26 +29,44 @@ export function MoveModal(props: ActionModalState) {
     const location = useTorrentLocation();
     const { setPath } = location;
 
-    const onMove = useCallback(() => {
-        props.actionController.run("changeDirectory", location.path, moveData).catch(console.log);
-        props.close();
-    }, [props, location.path, moveData]);
+    const mutation = useTorrentChangeDirectory();
 
-    const initialLocation = useMemo(() => {
-        const [id] = props.actionController.selectedTorrents;
-        const torrent = props.actionController.torrents.find((t) => t.id === id);
+    const onMove = useCallback(() => {
+        mutation.mutate(
+            {
+                torrentIds: Array.from(props.serverData.current.selected),
+                location: location.path,
+                move: moveData,
+            },
+            {
+                onError: (e) => {
+                    console.log("Error moving torrents", e);
+                    notifications.show({
+                        message: "Error moving torrents",
+                        color: "red",
+                    });
+                },
+            },
+        );
+
+        props.close();
+    }, [mutation, props, location.path, moveData]);
+
+    const calculateInitialLocation = useCallback(() => {
+        const [id] = [...props.serverData.current.selected];
+        const torrent = props.serverData.current.torrents.find((t) => t.id === id);
         return torrent?.downloadDir ?? "";
-    }, [props.actionController.torrents, props.actionController.selectedTorrents]);
+    }, [props.serverData]);
 
     useEffect(() => {
-        setPath(initialLocation);
-    }, [setPath, initialLocation]);
+        if (props.opened) setPath(calculateInitialLocation());
+    }, [props.opened, setPath, calculateInitialLocation]);
 
     return (
         <Modal opened={props.opened} onClose={props.close} title="Move torrents" centered size="lg">
             <Divider my="sm" />
             <Text mb="md">Enter new location for</Text>
-            <TorrentsNames actionController={props.actionController} />
+            <TorrentsNames serverData={props.serverData} />
             <TorrentLocation {...location} />
             <Checkbox
                 label="Move torrent data to new location"

@@ -21,7 +21,7 @@ import { appWindow } from "@tauri-apps/api/window";
 import type { CachedFileTree } from "cachedfiletree";
 import { ServerConfigContext } from "config";
 import { useCallback, useContext, useEffect, useState } from "react";
-import type { SessionInfo, TorrentAddParams } from "rpc/client";
+import type { SessionInfo, TorrentActionMethodsType, TorrentAddParams } from "rpc/client";
 import { useTransmissionClient } from "rpc/client";
 import type { Torrent } from "rpc/torrent";
 import type { TorrentMutableFieldsType, TorrentFieldsType } from "rpc/transmission";
@@ -175,32 +175,51 @@ export function useMutateTorrentPath() {
     });
 }
 
-export function useAddTorrent() {
+function useInvalidatingTorrentAction<ActionParams>(mutationFn: (params: ActionParams) => Promise<void>) {
     const serverConfig = useContext(ServerConfigContext);
-    const client = useTransmissionClient();
 
     return useMutation({
-        mutationFn: async (params: TorrentAddParams) => {
-            return await client.torrentAdd(params);
-        },
+        mutationFn,
         onSuccess: () => {
             void queryClient.invalidateQueries(TorrentKeys.all(serverConfig.name));
         },
     });
 }
 
-export function useRemoveTorrents() {
-    const serverConfig = useContext(ServerConfigContext);
+export function useAddTorrent() {
     const client = useTransmissionClient();
 
-    return useMutation({
-        mutationFn: async ({ torrentIds, deleteData }: { torrentIds: number[], deleteData: boolean }) => {
+    return useInvalidatingTorrentAction(
+        async (params: TorrentAddParams) => {
+            return await client.torrentAdd(params);
+        });
+}
+
+export function useRemoveTorrents() {
+    const client = useTransmissionClient();
+
+    return useInvalidatingTorrentAction(
+        async ({ torrentIds, deleteData }: { torrentIds: number[], deleteData: boolean }) => {
             await client.torrentRemove(torrentIds, deleteData);
-        },
-        onSettled: () => {
-            void queryClient.invalidateQueries(TorrentKeys.all(serverConfig.name));
-        },
-    });
+        });
+}
+
+export function useTorrentAction() {
+    const client = useTransmissionClient();
+
+    return useInvalidatingTorrentAction(
+        async ({ method, torrentIds }: { method: TorrentActionMethodsType, torrentIds: number[] }) => {
+            await client.torrentAction(method, torrentIds);
+        });
+}
+
+export function useTorrentChangeDirectory() {
+    const client = useTransmissionClient();
+
+    return useInvalidatingTorrentAction(
+        async ({ torrentIds, location, move }: { torrentIds: number[], location: string, move: boolean }) => {
+            await client.torrentMove(torrentIds, location, move);
+        });
 }
 
 export function useSession(enabled: boolean) {

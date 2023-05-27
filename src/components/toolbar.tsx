@@ -21,13 +21,15 @@ import { Button, Flex, Menu, TextInput } from "@mantine/core";
 import debounce from "lodash-es/debounce";
 import React, { forwardRef, memo, useCallback, useEffect, useMemo, useState } from "react";
 import * as Icon from "react-bootstrap-icons";
-import type { ActionController, ActionMethodsType } from "../actions";
 import type { PriorityNumberType } from "rpc/transmission";
 import { BandwidthPriority } from "rpc/transmission";
 import type { TorrentMutationVariables } from "queries";
-import { useMutateSession, useMutateTorrent } from "queries";
+import { useTorrentAction, useMutateSession, useMutateTorrent } from "queries";
 import type { UseMutationResult } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
+import type { ServerTorrentData } from "rpc/torrent";
+import type { TorrentActionMethodsType } from "rpc/client";
+import type { ModalCallbacks } from "./modals/servermodals";
 
 interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {
     depressed?: boolean,
@@ -55,16 +57,31 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
 
 interface ToolbarProps {
     setSearchTerms: (terms: string[]) => void,
-    actionController: ActionController,
+    modals: React.RefObject<ModalCallbacks>,
+    serverData: React.MutableRefObject<ServerTorrentData>,
     altSpeedMode: boolean,
 }
 
-function useSimpleActionHandler(action: ActionMethodsType, props: ToolbarProps) {
+function useSimpleActionHandler(method: TorrentActionMethodsType, props: ToolbarProps) {
+    const mutation = useTorrentAction();
+
     return useCallback(() => {
-        props.actionController.run(action).catch((e) => {
-            console.log("Error for action", action, e);
-        });
-    }, [props.actionController, action]);
+        mutation.mutate(
+            {
+                method,
+                torrentIds: Array.from(props.serverData.current.selected),
+            },
+            {
+                onError: (e) => {
+                    console.log("Error running torrent update method", method, e);
+                    notifications.show({
+                        message: "Error updating torrent",
+                        color: "red",
+                    });
+                },
+            },
+        );
+    }, [mutation, method, props.serverData]);
 }
 
 function usePriorityHandler(
@@ -75,7 +92,7 @@ function usePriorityHandler(
     return useCallback(() => {
         mutation.mutate(
             {
-                torrentIds: Array.from(props.actionController.selectedTorrents),
+                torrentIds: Array.from(props.serverData.current.selected),
                 fields: { bandwidthPriority: priority },
             },
             {
@@ -94,7 +111,7 @@ function usePriorityHandler(
                 },
             },
         );
-    }, [props.actionController.selectedTorrents, priority, mutation]);
+    }, [props.serverData, priority, mutation]);
 }
 
 function Toolbar(props: ToolbarProps) {
@@ -132,40 +149,40 @@ function Toolbar(props: ToolbarProps) {
     return (
         <Flex w="100%" align="stretch">
             <Button.Group mx="sm">
-                <ToolbarButton onClick={() => { props.actionController.showModal("addTorrent"); }}>
+                <ToolbarButton onClick={() => { props.modals.current?.addTorrent(); }}>
                     <Icon.FileArrowDownFill size="1.5rem" color="seagreen" />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => { props.actionController.showModal("addMagnet"); }}>
+                <ToolbarButton onClick={() => { props.modals.current?.addMagnet(); }}>
                     <Icon.MagnetFill size="1.5rem" color="seagreen" />
                 </ToolbarButton>
             </Button.Group>
 
             <Button.Group mx="sm">
-                <ToolbarButton onClick={useSimpleActionHandler("resume", props)} >
+                <ToolbarButton onClick={useSimpleActionHandler("torrent-start", props)} >
                     <Icon.PlayCircleFill size="1.5rem" color="steelblue" />
                 </ToolbarButton>
-                <ToolbarButton onClick={useSimpleActionHandler("pause", props)} >
+                <ToolbarButton onClick={useSimpleActionHandler("torrent-stop", props)} >
                     <Icon.PauseCircleFill size="1.5rem" color="steelblue" />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => { props.actionController.showModal("remove"); }}>
+                <ToolbarButton onClick={() => { props.modals.current?.remove(); }}>
                     <Icon.XCircleFill size="1.5rem" color="tomato" />
                 </ToolbarButton>
             </Button.Group>
 
             <Button.Group mx="sm">
-                <ToolbarButton onClick={useSimpleActionHandler("moveQueueUp", props)} >
+                <ToolbarButton onClick={useSimpleActionHandler("queue-move-up", props)} >
                     <Icon.ArrowUpCircleFill size="1.5rem" color="seagreen" />
                 </ToolbarButton>
-                <ToolbarButton onClick={useSimpleActionHandler("moveQueueDown", props)} >
+                <ToolbarButton onClick={useSimpleActionHandler("queue-move-down", props)} >
                     <Icon.ArrowDownCircleFill size="1.5rem" color="seagreen" />
                 </ToolbarButton>
             </Button.Group>
 
             <Button.Group mx="sm">
-                <ToolbarButton onClick={() => { props.actionController.showModal("move"); }}>
+                <ToolbarButton onClick={() => { props.modals.current?.move(); }}>
                     <Icon.FolderFill size="1.5rem" color="gold" />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => { props.actionController.showModal("setLabels"); }} >
+                <ToolbarButton onClick={() => { props.modals.current?.setLabels(); }} >
                     <Icon.TagsFill size="1.5rem" color="steelblue" />
                 </ToolbarButton>
 
@@ -207,7 +224,7 @@ function Toolbar(props: ToolbarProps) {
                 styles={{ input: { height: "auto" } }}
             />
 
-            <ToolbarButton onClick={() => { props.actionController.showModal("daemonSettings"); }}>
+            <ToolbarButton onClick={() => { props.modals.current?.daemonSettings(); }}>
                 <Icon.Tools size="1.5rem" />
             </ToolbarButton>
         </Flex >

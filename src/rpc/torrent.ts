@@ -18,6 +18,7 @@
 
 import type { BandwidthGroupFieldType, PeerStatsFieldsType, TorrentAllFieldsType, TrackerStatsFieldsType } from "./transmission";
 import { Status } from "./transmission";
+import { useRef, useEffect } from "react";
 
 export type Torrent = Partial<Record<TorrentAllFieldsType, any>>;
 export type TrackerStats = Partial<Record<TrackerStatsFieldsType, any>>;
@@ -49,4 +50,30 @@ export function getTorrentError(t: Torrent): string {
     } else {
         return trackerError;
     }
+}
+
+export interface ServerTorrentData {
+    torrents: Torrent[],
+    selected: Set<number>,
+    current: number | undefined,
+    allLabels: string[],
+}
+
+export function useServerTorrentData(torrents: Torrent[], selectedTorrents: Set<number>, currentTorrent: number | undefined, allLabels: string[]) {
+    const serverData = useRef<ServerTorrentData>({
+        torrents: torrents ?? [],
+        selected: selectedTorrents,
+        current: currentTorrent,
+        allLabels,
+    });
+
+    useEffect(() => {
+        serverData.current = {
+            torrents: torrents ?? [],
+            selected: selectedTorrents,
+            current: currentTorrent,
+            allLabels,
+        };
+    }, [torrents, selectedTorrents, currentTorrent, allLabels]);
+    return serverData;
 }
