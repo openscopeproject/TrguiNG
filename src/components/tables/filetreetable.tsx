@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useContext, useMemo } from "react";
+import React, { useCallback, useContext, useMemo, useState } from "react";
 import type { Row, ColumnDef, CellContext } from "@tanstack/react-table";
-import type { CachedFileTree, DirEntry, FileDirEntry } from "../../cachedfiletree";
+import type { CachedFileTree, FileDirEntry } from "../../cachedfiletree";
 import { isDirEntry } from "../../cachedfiletree";
 import { ServerConfigContext } from "../../config";
 import { PriorityColors, PriorityStrings } from "../../rpc/transmission";
@@ -37,6 +37,7 @@ type EntryWantedChangeHandler = (entry: FileDirEntry, state: boolean) => void;
 interface TableFieldProps {
     fileTree: CachedFileTree,
     entry: FileDirEntry,
+    row: Row<FileDirEntry>,
     fieldName: FileDirEntryKey,
     treeName: string,
     onCheckboxChange: EntryWantedChangeHandler,
@@ -61,17 +62,10 @@ function NameField(props: TableFieldProps) {
     const { entry, fileTree } = props;
     const isDir = isDirEntry(entry);
 
-    const onExpand = useCallback((e: React.MouseEvent) => {
+    const onToggleExpand = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
-        if (isDirEntry(props.entry)) props.fileTree.expand(props.entry.fullpath, true);
-        refreshFileTree(props.treeName);
+        props.row.toggleExpanded();
     }, [props]);
-
-    const onCollapse = useCallback((e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (isDir) fileTree.expand(entry.fullpath, false);
-        refreshFileTree(props.treeName);
-    }, [isDir, props.treeName, fileTree, entry.fullpath]);
 
     const theme = useMantineTheme();
 
@@ -81,16 +75,16 @@ function NameField(props: TableFieldProps) {
         onStart();
 
         mutation.mutate(
-            { torrentId: props.fileTree.torrentId, path: props.entry.fullpath, name },
+            { torrentId: fileTree.torrentId, path: props.entry.fullpath, name },
             {
                 onSettled: onEnd,
                 onError: () => { notifications.show({ color: "red", message: "Failed to update file path" }); },
                 onSuccess: () => {
-                    props.fileTree.updatePath(props.entry.fullpath, name);
+                    fileTree.updatePath(props.entry.fullpath, name);
                     refreshFileTree(props.treeName);
                 },
             });
-    }, [mutation, props.fileTree, props.entry.fullpath, props.treeName]);
+    }, [mutation, fileTree, props.entry.fullpath, props.treeName]);
 
     return (
         <EditableNameField currentName={props.entry.name} onUpdate={updatePath}>
@@ -111,9 +105,9 @@ function NameField(props: TableFieldProps) {
             </Box>
             <Box ml="xs" sx={{ flexShrink: 0, height: "100%" }}>
                 {isDir
-                    ? (props.entry as DirEntry).expanded
-                        ? <Icon.DashSquare size={16} onClick={onCollapse} style={{ cursor: "pointer" }} />
-                        : <Icon.PlusSquare size={16} onClick={onExpand} style={{ cursor: "pointer" }} />
+                    ? props.row.getIsExpanded()
+                        ? <Icon.DashSquare size={16} onClick={onToggleExpand} style={{ cursor: "pointer" }} />
+                        : <Icon.PlusSquare size={16} onClick={onToggleExpand} style={{ cursor: "pointer" }} />
                     : <Icon.FileEarmark size={16} />
                 }
             </Box>
@@ -168,10 +162,6 @@ export function FileTreeTable(props: FileTreeTableProps) {
     const nameSortFunc = useCallback(
         (rowa: Row<FileDirEntry>, rowb: Row<FileDirEntry>) => {
             const [a, b] = [rowa.original, rowb.original];
-            // if (isDirEntry(a) && !isDirEntry(b))
-            //     return -1;
-            // if (!isDirEntry(a) && isDirEntry(b))
-            //     return 1;
             return a.fullpath < b.fullpath ? -1 : 1;
         }, []);
 
@@ -183,6 +173,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
                     fileTree={props.fileTree}
                     fieldName={field.name}
                     entry={cellProps.row.original}
+                    row={cellProps.row}
                     treeName={props.brief === true ? "filetreebrief" : "filetree"}
                     onCheckboxChange={onCheckboxChange} />;
             };
@@ -196,13 +187,19 @@ export function FileTreeTable(props: FileTreeTableProps) {
         }), [props.brief, props.fileTree, nameSortFunc, onCheckboxChange]);
 
     const getRowId = useCallback((row: FileDirEntry) => row.fullpath, []);
+    const getSubRows = useCallback((row: FileDirEntry) => {
+        if (isDirEntry(row)) {
+            return row.subrows;
+        }
+        return [];
+    }, []);
 
-    const selected = useMemo(() => props.data.filter((e) => e.isSelected).map(getRowId), [props.data, getRowId]);
+    const [selected, setSelected] = useState<string[]>([]);
 
     const selectedReducer = useCallback((action: { verb: "add" | "set", ids: string[] }) => {
         props.fileTree.selectAction(action);
-        refreshFileTree(props.brief === true ? "filetreebrief" : "filetree");
-    }, [props.fileTree, props.brief]);
+        setSelected(props.fileTree.getSelected());
+    }, [props.fileTree]);
 
     const onRowDoubleClick = useCallback((row: FileDirEntry) => {
         if (props.downloadDir === undefined || props.downloadDir === "") return;
@@ -217,6 +214,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
         data: props.data,
         selected,
         getRowId,
+        getSubRows,
         selectedReducer,
         onRowDoubleClick,
     }} />;

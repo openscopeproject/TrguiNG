@@ -42,13 +42,13 @@ export interface DirEntry extends Entry {
     priority?: PriorityNumberType,
     subdirs: Map<string, DirEntry>,
     files: Map<string, FileEntry>,
-    expanded: boolean,
+    subrows: FileDirEntry[],
 }
 
 export type FileDirEntry = FileEntry | DirEntry;
 
 export function isDirEntry(entry: FileDirEntry): entry is DirEntry {
-    return "expanded" in entry;
+    return "files" in entry;
 }
 
 export class CachedFileTree {
@@ -77,7 +77,7 @@ export class CachedFileTree {
             percent: 0,
             subdirs: new Map(),
             files: new Map(),
-            expanded: true,
+            subrows: [],
             isSelected: false,
             wantedUpdating: false,
         };
@@ -183,7 +183,7 @@ export class CachedFileTree {
                         percent: 0,
                         subdirs: new Map(),
                         files: new Map(),
-                        expanded: false,
+                        subrows: [],
                         parent: node,
                         isSelected: false,
                         wantedUpdating: false,
@@ -246,22 +246,6 @@ export class CachedFileTree {
         }
     }
 
-    flatten(): FileDirEntry[] {
-        const result: FileDirEntry[] = [];
-
-        const append = (dir: DirEntry) => {
-            dir.subdirs.forEach((d) => {
-                result.push({ ...d });
-                if (d.expanded) append(d);
-            });
-            dir.files.forEach((f) => result.push({ ...f }));
-        };
-
-        append(this.tree);
-
-        return result;
-    }
-
     setWanted(path: string, state: boolean, updating: boolean) {
         const entry = this._findEntry(path);
         if (entry === undefined) return;
@@ -286,12 +270,6 @@ export class CachedFileTree {
         }
 
         this.recalcTree(this.tree);
-    }
-
-    expand(path: string, state: boolean) {
-        const entry = this._findEntry(path);
-        if (entry === undefined || !isDirEntry(entry)) return;
-        entry.expanded = state;
     }
 
     getChildFilesIndexes(path: string) {
@@ -366,5 +344,36 @@ export class CachedFileTree {
             }
         });
         this.updateDirSelection(this.tree);
+    }
+
+    getSelected(): string[] {
+        const result: string[] = [];
+
+        const recurse = (dir: DirEntry) => {
+            if (dir.isSelected) result.push(dir.fullpath);
+            dir.files.forEach((f) => {
+                if (f.isSelected) result.push(f.fullpath);
+            });
+            dir.subdirs.forEach(recurse);
+        };
+
+        recurse(this.tree);
+
+        return result;
+    }
+
+    getView(): FileDirEntry[] {
+        const treeCopy = { ...this.tree };
+
+        const recurse = (dir: DirEntry) => {
+            dir.subdirs.forEach(recurse);
+            dir.subrows = [
+                ...Array.from(dir.subdirs.values()).map((d) => ({ ...d, parent: undefined })),
+                ...Array.from(dir.files.values()).map((f) => ({ ...f, parent: undefined }))];
+        };
+
+        recurse(treeCopy);
+
+        return treeCopy.subrows;
     }
 }

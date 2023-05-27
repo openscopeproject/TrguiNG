@@ -20,10 +20,11 @@ import { ActionIcon, Box, Group, Menu, TextInput } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
 import type {
     Table, ColumnDef, ColumnSizingState,
-    SortingState, VisibilityState, Row, Column, RowSelectionState, ColumnOrderState, AccessorKeyColumnDef, Header
+    SortingState, VisibilityState, Row, Column, RowSelectionState,
+    ColumnOrderState, AccessorKeyColumnDef, Header
 } from "@tanstack/react-table";
 import {
-    useReactTable, getCoreRowModel, getSortedRowModel, flexRender
+    useReactTable, getCoreRowModel, getSortedRowModel, getExpandedRowModel, flexRender
 } from "@tanstack/react-table";
 import type { Virtualizer } from "@tanstack/react-virtual";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -48,6 +49,7 @@ function useTable<TData>(
     data: TData[],
     selected: string[],
     getRowId: (r: TData) => string,
+    getSubRows?: (r: TData) => TData[],
     onVisibilityChange?: React.Dispatch<VisibilityState>,
 ): [
         Table<TData>,
@@ -91,6 +93,8 @@ function useTable<TData>(
         data,
         defaultColumn,
         getRowId,
+        enableExpanding: getSubRows !== undefined,
+        getSubRows,
         enableHiding: true,
         onColumnVisibilityChange: setColumnVisibility,
         onColumnOrderChange: setColumnOrder,
@@ -107,6 +111,7 @@ function useTable<TData>(
             rowSelection,
         },
         getCoreRowModel: getCoreRowModel(),
+        getExpandedRowModel: getExpandedRowModel(),
         getSortedRowModel: getSortedRowModel(),
     });
 
@@ -269,6 +274,7 @@ export function useStandardSelect(): [string[], React.Dispatch<{ verb: "add" | "
 
 function InnerRow<TData>(props: {
     row: Row<TData>,
+    expanded: boolean | undefined,
     columnSizing: ColumnSizingState,
     columnVisibility: VisibilityState,
     columnOrder: ColumnOrderState,
@@ -289,6 +295,7 @@ function InnerRow<TData>(props: {
 const MemoizedInnerRow = memo(InnerRow, (prev, next) => {
     return (
         prev.row.original === next.row.original &&
+        prev.expanded === next.expanded &&
         prev.columnSizing === next.columnSizing &&
         prev.columnVisibility === next.columnVisibility &&
         prev.columnOrder === next.columnOrder
@@ -298,6 +305,7 @@ const MemoizedInnerRow = memo(InnerRow, (prev, next) => {
 function TableRow<TData>(props: {
     row: Row<TData>,
     selected: boolean,
+    expanded: boolean,
     index: number,
     start: number,
     lastIndex: number,
@@ -369,6 +377,7 @@ export function TransguiTable<TData>(props: {
     data: TData[],
     selected: string[],
     getRowId: (r: TData) => string,
+    getSubRows?: (r: TData) => TData[],
     selectedReducer: ({ verb, ids }: { verb: "add" | "set", ids: string[] }) => void,
     setCurrent?: (id: string) => void,
     onRowDoubleClick?: (row: TData) => void,
@@ -376,12 +385,12 @@ export function TransguiTable<TData>(props: {
     scrollToRow?: { id: string },
 }) {
     const [table, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columnSizing] =
-        useTable(props.tablename, props.columns, props.data, props.selected, props.getRowId, props.onVisibilityChange);
+        useTable(props.tablename, props.columns, props.data, props.selected, props.getRowId, props.getSubRows, props.onVisibilityChange);
 
     const [lastIndex, onRowClick] = useSelectHandler(
         table, props.selectedReducer, props.getRowId, props.setCurrent);
 
-    const [parentRef, rowHeight, virtualizer] = useTableVirtualizer(props.data.length);
+    const [parentRef, rowHeight, virtualizer] = useTableVirtualizer(table.getRowModel().rows.length);
 
     const [menuContextHandler, columnMenu] = useColumnMenu(
         columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, table.getAllLeafColumns());
@@ -436,6 +445,7 @@ export function TransguiTable<TData>(props: {
                             return <MemoizedTableRow<TData> key={props.getRowId(row.original)} {...{
                                 row,
                                 selected: row.getIsSelected(),
+                                expanded: row.getIsExpanded(),
                                 index: virtualRow.index,
                                 lastIndex,
                                 start: virtualRow.start,

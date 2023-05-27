@@ -20,7 +20,7 @@ import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { appWindow } from "@tauri-apps/api/window";
 import type { CachedFileTree } from "cachedfiletree";
 import { ServerConfigContext } from "config";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import type { SessionInfo, TorrentAddParams } from "rpc/client";
 import { useTransmissionClient } from "rpc/client";
 import type { Torrent } from "rpc/torrent";
@@ -294,9 +294,9 @@ export function useBandwidthGroups(enabled: boolean) {
 export function useFileTree(name: string, fileTree: CachedFileTree) {
     return useQuery({
         queryKey: [name],
-        initialData: useMemo(() => fileTree.flatten(), [fileTree]),
+        initialData: fileTree.getView(),
         staleTime: 0,
-        queryFn: () => fileTree.flatten(),
+        queryFn: () => fileTree.getView(),
     });
 }
 
