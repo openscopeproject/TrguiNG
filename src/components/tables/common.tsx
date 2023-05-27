@@ -21,7 +21,7 @@ import * as Icon from "react-bootstrap-icons";
 import type {
     Table, ColumnDef, ColumnSizingState,
     SortingState, VisibilityState, Row, Column, RowSelectionState,
-    ColumnOrderState, AccessorKeyColumnDef, Header
+    ColumnOrderState, AccessorKeyColumnDef, Header, HeaderGroup
 } from "@tanstack/react-table";
 import {
     useReactTable, getCoreRowModel, getSortedRowModel, getExpandedRowModel, flexRender
@@ -187,76 +187,6 @@ function useTableVirtualizer(count: number): [React.MutableRefObject<null>, numb
     return [parentRef, rowHeight, rowVirtualizer];
 }
 
-function useColumnMenu<TData>(
-    columnVisibility: VisibilityState,
-    setColumnVisibility: (v: VisibilityState) => void,
-    columnOrder: ColumnOrderState,
-    setColumnOrder: (s: ColumnOrderState) => void,
-    columns: Array<Column<TData, unknown>>
-): [React.MouseEventHandler<HTMLDivElement>, React.ReactElement] {
-    const [info, setInfo, handler] = useContextMenu();
-
-    const onColumnMenuItemClick = useCallback((value: string, checked: boolean) => {
-        setColumnVisibility({ ...columnVisibility, [value]: checked });
-    }, [columnVisibility, setColumnVisibility]);
-
-    const columnIds = useMemo(() => columns.map((c) => c.id), [columns]);
-
-    const onDragEnd = useCallback((result: DropResult) => {
-        if (result.destination != null) {
-            // sanitize columnOrder in case there are non-existing columns
-            // (can happen with bad config)
-            let newOrder = columnOrder.filter((f) => columnIds.includes(f));
-            columnIds.forEach((f) => {
-                if (!newOrder.includes(f)) newOrder.push(f);
-            });
-            // reorder
-            newOrder = reorderElements(newOrder, result.source.index, result.destination.index);
-            setColumnOrder(newOrder);
-        }
-    }, [columnIds, columnOrder, setColumnOrder]);
-
-    return [
-        handler,
-        // eslint-disable-next-line react/jsx-key
-        <ContextMenu
-            contextMenuInfo={info}
-            setContextMenuInfo={setInfo}
-            closeOnItemClick={false}
-        >
-            <DragDropContext onDragEnd={onDragEnd}>
-                <StrictModeDroppable droppableId="tableheadercontextmenu">
-                    {provided => (
-                        <div ref={provided.innerRef} {...provided.droppableProps}>
-                            {columns.map((column, index) => {
-                                const visible = !(column.id in columnVisibility) || columnVisibility[column.id];
-                                return (
-                                    <Draggable draggableId={column.id} index={index} key={column.id}>
-                                        {(provided) => (
-                                            <Group ref={provided.innerRef} {...provided.draggableProps} noWrap>
-                                                <Menu.Item
-                                                    icon={visible ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
-                                                    onClick={() => { onColumnMenuItemClick(column.id, !visible); }}
-                                                >
-                                                    {column.columnDef.header as string}
-                                                </Menu.Item>
-                                                <div {...provided.dragHandleProps}>
-                                                    <Icon.GripVertical size="12" />
-                                                </div>
-                                            </Group>
-                                        )}
-                                    </Draggable>
-                                );
-                            })}
-                            {provided.placeholder}
-                        </div>
-                    )}
-                </StrictModeDroppable>
-            </DragDropContext>
-        </ContextMenu >
-    ];
-}
-
 export function useStandardSelect(): [string[], React.Dispatch<{ verb: "add" | "set", ids: string[] }>] {
     const [selected, selectedReducer] = useReducer(
         (old: string[], action: { verb: "add" | "set", ids: string[] }) => {
@@ -339,7 +269,87 @@ function TableRow<TData>(props: {
 
 const MemoizedTableRow = memo(TableRow) as typeof TableRow;
 
-function HeaderCell<TData>({ header, table }: { header: Header<TData, unknown>, table: Table<TData> }) {
+function HeaderRow<TData>(
+    { headerGroup, height, resizerOffset, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columns }: {
+        headerGroup: HeaderGroup<TData>,
+        height: number,
+        resizerOffset: number | null,
+        columnVisibility: VisibilityState,
+        setColumnVisibility: (v: VisibilityState) => void,
+        columnOrder: ColumnOrderState,
+        setColumnOrder: (s: ColumnOrderState) => void,
+        columns: Array<Column<TData, unknown>>,
+    }
+) {
+    const [info, setInfo, handler] = useContextMenu();
+
+    const onColumnMenuItemClick = useCallback((value: string, checked: boolean) => {
+        setColumnVisibility({ ...columnVisibility, [value]: checked });
+    }, [columnVisibility, setColumnVisibility]);
+
+    const columnIds = useMemo(() => columns.map((c) => c.id), [columns]);
+
+    const onDragEnd = useCallback((result: DropResult) => {
+        if (result.destination != null) {
+            // sanitize columnOrder in case there are non-existing columns
+            // (can happen with bad config)
+            let newOrder = columnOrder.filter((f) => columnIds.includes(f));
+            columnIds.forEach((f) => {
+                if (!newOrder.includes(f)) newOrder.push(f);
+            });
+            // reorder
+            newOrder = reorderElements(newOrder, result.source.index, result.destination.index);
+            setColumnOrder(newOrder);
+        }
+    }, [columnIds, columnOrder, setColumnOrder]);
+
+    return (
+        <Box className="tr" onContextMenu={handler} h={`${height}px`}>
+            <ContextMenu
+                contextMenuInfo={info}
+                setContextMenuInfo={setInfo}
+                closeOnItemClick={false}
+            >
+                <DragDropContext onDragEnd={onDragEnd}>
+                    <StrictModeDroppable droppableId="tableheadercontextmenu">
+                        {provided => (
+                            <div ref={provided.innerRef} {...provided.droppableProps}>
+                                {columns.map((column, index) => {
+                                    const visible = !(column.id in columnVisibility) || columnVisibility[column.id];
+                                    return (
+                                        <Draggable draggableId={column.id} index={index} key={column.id}>
+                                            {(provided) => (
+                                                <Group ref={provided.innerRef} {...provided.draggableProps} noWrap>
+                                                    <Menu.Item
+                                                        icon={visible ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                                                        onClick={() => { onColumnMenuItemClick(column.id, !visible); }}
+                                                    >
+                                                        {column.columnDef.header as string}
+                                                    </Menu.Item>
+                                                    <div {...provided.dragHandleProps}>
+                                                        <Icon.GripVertical size="12" />
+                                                    </div>
+                                                </Group>
+                                            )}
+                                        </Draggable>
+                                    );
+                                })}
+                                {provided.placeholder}
+                            </div>
+                        )}
+                    </StrictModeDroppable>
+                </DragDropContext>
+            </ContextMenu >
+            {headerGroup.headers.map(header => (
+                <HeaderCell key={header.id} header={header} resizerOffset={resizerOffset} />)
+            )}
+        </Box>
+    );
+}
+
+const MemoizedHeaderRow = memo(HeaderRow) as typeof HeaderRow;
+
+function HeaderCell<TData>({ header, resizerOffset }: { header: Header<TData, unknown>, resizerOffset: number | null }) {
     return (
         <div className="th" style={{
             width: header.getSize(),
@@ -363,7 +373,7 @@ function HeaderCell<TData>({ header, table }: { header: Header<TData, unknown>, 
                 className: `resizer ${header.column.getIsResizing() ? "isResizing" : ""}`,
                 style: {
                     transform: header.column.getIsResizing()
-                        ? `translateX(${table.getState().columnSizingInfo.deltaOffset ?? 0}px)`
+                        ? `translateX(${resizerOffset ?? 0}px)`
                         : "",
                 },
             }} />
@@ -391,9 +401,6 @@ export function TransguiTable<TData>(props: {
         table, props.selectedReducer, props.getRowId, props.setCurrent);
 
     const [parentRef, rowHeight, virtualizer] = useTableVirtualizer(table.getRowModel().rows.length);
-
-    const [menuContextHandler, columnMenu] = useColumnMenu(
-        columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, table.getAllLeafColumns());
 
     const scrollToId = useMemo(() => {
         return table.getRowModel().rows.findIndex(
@@ -427,10 +434,16 @@ export function TransguiTable<TData>(props: {
                     translate: `${-horizScroll}px`,
                 }}>
                 {table.getHeaderGroups().map(headerGroup => (
-                    <Box className="tr" key={headerGroup.id} onContextMenu={menuContextHandler} h={`${rowHeight}px`}>
-                        {columnMenu}
-                        {headerGroup.headers.map(header => <HeaderCell key={header.id} header={header} table={table} />)}
-                    </Box>
+                    <MemoizedHeaderRow key={headerGroup.id} {...{
+                        headerGroup,
+                        height: rowHeight,
+                        resizerOffset: table.getState().columnSizingInfo.deltaOffset,
+                        columnVisibility,
+                        setColumnVisibility,
+                        columnOrder,
+                        setColumnOrder,
+                        columns: table.getAllLeafColumns(),
+                    }} />
                 ))}
             </Box>
             <div ref={parentRef} className="torrent-table-rows" onScroll={onTableScroll}>
