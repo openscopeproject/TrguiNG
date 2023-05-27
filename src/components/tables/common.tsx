@@ -465,7 +465,7 @@ export function TransguiTable<TData>(props: {
 
 interface EditableNameFieldProps extends React.PropsWithChildren {
     currentName: string,
-    onUpdate: (newName: string, onStart: () => void, onEnd: () => void) => void,
+    onUpdate?: (newName: string, onStart: () => void, onEnd: () => void) => void,
 }
 
 export function EditableNameField(props: EditableNameFieldProps) {
@@ -483,7 +483,7 @@ export function EditableNameField(props: EditableNameFieldProps) {
 
     const onEnter = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "Enter") {
-            props.onUpdate(
+            props.onUpdate?.(
                 newName,
                 () => {
                     if (textRef.current != null) textRef.current.readOnly = true;
@@ -519,7 +519,7 @@ export function EditableNameField(props: EditableNameFieldProps) {
                 : <Box pl="xs" sx={{ flexGrow: 1, textOverflow: "ellipsis", overflow: "hidden" }}>
                     {props.currentName}
                 </Box>}
-            {isHover && !isRenaming
+            {isHover && !isRenaming && props.onUpdate !== undefined
                 ? <ActionIcon sx={{ flexShrink: 0 }} onClick={renameHandler}>
                     <Icon.InputCursorText size="1rem" />
                 </ActionIcon>
