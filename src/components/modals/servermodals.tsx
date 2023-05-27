@@ -19,7 +19,7 @@
 import { useDisclosure } from "@mantine/hooks";
 import { emit, listen } from "@tauri-apps/api/event";
 import { appWindow } from "@tauri-apps/api/window";
-import React, { useCallback, useEffect, useImperativeHandle, useState } from "react";
+import React, { memo, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import type { ServerTorrentData } from "rpc/torrent";
 import { EditLabelsModal } from "./editlabels";
 import { RemoveModal } from "./remove";
@@ -57,7 +57,7 @@ function usePausingModalState(runUpdates: (run: boolean) => void): [boolean, () 
     return [opened, pauseOpen, closeResume];
 }
 
-export const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(function ServerModals(props, ref) {
+const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(function ServerModals(props, ref) {
     const [showLabelsModal, openLabelsModal, closeLabelsModal] = usePausingModalState(props.runUpdates);
     const [showRemoveModal, openRemoveModal, closeRemoveModal] = usePausingModalState(props.runUpdates);
     const [showMoveModal, openMoveModal, closeMoveModal] = usePausingModalState(props.runUpdates);
@@ -155,3 +155,5 @@ export const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(
             opened={showDaemonSettingsModal} close={closeDaemonSettingsModal} />
     </>;
 });
+
+export const MemoizedServerModals = memo(ServerModals) as typeof ServerModals;

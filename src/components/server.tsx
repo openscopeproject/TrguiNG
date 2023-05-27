@@ -32,7 +32,7 @@ import { MemoizedToolbar } from "./toolbar";
 import { useSession, useTorrentList } from "queries";
 import type { TorrentFieldsType } from "rpc/transmission";
 import type { ModalCallbacks } from "./modals/servermodals";
-import { ServerModals } from "./modals/servermodals";
+import { MemoizedServerModals } from "./modals/servermodals";
 
 function selectedTorrentsReducer(selected: Set<number>, action: { verb: string, ids: string[] }) {
     const ids = action.ids.map((t) => +t);
@@ -149,7 +149,7 @@ export function Server({ hostname }: { hostname: string }) {
     const modals = useRef<ModalCallbacks>(null);
 
     return (<>
-        <ServerModals ref={modals} {...{ serverData, runUpdates }} />
+        <MemoizedServerModals ref={modals} {...{ serverData, runUpdates }} />
         <div className="d-flex flex-column h-100 w-100">
             <div className="border-bottom border-dark p-2">
                 <MemoizedToolbar
