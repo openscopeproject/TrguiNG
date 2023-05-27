@@ -131,7 +131,7 @@ export class TransmissionClient {
     async getTorrents(fields: TorrentFieldsType[]): Promise<Torrent[]> {
         const request = {
             method: "torrent-get",
-            arguments: { fields }
+            arguments: { fields },
         };
 
         const response = await this._sendRpc(request);
@@ -148,8 +148,8 @@ export class TransmissionClient {
             method: "torrent-get",
             arguments: {
                 fields: TorrentAllFields,
-                ids: [id]
-            }
+                ids: [id],
+            },
         };
 
         const response = await this._sendRpc(request);
@@ -170,7 +170,7 @@ export class TransmissionClient {
     async _getSession(fields: Readonly<string[]>): Promise<SessionInfo> {
         const request = {
             method: "session-get",
-            arguments: { fields }
+            arguments: { fields },
         };
 
         const response = await this._sendRpc(request);
@@ -205,7 +205,7 @@ export class TransmissionClient {
 
     async getSessionStats(): Promise<SessionStatistics> {
         const request = {
-            method: "session-stats"
+            method: "session-stats",
         };
 
         const response = await this._sendRpc(request);
@@ -252,7 +252,7 @@ export class TransmissionClient {
             arguments: {
                 ids: torrentIds,
                 location,
-                move
+                move,
             },
         };
 
@@ -266,7 +266,7 @@ export class TransmissionClient {
                 ids: [torrentId],
                 path,
                 name,
-            }
+            },
         };
 
         await this._sendRpc(request);
@@ -280,8 +280,8 @@ export class TransmissionClient {
                 filename: url,
                 "download-dir": downloadDir !== "" ? downloadDir : undefined,
                 "files-unwanted": unwanted,
-                ...other
-            }
+                ...other,
+            },
         };
 
         return await this._sendRpc(request);
@@ -297,7 +297,7 @@ export class TransmissionClient {
 
     async getBandwidthGroups(): Promise<BandwidthGroup[]> {
         const request = {
-            method: "group-get"
+            method: "group-get",
         };
 
         const response = await this._sendRpc(request);

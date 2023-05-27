@@ -48,11 +48,7 @@ function AddCommon(props: AddCommonProps) {
                 checked={props.start}
                 onChange={(e) => { props.setStart(e.currentTarget.checked); }}
                 my="xl"
-                styles={{
-                    root: {
-                        flexGrow: 1
-                    }
-                }} />
+                styles={{ root: { flexGrow: 1 } }} />
             <SegmentedControl
                 color={PriorityColors.get(props.priority)}
                 value={String(props.priority)}
@@ -126,8 +122,8 @@ export function AddMagnet(props: AddCommonModalProps) {
                         message: String(e),
                         color: "red",
                     });
-                }
-            }
+                },
+            },
         );
         common.location.addPath(common.location.path);
         close();
@@ -188,7 +184,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 filters: [{
                     name: "Torrent",
                     extensions: ["torrent"],
-                }]
+                }],
             }) as Promise<string | null>;
 
         pathPromise.then(readFile)
@@ -243,8 +239,8 @@ export function AddTorrent(props: AddCommonModalProps) {
                         message: String(e),
                         color: "red",
                     });
-                }
-            }
+                },
+            },
         );
 
         common.location.addPath(common.location.path);

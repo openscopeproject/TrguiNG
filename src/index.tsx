@@ -112,8 +112,7 @@ async function run(config: Config) {
                     </CustomMantineProvider>
                 </Suspense>
             </ConfigContext.Provider>
-        </React.StrictMode>
-    );
+        </React.StrictMode>);
 }
 
 window.onload = (event) => {

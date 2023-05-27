@@ -19,7 +19,7 @@
 import * as fs from "@tauri-apps/api/fs";
 import React from "react";
 import type {
-    SortingState, ColumnSizingState, VisibilityState, ColumnOrderState
+    SortingState, ColumnSizingState, VisibilityState, ColumnOrderState,
 } from "@tanstack/react-table";
 import type { ColorScheme } from "@mantine/core";
 
@@ -111,7 +111,7 @@ const DefaultSettings: Settings = {
         toastNotifications: true,
         onMinimize: "minimize",
         onClose: "exit",
-    }
+    },
 };
 
 export class Config {
@@ -121,14 +121,14 @@ export class Config {
     async read() {
         const text = await fs.readTextFile(
             this.fileName,
-            { dir: fs.BaseDirectory.Config }
+            { dir: fs.BaseDirectory.Config },
         );
         const merge = (await import(/* webpackChunkName: "lodash" */ "lodash-es/merge")).default;
         merge(this.values, JSON.parse(text));
 
         // sanitize data
         this.values.openTabs = this.values.openTabs.filter(
-            (name) => this.values.servers.find((s) => s.name === name) !== undefined
+            (name) => this.values.servers.find((s) => s.name === name) !== undefined,
         );
 
         return this;
@@ -138,7 +138,7 @@ export class Config {
         const configText = JSON.stringify(this.values, null, "    ");
         await fs.writeFile(
             { path: this.fileName, contents: configText },
-            { dir: fs.BaseDirectory.Config }
+            { dir: fs.BaseDirectory.Config },
         );
     }
 
@@ -210,13 +210,11 @@ export class Config {
 }
 
 export const ConfigContext = React.createContext(new Config());
-export const ServerConfigContext = React.createContext<ServerConfig>(
-    {
-        connection: { url: "", username: "", password: "" },
-        name: "",
-        pathMappings: [],
-        expandedDirFilters: [],
-        lastSaveDirs: [],
-        intervals: { session: 0, torrents: 0, torrentsMinimized: 0, details: 0 },
-    }
-);
+export const ServerConfigContext = React.createContext<ServerConfig>({
+    connection: { url: "", username: "", password: "" },
+    name: "",
+    pathMappings: [],
+    expandedDirFilters: [],
+    lastSaveDirs: [],
+    intervals: { session: 0, torrents: 0, torrentsMinimized: 0, details: 0 },
+});

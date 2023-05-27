@@ -239,7 +239,7 @@ export function Filters(props: FiltersProps) {
                 const idx = serverConfig.expandedDirFilters.indexOf(value as string);
                 serverConfig.expandedDirFilters = [
                     ...serverConfig.expandedDirFilters.slice(0, idx),
-                    ...serverConfig.expandedDirFilters.slice(idx + 1)
+                    ...serverConfig.expandedDirFilters.slice(idx + 1),
                 ];
             }
             forceRender();
@@ -281,8 +281,7 @@ export function Filters(props: FiltersProps) {
             {paths.length > 0
                 ? dirs.map((d) =>
                     <DirFilterRow key={`dir-${d.path}`} id={`dir-${d.path}`}
-                        dir={d} expandedReducer={expandedReducer} {...props} />
-                )
+                        dir={d} expandedReducer={expandedReducer} {...props} />)
                 : <></>
             }
             <Divider mx="sm" mt="md" label="Labels" labelPosition="center" />

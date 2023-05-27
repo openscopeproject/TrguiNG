@@ -72,7 +72,7 @@ const Columns = AllFields.map((field): ColumnDef<PeerStats> => {
         header: field.label,
         accessorKey: field.name,
         accessorFn: field.accessorFn,
-        cell
+        cell,
     };
     return column;
 });
@@ -88,6 +88,6 @@ export function PeersTable(props: { torrent: Torrent }) {
         data: props.torrent.peers,
         selected,
         getRowId,
-        selectedReducer
+        selectedReducer,
     }} />;
 }

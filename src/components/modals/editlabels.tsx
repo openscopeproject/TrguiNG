@@ -51,7 +51,7 @@ export function EditLabelsModal(props: EditLabelsProps) {
         mutation.mutate(
             {
                 torrentIds: Array.from(ac.selectedTorrents),
-                fields: { labels }
+                fields: { labels },
             },
             {
                 onSuccess: () => {
@@ -66,8 +66,8 @@ export function EditLabelsModal(props: EditLabelsProps) {
                         message: String(error),
                         color: "red",
                     });
-                }
-            }
+                },
+            },
         );
         close();
     }, [mutation, ac.selectedTorrents, labels, close]);

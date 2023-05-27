@@ -87,7 +87,7 @@ function SplitLayout({ left, right, bottom }: { left: React.ReactNode, right: Re
             flexGrow: 1,
             "& .gutter": {
                 backgroundColor: theme.colorScheme === "dark" ? theme.colors.gray[7] : theme.colors.gray[3],
-            }
+            },
         })
         } >
             <Split

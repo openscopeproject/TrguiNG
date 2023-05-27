@@ -33,10 +33,10 @@ const Theme: (colorScheme: ColorScheme) => MantineThemeOverride = (colorScheme) 
             styles: {
                 root: {
                     "& tbody tr td": {
-                        padding: "0 0.5rem"
-                    }
-                }
-            }
+                        padding: "0 0.5rem",
+                    },
+                },
+            },
         },
         Tabs: {
             styles: (theme) => ({
@@ -44,22 +44,22 @@ const Theme: (colorScheme: ColorScheme) => MantineThemeOverride = (colorScheme) 
                     borderColor: colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
                     "&[data-active]": {
                         borderColor: theme.colorScheme === "dark" ? theme.colors.dark[3] : theme.colors.gray[5],
-                    }
-                }
-            })
+                    },
+                },
+            }),
         },
         Checkbox: {
             styles: {
                 inner: {
                     ".selected &": {
-                        boxShadow: "0 0 3px 1px white"
-                    }
-                }
-            }
+                        boxShadow: "0 0 3px 1px white",
+                    },
+                },
+            },
         },
     },
     colors: {
-        secondaryColorName: ["#dcfdff", "#b2f4fd", "#85ebf9", "#58e3f6", "#36d9f3", "#25c0d9", "#1696aa", "#066b7a", "#00404a", "#00171b"]
+        secondaryColorName: ["#dcfdff", "#b2f4fd", "#85ebf9", "#58e3f6", "#36d9f3", "#25c0d9", "#1696aa", "#066b7a", "#00404a", "#00171b"],
     },
     spacing: {
         xs: "0.3rem",
@@ -92,7 +92,7 @@ function GlobalStyles() {
                 backgroundColor: theme.colorScheme === "dark"
                     ? theme.fn.rgba(theme.colors.gray[7], 0.9)
                     : theme.fn.rgba(theme.colors.gray[5], 0.9),
-                border: "1px solid #77777744"
+                border: "1px solid #77777744",
             },
             "::-webkit-scrollbar-corner": {
                 backgroundColor: theme.colorScheme === "dark"

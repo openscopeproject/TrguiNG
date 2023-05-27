@@ -21,10 +21,10 @@ import * as Icon from "react-bootstrap-icons";
 import type {
     Table, ColumnDef, ColumnSizingState,
     SortingState, VisibilityState, Row, Column, RowSelectionState,
-    ColumnOrderState, AccessorKeyColumnDef, Header, HeaderGroup
+    ColumnOrderState, AccessorKeyColumnDef, Header, HeaderGroup,
 } from "@tanstack/react-table";
 import {
-    useReactTable, getCoreRowModel, getSortedRowModel, getExpandedRowModel, flexRender
+    useReactTable, getCoreRowModel, getSortedRowModel, getExpandedRowModel, flexRender,
 } from "@tanstack/react-table";
 import type { Virtualizer } from "@tanstack/react-virtual";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -57,7 +57,7 @@ function useTable<TData>(
         (v: VisibilityState) => void,
         ColumnOrderState,
         (o: ColumnOrderState) => void,
-        ColumnSizingState
+        ColumnSizingState,
     ] {
     const config = useContext(ConfigContext);
 
@@ -196,8 +196,7 @@ export function useStandardSelect(): [string[], React.Dispatch<{ verb: "add" | "
                 action.ids.forEach((id) => newset.add(id));
                 return Array.from(newset);
             }
-        }, []
-    );
+        }, []);
 
     return [selected, selectedReducer];
 }
@@ -212,9 +211,7 @@ function InnerRow<TData>(props: {
     return <>
         {props.row.getVisibleCells().map(cell => {
             return (
-                <div key={cell.id} className="td" style={{
-                    width: cell.column.getSize()
-                }}>
+                <div key={cell.id} className="td" style={{ width: cell.column.getSize() }}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </div >
             );
@@ -279,7 +276,7 @@ function HeaderRow<TData>(
         columnOrder: ColumnOrderState,
         setColumnOrder: (s: ColumnOrderState) => void,
         columns: Array<Column<TData, unknown>>,
-    }
+    },
 ) {
     const [info, setInfo, handler] = useContextMenu();
 
@@ -341,8 +338,7 @@ function HeaderRow<TData>(
                 </DragDropContext>
             </ContextMenu >
             {headerGroup.headers.map(header => (
-                <HeaderCell key={header.id} header={header} resizerOffset={resizerOffset} />)
-            )}
+                <HeaderCell key={header.id} header={header} resizerOffset={resizerOffset} />))}
         </Box>
     );
 }
@@ -364,8 +360,7 @@ function HeaderCell<TData>({ header, resizerOffset }: { header: Header<TData, un
                 </span>
                 {flexRender(
                     header.column.columnDef.header,
-                    header.getContext()
-                )}
+                    header.getContext())}
             </div>
             <div {...{
                 onMouseDown: header.getResizeHandler(),
@@ -523,7 +518,7 @@ export function EditableNameField(props: EditableNameFieldProps) {
                             height: "1.5rem",
                             minHeight: "1.5rem",
                             lineHeight: "1.3rem",
-                        }
+                        },
                     }}
                     onChange={(e) => { setNewName(e.target.value); }}
                     onBlur={() => { setRenaming(false); }}

@@ -41,8 +41,8 @@ export function RemoveModal(props: ActionModalState) {
                         message: "Error removing torrents",
                         color: "red",
                     });
-                }
-            }
+                },
+            },
         );
         props.close();
     }, [mutation, props, deleteData]);

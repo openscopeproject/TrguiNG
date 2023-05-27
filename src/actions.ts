@@ -44,7 +44,7 @@ function mapSimpleAction(name: ActionMethodsType, method: TorrentActionMethodsTy
             const torrentIds = Array.from(ac.selectedTorrents);
             await ac.client.torrentAction(method, torrentIds);
         },
-        defaultShortcut: shortcut
+        defaultShortcut: shortcut,
     };
 }
 

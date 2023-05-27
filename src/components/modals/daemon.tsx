@@ -151,7 +151,7 @@ function NetworkPanel(
         opened: boolean,
         form: UseFormReturnType<FormValues>,
         session: SessionInfo,
-    }
+    },
 ) {
     const [testPortQueryEnbaled, setTestPortQueryEnabled] = useState(false);
     const [testPortResult, setTestPortResult] = useState<PortTestResult>({ label: "", color: "green" });
@@ -193,7 +193,7 @@ function NetworkPanel(
         if (!opened) {
             setTestPortResult({
                 label: "",
-                color: "green"
+                color: "green",
             });
             removeQuery();
         }
@@ -404,8 +404,7 @@ function BandwidthPanel({ form, session }: { form: UseFormReturnType<FormValues>
             <Grid.Col span={10}>
                 <Group>
                     {DaysOfTheWeek.map((_, day) =>
-                        <DayOfWeekCheckbox key={day} form={form} day={day} session={session} />
-                    )}
+                        <DayOfWeekCheckbox key={day} form={form} day={day} session={session} />)}
                 </Group>
             </Grid.Col>
         </Grid>
@@ -463,8 +462,8 @@ export function DaemonSettingsModal(props: ModalState) {
     const form = useForm<FormValues>({
         initialValues: {
             intervals: serverConfig.intervals,
-            session
-        }
+            session,
+        },
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -487,7 +486,7 @@ export function DaemonSettingsModal(props: ModalState) {
                         message: String(error),
                         color: "red",
                     });
-                }
+                },
             });
         } else {
             props.close();

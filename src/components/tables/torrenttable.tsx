@@ -133,7 +133,7 @@ function NameField(props: TableFieldProps) {
             { torrentId: props.torrent.id, path: props.torrent.name, name },
             {
                 onSettled: onEnd,
-                onError: () => { notifications.show({ color: "red", message: "Failed to rename torrent" }); }
+                onError: () => { notifications.show({ color: "red", message: "Failed to rename torrent" }); },
             });
     }, [mutation, props.torrent.id, props.torrent.name]);
 
@@ -250,8 +250,8 @@ const Columns = AllFields.map((f): ColumnDef<Torrent> => {
 const ColumnRequiredFields = AllFields.map(
     (f) => ({
         id: (f as TableFieldWithAccessor).columnId ?? f.name,
-        requires: f.requiredFields ?? [f.name]
-    })
+        requires: f.requiredFields ?? [f.name],
+    }),
 );
 
 function getRequiredFields(visibilityState: VisibilityState): TorrentFieldsType[] {
@@ -295,7 +295,7 @@ export function TorrentTable(props: {
     const { onColumnVisibilityChange } = props;
     const onVisibilityChange = useCallback(
         (visibility: VisibilityState) => { onColumnVisibilityChange(getRequiredFields(visibility)); },
-        [onColumnVisibilityChange]
+        [onColumnVisibilityChange],
     );
 
     const onRowDoubleClick = useCallback((torrent: Torrent) => {

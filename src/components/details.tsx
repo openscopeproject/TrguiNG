@@ -182,8 +182,8 @@ const readonlyInputStyles = (theme: MantineTheme) => ({
     },
     input: {
         minHeight: "1rem",
-        height: "1rem"
-    }
+        height: "1rem",
+    },
 });
 
 function TorrentDetails(props: { torrent: Torrent }) {

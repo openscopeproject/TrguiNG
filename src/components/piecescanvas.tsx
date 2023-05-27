@@ -139,7 +139,7 @@ export function PiecesCanvas(props: { torrent: Torrent }) {
     const dw = Math.floor(window.devicePixelRatio * (width ?? 1));
     const dh = Math.floor(window.devicePixelRatio * (height ?? 1));
     const style: CSSProperties = {
-        width: width ?? 1, height: height ?? 1, position: "absolute", top: 0, left: 0
+        width: width ?? 1, height: height ?? 1, position: "absolute", top: 0, left: 0,
     };
     return (
         <div ref={ref} className="w-100 h-100 position-relative" style={{ overflow: "hidden" }}>

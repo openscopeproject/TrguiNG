@@ -29,7 +29,7 @@ import type { TorrentMutableFieldsType, TorrentFieldsType } from "rpc/transmissi
 export const queryClient = new QueryClient();
 
 const TorrentKeys = {
-    all: (server: string,) => [server, "torrent"] as const,
+    all: (server: string) => [server, "torrent"] as const,
     listAll: (server: string, fields: TorrentFieldsType[]) =>
         [...TorrentKeys.all(server), "list", { fields }] as const,
     details: (server: string, torrentId: number) =>
@@ -46,7 +46,7 @@ const SessionStatsKeys = {
 };
 
 const BandwidthGroupKeys = {
-    all: (server: string,) => [server, "bandwidth-group"] as const,
+    all: (server: string) => [server, "bandwidth-group"] as const,
 };
 
 export function useTorrentList(enabled: boolean, fields: TorrentFieldsType[]) {
@@ -108,7 +108,7 @@ function updateCachedTorrentFields(serverName: string, torrentIds: number[], fie
                     key[0] === serverName &&
                     key[1] === "torrent" &&
                     key[2] === "list";
-            }
+            },
         },
         (data: Torrent[] | undefined) => {
             if (data === undefined) return undefined;
@@ -116,7 +116,7 @@ function updateCachedTorrentFields(serverName: string, torrentIds: number[], fie
                 if (!torrentIds.includes(t.id)) return t;
                 return { ...t, ...fields };
             });
-        }
+        },
     );
     queryClient.setQueriesData(
         {
@@ -127,11 +127,9 @@ function updateCachedTorrentFields(serverName: string, torrentIds: number[], fie
                     key[0] === serverName &&
                     key[1] === "torrent" &&
                     torrentIds.includes((key[2] as { torrentId: number }).torrentId);
-            }
+            },
         },
-        (t: Torrent | undefined) => {
-            return { ...t, ...fields };
-        }
+        (t: Torrent | undefined) => ({ ...t, ...fields }),
     );
 }
 
@@ -148,7 +146,7 @@ export function useMutateTorrent() {
             // proper torrent fields but it's ok to have some extra entrie in the object
             updateCachedTorrentFields(serverConfig.name, torrentIds, fields);
             void queryClient.invalidateQueries(TorrentKeys.all(serverConfig.name));
-        }
+        },
     });
 }
 
@@ -173,7 +171,7 @@ export function useMutateTorrentPath() {
                 updateCachedTorrentFields(serverConfig.name, [torrentId], { name });
                 void queryClient.invalidateQueries(TorrentKeys.all(serverConfig.name));
             }
-        }
+        },
     });
 }
 
@@ -244,7 +242,7 @@ export function useMutateSession() {
         },
         onSuccess: () => {
             void queryClient.invalidateQueries(SessionKeys.all(serverConfig.name));
-        }
+        },
     });
 }
 

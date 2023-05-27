@@ -88,6 +88,6 @@ export function TrackersTable(props: { torrent: Torrent }) {
         data: props.torrent.trackerStats,
         selected,
         getRowId,
-        selectedReducer
+        selectedReducer,
     }} />;
 }

@@ -35,7 +35,7 @@ interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentProp
 
 // eslint-disable-next-line react/display-name
 const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
-    { children, depressed, ...other }: ToolbarButtonProps, ref
+    { children, depressed, ...other }: ToolbarButtonProps, ref,
 ) => {
     return (
         <Button variant="light" color="gray" compact h="2.5rem" {...other} ref={ref}
@@ -45,7 +45,7 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
                         ? theme.colors.gray[depressed === true ? 8 : 9]
                         : theme.colors.gray[depressed === true ? 3 : 1],
                     transform: depressed === true ? "scale(-1, 1)" : "none",
-                }
+                },
             })}
         >
             {children}
@@ -70,13 +70,13 @@ function useSimpleActionHandler(action: ActionMethodsType, props: ToolbarProps) 
 function usePriorityHandler(
     priority: PriorityNumberType,
     props: ToolbarProps,
-    mutation: UseMutationResult<void, unknown, TorrentMutationVariables>
+    mutation: UseMutationResult<void, unknown, TorrentMutationVariables>,
 ) {
     return useCallback(() => {
         mutation.mutate(
             {
                 torrentIds: Array.from(props.actionController.selectedTorrents),
-                fields: { bandwidthPriority: priority }
+                fields: { bandwidthPriority: priority },
             },
             {
                 onSuccess: () => {
@@ -91,8 +91,8 @@ function usePriorityHandler(
                         message: String(error),
                         color: "red",
                     });
-                }
-            }
+                },
+            },
         );
     }, [props.actionController.selectedTorrents, priority, mutation]);
 }
@@ -110,7 +110,7 @@ function Toolbar(props: ToolbarProps) {
         sessioMutation.mutate({ "alt-speed-enabled": altSpeedMode !== true }, {
             onError: (_, session) => {
                 setAltSpeedMode(session["alt-speed-enabled"] !== true);
-            }
+            },
         });
         setAltSpeedMode(altSpeedMode !== true);
     }, [altSpeedMode, sessioMutation]);

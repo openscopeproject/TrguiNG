@@ -74,11 +74,11 @@ function ServerTabs(props: ServerTabsProps) {
                     minWidth: "12rem",
                 },
                 tabLabel: {
-                    marginInline: "auto"
+                    marginInline: "auto",
                 },
                 tabRightSection: {
-                    padding: "0.2rem"
-                }
+                    padding: "0.2rem",
+                },
             })}
         >
             <Tabs.List px="sm">
@@ -95,8 +95,7 @@ function ServerTabs(props: ServerTabsProps) {
                         }
                     >
                         {name}
-                    </Tabs.Tab>
-                )}
+                    </Tabs.Tab>)}
                 {unopenedTabs.length > 0
                     ? <Menu shadow="md" width={200} position="bottom-start">
                         <Menu.Target>

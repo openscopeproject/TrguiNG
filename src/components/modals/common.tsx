@@ -19,7 +19,7 @@
 import type { ModalProps, MultiSelectValueProps } from "@mantine/core";
 import {
     Badge, Button, CloseButton, Divider, Group, Loader, Modal, MultiSelect,
-    Text, TextInput, ActionIcon, Menu, ScrollArea
+    Text, TextInput, ActionIcon, Menu, ScrollArea,
 } from "@mantine/core";
 import { dialog } from "@tauri-apps/api";
 import type { ActionController } from "actions";
@@ -107,7 +107,7 @@ export function useTorrentLocation(): LocationData {
         dialog.open({
             title: "Select directory",
             defaultPath: mappedLocation,
-            directory: true
+            directory: true,
         }).then((directory) => {
             if (directory === null) return;
             const mappedPath = pathMapToServer((directory as string).replace(/\\/g, "/"), serverConfig);
@@ -129,11 +129,7 @@ export function TorrentLocation(props: LocationData) {
                 value={props.path}
                 label={props.inputLabel}
                 onChange={(e) => { props.setPath(e.currentTarget.value); }}
-                styles={{
-                    root: {
-                        flexGrow: 1
-                    }
-                }}
+                styles={{ root: { flexGrow: 1 } }}
                 rightSection={
                     <Menu position="left-start" withinPortal
                         middlewares={{ shift: true, flip: false }} offset={{ mainAxis: -20, crossAxis: 30 }}>
@@ -148,11 +144,7 @@ export function TorrentLocation(props: LocationData) {
                                 mah="calc(100vh - 0.5rem)"
                                 miw="30rem"
                                 offsetScrollbars
-                                styles={{
-                                    viewport: {
-                                        paddingBottom: 0
-                                    }
-                                }}
+                                styles={{ viewport: { paddingBottom: 0 } }}
                             >
                                 {props.lastPaths.map((path) => (
                                     <Menu.Item key={path} onClick={() => { props.setPath(path); }}>{path}</Menu.Item>

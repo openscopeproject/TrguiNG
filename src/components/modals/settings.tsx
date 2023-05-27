@@ -133,11 +133,7 @@ function ServerPanel(props: ServerPanelProps) {
     );
 }
 
-const bigSwitchStyles = {
-    track: {
-        flexGrow: 1
-    }
-};
+const bigSwitchStyles = { track: { flexGrow: 1 } };
 
 const MinimizeOptions = ["minimize", "hide"];
 const CloseOptions = ["hide", "close", "quit"];
@@ -253,16 +249,14 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
     }, [servers, currentServerIndex]);
 
     const onAdd = useCallback(() => {
-        servers.push(
-            {
-                connection: { url: "", username: "", password: "" },
-                name: "new",
-                pathMappings: [],
-                expandedDirFilters: [],
-                lastSaveDirs: [],
-                intervals: { session: 60, torrents: 5, torrentsMinimized: 60, details: 5 },
-            }
-        );
+        servers.push({
+            connection: { url: "", username: "", password: "" },
+            name: "new",
+            pathMappings: [],
+            expandedDirFilters: [],
+            lastSaveDirs: [],
+            intervals: { session: 60, torrents: 5, torrentsMinimized: 60, details: 5 },
+        });
         setServers(servers.slice());
         setCurrentServerIndex(servers.length - 1);
     }, [servers]);

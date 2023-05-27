@@ -68,8 +68,14 @@
         ],
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/space-before-function-paren": "off",
-        "comma-dangle": "off",
-        "@typescript-eslint/comma-dangle": "off",
+        "comma-dangle": [
+            "error",
+            "always-multiline"
+        ],
+        "@typescript-eslint/comma-dangle": [
+            "error",
+            "always-multiline"
+        ],
         "@typescript-eslint/consistent-type-imports": [
             "error",
             {

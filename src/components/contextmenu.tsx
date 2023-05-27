@@ -79,11 +79,7 @@ export function ContextMenu({ contextMenuInfo, setContextMenuInfo, children, ...
                         type="auto"
                         mah="calc(100vh - 0.5rem)"
                         offsetScrollbars
-                        styles={{
-                            viewport: {
-                                paddingBottom: 0
-                            }
-                        }}
+                        styles={{ viewport: { paddingBottom: 0 } }}
                     >
                         {children}
                     </ScrollArea.Autosize>
