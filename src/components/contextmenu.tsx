@@ -20,7 +20,7 @@ import type { MenuProps } from "@mantine/core";
 import { Button, Menu, Portal, ScrollArea } from "@mantine/core";
 import React, { useCallback, useEffect, useState } from "react";
 
-interface ContextMenuInfo {
+export interface ContextMenuInfo {
     x: number,
     y: number,
     opened: boolean,
@@ -31,6 +31,7 @@ export function useContextMenu(): [ContextMenuInfo, React.Dispatch<ContextMenuIn
 
     const contextMenuHandler = useCallback<React.MouseEventHandler<HTMLElement>>((e) => {
         e.preventDefault();
+        e.stopPropagation();
         setInfo({ x: e.clientX, y: e.clientY, opened: true });
     }, [setInfo]);
 

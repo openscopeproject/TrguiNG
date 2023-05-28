@@ -171,6 +171,8 @@ export function Server({ hostname }: { hostname: string }) {
                 }
                 right={
                     <TorrentTable
+                        serverData={serverData}
+                        modals={modals}
                         torrents={filteredTorrents}
                         setCurrentTorrent={setCurrentTorrent}
                         selectedTorrents={selectedTorrents}

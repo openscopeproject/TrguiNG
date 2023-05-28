@@ -18,7 +18,7 @@
 
 import "css/torrenttable.css";
 import React, { memo, useCallback, useContext, useMemo } from "react";
-import type { Torrent, TrackerStats } from "rpc/torrent";
+import type { ServerTorrentData, Torrent, TrackerStats } from "rpc/torrent";
 import { getTorrentError } from "rpc/torrent";
 import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
@@ -28,12 +28,17 @@ import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
 import { EditableNameField, TransguiTable } from "./common";
 import { getTrackerAnnounceState } from "./trackertable";
-import { Badge, Box } from "@mantine/core";
+import { Badge, Box, Menu, Text } from "@mantine/core";
 import { ConfigContext, ServerConfigContext } from "config";
 import { StatusIconMap, Error as StatusIconError } from "components/statusicons";
-import { useMutateTorrentPath } from "queries";
+import { useMutateTorrentPath, useTorrentAction } from "queries";
 import { notifications } from "@mantine/notifications";
 import { tauri } from "@tauri-apps/api";
+import type { ContextMenuInfo } from "components/contextmenu";
+import { ContextMenu, useContextMenu } from "components/contextmenu";
+import type { ModalCallbacks } from "components/modals/servermodals";
+import type { TorrentActionMethodsType } from "rpc/client";
+import * as Icon from "react-bootstrap-icons";
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -279,6 +284,8 @@ export function useInitialTorrentRequiredFields() {
 }
 
 export function TorrentTable(props: {
+    serverData: React.MutableRefObject<ServerTorrentData>,
+    modals: React.RefObject<ModalCallbacks>,
     torrents: Torrent[],
     setCurrentTorrent: (id: string) => void,
     selectedTorrents: Set<number>,
@@ -305,16 +312,119 @@ export function TorrentTable(props: {
         tauri.invoke("shell_open", { path }).catch((e) => { console.error("Error opening", path, e); });
     }, [serverConfig]);
 
-    return <TransguiTable<Torrent> {...{
-        tablename: "torrents",
-        columns: Columns,
-        data: props.torrents,
-        selected,
-        getRowId,
-        selectedReducer: props.selectedReducer,
-        setCurrent: props.setCurrentTorrent,
-        onVisibilityChange,
-        onRowDoubleClick,
-        scrollToRow: props.scrollToRow,
-    }} />;
+    const [info, setInfo, handler] = useContextMenu();
+
+    return (
+        <Box w="100%" h="100%" onContextMenu={handler}>
+            <MemoizedTorrentContextMenu
+                contextMenuInfo={info}
+                setContextMenuInfo={setInfo}
+                serverData={props.serverData}
+                modals={props.modals}
+                onRowDoubleClick={onRowDoubleClick} />
+            <TransguiTable<Torrent> {...{
+                tablename: "torrents",
+                columns: Columns,
+                data: props.torrents,
+                selected,
+                getRowId,
+                selectedReducer: props.selectedReducer,
+                setCurrent: props.setCurrentTorrent,
+                onVisibilityChange,
+                onRowDoubleClick,
+                scrollToRow: props.scrollToRow,
+            }} />
+        </Box>
+    );
 }
+
+const findTorrent = (serverData: React.MutableRefObject<ServerTorrentData>) => {
+    const [id] = [...serverData.current.selected];
+    return serverData.current.torrents.find((t) => t.id === id);
+};
+
+function TorrentContextMenu(props: {
+    contextMenuInfo: ContextMenuInfo,
+    setContextMenuInfo: (i: ContextMenuInfo) => void,
+    serverData: React.MutableRefObject<ServerTorrentData>,
+    modals: React.RefObject<ModalCallbacks>,
+    onRowDoubleClick: (t: Torrent) => void,
+}) {
+    const { onRowDoubleClick } = props;
+    const onOpen = useCallback(() => {
+        const torrent = findTorrent(props.serverData);
+        if (torrent === undefined) return;
+        onRowDoubleClick(torrent);
+    }, [onRowDoubleClick, props.serverData]);
+
+    const mutation = useTorrentAction();
+
+    const torrentAction = useCallback((method: TorrentActionMethodsType, successMessage: string) => {
+        mutation.mutate(
+            {
+                method,
+                torrentIds: Array.from(props.serverData.current.selected),
+            },
+            {
+                onSuccess: () => {
+                    notifications.show({
+                        message: successMessage,
+                        color: "green",
+                    });
+                },
+            },
+        );
+    }, [mutation, props.serverData]);
+
+    return (
+        <ContextMenu contextMenuInfo={props.contextMenuInfo} setContextMenuInfo={props.setContextMenuInfo}>
+            <Box miw="10rem">
+                <Menu.Item
+                    onClick={onOpen}
+                    icon={<Icon.LightningFill size={16} />}
+                    disabled={props.serverData.current.selected.size !== 1}>
+                    <Text weight="bold">Open</Text>
+                </Menu.Item>
+                <Menu.Divider />
+                <Menu.Item
+                    onClick={() => { torrentAction("torrent-verify", "Torrents verification started"); }}
+                    icon={<Icon.CheckAll size={16} />}
+                    disabled={props.serverData.current.selected.size === 0}>
+                    Verify
+                </Menu.Item>
+                <Menu.Item
+                    onClick={() => { torrentAction("torrent-reannounce", "Torrents are reannounced"); }}
+                    icon={<Icon.Wifi size={16} />}
+                    disabled={props.serverData.current.selected.size === 0}>
+                    Reannounce
+                </Menu.Item>
+                <Menu.Item
+                    onClick={() => props.modals.current?.setLabels()}
+                    icon={<Icon.TagsFill size={16} />}
+                    disabled={props.serverData.current.selected.size === 0}>
+                    Set labels...
+                </Menu.Item>
+                <Menu.Item
+                    onClick={() => props.modals.current?.move()}
+                    icon={<Icon.FolderFill size={16} />}
+                    disabled={props.serverData.current.selected.size === 0}>
+                    Move...
+                </Menu.Item>
+                <Menu.Item
+                    onClick={() => props.modals.current?.remove()}
+                    icon={<Icon.XCircleFill color="red" size={16} />}
+                    disabled={props.serverData.current.selected.size === 0}>
+                    Remove...
+                </Menu.Item>
+                <Menu.Divider />
+                <Menu.Item
+                    icon={<Icon.GearFill size={16} />}
+                    disabled={props.serverData.current.selected.size !== 1}>
+                    Properties (TODO)...
+                </Menu.Item>
+            </Box>
+        </ContextMenu>
+    );
+}
+
+const MemoizedTorrentContextMenu = memo(TorrentContextMenu);
