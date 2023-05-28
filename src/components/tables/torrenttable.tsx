@@ -17,7 +17,7 @@
  */
 
 import "css/torrenttable.css";
-import React, { memo, useCallback, useContext, useMemo } from "react";
+import React, { memo, useCallback, useContext, useMemo, useRef, useState } from "react";
 import type { ServerTorrentData, Torrent, TrackerStats } from "rpc/torrent";
 import { getTorrentError } from "rpc/torrent";
 import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
@@ -28,7 +28,7 @@ import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
 import { EditableNameField, TransguiTable } from "./common";
 import { getTrackerAnnounceState } from "./trackertable";
-import { Badge, Box, Menu, Text } from "@mantine/core";
+import { Badge, Box, Button, Menu, Portal, Text } from "@mantine/core";
 import { ConfigContext, ServerConfigContext } from "config";
 import { StatusIconMap, Error as StatusIconError } from "components/statusicons";
 import { useMutateTorrentPath, useTorrentAction } from "queries";
@@ -376,11 +376,81 @@ function TorrentContextMenu(props: {
         );
     }, [mutation, props.serverData]);
 
-    return (
+    const [queueSubmenuOpened, setQueueSubmenuOpened] = useState(false);
+    const queueRef = useRef<HTMLButtonElement>(null);
+    const [queueItemRect, setQueueItemRect] = useState<DOMRect>(() => new DOMRect(0, 0, 0, 0));
+
+    const openQueueSubmenu = useCallback(() => {
+        if (queueRef.current == null || props.serverData.current.selected.size === 0) return;
+        setQueueItemRect(queueRef.current.getBoundingClientRect());
+        setQueueSubmenuOpened(true);
+    }, [props.serverData]);
+
+    return (<>
+        <Menu
+            openDelay={100}
+            closeDelay={400}
+            opened={queueSubmenuOpened}
+            onChange={setQueueSubmenuOpened}
+            middlewares={{ shift: true, flip: true }}
+            position="right-start"
+            zIndex={301}
+        >
+            <Portal>
+                <Box
+                    onMouseDown={() => { setQueueSubmenuOpened(false); }}
+                    sx={{
+                        position: "absolute",
+                        left: 0,
+                        top: 0,
+                        height: "100vh",
+                        width: "100vw",
+                        zIndex: queueSubmenuOpened ? 100 : -1,
+                    }} />
+                <Menu.Target>
+                    <Button unstyled
+                        sx={{
+                            position: "absolute",
+                            border: 0,
+                            padding: 0,
+                            background: "transparent",
+                        }}
+                        style={{
+                            left: queueItemRect.x,
+                            top: queueItemRect.y,
+                            width: `calc(${queueItemRect.width}px + 0.5em)`,
+                            height: queueItemRect.height,
+                        }} />
+                </Menu.Target>
+                <Menu.Dropdown miw="10rem">
+                    <Menu.Item
+                        onClick={() => { torrentAction("queue-move-top", "Torrents queue updated"); }}
+                        icon={<Icon.ChevronDoubleUp size={16} />}>
+                        Move to top
+                    </Menu.Item>
+                    <Menu.Item
+                        onClick={() => { torrentAction("queue-move-up", "Torrents queue updated"); }}
+                        icon={<Icon.ChevronUp size={16} />}>
+                        Move up
+                    </Menu.Item>
+                    <Menu.Item
+                        onClick={() => { torrentAction("queue-move-down", "Torrents queue updated"); }}
+                        icon={<Icon.ChevronDown size={16} />}>
+                        Move down
+                    </Menu.Item>
+                    <Menu.Item
+                        onClick={() => { torrentAction("queue-move-bottom", "Torrents queue updated"); }}
+                        icon={<Icon.ChevronDoubleDown size={16} />}>
+                        Move to bottom
+                    </Menu.Item>
+                </Menu.Dropdown>
+            </Portal>
+        </Menu>
         <ContextMenu contextMenuInfo={props.contextMenuInfo} setContextMenuInfo={props.setContextMenuInfo}>
             <Box miw="10rem">
                 <Menu.Item
                     onClick={onOpen}
+                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
                     icon={<Icon.LightningFill size={16} />}
                     disabled={props.serverData.current.selected.size !== 1}>
                     <Text weight="bold">Open</Text>
@@ -388,30 +458,42 @@ function TorrentContextMenu(props: {
                 <Menu.Divider />
                 <Menu.Item
                     onClick={() => { torrentAction("torrent-verify", "Torrents verification started"); }}
+                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
                     icon={<Icon.CheckAll size={16} />}
                     disabled={props.serverData.current.selected.size === 0}>
                     Verify
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => { torrentAction("torrent-reannounce", "Torrents are reannounced"); }}
+                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
                     icon={<Icon.Wifi size={16} />}
                     disabled={props.serverData.current.selected.size === 0}>
                     Reannounce
                 </Menu.Item>
+                <Menu.Item ref={queueRef}
+                    icon={<Icon.ThreeDots size={16} />}
+                    rightSection={<Icon.ChevronRight size={12} />}
+                    onMouseEnter={openQueueSubmenu}
+                    disabled={props.serverData.current.selected.size === 0}>
+                    Queue
+                </Menu.Item>
                 <Menu.Item
                     onClick={() => props.modals.current?.setLabels()}
+                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
                     icon={<Icon.TagsFill size={16} />}
                     disabled={props.serverData.current.selected.size === 0}>
                     Set labels...
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => props.modals.current?.move()}
+                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
                     icon={<Icon.FolderFill size={16} />}
                     disabled={props.serverData.current.selected.size === 0}>
                     Move...
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => props.modals.current?.remove()}
+                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
                     icon={<Icon.XCircleFill color="red" size={16} />}
                     disabled={props.serverData.current.selected.size === 0}>
                     Remove...
@@ -419,12 +501,13 @@ function TorrentContextMenu(props: {
                 <Menu.Divider />
                 <Menu.Item
                     icon={<Icon.GearFill size={16} />}
+                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
                     disabled={props.serverData.current.selected.size !== 1}>
                     Properties (TODO)...
                 </Menu.Item>
             </Box>
         </ContextMenu>
-    );
+    </>);
 }
 
 const MemoizedTorrentContextMenu = memo(TorrentContextMenu);
