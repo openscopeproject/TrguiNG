@@ -451,11 +451,18 @@ function TorrentContextMenu(props: {
                 <Menu.Item
                     onClick={onOpen}
                     onMouseEnter={() => { setQueueSubmenuOpened(false); }}
-                    icon={<Icon.LightningFill size={16} />}
+                    icon={<Icon.BoxArrowUpRight size={16} />}
                     disabled={props.serverData.current.selected.size !== 1}>
                     <Text weight="bold">Open</Text>
                 </Menu.Item>
                 <Menu.Divider />
+                <Menu.Item
+                    onClick={() => { torrentAction("torrent-start-now", "Torrents started"); }}
+                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
+                    icon={<Icon.LightningFill size={16} />}
+                    disabled={props.serverData.current.selected.size === 0}>
+                    Force start
+                </Menu.Item>
                 <Menu.Item
                     onClick={() => { torrentAction("torrent-verify", "Torrents verification started"); }}
                     onMouseEnter={() => { setQueueSubmenuOpened(false); }}

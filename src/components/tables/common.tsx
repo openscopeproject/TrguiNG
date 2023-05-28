@@ -58,6 +58,7 @@ function useTable<TData>(
         ColumnOrderState,
         (o: ColumnOrderState) => void,
         ColumnSizingState,
+        SortingState,
     ] {
     const config = useContext(ConfigContext);
 
@@ -119,7 +120,7 @@ function useTable<TData>(
         if (columnOrder.length === 0) setColumnOrder(table.getAllLeafColumns().map((c) => c.id));
     }, [columnOrder, table]);
 
-    return [table, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columnSizing];
+    return [table, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columnSizing, sorting];
 }
 
 function useSelectHandler<TData>(
@@ -389,7 +390,7 @@ export function TransguiTable<TData>(props: {
     onVisibilityChange?: React.Dispatch<VisibilityState>,
     scrollToRow?: { id: string },
 }) {
-    const [table, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columnSizing] =
+    const [table, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columnSizing, sorting] =
         useTable(props.tablename, props.columns, props.data, props.selected, props.getRowId, props.getSubRows, props.onVisibilityChange);
 
     const [lastIndex, onRowClick] = useSelectHandler(
@@ -437,6 +438,7 @@ export function TransguiTable<TData>(props: {
                         setColumnVisibility,
                         columnOrder,
                         setColumnOrder,
+                        sorting,
                         columns: table.getAllLeafColumns(),
                     }} />
                 ))}

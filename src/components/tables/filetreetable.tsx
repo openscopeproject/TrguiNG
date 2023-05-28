@@ -27,9 +27,11 @@ import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
 import { tauri } from "@tauri-apps/api";
 import { EditableNameField, TransguiTable } from "./common";
-import { Badge, Box, Checkbox, Loader, useMantineTheme } from "@mantine/core";
-import { refreshFileTree, useMutateTorrentPath } from "queries";
+import { Badge, Box, Checkbox, Loader, Menu, Text, useMantineTheme } from "@mantine/core";
+import { refreshFileTree, useMutateTorrent, useMutateTorrentPath } from "queries";
 import { notifications } from "@mantine/notifications";
+import type { ContextMenuInfo } from "components/contextmenu";
+import { ContextMenu, useContextMenu } from "components/contextmenu";
 
 type FileDirEntryKey = keyof FileDirEntry;
 type EntryWantedChangeHandler = (entry: FileDirEntry, state: boolean) => void;
@@ -130,12 +132,12 @@ function PercentBarField(props: TableFieldProps) {
 }
 
 function PriorityField(props: TableFieldProps) {
-    const priority = props.entry.priority ?? 0;
+    const priority = props.entry.priority;
     return <Badge
         radius="md"
         variant="filled"
-        bg={PriorityColors.get(priority)}>
-        {PriorityStrings.get(priority)}
+        bg={priority === undefined ? "gray" : PriorityColors.get(priority)}>
+        {priority === undefined ? "mixed" : PriorityStrings.get(priority)}
     </Badge>;
 }
 
@@ -208,14 +210,103 @@ export function FileTreeTable(props: FileTreeTableProps) {
         tauri.invoke("shell_open", { path }).catch((e) => { console.error("Error opening", path, e); });
     }, [props.downloadDir, serverConfig]);
 
-    return <TransguiTable<FileDirEntry> {...{
-        tablename: props.brief === true ? "filetreebrief" : "filetree",
-        columns,
-        data: props.data,
-        selected,
-        getRowId,
-        getSubRows,
-        selectedReducer,
-        onRowDoubleClick,
-    }} />;
+    const [info, setInfo, handler] = useContextMenu();
+
+    return (
+        <Box w="100%" h="100%" onContextMenu={handler}>
+            {props.brief === true
+                ? <></>
+                : <FiletreeContextMenu
+                    contextMenuInfo={info}
+                    setContextMenuInfo={setInfo}
+                    fileTree={props.fileTree}
+                    selected={selected}
+                    onRowDoubleClick={onRowDoubleClick} />}
+            <TransguiTable<FileDirEntry> {...{
+                tablename: props.brief === true ? "filetreebrief" : "filetree",
+                columns,
+                data: props.data,
+                selected,
+                getRowId,
+                getSubRows,
+                selectedReducer,
+                onRowDoubleClick,
+            }} />
+        </Box>
+    );
+}
+
+function FiletreeContextMenu(props: {
+    contextMenuInfo: ContextMenuInfo,
+    setContextMenuInfo: (i: ContextMenuInfo) => void,
+    fileTree: CachedFileTree,
+    selected: string[],
+    onRowDoubleClick: (row: FileDirEntry) => void,
+}) {
+    const { onRowDoubleClick } = props;
+    const onOpen = useCallback(() => {
+        const [path] = [...props.selected];
+        const entry = props.fileTree.findEntry(path);
+        if (entry === undefined) return;
+        onRowDoubleClick(entry);
+    }, [onRowDoubleClick, props.fileTree, props.selected]);
+    console.log("Selected", props.selected);
+
+    const mutation = useMutateTorrent();
+
+    const setPriority = useCallback((priority: "priority-high" | "priority-normal" | "priority-low") => {
+        const fileIds = Array.from(props.selected
+            .map((path) => props.fileTree.getChildFilesIndexes(path))
+            .reduce((set, curIds) => {
+                curIds.forEach((id) => set.add(id));
+                return set;
+            }, new Set<number>()));
+
+        mutation.mutate(
+            {
+                torrentIds: [props.fileTree.torrentId],
+                fields: {
+                    [priority]: fileIds,
+                },
+            },
+            {
+                onSuccess: () => {
+                    notifications.show({
+                        message: "Priority updated",
+                        color: "green",
+                    });
+                },
+            },
+        );
+    }, [mutation, props.fileTree, props.selected]);
+
+    return (
+        <ContextMenu contextMenuInfo={props.contextMenuInfo} setContextMenuInfo={props.setContextMenuInfo}>
+            <Menu.Item
+                onClick={onOpen}
+                icon={<Icon.BoxArrowUpRight size={16} />}
+                disabled={props.selected.length !== 1}>
+                <Text weight="bold">Open</Text>
+            </Menu.Item>
+            <Menu.Divider />
+            <Menu.Item
+                onClick={() => { setPriority("priority-high"); }}
+                icon={<Icon.CircleFill color="tomato" size={16} />}
+                disabled={props.selected.length === 0}>
+                High priority
+            </Menu.Item>
+            <Menu.Item
+                onClick={() => { setPriority("priority-normal"); }}
+                icon={<Icon.CircleFill color="seagreen" size={16} />}
+                disabled={props.selected.length === 0}>
+                Normal priority
+            </Menu.Item>
+            <Menu.Item
+                onClick={() => { setPriority("priority-low"); }}
+                icon={<Icon.CircleFill color="gold" size={16} />}
+                disabled={props.selected.length === 0}>
+                Low priority
+            </Menu.Item>
+        </ContextMenu >
+    );
 }

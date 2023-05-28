@@ -121,16 +121,16 @@ function Toolbar(props: ToolbarProps) {
 
     const [altSpeedMode, setAltSpeedMode] = useState<boolean>();
 
-    const sessioMutation = useMutateSession();
+    const sessionMutation = useMutateSession();
 
     const toggleAltSpeedMode = useCallback(() => {
-        sessioMutation.mutate({ "alt-speed-enabled": altSpeedMode !== true }, {
+        sessionMutation.mutate({ "alt-speed-enabled": altSpeedMode !== true }, {
             onError: (_, session) => {
                 setAltSpeedMode(session["alt-speed-enabled"] !== true);
             },
         });
         setAltSpeedMode(altSpeedMode !== true);
-    }, [altSpeedMode, sessioMutation]);
+    }, [altSpeedMode, sessionMutation]);
 
     useEffect(() => {
         if (props.altSpeedMode !== undefined) setAltSpeedMode(props.altSpeedMode);
