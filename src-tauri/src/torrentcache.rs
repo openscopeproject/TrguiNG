@@ -18,7 +18,9 @@ use std::{collections::HashMap, sync::Arc};
 
 use hyper::{body::to_bytes, Body, Response};
 use serde::Deserialize;
-use tauri::{api::notification::Notification, async_runtime::Mutex, AppHandle, Manager, State};
+use tauri::{api::notification::Notification, async_runtime::{Mutex, self}, AppHandle, Manager, State};
+
+use crate::sound::play_ping;
 
 #[derive(Deserialize, Debug)]
 struct Torrent {
@@ -100,11 +102,13 @@ async fn process_torrents(app: &AppHandle, mut torrents: Vec<Torrent>, original_
     let mut cache = cache_handle.0.lock().await;
 
     if let Some(old_map) = cache.server_data.get::<str>(original_url) {
+        let mut play_sound = false;
         old_map.iter().for_each(|(id, old_torrent)| {
             if let Some(new_torrent) = map.get(id) {
                 // If status switches from downloading (4) to seeding (6) or queued to seed (5)
                 // then show a "download complete" notification
                 if new_torrent.status > 4 && old_torrent.status == 4 {
+                    play_sound = true;
                     show_notification(app, &new_torrent.name);
                 }
             } else if partial_update {
@@ -118,6 +122,9 @@ async fn process_torrents(app: &AppHandle, mut torrents: Vec<Torrent>, original_
                 );
             }
         });
+        if play_sound {
+            async_runtime::spawn_blocking(|| play_ping());
+        }
     }
 
     cache.server_data.insert(original_url.into(), map);

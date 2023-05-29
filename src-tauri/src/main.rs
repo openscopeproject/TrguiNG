@@ -32,6 +32,7 @@ mod poller;
 mod torrentcache;
 mod tray;
 mod integrations;
+mod sound;
 
 struct ListenerHandle(Arc<RwLock<ipc::Ipc>>);
 
