@@ -67,6 +67,11 @@ export type TableName = typeof TableNames[number];
 const Sashes = ["vertical", "horizontal"] as const;
 export type SashName = typeof Sashes[number];
 
+export const WindowMinimizeOptions = ["minimize", "hide"] as const;
+export const WindowCloseOptions = ["hide", "close", "quit"] as const;
+export type WindowMinimizeOption = typeof WindowMinimizeOptions[number];
+export type WindowCloseOption = typeof WindowCloseOptions[number];
+
 interface Settings {
     servers: ServerConfig[],
     openTabs: string[],
@@ -81,8 +86,8 @@ interface Settings {
         numLastSaveDirs: number,
         deleteAdded: boolean,
         toastNotifications: boolean,
-        onMinimize: string,
-        onClose: string,
+        onMinimize: WindowMinimizeOption,
+        onClose: WindowCloseOption,
     },
 }
 
@@ -110,7 +115,7 @@ const DefaultSettings: Settings = {
         deleteAdded: false,
         toastNotifications: true,
         onMinimize: "minimize",
-        onClose: "exit",
+        onClose: "quit",
     },
 };
 

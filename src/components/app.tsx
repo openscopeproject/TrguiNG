@@ -62,7 +62,7 @@ function ServerTabs(props: ServerTabsProps) {
 
     return (<>
         <AppSettingsModal
-            servers={props.servers} onSave={props.onServersSave}
+            onSave={props.onServersSave}
             opened={showServerConfig} close={serverConfigHandlers.close} />
         <Tabs
             variant="outline"
@@ -201,7 +201,6 @@ export default function App() {
     }, [openTabs, clientManager, currentTab, tabSwitch]);
 
     const onServerSave = useCallback((servers: ServerConfig[]) => {
-        config.setServers(servers);
         setServers(servers);
         openTabs.slice().reverse().forEach((serverName, reverseIndex) => {
             if (servers.find((s) => s.name === serverName) === undefined) {
@@ -209,7 +208,7 @@ export default function App() {
                 closeTab(openTabs.length - reverseIndex - 1);
             }
         });
-    }, [config, openTabs, closeTab]);
+    }, [openTabs, closeTab]);
 
     return (
         <QueryClientProvider client={queryClient}>

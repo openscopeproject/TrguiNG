@@ -16,76 +16,114 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ActionIcon, Button, Grid, Group, PasswordInput, SegmentedControl, Switch, Tabs, Text, Textarea, TextInput } from "@mantine/core";
-import type { ServerConfig } from "config";
-import { ConfigContext } from "config";
-import cloneDeep from "lodash-es/cloneDeep";
-import React, { useCallback, useContext, useEffect, useReducer, useState } from "react";
-import { swapElements, useForceRender } from "util";
+import { ActionIcon, Button, Flex, Grid, Group, PasswordInput, SegmentedControl, Stack, Switch, Tabs, Text, Textarea, TextInput } from "@mantine/core";
+import type { ServerConfig, WindowCloseOption, WindowMinimizeOption } from "config";
+import { ConfigContext, WindowCloseOptions, WindowMinimizeOptions } from "config";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import type { ModalState } from "./common";
 import { SaveCancelModal } from "./common";
 import * as Icon from "react-bootstrap-icons";
 import { invoke } from "@tauri-apps/api";
+import type { UseFormReturnType } from "@mantine/form";
+import { useForm } from "@mantine/form";
 
-interface ServerListPanelProps {
-    servers: string[],
-    current: number,
-    onSelect: (current: number) => void,
-    onAdd: () => void,
-    onRemove: () => void,
-    onUp: () => void,
-    onDown: () => void,
+interface FormValues {
+    servers: ServerConfig[],
+    app: {
+        deleteAdded: boolean,
+        toastNotifications: boolean,
+        onMinimize: WindowMinimizeOption,
+        onClose: WindowCloseOption,
+    },
 }
 
-function ServerListPanel(props: ServerListPanelProps) {
+interface ServerListPanelProps {
+    form: UseFormReturnType<FormValues>,
+    current: number,
+    setCurrent: React.Dispatch<number>,
+}
+
+function ServerListPanel({ form, current, setCurrent }: ServerListPanelProps) {
     return (
-        <div className="d-flex flex-column pe-3">
-            <div className="border border-secondary flex-grow-1 mb-2" style={{ minHeight: "20rem" }}>
-                {props.servers.map((s, i) => {
-                    return <div key={i} className={("p-1 " + (i === props.current ? "selected" : ""))} onClick={() => { props.onSelect(i); }}>{s}</div>;
-                })}
+        <Stack>
+            <div className="border border-secondary flex-grow-1 mb-2 scrollable">
+                <div>
+                    {form.values.servers.map((s, i) => {
+                        return <div key={i} className={("p-1 " + (i === current ? "selected" : ""))}
+                            onClick={() => { setCurrent(i); }}>{s.name}</div>;
+                    })}
+                </div>
             </div>
             <Group position="apart" noWrap>
-                <ActionIcon variant="light" onClick={props.onAdd}><Icon.PlusSquare size={24} color="royalblue" /></ActionIcon>
-                <ActionIcon variant="light" onClick={props.onRemove}><Icon.DashSquare size={24} color="royalblue" /></ActionIcon>
-                <ActionIcon variant="light" onClick={props.onUp}><Icon.ArrowUpSquare size={24} color="royalblue" /></ActionIcon>
-                <ActionIcon variant="light" onClick={props.onDown}><Icon.ArrowDownSquare size={24} color="royalblue" /></ActionIcon>
+                <ActionIcon variant="light"
+                    onClick={() => {
+                        form.insertListItem("servers", {
+                            connection: { url: "", username: "", password: "" },
+                            name: "new",
+                            pathMappings: [],
+                            expandedDirFilters: [],
+                            lastSaveDirs: [],
+                            intervals: { session: 60, torrents: 5, torrentsMinimized: 60, details: 5 },
+                        });
+                        setCurrent(form.values.servers.length);
+                    }}>
+                    <Icon.PlusSquare size={24} color="royalblue" />
+                </ActionIcon>
+                <ActionIcon variant="light"
+                    onClick={() => {
+                        if (current >= form.values.servers.length - 1) {
+                            setCurrent(form.values.servers.length - 2);
+                        }
+                        form.removeListItem("servers", current);
+                    }}>
+                    <Icon.DashSquare size={24} color="royalblue" />
+                </ActionIcon>
+                <ActionIcon variant="light"
+                    onClick={() => {
+                        if (current > 0) {
+                            form.reorderListItem("servers", { from: current, to: current - 1 });
+                            setCurrent(current - 1);
+                        }
+                    }}>
+                    <Icon.ArrowUpSquare size={24} color="royalblue" />
+                </ActionIcon>
+                <ActionIcon variant="light"
+                    onClick={() => {
+                        if (current < form.values.servers.length - 1) {
+                            form.reorderListItem("servers", { from: current, to: current + 1 });
+                            setCurrent(current + 1);
+                        }
+                    }}>
+                    <Icon.ArrowDownSquare size={24} color="royalblue" />
+                </ActionIcon>
             </Group>
-        </div>
+        </Stack >
     );
 }
 
 interface ServerPanelProps {
-    server: ServerConfig,
-    onNameChange: (name: string) => void,
+    form: UseFormReturnType<FormValues>,
+    current: number,
 }
 
 function ServerPanel(props: ServerPanelProps) {
-    const forceRender = useForceRender();
     const [mappingsString, setMappingsString] = useState("");
+    const server = props.form.values.servers[props.current];
 
     useEffect(() => {
-        setMappingsString(props.server.pathMappings.map((m) => `${m.from}=${m.to}`).join("\n"));
-    }, [props.server]);
+        setMappingsString(server.pathMappings.map((m) => `${m.from}=${m.to}`).join("\n"));
+    }, [server.pathMappings]);
 
     return (
         <div className="flex-grow-1">
             <TextInput
                 label="Name"
-                onChange={(e) => {
-                    props.onNameChange(e.target.value);
-                    forceRender();
-                }}
-                value={props.server.name}
+                {...props.form.getInputProps(`servers.${props.current}.name`)}
             />
 
             <TextInput
                 label="Server rpc url"
-                onChange={(e) => {
-                    props.server.connection.url = e.target.value;
-                    forceRender();
-                }}
-                value={props.server.connection.url}
+                {...props.form.getInputProps(`servers.${props.current}.connection.url`)}
                 placeholder="http://1.2.3.4:9091/transmission/rpc"
             />
 
@@ -93,21 +131,13 @@ function ServerPanel(props: ServerPanelProps) {
                 <Grid.Col span={6}>
                     <TextInput
                         label="User name"
-                        onChange={(e) => {
-                            props.server.connection.username = e.target.value;
-                            forceRender();
-                        }}
-                        value={props.server.connection.username}
+                        {...props.form.getInputProps(`servers.${props.current}.connection.username`)}
                     />
                 </Grid.Col>
                 <Grid.Col span={6}>
                     <PasswordInput
                         label="Password"
-                        onChange={(e) => {
-                            props.server.connection.password = e.target.value;
-                            forceRender();
-                        }}
-                        value={props.server.connection.password}
+                        {...props.form.getInputProps(`servers.${props.current}.connection.password`)}
                     />
                 </Grid.Col>
 
@@ -115,13 +145,16 @@ function ServerPanel(props: ServerPanelProps) {
                     <Textarea
                         label={"Path mappings in \"remote=local\" format, one per line"}
                         onChange={(e) => {
+                            // TODO fix
                             const mappings = e.target.value.split("\n")
-                                .filter((line) => line.includes("="))
                                 .map((line) => {
-                                    const equalsPos = line.indexOf("=");
-                                    return { from: line.substring(0, equalsPos), to: line.substring(equalsPos + 1) };
+                                    const equalsPos = line.indexOf("=") + 1;
+                                    return {
+                                        from: line.substring(0, equalsPos - 1),
+                                        to: line.substring(equalsPos),
+                                    };
                                 });
-                            props.server.pathMappings = mappings;
+                            props.form.setFieldValue(`servers.${props.current}.pathMappings`, mappings);
                             setMappingsString(e.target.value);
                         }}
                         value={mappingsString}
@@ -135,32 +168,7 @@ function ServerPanel(props: ServerPanelProps) {
 
 const bigSwitchStyles = { track: { flexGrow: 1 } };
 
-const MinimizeOptions = ["minimize", "hide"];
-const CloseOptions = ["hide", "close", "quit"];
-
-function IntegrationsPanel() {
-    const config = useContext(ConfigContext);
-
-    const [deleteAdded, setDeleteAdded] = useReducer((_: boolean, newVal: boolean) => {
-        config.values.app.deleteAdded = newVal;
-        return newVal;
-    }, config.values.app.deleteAdded);
-
-    const [toastNotifications, setToastNotifications] = useReducer((_: boolean, newVal: boolean) => {
-        config.values.app.toastNotifications = newVal;
-        return newVal;
-    }, config.values.app.toastNotifications);
-
-    const [onMinimize, setOnMinimize] = useReducer((_: string, newVal: string) => {
-        config.values.app.onMinimize = newVal;
-        return newVal;
-    }, config.values.app.onMinimize);
-
-    const [onClose, setOnClose] = useReducer((_: string, newVal: string) => {
-        config.values.app.onClose = newVal;
-        return newVal;
-    }, config.values.app.onClose);
-
+function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
     const [autostart, setAutostart] = useState(false);
 
     const associateTorrent = useCallback(() => {
@@ -187,13 +195,13 @@ function IntegrationsPanel() {
             <Grid.Col span={6}>Delete successfully added torrent files</Grid.Col>
             <Grid.Col span={2}>
                 <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
-                    checked={deleteAdded} onChange={(e) => { setDeleteAdded(e.target.checked); }} />
+                    {...form.getInputProps("app.deleteAdded", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={4}></Grid.Col>
             <Grid.Col span={6}>Show system notifications for completed torrents</Grid.Col>
             <Grid.Col span={2}>
                 <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
-                    checked={toastNotifications} onChange={(e) => { setToastNotifications(e.target.checked); }} />
+                    {...form.getInputProps("app.toastNotifications", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={4}></Grid.Col>
             <Grid.Col span={6}>Launch on startup</Grid.Col>
@@ -202,19 +210,18 @@ function IntegrationsPanel() {
                     checked={autostart} onChange={onChangeAutostart} />
             </Grid.Col>
             <Grid.Col span={4}></Grid.Col>
-            <Grid.Col span={6}>Associate with .torrent files</Grid.Col>
-            <Grid.Col span={2}><Button onClick={associateTorrent}>Associate</Button></Grid.Col>
-            <Grid.Col span={4}></Grid.Col>
-            <Grid.Col span={6}>Associate with magnet links</Grid.Col>
-            <Grid.Col span={2}><Button onClick={associateMagnet}>Associate</Button></Grid.Col>
-            <Grid.Col span={4}></Grid.Col>
+            <Grid.Col span={6}>Associate application</Grid.Col>
+            <Grid.Col span={3}><Button onClick={associateTorrent}>.torrent files</Button></Grid.Col>
+            <Grid.Col span={3}><Button onClick={associateMagnet}>magnet links</Button></Grid.Col>
             <Grid.Col span={6}>When minimized</Grid.Col>
             <Grid.Col span={6}>
-                <SegmentedControl data={MinimizeOptions} value={onMinimize} onChange={setOnMinimize} />
+                <SegmentedControl data={WindowMinimizeOptions as unknown as string[]}
+                    {...form.getInputProps("app.onMinimize")} />
             </Grid.Col>
             <Grid.Col span={6}>When closed</Grid.Col>
             <Grid.Col span={6}>
-                <SegmentedControl data={CloseOptions} value={onClose} onChange={setOnClose} />
+                <SegmentedControl data={WindowCloseOptions as unknown as string[]}
+                    {...form.getInputProps("app.onClose")} />
             </Grid.Col>
             <Grid.Col>
                 <Text fz="sm" fs="italic">
@@ -228,69 +235,40 @@ function IntegrationsPanel() {
 }
 
 interface AppSettingsModalProps extends ModalState {
-    servers: ServerConfig[],
     onSave: (servers: ServerConfig[]) => void,
 }
 
 export function AppSettingsModal(props: AppSettingsModalProps) {
-    const [servers, setServers] = useState(cloneDeep(props.servers));
+    const config = useContext(ConfigContext);
+    const form = useForm<FormValues>({
+        initialValues: {
+            servers: config.getServers(),
+            app: { ...config.values.app },
+        },
+    });
+
     const [currentServerIndex, setCurrentServerIndex] = useState(0);
 
     useEffect(() => {
-        setServers(cloneDeep(props.servers));
-        if (currentServerIndex >= props.servers.length) {
-            setCurrentServerIndex(props.servers.length > 0 ? props.servers.length - 1 : 0);
+        if (props.opened) {
+            form.setValues({
+                servers: config.getServers(),
+                app: { ...config.values.app },
+            });
+            form.resetDirty();
+            setCurrentServerIndex(config.getServers().length > 0 ? 0 : -1);
         }
-    }, [props.servers, props.opened, currentServerIndex]);
-
-    const onRenameCurrent = useCallback((name: string) => {
-        servers[currentServerIndex] = { ...servers[currentServerIndex], name };
-        setServers(servers.slice());
-    }, [servers, currentServerIndex]);
-
-    const onAdd = useCallback(() => {
-        servers.push({
-            connection: { url: "", username: "", password: "" },
-            name: "new",
-            pathMappings: [],
-            expandedDirFilters: [],
-            lastSaveDirs: [],
-            intervals: { session: 60, torrents: 5, torrentsMinimized: 60, details: 5 },
-        });
-        setServers(servers.slice());
-        setCurrentServerIndex(servers.length - 1);
-    }, [servers]);
-
-    const onRemove = useCallback(() => {
-        if (currentServerIndex < servers.length) {
-            servers.splice(currentServerIndex, 1);
-            setServers(servers.slice());
-            if (currentServerIndex === servers.length && currentServerIndex > 0) {
-                setCurrentServerIndex(currentServerIndex - 1);
-            }
-        }
-    }, [servers, currentServerIndex]);
-
-    const onUp = useCallback(() => {
-        if (currentServerIndex > 0) {
-            swapElements(servers, currentServerIndex, currentServerIndex - 1);
-            setServers(servers.slice());
-            setCurrentServerIndex(currentServerIndex - 1);
-        }
-    }, [servers, currentServerIndex]);
-
-    const onDown = useCallback(() => {
-        if (currentServerIndex < servers.length - 1) {
-            swapElements(servers, currentServerIndex, currentServerIndex + 1);
-            setServers(servers.slice());
-            setCurrentServerIndex(currentServerIndex + 1);
-        }
-    }, [servers, currentServerIndex]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [config, props.opened]);
 
     const onSave = useCallback(() => {
-        props.onSave(servers);
-        props.close();
-    }, [props, servers]);
+        if (form.isValid()) {
+            config.setServers(form.values.servers);
+            config.values.app = { ...config.values.app, ...form.values.app };
+            props.onSave(form.values.servers);
+            props.close();
+        }
+    }, [config, form, props]);
 
     return (
         <SaveCancelModal
@@ -306,24 +284,16 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
                     <Tabs.Tab value="servers" p="lg">Servers</Tabs.Tab>
                     <Tabs.Tab value="integrations" p="lg">Integrations</Tabs.Tab>
                 </Tabs.List>
-                <Tabs.Panel value="servers" pt="md">
-                    <div className="d-flex w-100">
-                        <ServerListPanel
-                            servers={servers.map((s) => s.name)}
-                            current={currentServerIndex}
-                            onSelect={setCurrentServerIndex}
-                            onAdd={onAdd}
-                            onRemove={onRemove}
-                            onUp={onUp}
-                            onDown={onDown}
-                        />
-                        {currentServerIndex >= servers.length
+                <Tabs.Panel value="servers" pt="md" h="22rem">
+                    <Flex h="100%" gap="0.5rem">
+                        <ServerListPanel form={form} current={currentServerIndex} setCurrent={setCurrentServerIndex} />
+                        {currentServerIndex === -1
                             ? <></>
-                            : <ServerPanel server={servers[currentServerIndex]} onNameChange={onRenameCurrent} />}
-                    </div>
+                            : <ServerPanel form={form} current={currentServerIndex} />}
+                    </Flex>
                 </Tabs.Panel>
-                <Tabs.Panel value="integrations" pt="md">
-                    <IntegrationsPanel />
+                <Tabs.Panel value="integrations" pt="md" h="22rem">
+                    <IntegrationsPanel form={form} />
                 </Tabs.Panel>
             </Tabs>
         </SaveCancelModal>
