@@ -21,15 +21,19 @@ const { compilerOptions } = require("./tsconfig.json");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
-module.exports = {
+module.exports = (mode) => ({
+    mode,
     entry: "./src/index.tsx",
     plugins: [
         new HtmlWebpackPlugin({
             title: "Transmission Remote GUI",
             template: "src/index.html",
+            templateParameters: {
+                reactDevTools: mode === "production" ? "" : "<script src=\"http://localhost:8097\"></script>",
+            },
         }),
         new MiniCssExtractPlugin({
-            filename: "[name].bundle.css"
+            filename: "[name].bundle.css",
         }),
     ],
     output: {
@@ -96,4 +100,4 @@ module.exports = {
             },
         },
     },
-};
+});

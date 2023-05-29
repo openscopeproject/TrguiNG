@@ -22,13 +22,12 @@ const { merge } = require("webpack-merge");
 
 const common = require("./webpack.common.js");
 
-module.exports = merge(common, {
-    mode: "production",
+module.exports = merge(common("production"), {
     plugins: [
         new BundleAnalyzerPlugin({
             analyzerMode: "static",
             openAnalyzer: false,
-            reportFilename: path.resolve(__dirname, "webpack-report.html")
+            reportFilename: path.resolve(__dirname, "webpack-report.html"),
         }),
     ],
     devtool: "source-map",
