@@ -25,6 +25,7 @@
         "react-hooks"
     ],
     "rules": {
+        "import/no-webpack-loader-syntax": "off",
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "error",
         "indent": [

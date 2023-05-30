@@ -3,6 +3,7 @@
   "sideEffects": [
     "*.css"
   ],
+  "type": "module",
   "scripts": {
     "tauri dev": "tauri dev",
     "build": "tauri build",
@@ -28,6 +29,7 @@
     "eslint-plugin-promise": "^6.1.1",
     "eslint-plugin-react": "^7.32.2",
     "eslint-plugin-react-hooks": "^4.6.0",
+    "execa": "^7.1.1",
     "html-webpack-plugin": "^5.5.1",
     "mini-css-extract-plugin": "^2.7.6",
     "style-loader": "^3.3.3",

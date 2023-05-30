@@ -16,11 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const { merge } = require("webpack-merge");
+import { merge } from "webpack-merge";
+import common from "./webpack.common.js";
 
-const common = require("./webpack.common.js");
-
-module.exports = merge(common("development"), {
+export default merge(common("development"), {
     devtool: "source-map",
     devServer: {
         static: "./dist",

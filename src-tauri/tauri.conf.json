@@ -48,14 +48,6 @@
       "active": false
     },
     "allowlist": {
-      "http": {
-        "all": true,
-        "request": true,
-        "scope": [
-          "https://**",
-          "http://**"
-        ]
-      },
       "fs": {
         "scope": [
           "$CONFIG/transgui-ng.json"

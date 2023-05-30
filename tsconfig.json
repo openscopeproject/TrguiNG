@@ -11,6 +11,7 @@
         "allowJs": false,
         "moduleResolution": "node",
         "esModuleInterop": true,
+        "resolveJsonModule": true,
         "types": []
     },
     "include": ["src/**/*"]

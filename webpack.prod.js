@@ -16,13 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const path = require("path");
-const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
-const { merge } = require("webpack-merge");
+import { merge } from "webpack-merge";
+import common, { __dirname } from "./webpack.common.js";
+import path from "path";
+import { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
-const common = require("./webpack.common.js");
-
-module.exports = merge(common("production"), {
+export default merge(common("production"), {
     plugins: [
         new BundleAnalyzerPlugin({
             analyzerMode: "static",

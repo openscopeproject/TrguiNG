@@ -28,7 +28,7 @@ import { TrackersTable } from "./tables/trackertable";
 import { PeersTable } from "./tables/peerstable";
 import type { SessionStatEntry } from "rpc/transmission";
 import type { MantineTheme } from "@mantine/core";
-import { Box, Container, Group, Table, Tabs, TextInput } from "@mantine/core";
+import { Anchor, Box, Container, Group, Table, Tabs, TextInput } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
 import type { FileDirEntry } from "cachedfiletree";
 import { CachedFileTree } from "cachedfiletree";
@@ -172,7 +172,7 @@ function Urlize(props: { text: string }) {
     const matches = props.text.split(urlRe).filter((match) => match.length > 0);
     return <>{matches.map((match, index) => {
         if (!httpRe.test(match)) return <span key={index}>{match}</span>;
-        return <a key={index} href={match} target="_blank" rel="noreferrer">{match}</a>;
+        return <Anchor key={index} href={match} target="_blank" rel="noreferrer">{match}</Anchor>;
     })}</>;
 }
 

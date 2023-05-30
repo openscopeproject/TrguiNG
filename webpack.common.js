@@ -16,12 +16,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const path = require("path");
-const { compilerOptions } = require("./tsconfig.json");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+import { execaSync } from "execa";
+import path from "path";
+import { readFile, writeFile, mkdir } from "fs/promises";
+import HtmlWebpackPlugin from "html-webpack-plugin";
+import MiniCssExtractPlugin from "mini-css-extract-plugin";
+import * as url from "url";
 
-module.exports = (mode) => ({
+export const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
+
+const tsConfig = JSON.parse(await readFile("./tsconfig.json"));
+const tauriConf = JSON.parse(await readFile("./src-tauri/tauri.conf.json"));
+
+const gitVersion = execaSync("git", ["describe", "--tags", "--dirty", "--always"]);
+const versionTemplate = `{
+    "gitVersion": "${gitVersion.stdout}",
+    "backendVersion": "${tauriConf.package.version}",
+    "buildDate": ${Date.now()}
+}`;
+
+await mkdir(path.join(__dirname, "src/build/"), { recursive: true });
+await writeFile(path.resolve(path.join(__dirname, "src/build/version.json")), versionTemplate);
+
+export default (mode) => ({
     mode,
     entry: "./src/index.tsx",
     plugins: [
@@ -52,13 +69,17 @@ module.exports = (mode) => ({
                 use: "ts-loader",
                 exclude: /node_modules/,
             },
+            {
+                test: /\.svg$/,
+                type: "asset/resource",
+            },
         ],
     },
     resolve: {
         extensions: [".tsx", ".ts", ".js"],
         modules: [
             path.resolve(__dirname, "node_modules"),
-            path.resolve(__dirname, compilerOptions.baseUrl),
+            path.resolve(__dirname, tsConfig.compilerOptions.baseUrl),
         ],
     },
     // cache: false,

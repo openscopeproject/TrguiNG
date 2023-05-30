@@ -33,6 +33,7 @@ import { invoke } from "@tauri-apps/api";
 import { queryClient } from "queries";
 import { Notifications } from "@mantine/notifications";
 import { ClientContext } from "rpc/client";
+import { VersionModal } from "./modals/version";
 
 interface ServerTabsProps {
     clientManager: ClientManager,
@@ -132,10 +133,13 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
         setServers(servers);
     }, [tabs.openTabs, setCurrentServer, setServers, config, props.clientManager]);
 
+    const [showVersionModal, { open: openVersionModal, close: closeVersionModal }] = useDisclosure(false);
+
     return (<>
         <AppSettingsModal
             onSave={onServerSave}
             opened={showServerConfig} close={serverConfigHandlers.close} />
+        <VersionModal opened={showVersionModal} close={closeVersionModal} />
         <Tabs
             variant="outline"
             radius="lg"
@@ -184,12 +188,14 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
                         </Menu.Dropdown>
                     </Menu>
                     : <></>}
+                <ActionIcon size="lg" ml="auto" my="auto" onClick={openVersionModal}>
+                    <Icon.InfoCircle size="1.1rem" />
+                </ActionIcon>
                 <ActionIcon
                     variant="default"
                     size="lg"
                     onClick={() => { toggleColorScheme(); }}
                     title="Toggle color scheme"
-                    ml="auto"
                     my="auto"
                 >
                     {dark
