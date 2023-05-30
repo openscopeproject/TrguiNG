@@ -20,13 +20,12 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 import { ConfigContext, ServerConfigContext } from "../config";
 import type { ServerConfig } from "../config";
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Server } from "../components/server";
 import * as Icon from "react-bootstrap-icons";
 import { AppSettingsModal } from "./modals/settings";
 import { ClientManager } from "../clientmanager";
-import { ActionIcon, Menu, Tabs, useMantineColorScheme } from "@mantine/core";
-import type { TabsValue } from "@mantine/core";
+import { ActionIcon, Box, Button, Flex, Menu, Stack, Tabs, useMantineColorScheme } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -36,39 +35,112 @@ import { Notifications } from "@mantine/notifications";
 import { ClientContext } from "rpc/client";
 
 interface ServerTabsProps {
-    openTabs: string[],
-    currentTab: number,
-    servers: ServerConfig[],
-    onTabOpen: (tab: string) => void,
-    onTabClose: (tab: number) => void,
-    onTabSwitch: (tab: number) => void,
-    onServersSave: (servers: ServerConfig[]) => void,
+    clientManager: ClientManager,
+    setCurrentServer: React.Dispatch<ServerConfig | undefined>,
+    setServers: React.Dispatch<ServerConfig[]>,
 }
 
-function ServerTabs(props: ServerTabsProps) {
-    const [showServerConfig, serverConfigHandlers] = useDisclosure(false);
+interface ServerTabsRef {
+    openTab: (tab: string) => void,
+    configureServers: () => void,
+}
+
+const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function ServerTabs(props, ref) {
+    const config = useContext(ConfigContext);
+
+    const [tabs, setTabs] = useState({
+        openTabs: config.getOpenTabs(),
+        currentTab: 0,
+    });
+
+    useEffect(() => { config.setOpenTabs(tabs.openTabs); }, [config, tabs.openTabs]);
+
+    useEffect(() => {
+        const pollerConfigs = tabs.openTabs.filter((_, i) => i !== tabs.currentTab).map((t) => {
+            const serverConfig = config.getServer(t) as ServerConfig;
+            return {
+                name: serverConfig.name,
+                connection: serverConfig.connection,
+                interval: serverConfig.intervals.torrentsMinimized,
+            };
+        });
+        void invoke("set_poller_config", { configs: pollerConfigs });
+    }, [config, tabs.currentTab, tabs.openTabs]);
+
+    const { setCurrentServer, setServers } = props;
+
+    const tabSwitch = useCallback((tab: number) => {
+        setCurrentServer(config.getServer(tabs.openTabs[tab]));
+        setTabs({ ...tabs, currentTab: tab });
+    }, [config, setCurrentServer, tabs]);
+
+    const openTab = useCallback((name: string) => {
+        if (tabs.openTabs.includes(name)) return;
+        props.clientManager.open(name);
+        setCurrentServer(config.getServer(name));
+        setTabs({ ...tabs, openTabs: [...tabs.openTabs, name], currentTab: tabs.openTabs.length });
+    }, [tabs, props.clientManager, setCurrentServer, config]);
+
+    const closeTab = useCallback((tab: number) => {
+        if (tab >= tabs.openTabs.length) return;
+
+        props.clientManager.close(tabs.openTabs[tab]);
+
+        const newTabs = {
+            openTabs: tabs.openTabs.filter((_, i) => i !== tab),
+            currentTab: tabs.currentTab,
+        };
+
+        if (tabs.currentTab > tab ||
+            (tabs.currentTab === tab && newTabs.currentTab === tabs.openTabs.length - 1)) {
+            newTabs.currentTab -= 1;
+        }
+
+        setCurrentServer(config.getServer(newTabs.openTabs[newTabs.currentTab]));
+        setTabs(newTabs);
+    }, [tabs, props.clientManager, setCurrentServer, config]);
+
+    const servers = config.getServers();
     const unopenedTabs = useMemo(() => {
-        return props.servers.filter((s) => !props.openTabs.includes(s.name)).map((s) => s.name);
-    }, [props.servers, props.openTabs]);
+        return servers.filter((s) => !tabs.openTabs.includes(s.name)).map((s) => s.name);
+    }, [servers, tabs.openTabs]);
 
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
     const dark = colorScheme === "dark";
 
-    const { onTabSwitch } = props;
+    const [showServerConfig, serverConfigHandlers] = useDisclosure(false);
 
-    const onTabsChange = useCallback((value: TabsValue) => {
-        onTabSwitch(Number(value));
-    }, [onTabSwitch]);
+    useImperativeHandle(ref, () => ({
+        openTab,
+        configureServers: serverConfigHandlers.open,
+    }));
+
+    const onServerSave = useCallback((servers: ServerConfig[]) => {
+        const newOpenTabs: string[] = [];
+        tabs.openTabs.forEach((serverName) => {
+            if (servers.find((s) => s.name === serverName) === undefined) {
+                props.clientManager.close(serverName);
+            } else {
+                newOpenTabs.push(serverName);
+            }
+        });
+        setTabs({
+            openTabs: newOpenTabs,
+            currentTab: 0,
+        });
+        setCurrentServer(config.getServer(newOpenTabs[0]));
+        setServers(servers);
+    }, [tabs.openTabs, setCurrentServer, setServers, config, props.clientManager]);
 
     return (<>
         <AppSettingsModal
-            onSave={props.onServersSave}
+            onSave={onServerSave}
             opened={showServerConfig} close={serverConfigHandlers.close} />
         <Tabs
             variant="outline"
             radius="lg"
-            value={props.currentTab >= 0 ? String(props.currentTab) : null}
-            onTabChange={onTabsChange}
+            value={String(tabs.currentTab)}
+            onTabChange={(value) => { tabSwitch(Number(value)); }}
             styles={() => ({
                 tab: {
                     minWidth: "12rem",
@@ -82,7 +154,7 @@ function ServerTabs(props: ServerTabsProps) {
             })}
         >
             <Tabs.List px="sm">
-                {props.openTabs.map((name, index) =>
+                {tabs.openTabs.map((name, index) =>
                     <Tabs.Tab
                         key={index}
                         value={String(index)}
@@ -90,7 +162,7 @@ function ServerTabs(props: ServerTabsProps) {
                             <Icon.XLg size={16} onClick={(e) => {
                                 e.stopPropagation();
                                 e.preventDefault();
-                                props.onTabClose(index);
+                                closeTab(index);
                             }} />
                         }
                     >
@@ -107,7 +179,7 @@ function ServerTabs(props: ServerTabsProps) {
                         <Menu.Dropdown>
                             <Menu.Label>Connect</Menu.Label>
                             {unopenedTabs.map((tab) =>
-                                <Menu.Item key={tab} onClick={() => { props.onTabOpen(tab); }}>{tab}</Menu.Item>)
+                                <Menu.Item key={tab} onClick={() => { openTab(tab); }}>{tab}</Menu.Item>)
                             }
                         </Menu.Dropdown>
                     </Menu>
@@ -130,113 +202,52 @@ function ServerTabs(props: ServerTabsProps) {
             </Tabs.List>
         </Tabs>
     </>);
-}
+});
 
 export default function App() {
     const config = useContext(ConfigContext);
+    const clientManager = useMemo(() => {
+        const cm = new ClientManager(config);
+        config.getOpenTabs().forEach((tab) => { cm.open(tab); });
+        return cm;
+    }, [config]);
+
+    const tabsRef = useRef<ServerTabsRef>(null);
+
+    const [currentServer, setCurrentServer] = useState<ServerConfig | undefined>(
+        config.getServer(config.getOpenTabs()[0]));
     const [servers, setServers] = useState(config.getServers());
-    const [openTabs, setOpenTabs] = useState<string[]>(config.getOpenTabs());
-    const [currentTab, setCurrentTab] = useState(-1);
-    const clientManager = useMemo(() => new ClientManager(config), [config]);
-
-    useEffect(() => {
-        for (const tab of config.getOpenTabs()) clientManager.open(tab);
-    }, [config, clientManager]);
-
-    useEffect(() => {
-        const configs = openTabs.filter((_, i) => i !== currentTab).map((t) => {
-            const serverConfig = config.getServer(t) as ServerConfig;
-            return {
-                name: serverConfig.name,
-                connection: serverConfig.connection,
-                interval: serverConfig.intervals.torrentsMinimized,
-            };
-        });
-        void invoke("set_poller_config", { configs });
-    }, [config, openTabs, currentTab]);
-
-    const server = useRef<ServerConfig | undefined>();
-
-    const tabSwitch = useCallback((tab: number) => {
-        server.current = config.getServer(openTabs[tab]);
-        if (server.current === undefined) return;
-        setCurrentTab(tab);
-    }, [config, openTabs]);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { tabSwitch(0); }, []);
-
-    useEffect(() => { config.setOpenTabs(openTabs); }, [config, openTabs]);
-
-    const openTab = useCallback((name: string) => {
-        if (openTabs.includes(name)) return;
-
-        clientManager.open(name);
-
-        openTabs.push(name);
-        setOpenTabs(openTabs.slice());
-
-        tabSwitch(openTabs.length - 1);
-    }, [openTabs, clientManager, tabSwitch]);
-
-    const closeTab = useCallback((tab: number) => {
-        if (tab >= openTabs.length) return;
-
-        clientManager.close(openTabs[tab]);
-
-        setOpenTabs(openTabs.filter((_, i) => i !== tab));
-
-        if (currentTab === tab) {
-            let nextTab = currentTab;
-            if (nextTab === openTabs.length - 1) nextTab -= 1;
-            if (nextTab >= 0) {
-                tabSwitch(nextTab);
-            } else {
-                server.current = undefined;
-                setCurrentTab(0);
-            }
-        } else if (tab < currentTab) {
-            setCurrentTab(currentTab - 1);
-        }
-    }, [openTabs, clientManager, currentTab, tabSwitch]);
-
-    const onServerSave = useCallback((servers: ServerConfig[]) => {
-        setServers(servers);
-        openTabs.slice().reverse().forEach((serverName, reverseIndex) => {
-            if (servers.find((s) => s.name === serverName) === undefined) {
-                console.log("Closing tab", serverName);
-                closeTab(openTabs.length - reverseIndex - 1);
-            }
-        });
-    }, [openTabs, closeTab]);
 
     return (
         <QueryClientProvider client={queryClient}>
             <Notifications limit={3} style={{ bottom: "2.5rem" }} />
-            <div className="d-flex flex-column h-100 w-100">
-                <ServerTabs
-                    openTabs={openTabs} onTabOpen={openTab} onTabClose={closeTab}
-                    currentTab={currentTab} onTabSwitch={tabSwitch}
-                    servers={servers} onServersSave={onServerSave} />
-                {server.current !== undefined
-                    ? <ServerConfigContext.Provider value={server.current}>
-                        <ClientContext.Provider value={clientManager.getClient(server.current.name)}>
-                            <Server hostname={clientManager.getHostname(server.current.name)} />
+            <Stack h="100%" w="100%">
+                <ServerTabs ref={tabsRef}
+                    clientManager={clientManager}
+                    setCurrentServer={setCurrentServer}
+                    setServers={setServers} />
+                {currentServer !== undefined
+                    ? <ServerConfigContext.Provider value={currentServer}>
+                        <ClientContext.Provider value={clientManager.getClient(currentServer.name)}>
+                            <Server hostname={clientManager.getHostname(currentServer.name)} />
                         </ClientContext.Provider>
                     </ServerConfigContext.Provider>
-                    : <div className="d-flex justify-content-center align-items-center w-100 h-100">
-                        <div className="d-flex flex-column" style={{ minHeight: "10rem", height: "75vh" }}>
-                            <div>Open server tab</div>
-                            <div className="border border-secondary flex-grow-1" style={{ minHeight: "20rem" }}>
-                                {servers.map((s, i) => {
-                                    return <div key={i} className="p-1" onClick={() => { openTab(s.name); }}>{s.name}</div>;
-                                })}
-                            </div>
-                        </div>
-                    </div>
+                    : <Flex justify="center" align="center" w="100%" h="100%">
+                        <Stack mih="20rem">
+                            {servers.map((s, i) => {
+                                return <Button key={i} variant="subtle"
+                                    onClick={() => tabsRef.current?.openTab(s.name)}>{s.name}
+                                </Button>;
+                            })}
+                            <Box sx={{ flexGrow: 1 }} />
+                            <Button onClick={() => tabsRef.current?.configureServers()}>
+                                Configure servers
+                            </Button>
+                        </Stack>
+                    </Flex>
                 }
                 <ReactQueryDevtools toggleButtonProps={{ style: { marginBottom: "2rem" } }} />
-            </div>
+            </Stack>
         </QueryClientProvider>
     );
 }
