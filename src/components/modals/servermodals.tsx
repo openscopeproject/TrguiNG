@@ -26,6 +26,7 @@ import { RemoveModal } from "./remove";
 import { MoveModal } from "./move";
 import { AddMagnet, AddTorrent } from "./add";
 import { DaemonSettingsModal } from "./daemon";
+import { EditTorrent } from "./edittorrent";
 
 export interface ModalCallbacks {
     setLabels: () => void,
@@ -34,6 +35,7 @@ export interface ModalCallbacks {
     addMagnet: () => void,
     addTorrent: () => void,
     daemonSettings: () => void,
+    editTorrent: () => void,
 }
 
 interface ServerModalsProps {
@@ -64,6 +66,7 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
     const [showAddMagnetModal, openAddMagnetModal, closeAddMagnetModal] = usePausingModalState(props.runUpdates);
     const [showAddTorrentModal, openAddTorrentModal, closeAddTorrentModal] = usePausingModalState(props.runUpdates);
     const [showDaemonSettingsModal, openDaemonSettingsModal, closeDaemonSettingsModal] = usePausingModalState(props.runUpdates);
+    const [showEditTorrentModal, openEditTorrentModal, closeEditTorrentModal] = usePausingModalState(props.runUpdates);
 
     useImperativeHandle(ref, () => ({
         setLabels: openLabelsModal,
@@ -72,6 +75,7 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
         addMagnet: openAddMagnetModal,
         addTorrent: openAddTorrentModal,
         daemonSettings: openDaemonSettingsModal,
+        editTorrent: openEditTorrentModal,
     }));
 
     const [magnetLink, setMagnetLink] = useState<string>();
@@ -153,6 +157,9 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
             opened={showAddTorrentModal} close={closeAddTorrentModalAndPop} />
         <DaemonSettingsModal
             opened={showDaemonSettingsModal} close={closeDaemonSettingsModal} />
+        <EditTorrent
+            serverData={props.serverData}
+            opened={showEditTorrentModal} close={closeEditTorrentModal} />
     </>;
 });
 

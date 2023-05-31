@@ -195,7 +195,8 @@ export function LabelsField(props: TableFieldProps) {
 
 export function StatusField(props: TableFieldProps) {
     const status = StatusStrings[props.torrent.status];
-    return <div>{status}</div>;
+    const sequential = (props.torrent.status === Status.downloading && props.torrent.sequentialDownload === true) ? " sequentially" : "";
+    return <div>{(status as string) + sequential}</div>;
 }
 
 export function DateField(props: TableFieldProps) {
@@ -507,10 +508,11 @@ function TorrentContextMenu(props: {
                 </Menu.Item>
                 <Menu.Divider />
                 <Menu.Item
+                    onClick={() => props.modals.current?.editTorrent()}
                     icon={<Icon.GearFill size={16} />}
                     onMouseEnter={() => { setQueueSubmenuOpened(false); }}
                     disabled={props.serverData.current.selected.size !== 1}>
-                    Properties (TODO)...
+                    Properties...
                 </Menu.Item>
             </Box>
         </ContextMenu>

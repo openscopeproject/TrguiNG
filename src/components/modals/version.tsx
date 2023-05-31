@@ -34,6 +34,7 @@ interface AppVersion {
 const appVersion: AppVersion = appVersionJson;
 
 export function VersionModal({ opened, close }: ModalState) {
+    // TODO show webview version and platform
     return (
         <Modal opened={opened} onClose={close} size="lg">
             <h2>Transmission Remote GUI (next gen)</h2>

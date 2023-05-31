@@ -123,6 +123,7 @@ export const TorrentFields = [
     "seedIdleMode", // number tr_inactvelimit
     "seedRatioLimit", // double tr_torrent
     "seedRatioMode", // number tr_ratiolimit
+    "sequentialDownload", // boolean download torrent pieces sequentially
     "startDate", // number tr_stat
     "totalSize", // number tr_torrent_view
     "torrentFile", // string tr_info
@@ -164,7 +165,6 @@ export const TorrentMutableFields = [
     "files-wanted", // array indices of file(s) to download
     "group", // string The name of this torrent's bandwidth group
     "honorsSessionLimits", // boolean true if session upload limits are honored
-    "ids", // array torrent list, as described in 3.1
     "labels", // array array of string labels
     "location", // string new location of the torrent's content
     "peer-limit", // number maximum number of peers

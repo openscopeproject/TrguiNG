@@ -101,13 +101,13 @@ function TrackerUpdate(props: { torrent: Torrent }) {
     if (props.torrent.trackerStats.length === 0) return <></>;
     const tracker = props.torrent.trackerStats[0] as TrackerStats;
     const state = tracker.announceState;
-    return <>{timestampToDateString((state === 2 || state === 3) ? 1 : tracker.nextAnnounceTime)}</>;
+    return <>{(state === 2 || state === 3) ? "-" : timestampToDateString(tracker.nextAnnounceTime)}</>;
 }
 
 function TransferTable(props: { torrent: Torrent }) {
     const shareRatio = `${props.torrent.uploadRatio as number} (${secondsToHumanReadableStr(props.torrent.secondsSeeding)})`;
     return (
-        <Table p={0}>
+        <Table mb="sm">
             <tbody>
                 <tr>
                     <td>Status:</td><td><StatusField {...props} fieldName="status" /></td>
@@ -189,14 +189,23 @@ const readonlyInputStyles = (theme: MantineTheme) => ({
 function TorrentDetails(props: { torrent: Torrent }) {
     const fullPath = ensurePathDelimiter(props.torrent.downloadDir) + (props.torrent.name as string);
     return (
-        <Table>
+        <Table mb="sm">
             <tbody>
                 <tr>
                     <td>Full path:</td>
                     <td>{fullPath}</td>
-                    <td>Created on:</td>
-                    <td><DateField {...props} fieldName="dateCreated" />
-                        <span>{` by ${props.torrent.creator as string}`}</span>
+                    <td>Created:</td>
+                    <td>
+                        <span>
+                            {props.torrent.dateCreated > 0
+                                ? timestampToDateString(props.torrent.dateCreated)
+                                : ""}
+                        </span>
+                        <span>
+                            {(props.torrent.creator === undefined || props.torrent.creator === "")
+                                ? ""
+                                : ` by ${props.torrent.creator as string}`}
+                        </span>
                     </td>
                 </tr>
                 <tr>

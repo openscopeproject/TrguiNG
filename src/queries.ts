@@ -79,13 +79,13 @@ export function useTorrentList(enabled: boolean, fields: TorrentFieldsType[]) {
     });
 }
 
-export function useTorrentDetails(torrentId: number, enabled: boolean) {
+export function useTorrentDetails(torrentId: number, enabled: boolean, disableRefetch?: boolean) {
     const serverConfig = useContext(ServerConfigContext);
     const client = useTransmissionClient();
 
     return useQuery({
         queryKey: TorrentKeys.details(serverConfig.name, torrentId),
-        refetchInterval: 1000 * serverConfig.intervals.details,
+        refetchInterval: disableRefetch === true ? undefined : 1000 * serverConfig.intervals.details,
         staleTime: 1000 * 60,
         enabled,
         queryFn: useCallback(async () => {
