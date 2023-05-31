@@ -226,7 +226,7 @@ function Toolbar(props: ToolbarProps) {
             <ToolbarButton onClick={() => { props.modals.current?.daemonSettings(); }}>
                 <Icon.Tools size="1.5rem" />
             </ToolbarButton>
-        </Flex >
+        </Flex>
     );
 }
 

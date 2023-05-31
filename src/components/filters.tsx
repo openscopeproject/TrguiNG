@@ -23,7 +23,7 @@ import { Status } from "../rpc/transmission";
 import * as Icon from "react-bootstrap-icons";
 import * as StatusIcons from "./statusicons";
 import { ServerConfigContext } from "../config";
-import { Divider, Flex, Text } from "@mantine/core";
+import { Divider, Flex } from "@mantine/core";
 import { useForceRender } from "util";
 
 export interface TorrentFilter {
@@ -117,11 +117,12 @@ function FilterRow(props: FiltersProps & { id: string, filter: LabeledFilter }) 
         if (props.filter.filter(torrent)) count++;
     }
 
-    return <Flex align="center" gap="sm"
-        className={props.currentFilter.id === props.id ? "selected" : ""} px="xs"
+    return <Flex align="center" gap="sm" px="xs"
+        className={props.currentFilter.id === props.id ? "selected" : ""}
         onClick={() => { props.setCurrentFilter({ id: props.id, filter: props.filter.filter }); }}>
         <div style={{ flexShrink: 0 }}><props.filter.icon /></div>
-        <Text>{`${props.filter.label} (${count})`}</Text>
+        <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.filter.label}</div>
+        <div style={{ flexShrink: 0 }}>{`(${count})`}</div>
     </Flex>;
 }
 
@@ -150,9 +151,11 @@ function DirFilterRow(props: DirFilterRowProps) {
     const expandable = props.dir.subdirs.size > 0;
 
     return (
-        <div className="d-flex flex-row align-items-center"
-            style={{ paddingLeft: `${props.dir.level * 1.4 + 0.25}em`, cursor: "default" }}>
-            <div className="flex-shrink-0">
+        <Flex align="center" gap="sm"
+            style={{ paddingLeft: `${props.dir.level * 1.4 + 0.25}em`, cursor: "default" }}
+            className={props.currentFilter.id === props.id ? "selected" : ""}
+            onClick={() => { props.setCurrentFilter({ id: props.id, filter }); }}>
+            <div style={{ flexShrink: 0 }}>
                 {expandable
                     ? props.dir.expanded
                         ? <Icon.DashSquare size={16} onClick={onCollapse} style={{ cursor: "pointer" }} />
@@ -160,12 +163,9 @@ function DirFilterRow(props: DirFilterRowProps) {
                     : <Icon.Folder size={16} />
                 }
             </div>
-            <div
-                className={`ms-1 ps-1 flex-grow-1 ${props.currentFilter.id === props.id ? " bg-primary text-white" : ""}`}
-                onClick={() => { props.setCurrentFilter({ id: props.id, filter }); }}>
-                {`${props.dir.name} (${props.dir.count})`}
-            </div>
-        </div>
+            <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.dir.name}</div>
+            <div style={{ flexShrink: 0 }}>{`(${props.dir.count})`}</div>
+        </Flex>
     );
 }
 

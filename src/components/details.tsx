@@ -193,7 +193,7 @@ function TorrentDetails(props: { torrent: Torrent }) {
             <tbody>
                 <tr>
                     <td>Full path:</td>
-                    <td>{fullPath}</td>
+                    <td><TextInput styles={readonlyInputStyles} variant="unstyled" readOnly defaultValue={fullPath} /></td>
                     <td>Created:</td>
                     <td>
                         <span>
