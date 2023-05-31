@@ -14,9 +14,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(target_os = "windows")]
-use std::os::windows::fs::MetadataExt;
-
 use base64::{engine::general_purpose::STANDARD as b64engine, Engine as _};
 use lava_torrent::torrent::v1::Torrent;
 use tauri::State;
@@ -45,7 +42,7 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
     match metadata {
         Err(_) => return Err(format!("Failed to read file {:?}", path)),
         Ok(metadata) => {
-            if metadata.file_size() > 10 * 1024 * 1024 {
+            if metadata.len() > 10 * 1024 * 1024 {
                 return Err("File is too large".to_string());
             }
         }

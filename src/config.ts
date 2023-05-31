@@ -124,12 +124,17 @@ export class Config {
     values = DefaultSettings;
 
     async read() {
-        const text = await fs.readTextFile(
-            this.fileName,
-            { dir: fs.BaseDirectory.Config },
-        );
+        let text = "{}";
         const merge = (await import(/* webpackChunkName: "lodash" */ "lodash-es/merge")).default;
-        merge(this.values, JSON.parse(text));
+        try {
+            text = await fs.readTextFile(
+                this.fileName,
+                { dir: fs.BaseDirectory.Config },
+            );
+            merge(this.values, JSON.parse(text));
+        } catch (e) {
+            console.log(e);
+        }
 
         // sanitize data
         this.values.openTabs = this.values.openTabs.filter(

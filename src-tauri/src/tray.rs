@@ -66,13 +66,12 @@ pub fn on_tray_event(app: &AppHandle, event: SystemTrayEvent) {
 pub fn toggle_main_window(app: AppHandle, window: Option<Window>) {
     match window {
         Some(window) => {
+            app.tray_handle()
+                .get_item("showhide".into())
+                .set_title("Show")
+                .ok();
             async_runtime::spawn(async move {
                 close_main(window).await;
-
-                app.tray_handle()
-                    .get_item("showhide".into())
-                    .set_title("Show\0")
-                    .ok();
             });
         }
         None => {
@@ -82,7 +81,7 @@ pub fn toggle_main_window(app: AppHandle, window: Option<Window>) {
                     .unwrap();
             app.tray_handle()
                 .get_item("showhide".into())
-                .set_title("Hide\0")
+                .set_title("Hide")
                 .ok();
             window.set_title("Transmission Remote GUI").ok();
             window.set_focus().ok();

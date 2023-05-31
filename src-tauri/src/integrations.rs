@@ -14,7 +14,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#[cfg(target_os = "windows")]
 use winreg::RegKey;
+
+#[cfg(target_os = "windows")]
 const APP_NAME: &str = "TransguiNG";
 
 #[cfg(target_os = "windows")]
@@ -159,6 +162,6 @@ pub fn app_integration_impl(mode: String) -> bool {
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn app_integration_impl(mode: String) -> bool {
+pub fn app_integration_impl(_mode: String) -> bool {
     false
 }
