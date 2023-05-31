@@ -227,7 +227,7 @@ export default function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <Notifications limit={3} style={{ bottom: "2.5rem" }} />
-            <Stack h="100%" w="100%">
+            <Flex direction="column" h="100%" w="100%" >
                 <ServerTabs ref={tabsRef}
                     clientManager={clientManager}
                     setCurrentServer={setCurrentServer}
@@ -253,7 +253,7 @@ export default function App() {
                     </Flex>
                 }
                 <ReactQueryDevtools toggleButtonProps={{ style: { marginBottom: "2rem" } }} />
-            </Stack>
+            </Flex>
         </QueryClientProvider>
     );
 }

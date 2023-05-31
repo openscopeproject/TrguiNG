@@ -34,8 +34,9 @@ export function bytesToHumanReadableStr(value: number): string {
     const tmp = value / divisor;
 
     let fp = 2;
-    if (tmp > 100) fp = 1;
-    if (tmp > 1000) fp = 0;
+    if (tmp >= 100) fp = 1;
+    if (tmp >= 1000) fp = 0;
+    if (unit === "B") fp = 0;
 
     return `${tmp.toFixed(fp)} ${unit}`;
 }

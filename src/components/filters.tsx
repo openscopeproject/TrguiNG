@@ -120,7 +120,7 @@ function FilterRow(props: FiltersProps & { id: string, filter: LabeledFilter }) 
     return <Flex align="center" gap="sm"
         className={props.currentFilter.id === props.id ? "selected" : ""} px="xs"
         onClick={() => { props.setCurrentFilter({ id: props.id, filter: props.filter.filter }); }}>
-        <props.filter.icon />
+        <div style={{ flexShrink: 0 }}><props.filter.icon /></div>
         <Text>{`${props.filter.label} (${count})`}</Text>
     </Flex>;
 }

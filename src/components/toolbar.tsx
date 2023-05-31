@@ -35,10 +35,9 @@ interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentProp
     depressed?: boolean,
 }
 
-// eslint-disable-next-line react/display-name
-const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
+const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(function ToolbarButton(
     { children, depressed, ...other }: ToolbarButtonProps, ref,
-) => {
+) {
     return (
         <Button variant="light" color="gray" compact h="2.5rem" {...other} ref={ref}
             styles={(theme: MantineTheme) => ({
