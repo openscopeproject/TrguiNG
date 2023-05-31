@@ -19,11 +19,12 @@
 import { Anchor, Box, Divider, Flex, Grid, Modal, Text } from "@mantine/core";
 import type { ModalState } from "./common";
 import appVersionJson from "build/version.json";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ReactLogo from "svg/reactjs.svg";
 import TauriLogo from "svg/tauri.svg";
 import AppLogo from "svg/app.svg";
 import { Github } from "react-bootstrap-icons";
+import UserAgent from "ua-parser-js";
 
 interface AppVersion {
     readonly gitVersion: string,
@@ -34,9 +35,23 @@ interface AppVersion {
 const appVersion: AppVersion = appVersionJson;
 
 export function VersionModal({ opened, close }: ModalState) {
-    // TODO show webview version and platform
+    const [frontend, setFrontend] = useState<string>();
+
+    useEffect(() => {
+        if (opened && frontend === undefined) {
+            const ua = new UserAgent();
+            const browser = ua.getBrowser();
+            const engine = ua.getEngine();
+            const os = ua.getOS();
+            let frontend = `${browser.name ?? "unknown"} ${browser.version ?? ""} `;
+            frontend += `(${engine.name ?? "unknown"} ${engine.version ?? ""}) `;
+            frontend += `on ${os.name ?? "unknown"} ${os.version ?? ""}`;
+            setFrontend(frontend);
+        }
+    }, [opened, frontend]);
+
     return (
-        <Modal opened={opened} onClose={close} size="lg">
+        <Modal opened={opened} onClose={close} size="lg" centered>
             <h2>Transmission Remote GUI (next gen)</h2>
             <h5>
                 Remote interface for&nbsp;
@@ -53,6 +68,8 @@ export function VersionModal({ opened, close }: ModalState) {
                     <Grid.Col span={8}>{appVersion.gitVersion}</Grid.Col>
                     <Grid.Col span={4}>Backend</Grid.Col>
                     <Grid.Col span={8}>{appVersion.backendVersion}</Grid.Col>
+                    <Grid.Col span={4}>Frontend</Grid.Col>
+                    <Grid.Col span={8}>{frontend}</Grid.Col>
                     <Grid.Col span={4}>Build date</Grid.Col>
                     <Grid.Col span={8}>{new Date(appVersion.buildDate).toLocaleString()}</Grid.Col>
                 </Grid>

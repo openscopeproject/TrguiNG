@@ -20,6 +20,7 @@
     "@types/react": "^18.2.6",
     "@types/react-beautiful-dnd": "^13.1.4",
     "@types/react-dom": "^18.2.4",
+    "@types/ua-parser-js": "^0.7.36",
     "@typescript-eslint/eslint-plugin": "^5.59.6",
     "css-loader": "^6.7.4",
     "eslint": "^8.41.0",
@@ -65,7 +66,8 @@
     "react-dom": "^18.2.0",
     "react-resize-detector": "^8.1.0",
     "react-split": "^2.0.14",
-    "split.js": "^1.6.5"
+    "split.js": "^1.6.5",
+    "ua-parser-js": "^1.0.35"
   },
   "madge": {
     "webpackConfig": "./webpack.prod.js",
