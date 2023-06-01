@@ -18,7 +18,7 @@
 
 import "../css/custom.css";
 import type { CSSObject } from "@mantine/core";
-import { Box } from "@mantine/core";
+import { Box, Flex } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import Split from "react-split";
 import { ConfigContext } from "../config";
@@ -150,15 +150,15 @@ export function Server({ hostname }: { hostname: string }) {
 
     return (<>
         <MemoizedServerModals ref={modals} {...{ serverData, runUpdates }} />
-        <div className="d-flex flex-column h-100 w-100">
-            <div className="border-bottom border-dark p-2">
+        <Flex direction="column" w="100%" h="100%">
+            <Box p="sm" sx={(theme) => ({ borderBottom: "1px solid", borderColor: theme.colors.dark[3] })}>
                 <MemoizedToolbar
                     setSearchTerms={setSearchTerms}
                     modals={modals}
                     serverData={serverData}
                     altSpeedMode={session?.["alt-speed-enabled"] ?? false}
                 />
-            </div>
+            </Box>
             <SplitLayout
                 left={
                     <div className="scrollable">
@@ -181,19 +181,17 @@ export function Server({ hostname }: { hostname: string }) {
                         scrollToRow={scrollToRow} />
                 }
                 bottom={
-                    <div className="w-100">
-                        <MemoizedDetails torrentId={currentTorrent} updates={updates} />
-                    </div>
+                    <MemoizedDetails torrentId={currentTorrent} updates={updates} />
                 }
             />
-            <div className="border-top border-dark py-1">
+            <Box px="xs" sx={(theme) => ({ borderTop: "1px solid", borderColor: theme.colors.dark[3] })}>
                 <Statusbar {...{
                     session,
                     filteredTorrents,
                     selectedTorrents,
                     hostname,
                 }} />
-            </div>
-        </div>
+            </Box>
+        </Flex>
     </>);
 }

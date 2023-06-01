@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "bootstrap/dist/css/bootstrap.min.css";
-
 import { ConfigContext, ServerConfigContext } from "../config";
 import type { ServerConfig } from "../config";
 import React, { useCallback, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";

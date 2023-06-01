@@ -272,7 +272,7 @@ export function Filters(props: FiltersProps) {
     }, [props.allLabels]);
 
     return (
-        <div className='w-100 filter-container'>
+        <div style={{ width: "100%", whiteSpace: "nowrap" }}>
             <Divider mx="sm" label="Status" labelPosition="center" />
             {allFilters.statusFilters.map((f) =>
                 <FilterRow key={`status-${f.label}`} id={`status-${f.label}`}

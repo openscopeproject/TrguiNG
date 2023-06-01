@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Anchor, Box, Divider, Flex, Grid, Modal, Text } from "@mantine/core";
+import { Anchor, Box, Divider, Flex, Grid, Modal, Text, Title } from "@mantine/core";
 import type { ModalState } from "./common";
 import appVersionJson from "build/version.json";
 import React, { useEffect, useState } from "react";
@@ -51,13 +51,13 @@ export function VersionModal({ opened, close }: ModalState) {
     }, [opened, frontend]);
 
     return (
-        <Modal opened={opened} onClose={close} size="lg" centered>
-            <h2>Transmission Remote GUI (next gen)</h2>
-            <h5>
+        <Modal opened={opened} onClose={close} size="lg" centered p="lg">
+            <Title order={2} mb="lg">Transmission Remote GUI (next gen)</Title>
+            <Text>
                 Remote interface for&nbsp;
                 <Anchor href="https://transmissionbt.com/" target="_blank" rel="noreferrer">Transmission</Anchor>
                 &nbsp;torrent daemon
-            </h5>
+            </Text>
             <Divider px="sm" my="xl" />
             <Flex gap="md" align="center">
                 <img src={AppLogo} />

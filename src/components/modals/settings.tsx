@@ -16,7 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ActionIcon, Button, Flex, Grid, Group, PasswordInput, SegmentedControl, Stack, Switch, Tabs, Text, Textarea, TextInput } from "@mantine/core";
+import {
+    ActionIcon, Box, Button, Flex, Grid, Group, PasswordInput, SegmentedControl,
+    Stack, Switch, Tabs, Text, Textarea, TextInput,
+} from "@mantine/core";
 import type { ServerConfig, WindowCloseOption, WindowMinimizeOption } from "config";
 import { ConfigContext, WindowCloseOptions, WindowMinimizeOptions } from "config";
 import React, { useCallback, useContext, useEffect, useState } from "react";
@@ -46,14 +49,15 @@ interface ServerListPanelProps {
 function ServerListPanel({ form, current, setCurrent }: ServerListPanelProps) {
     return (
         <Stack>
-            <div className="border border-secondary flex-grow-1 mb-2 scrollable">
+            <Box sx={(theme) => ({ border: "1px solid", borderColor: theme.colors.dark[3], flexGrow: 1 })}
+                mb="md" className="scrollable">
                 <div>
                     {form.values.servers.map((s, i) => {
-                        return <div key={i} className={("p-1 " + (i === current ? "selected" : ""))}
-                            onClick={() => { setCurrent(i); }}>{s.name}</div>;
+                        return <Box key={i} px="sm" className={i === current ? "selected" : ""}
+                            onClick={() => { setCurrent(i); }}>{s.name}</Box>;
                     })}
                 </div>
-            </div>
+            </Box>
             <Group position="apart" noWrap>
                 <ActionIcon variant="light"
                     onClick={() => {
@@ -115,7 +119,7 @@ function ServerPanel(props: ServerPanelProps) {
     }, [server.pathMappings]);
 
     return (
-        <div className="flex-grow-1">
+        <div style={{ flexGrow: 1 }}>
             <TextInput
                 label="Name"
                 {...props.form.getInputProps(`servers.${props.current}.name`)}

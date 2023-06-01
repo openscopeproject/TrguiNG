@@ -216,11 +216,11 @@ function Toolbar(props: ToolbarProps) {
                 <Icon.Speedometer2 size="1.5rem" />
             </ToolbarButton>
 
-            <TextInput mx="sm" className="flex-grow-1"
+            <TextInput mx="sm"
                 icon={<Icon.Search size="1rem" />}
                 placeholder="search"
                 onInput={onSearchInput}
-                styles={{ input: { height: "auto" } }}
+                styles={{ root: { flexGrow: 1 }, input: { height: "auto" } }}
             />
 
             <ToolbarButton onClick={() => { props.modals.current?.daemonSettings(); }}>

@@ -23,6 +23,10 @@ html, body {
     font-size: 0.9rem;
 }
 
+svg, img {
+    vertical-align: middle;
+}
+
 .split-horizontal {
     display: flex;
     flex-direction: row;
@@ -68,20 +72,11 @@ html, body {
     width: 100%;
 }
 
-.statusbar {
-    flex-wrap: nowrap;
-}
-
 .statusbar>* {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     flex-shrink: 1;
-}
-
-.filter-container div {
-    overflow: hidden;
-    white-space: nowrap;
 }
 
 .filters>* {

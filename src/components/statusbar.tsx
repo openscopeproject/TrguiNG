@@ -19,7 +19,7 @@
 import React, { useMemo } from "react";
 import { byteRateToHumanReadableStr, bytesToHumanReadableStr } from "../util";
 import * as Icon from "react-bootstrap-icons";
-import { Container, Group } from "@mantine/core";
+import { Box, Group } from "@mantine/core";
 import type { SessionInfo } from "rpc/client";
 import type { Torrent } from "rpc/torrent";
 
@@ -66,31 +66,29 @@ export function Statusbar({ session, filteredTorrents, selectedTorrents, hostnam
     }, [filteredTorrents, selectedTorrents]);
 
     return (
-        <Container fluid>
-            <Group className="statusbar" styles={{ root: { "flex-wrap": "nowrap" } }}>
-                <div>
-                    <Icon.Diagram2 className="me-2" />
-                    <span>{`${session?.version as string ?? "<not connected>"} at ${hostname}`}</span>
-                </div>
-                <div>
-                    <Icon.ArrowDown className="me-2" />
-                    <span>{`${downRate}/s (${byteRateToHumanReadableStr(serverFields.downRateLimit * 1024)})`}</span>
-                </div>
-                <div>
-                    <Icon.ArrowUp className="me-2" />
-                    <span>{`${upRate}/s (${byteRateToHumanReadableStr(serverFields.upRateLimit * 1024)})`}</span>
-                </div>
-                <div>
-                    <Icon.Hdd className="me-2" />
-                    <span>{`Free: ${bytesToHumanReadableStr(serverFields.free)}`}</span>
-                </div>
-                <div>
-                    {`Total: ${sizeTotal}`}
-                </div>
-                <div>
-                    {`Selected: ${sizeSelected}, done ${sizeDone}, left ${sizeLeft}`}
-                </div>
-            </Group>
-        </Container>
+        <Group className="statusbar" h="100%" sx={{ flexWrap: "nowrap" }}>
+            <div>
+                <Box component="span" my="auto" mr="xs"><Icon.Diagram2 /></Box>
+                <span>{`${session?.version as string ?? "<not connected>"} at ${hostname}`}</span>
+            </div>
+            <div>
+                <Box component="span" my="auto" mr="xs"><Icon.ArrowDown /></Box>
+                <span>{`${downRate}/s (${byteRateToHumanReadableStr(serverFields.downRateLimit * 1024)})`}</span>
+            </div>
+            <div>
+                <Box component="span" my="auto" mr="xs"><Icon.ArrowUp /></Box>
+                <span>{`${upRate}/s (${byteRateToHumanReadableStr(serverFields.upRateLimit * 1024)})`}</span>
+            </div>
+            <div>
+                <Box component="span" my="auto" mr="xs"><Icon.Hdd /></Box>
+                <span>{`Free: ${bytesToHumanReadableStr(serverFields.free)}`}</span>
+            </div>
+            <div>
+                {`Total: ${sizeTotal}`}
+            </div>
+            <div>
+                {`Selected: ${sizeSelected}, done ${sizeDone}, left ${sizeLeft}`}
+            </div>
+        </Group>
     );
 }

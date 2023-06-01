@@ -28,7 +28,7 @@ import { TrackersTable } from "./tables/trackertable";
 import { PeersTable } from "./tables/peerstable";
 import type { SessionStatEntry } from "rpc/transmission";
 import type { MantineTheme } from "@mantine/core";
-import { Anchor, Box, Container, Group, Table, Tabs, TextInput } from "@mantine/core";
+import { Anchor, Box, Flex, Container, Group, Table, Tabs, TextInput } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
 import type { FileDirEntry } from "cachedfiletree";
 import { CachedFileTree } from "cachedfiletree";
@@ -238,8 +238,10 @@ function TorrentDetails(props: { torrent: Torrent }) {
 function TableNameRow(props: { children: React.ReactNode }) {
     return (
         <Group grow>
-            <Box className="h5" sx={(theme: MantineTheme) => ({
+            <Box px="md" sx={(theme) => ({
                 backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[4] : theme.colors.gray[3],
+                fontSize: "1.25rem",
+                fontWeight: "bolder",
             })}>
                 {props.children}
             </Box>
@@ -249,11 +251,11 @@ function TableNameRow(props: { children: React.ReactNode }) {
 
 function GeneralPane(props: { torrent: Torrent }) {
     return (
-        <div className="d-flex flex-column h-100 w-100">
+        <Flex direction="column" h="100%" w="100%">
             <Container fluid mx={0}>
                 <DownloadBar {...props} />
             </Container>
-            <div className="flex-grow-1">
+            <div style={{ flexGrow: 1 }}>
                 <div className="scrollable">
                     <Container fluid>
                         <TableNameRow>Transfer</TableNameRow>
@@ -263,7 +265,7 @@ function GeneralPane(props: { torrent: Torrent }) {
                     </Container>
                 </div>
             </div>
-        </div>
+        </Flex>
     );
 }
 
@@ -304,7 +306,7 @@ function FileTreePane(props: { torrent: Torrent }) {
 }
 
 function Stats(props: { stats: SessionStatEntry }) {
-    return <Table>
+    return <Table mb="sm">
         <tbody>
             <tr>
                 <td>Downloaded</td><td>{bytesToHumanReadableStr(props.stats.downloadedBytes)}</td>
@@ -325,8 +327,8 @@ function ServerStats() {
     const { data: sessionStats } = useSessionStats(true);
 
     return (
-        <div className="d-flex flex-column h-100 w-100">
-            <div className="flex-grow-1">
+        <Flex direction="column" h="100%" w="100%">
+            <div style={{ flexGrow: 1 }}>
                 <div className="scrollable">
                     {sessionStats !== undefined
                         ? <Container fluid>
@@ -339,7 +341,7 @@ function ServerStats() {
                     }
                 </div>
             </div>
-        </div>
+        </Flex>
     );
 }
 
@@ -348,7 +350,8 @@ function Details(props: DetailsProps) {
         props.torrentId ?? -1, props.torrentId !== undefined && props.updates);
 
     return (
-        <Tabs variant="outline" defaultValue="general" keepMounted={false} className="h-100 d-flex flex-column">
+        <Tabs variant="outline" defaultValue="general" keepMounted={false}
+            h="100%" w="100%" style={{ display: "flex", flexDirection: "column" }}>
             <Tabs.List px="sm" pt="xs">
                 <Tabs.Tab value="general" disabled={torrent === undefined}>
                     <Group>
@@ -387,33 +390,33 @@ function Details(props: DetailsProps) {
                     </Group>
                 </Tabs.Tab>
             </Tabs.List>
-            <div className="flex-grow-1">
-                <Tabs.Panel value="general" className="h-100">
+            <div style={{ flexGrow: 1 }}>
+                <Tabs.Panel value="general" h="100%">
                     {torrent !== undefined
                         ? <GeneralPane torrent={torrent} />
                         : <></>}
                 </Tabs.Panel>
-                <Tabs.Panel value="files" className="h-100">
+                <Tabs.Panel value="files" h="100%">
                     {torrent !== undefined
                         ? <FileTreePane torrent={torrent} />
                         : <></>}
                 </Tabs.Panel>
-                <Tabs.Panel value="pieces" className="h-100">
+                <Tabs.Panel value="pieces" h="100%">
                     {torrent !== undefined
                         ? <PiecesCanvas torrent={torrent} />
                         : <></>}
                 </Tabs.Panel>
-                <Tabs.Panel value="peers" className="h-100">
+                <Tabs.Panel value="peers" h="100%">
                     {torrent !== undefined
                         ? <PeersTable torrent={torrent} />
                         : <></>}
                 </Tabs.Panel>
-                <Tabs.Panel value="trackers" className="h-100">
+                <Tabs.Panel value="trackers" h="100%">
                     {torrent !== undefined
                         ? <TrackersTable torrent={torrent} />
                         : <></>}
                 </Tabs.Panel>
-                <Tabs.Panel value="serverstats" className="h-100">
+                <Tabs.Panel value="serverstats" h="100%">
                     <ServerStats />
                 </Tabs.Panel>
             </div>
