@@ -158,9 +158,9 @@ function DirFilterRow(props: DirFilterRowProps) {
             <div style={{ flexShrink: 0 }}>
                 {expandable
                     ? props.dir.expanded
-                        ? <Icon.DashSquare size={16} onClick={onCollapse} style={{ cursor: "pointer" }} />
-                        : <Icon.PlusSquare size={16} onClick={onExpand} style={{ cursor: "pointer" }} />
-                    : <Icon.Folder size={16} />
+                        ? <Icon.DashSquare size="1.1rem" onClick={onCollapse} style={{ cursor: "pointer" }} />
+                        : <Icon.PlusSquare size="1.1rem" onClick={onExpand} style={{ cursor: "pointer" }} />
+                    : <Icon.Folder size="1.1rem" />
                 }
             </div>
             <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.dir.name}</div>
@@ -272,7 +272,7 @@ export function Filters(props: FiltersProps) {
     }, [props.allLabels]);
 
     return (
-        <div style={{ width: "100%", whiteSpace: "nowrap" }}>
+        <div style={{ width: "100%", whiteSpace: "nowrap", cursor: "default", userSelect: "none" }}>
             <Divider mx="sm" label="Status" labelPosition="center" />
             {allFilters.statusFilters.map((f) =>
                 <FilterRow key={`status-${f.label}`} id={`status-${f.label}`}

@@ -20,6 +20,7 @@ import { ColorSchemeProvider, Global, MantineProvider } from "@mantine/core";
 import type { ColorScheme, MantineThemeOverride } from "@mantine/core";
 import { useColorScheme } from "@mantine/hooks";
 import { ConfigContext } from "config";
+import { FontsizeContextProvider, useFontSize } from "fontsize";
 import React, { useCallback, useContext, useState } from "react";
 
 const Theme: (colorScheme: ColorScheme) => MantineThemeOverride = (colorScheme) => ({
@@ -71,8 +72,13 @@ const Theme: (colorScheme: ColorScheme) => MantineThemeOverride = (colorScheme) 
 });
 
 function GlobalStyles() {
+    const fontSize = useFontSize();
+
     return (
         <Global styles={(theme) => ({
+            html: {
+                fontSize: `${fontSize.value}em`,
+            },
             "::-webkit-scrollbar": {
                 width: "0.75em",
                 height: "0.75em",
@@ -118,10 +124,12 @@ export default function CustomMantineProvider({ children }: { children: React.Re
 
     return (
         <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
-            <MantineProvider withGlobalStyles withNormalizeCSS theme={Theme(colorScheme)}>
-                <GlobalStyles />
-                {children}
-            </MantineProvider>
+            <FontsizeContextProvider>
+                <MantineProvider withGlobalStyles withNormalizeCSS theme={Theme(colorScheme)}>
+                    <GlobalStyles />
+                    {children}
+                </MantineProvider>
+            </FontsizeContextProvider>
         </ColorSchemeProvider>
     );
 }

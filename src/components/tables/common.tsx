@@ -36,6 +36,7 @@ import type { DropResult } from "react-beautiful-dnd";
 import { DragDropContext, Draggable } from "react-beautiful-dnd";
 import { StrictModeDroppable } from "components/strictmodedroppable";
 import { reorderElements } from "util";
+import { useFontSize } from "fontsize";
 
 const defaultColumn = {
     minSize: 30,
@@ -175,12 +176,12 @@ function useTableVirtualizer(count: number): [React.MutableRefObject<null>, numb
     const parentRef = useRef(null);
     const [rowHeight, setRowHeight] = useState(0);
 
+    const { value: fontSize } = useFontSize();
+
     useEffect(() => {
-        if (rowHeight === 0) {
-            const lineHeight = getComputedStyle(document.body).lineHeight.match(/[\d.]+/)?.[0];
-            setRowHeight(Math.ceil(Number(lineHeight) * 1.1));
-        }
-    }, [rowHeight]);
+        const lineHeight = getComputedStyle(document.body).lineHeight.match(/[\d.]+/)?.[0];
+        setRowHeight(Math.ceil(Number(lineHeight) * 1.1));
+    }, [fontSize]);
 
     const rowVirtualizer = useVirtualizer({
         count,
@@ -188,6 +189,10 @@ function useTableVirtualizer(count: number): [React.MutableRefObject<null>, numb
         overscan: 3,
         estimateSize: useCallback(() => rowHeight, [rowHeight]),
     });
+
+    const { measure } = rowVirtualizer;
+
+    useEffect(() => { measure(); }, [rowHeight, measure]);
 
     return [parentRef, rowHeight, rowVirtualizer];
 }

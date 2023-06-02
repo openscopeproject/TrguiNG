@@ -32,6 +32,7 @@ import { queryClient } from "queries";
 import { Notifications } from "@mantine/notifications";
 import { ClientContext } from "rpc/client";
 import { VersionModal } from "./modals/version";
+import { useFontSize } from "fontsize";
 
 interface ServerTabsProps {
     clientManager: ClientManager,
@@ -42,6 +43,41 @@ interface ServerTabsProps {
 interface ServerTabsRef {
     openTab: (tab: string) => void,
     configureServers: () => void,
+}
+
+function ColorSchemeToggle() {
+    const { colorScheme, toggleColorScheme } = useMantineColorScheme();
+    const dark = colorScheme === "dark";
+
+    return (
+        <ActionIcon
+            variant="default"
+            size="lg"
+            onClick={() => { toggleColorScheme(); }}
+            title="Toggle color scheme"
+            my="auto"
+        >
+            {dark
+                ? <Icon.Sun size="1.1rem" color="yellow" />
+                : <Icon.MoonStars size="1.1rem" color="blue" />}
+        </ActionIcon>
+    );
+}
+
+function FontSizeToggle() {
+    const { toggle } = useFontSize();
+
+    return (
+        <ActionIcon
+            variant="default"
+            size="lg"
+            onClick={() => { toggle(); }}
+            title="Toggle font size"
+            my="auto"
+        >
+            <Icon.Fonts size="1.1rem" />
+        </ActionIcon>
+    );
 }
 
 const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function ServerTabs(props, ref) {
@@ -104,9 +140,6 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
         return servers.filter((s) => !tabs.openTabs.includes(s.name)).map((s) => s.name);
     }, [servers, tabs.openTabs]);
 
-    const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-    const dark = colorScheme === "dark";
-
     const [showServerConfig, serverConfigHandlers] = useDisclosure(false);
 
     useImperativeHandle(ref, () => ({
@@ -161,7 +194,7 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
                         key={index}
                         value={String(index)}
                         rightSection={
-                            <Icon.XLg size={16} onClick={(e) => {
+                            <Icon.XLg size="1.1rem" onClick={(e) => {
                                 e.stopPropagation();
                                 e.preventDefault();
                                 closeTab(index);
@@ -174,7 +207,7 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
                     ? <Menu shadow="md" width={200} position="bottom-start">
                         <Menu.Target>
                             <ActionIcon variant="subtle" color="secondaryColorName" my="auto">
-                                <Icon.PlusLg size={16} />
+                                <Icon.PlusLg size="1.1rem" />
                             </ActionIcon>
                         </Menu.Target>
 
@@ -189,17 +222,8 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
                 <ActionIcon size="lg" ml="auto" my="auto" onClick={openVersionModal}>
                     <Icon.InfoCircle size="1.1rem" />
                 </ActionIcon>
-                <ActionIcon
-                    variant="default"
-                    size="lg"
-                    onClick={() => { toggleColorScheme(); }}
-                    title="Toggle color scheme"
-                    my="auto"
-                >
-                    {dark
-                        ? <Icon.Sun size="1.1rem" color="yellow" />
-                        : <Icon.MoonStars size="1.1rem" color="blue" />}
-                </ActionIcon>
+                <ColorSchemeToggle />
+                <FontSizeToggle />
                 <ActionIcon size="lg" variant="default" my="auto" onClick={serverConfigHandlers.open}>
                     <Icon.GearFill size="1.1rem" />
                 </ActionIcon>

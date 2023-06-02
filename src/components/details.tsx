@@ -355,37 +355,37 @@ function Details(props: DetailsProps) {
             <Tabs.List px="sm" pt="xs">
                 <Tabs.Tab value="general" disabled={torrent === undefined}>
                     <Group>
-                        <Icon.InfoCircleFill size={16} />
+                        <Icon.InfoCircleFill size="1.1rem" />
                         General
                     </Group>
                 </Tabs.Tab>
                 <Tabs.Tab value="files" disabled={torrent === undefined}>
                     <Group>
-                        <Icon.Files size={16} />
+                        <Icon.Files size="1.1rem" />
                         {`Files${torrent !== undefined ? ` (${torrent.files.length as number})` : ""}`}
                     </Group>
                 </Tabs.Tab>
                 <Tabs.Tab value="pieces" disabled={torrent === undefined}>
                     <Group>
-                        <Icon.Grid3x2 size={16} />
+                        <Icon.Grid3x2 size="1.1rem" />
                         {`Pieces${torrent !== undefined ? ` (${torrent.pieceCount as number})` : ""}`}
                     </Group>
                 </Tabs.Tab>
                 <Tabs.Tab value="peers" disabled={torrent === undefined}>
                     <Group>
-                        <Icon.PeopleFill size={16} />
+                        <Icon.PeopleFill size="1.1rem" />
                         Peers
                     </Group>
                 </Tabs.Tab>
                 <Tabs.Tab value="trackers" disabled={torrent === undefined}>
                     <Group>
-                        <Icon.Wifi size={16} />
+                        <Icon.Wifi size="1.1rem" />
                         Trackers
                     </Group>
                 </Tabs.Tab>
                 <Tabs.Tab value="serverstats" ml="auto">
                     <Group>
-                        <Icon.ArrowDownUp size={16} />
+                        <Icon.ArrowDownUp size="1.1rem" />
                         Server statistics
                     </Group>
                 </Tabs.Tab>

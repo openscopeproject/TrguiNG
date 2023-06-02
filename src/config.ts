@@ -88,6 +88,8 @@ interface Settings {
         toastNotifications: boolean,
         onMinimize: WindowMinimizeOption,
         onClose: WindowCloseOption,
+        fontSizeBase: number,
+        fontSize: number,
     },
 }
 
@@ -116,6 +118,8 @@ const DefaultSettings: Settings = {
         toastNotifications: true,
         onMinimize: "minimize",
         onClose: "quit",
+        fontSizeBase: 0.9,
+        fontSize: 0.9,
     },
 };
 

@@ -108,9 +108,9 @@ function NameField(props: TableFieldProps) {
             <Box ml="xs" sx={{ flexShrink: 0, height: "100%" }}>
                 {isDir
                     ? props.row.getIsExpanded()
-                        ? <Icon.DashSquare size={16} onClick={onToggleExpand} style={{ cursor: "pointer" }} />
-                        : <Icon.PlusSquare size={16} onClick={onToggleExpand} style={{ cursor: "pointer" }} />
-                    : <Icon.FileEarmark size={16} />
+                        ? <Icon.DashSquare size="1.1rem" onClick={onToggleExpand} style={{ cursor: "pointer" }} />
+                        : <Icon.PlusSquare size="1.1rem" onClick={onToggleExpand} style={{ cursor: "pointer" }} />
+                    : <Icon.FileEarmark size="1.1rem" />
                 }
             </Box>
         </EditableNameField>
@@ -284,26 +284,26 @@ function FiletreeContextMenu(props: {
         <ContextMenu contextMenuInfo={props.contextMenuInfo} setContextMenuInfo={props.setContextMenuInfo}>
             <Menu.Item
                 onClick={onOpen}
-                icon={<Icon.BoxArrowUpRight size={16} />}
+                icon={<Icon.BoxArrowUpRight size="1.1rem" />}
                 disabled={props.selected.length !== 1}>
                 <Text weight="bold">Open</Text>
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item
                 onClick={() => { setPriority("priority-high"); }}
-                icon={<Icon.CircleFill color="tomato" size={16} />}
+                icon={<Icon.CircleFill color="tomato" size="1.1rem" />}
                 disabled={props.selected.length === 0}>
                 High priority
             </Menu.Item>
             <Menu.Item
                 onClick={() => { setPriority("priority-normal"); }}
-                icon={<Icon.CircleFill color="seagreen" size={16} />}
+                icon={<Icon.CircleFill color="seagreen" size="1.1rem" />}
                 disabled={props.selected.length === 0}>
                 Normal priority
             </Menu.Item>
             <Menu.Item
                 onClick={() => { setPriority("priority-low"); }}
-                icon={<Icon.CircleFill color="gold" size={16} />}
+                icon={<Icon.CircleFill color="gold" size="1.1rem" />}
                 disabled={props.selected.length === 0}>
                 Low priority
             </Menu.Item>

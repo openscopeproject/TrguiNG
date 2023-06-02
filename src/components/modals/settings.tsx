@@ -71,7 +71,7 @@ function ServerListPanel({ form, current, setCurrent }: ServerListPanelProps) {
                         });
                         setCurrent(form.values.servers.length);
                     }}>
-                    <Icon.PlusSquare size={24} color="royalblue" />
+                    <Icon.PlusSquare size={"1.6rem"} color="royalblue" />
                 </ActionIcon>
                 <ActionIcon variant="light"
                     onClick={() => {
@@ -80,7 +80,7 @@ function ServerListPanel({ form, current, setCurrent }: ServerListPanelProps) {
                         }
                         form.removeListItem("servers", current);
                     }}>
-                    <Icon.DashSquare size={24} color="royalblue" />
+                    <Icon.DashSquare size={"1.6rem"} color="royalblue" />
                 </ActionIcon>
                 <ActionIcon variant="light"
                     onClick={() => {
@@ -89,7 +89,7 @@ function ServerListPanel({ form, current, setCurrent }: ServerListPanelProps) {
                             setCurrent(current - 1);
                         }
                     }}>
-                    <Icon.ArrowUpSquare size={24} color="royalblue" />
+                    <Icon.ArrowUpSquare size={"1.6rem"} color="royalblue" />
                 </ActionIcon>
                 <ActionIcon variant="light"
                     onClick={() => {
@@ -98,7 +98,7 @@ function ServerListPanel({ form, current, setCurrent }: ServerListPanelProps) {
                             setCurrent(current + 1);
                         }
                     }}>
-                    <Icon.ArrowDownSquare size={24} color="royalblue" />
+                    <Icon.ArrowDownSquare size={"1.6rem"} color="royalblue" />
                 </ActionIcon>
             </Group>
         </Stack >
