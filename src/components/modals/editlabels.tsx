@@ -31,7 +31,7 @@ export function EditLabelsModal(props: ActionModalState) {
         const selected = props.serverData.current?.torrents.filter(
             (t) => props.serverData.current?.selected.has(t.id)) ?? [];
         const labels: string[] = [];
-        selected.forEach((t) => t.labels.forEach((l: string) => {
+        selected.forEach((t) => t.labels?.forEach((l: string) => {
             if (!labels.includes(l)) labels.push(l);
         }));
         return labels;

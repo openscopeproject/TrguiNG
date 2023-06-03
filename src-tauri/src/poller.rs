@@ -16,6 +16,7 @@
 
 use base64::{engine::general_purpose::STANDARD as b64engine, Engine as _};
 use hyper::{http::HeaderValue, Client, Method, Request};
+use hyper_tls::HttpsConnector;
 use serde::Deserialize;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tauri::{
@@ -181,7 +182,7 @@ async fn poll(
         );
     }
 
-    let client = Client::new();
+    let client = Client::builder().build::<_, hyper::Body>(HttpsConnector::new());
 
     match client
         .request(req.body(TORRENT_GET_BODY.into()).unwrap())

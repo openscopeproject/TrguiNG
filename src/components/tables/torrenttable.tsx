@@ -187,9 +187,9 @@ function PriorityField(props: TableFieldProps) {
 }
 
 export function LabelsField(props: TableFieldProps) {
-    const labels: string[] = props.torrent.labels;
+    const labels: string[] | undefined = props.torrent.labels;
     return <>
-        {labels.map((label) => <Badge key={label}
+        {labels?.map((label) => <Badge key={label}
             radius="md" variant="filled" className="torrent-label white-outline">
             {label}
         </Badge>)}

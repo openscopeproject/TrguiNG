@@ -34,8 +34,6 @@ export class ClientManager {
         const client = new TransmissionClient(serverConfig.connection);
 
         this.clients.set(server, client);
-
-        void client.getSessionFull();
     }
 
     close(server: string) {

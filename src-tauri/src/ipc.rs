@@ -20,12 +20,13 @@ use std::sync::Arc;
 use hyper::body::Bytes;
 use hyper::header::{
     self, HeaderValue, ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS,
-    ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION, ORIGIN,
+    ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_EXPOSE_HEADERS, AUTHORIZATION, ORIGIN,
 };
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Client, HeaderMap, Method, Request, Response, Server, StatusCode};
+use hyper_tls::HttpsConnector;
 use tauri::{async_runtime, AppHandle, Manager};
-use tokio::sync::{oneshot, Semaphore, OwnedSemaphorePermit};
+use tokio::sync::{oneshot, OwnedSemaphorePermit, Semaphore};
 
 use crate::torrentcache::process_response;
 use crate::tray::toggle_main_window;
@@ -69,6 +70,12 @@ fn cors(request_headers: &HeaderMap, r: &mut Response<Body>, allowed_origins: &[
     }
     r.headers_mut()
         .append(ACCESS_CONTROL_ALLOW_HEADERS, HeaderValue::from_static("*"));
+    if !r.headers().contains_key(ACCESS_CONTROL_EXPOSE_HEADERS) {
+        r.headers_mut().append(
+            ACCESS_CONTROL_EXPOSE_HEADERS,
+            HeaderValue::from_static("X-Transmission-Session-Id"),
+        );
+    }
     r.headers_mut().append(
         ACCESS_CONTROL_ALLOW_METHODS,
         HeaderValue::from_static("POST, OPTIONS"),
@@ -146,7 +153,7 @@ async fn proxy_fetch(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 
             match req_builder.body(req.into_body()) {
                 Ok(req) => {
-                    let client = Client::new();
+                    let client = Client::builder().build::<_, hyper::Body>(HttpsConnector::new());
 
                     match client.request(req).await {
                         Ok(mut response) => {
@@ -215,7 +222,8 @@ impl Ipc {
         let make_service = make_service_fn(move |_| {
             let app = app.clone();
             let args_sem = args_sem.clone();
-            let service_fn = service_fn(move |req| http_response(app.clone(), args_sem.clone(), req));
+            let service_fn =
+                service_fn(move |req| http_response(app.clone(), args_sem.clone(), req));
             async move { Ok::<_, hyper::Error>(service_fn) }
         });
 

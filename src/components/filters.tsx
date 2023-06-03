@@ -92,7 +92,7 @@ const statusFilters: LabeledFilter[] = [
 
 const noLabelsFilter: LabeledFilter = {
     label: "<No labels>",
-    filter: (t: Torrent) => t.labels.length === 0,
+    filter: (t: Torrent) => t.labels?.length === 0,
     icon: StatusIcons.Label,
 };
 

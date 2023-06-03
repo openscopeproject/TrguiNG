@@ -18,7 +18,7 @@
 
 import "../css/custom.css";
 import type { CSSObject } from "@mantine/core";
-import { Box, Flex } from "@mantine/core";
+import { Box, Flex, Loader, Overlay, Title } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import Split from "react-split";
 import { ConfigContext } from "../config";
@@ -106,10 +106,16 @@ export function Server({ hostname }: { hostname: string }) {
 
     const [updates, runUpdates] = useState<boolean>(true);
 
-    const [tableRequiredFields, setTableRequiredFields] = useState<TorrentFieldsType[]>(useInitialTorrentRequiredFields());
+    const [tableRequiredFields, setTableRequiredFields] =
+        useState<TorrentFieldsType[]>(useInitialTorrentRequiredFields());
 
+    const {
+        data: session,
+        isLoading: sessionIsLoading,
+        isError: sessionIsError,
+        error: sessionError,
+    } = useSession(updates);
     const { data: torrents } = useTorrentList(updates, tableRequiredFields);
-    const { data: session } = useSession(updates);
 
     const [currentTorrent, setCurrentTorrentInt] = useState<number>();
     const setCurrentTorrent = useCallback(
@@ -123,22 +129,20 @@ export function Server({ hostname }: { hostname: string }) {
 
     const allLabels = useMemo(() => {
         const labels = new Set<string>();
-        torrents?.forEach((t) => t.labels.forEach((l: string) => labels.add(l)));
+        torrents?.forEach((t) => t.labels?.forEach((l: string) => labels.add(l)));
         return Array.from(labels).sort();
     }, [torrents]);
 
     const serverData = useServerTorrentData(torrents ?? [], selectedTorrents, currentTorrent, allLabels);
 
     const [filteredTorrents, setFilteredTorrents] = useState<Torrent[]>([]);
-    useEffect(
-        () => {
-            if ((torrents?.findIndex((t) => t.id === currentTorrent) ?? -1) === -1) setCurrentTorrentInt(undefined);
-            const filtered = torrents?.filter(currentFilter.filter).filter(searchFilter) ?? [];
-            const ids: string[] = filtered.map((t) => t.id);
-            selectedReducer({ verb: "filter", ids });
-            setFilteredTorrents(filtered);
-        },
-        [torrents, currentFilter, searchFilter, currentTorrent]);
+    useEffect(() => {
+        if ((torrents?.findIndex((t) => t.id === currentTorrent) ?? -1) === -1) setCurrentTorrentInt(undefined);
+        const filtered = torrents?.filter(currentFilter.filter).filter(searchFilter) ?? [];
+        const ids: string[] = filtered.map((t) => t.id);
+        selectedReducer({ verb: "filter", ids });
+        setFilteredTorrents(filtered);
+    }, [torrents, currentFilter, searchFilter, currentTorrent]);
 
     const [scrollToRow, setScrollToRow] = useState<{ id: string }>();
 
@@ -148,9 +152,26 @@ export function Server({ hostname }: { hostname: string }) {
 
     const modals = useRef<ModalCallbacks>(null);
 
-    return (<>
-        <MemoizedServerModals ref={modals} {...{ serverData, runUpdates }} />
-        <Flex direction="column" w="100%" h="100%">
+    const overlayVisible = sessionIsError || sessionIsLoading ||
+        session?.["rpc-version"] === undefined || session["rpc-version"] < 15;
+
+    return (
+        <Flex direction="column" w="100%" h="100%" sx={{ position: "relative" }}>
+            <MemoizedServerModals ref={modals} {...{ serverData, runUpdates }} />
+            {overlayVisible && <Overlay blur={10}>
+                <Flex align="center" justify="center" h="100%" direction="column" gap="xl">
+                    {sessionIsLoading
+                        ? <Loader size="xl" />
+                        : sessionIsError
+                            ? <><Title color="red" order={1}>Failed to load session</Title>
+                                <Title color="red" order={3}>{(sessionError as Error).message}</Title></>
+                            : session?.["rpc-version"] === undefined
+                                ? <Title color="red" order={1}>Server does not appear to be transmission daemon</Title>
+                                : session["rpc-version"] < 15
+                                    ? <Title color="red" order={1}>Transmission version 2.80 or higher is required.</Title>
+                                    : <></>}
+                </Flex>
+            </Overlay>}
             <Box p="sm" sx={(theme) => ({ borderBottom: "1px solid", borderColor: theme.colors.dark[3] })}>
                 <MemoizedToolbar
                     setSearchTerms={setSearchTerms}
@@ -192,6 +213,6 @@ export function Server({ hostname }: { hostname: string }) {
                     hostname,
                 }} />
             </Box>
-        </Flex>
-    </>);
+        </Flex >
+    );
 }

@@ -67,15 +67,17 @@ export interface TorrentAddParams {
 export class TransmissionClient {
     url: string;
     hostname: string;
-    auth: string;
     headers: Record<string, string>;
     timeout: number;
     sessionInfo: SessionInfo;
 
     constructor(connection: ServerConnection, timeout = 15) {
         this.url = encodeURIComponent(connection.url);
-        this.auth = "Basic " + Buffer.from(connection.username + ":" + connection.password, "utf-8").toString("base64");
-        this.headers = { Authorization: this.auth };
+        this.headers = {};
+        if (connection.username !== "" || connection.password !== "") {
+            const auth = "Basic " + Buffer.from(connection.username + ":" + connection.password, "utf-8").toString("base64");
+            this.headers = { Authorization: auth };
+        }
         this.timeout = timeout;
         this.sessionInfo = {};
         this.hostname = "unknown";
@@ -100,7 +102,7 @@ export class TransmissionClient {
         const url = `http://127.123.45.67:8080/${data.method === "torrent-get" ? "torrentget" : "post"}?url=${this.url}`;
         const body = JSON.stringify(data);
         let response = await fetch(
-            url, { method: "POST", headers: this.headers, body });
+            url, { method: "POST", redirect: "manual", headers: this.headers, body });
 
         if (response.status === 409) {
             const sid = response.headers.get("X-Transmission-Session-Id");
@@ -110,7 +112,7 @@ export class TransmissionClient {
             this.headers["X-Transmission-Session-Id"] = sid;
 
             response = await fetch(
-                url, { method: "POST", headers: this.headers, body });
+                url, { method: "POST", redirect: "manual", headers: this.headers, body });
         }
 
         if (response.ok) {
@@ -122,9 +124,13 @@ export class TransmissionClient {
             }
 
             return responseJson;
+        } else if (response.type === "opaqueredirect") {
+            throw new Error("Server makes a redirect");
+        } else if (response.type === "error") {
+            throw new Error("Network error");
         } else {
             console.log(response);
-            throw new Error("Server returned error");
+            throw new Error(`Server returned error: ${response.status} (${response.statusText})`);
         }
     }
 
@@ -183,7 +189,8 @@ export class TransmissionClient {
     }
 
     async getSession(): Promise<SessionInfo> {
-        const session = await this._getSession(SessionFields);
+        const fields = this.sessionInfo["rpc-version"] === undefined ? SessionAllFields : SessionFields;
+        const session = await this._getSession(fields);
         this.sessionInfo = { ...this.sessionInfo, ...session };
         return this.sessionInfo;
     }
