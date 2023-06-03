@@ -90,14 +90,16 @@ function GlobalStyles() {
             },
             "::-webkit-scrollbar-thumb": {
                 backgroundColor: theme.colorScheme === "dark"
-                    ? theme.fn.rgba(theme.colors.gray[7], 0.5)
-                    : theme.fn.rgba(theme.colors.gray[6], 0.4),
+                    ? theme.colors.gray[7]
+                    : theme.colors.gray[5],
                 borderRadius: "0.375em",
+                minHeight: "3rem",
+                minWidth: "3rem",
             },
             "::-webkit-scrollbar-thumb:hover": {
                 backgroundColor: theme.colorScheme === "dark"
-                    ? theme.fn.rgba(theme.colors.gray[7], 0.9)
-                    : theme.fn.rgba(theme.colors.gray[5], 0.9),
+                    ? theme.colors.gray[6]
+                    : theme.colors.gray[6],
                 border: "1px solid #77777744",
             },
             "::-webkit-scrollbar-corner": {
