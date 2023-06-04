@@ -53,7 +53,12 @@ function ServerListPanel({ form, current, setCurrent }: ServerListPanelProps) {
                 mb="md" className="scrollable">
                 <div>
                     {form.values.servers.map((s, i) => {
+                        let isDuplicate = false;
+                        form.values.servers.forEach((other, otherIndex) => {
+                            if (otherIndex !== i && other.name === s.name) isDuplicate = true;
+                        });
                         return <Box key={i} px="sm" className={i === current ? "selected" : ""}
+                            style={{ textDecoration: isDuplicate ? "red wavy underline" : undefined }}
                             onClick={() => { setCurrent(i); }}>{s.name}</Box>;
                     })}
                 </div>
@@ -69,6 +74,7 @@ function ServerListPanel({ form, current, setCurrent }: ServerListPanelProps) {
                             lastSaveDirs: [],
                             intervals: { session: 60, torrents: 5, torrentsMinimized: 60, details: 5 },
                         });
+                        form.validate();
                         setCurrent(form.values.servers.length);
                     }}>
                     <Icon.PlusSquare size={"1.6rem"} color="royalblue" />
@@ -249,23 +255,51 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
             servers: config.getServers(),
             app: { ...config.values.app },
         },
+        validate: {
+            servers: {
+                name: (value, values, path) => {
+                    let found = false;
+                    values.servers.forEach((server, i) => {
+                        if (`servers.${i}.name` !== path && value === server.name) {
+                            found = true;
+                        }
+                    });
+                    return found ? "Server names must be unique" : null;
+                },
+                connection: {
+                    url: (value) => {
+                        try {
+                            const url = new URL(value);
+                            console.log(url.protocol);
+                            if (!["http:", "https:"].includes(url.protocol)) {
+                                return "Only http/https URLs are supported";
+                            }
+                        } catch {
+                            return "Invalid URL";
+                        }
+                        return null;
+                    },
+                },
+            },
+        },
+        validateInputOnChange: true,
     });
 
     const [currentServerIndex, setCurrentServerIndex] = useState(0);
+    const { setValues } = form;
 
     useEffect(() => {
         if (props.opened) {
-            form.setValues({
+            setValues({
                 servers: config.getServers(),
                 app: { ...config.values.app },
             });
-            form.resetDirty();
             setCurrentServerIndex(config.getServers().length > 0 ? 0 : -1);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [config, props.opened]);
+    }, [config, props.opened, setValues]);
 
     const onSave = useCallback(() => {
+        form.validate();
         if (form.isValid()) {
             config.setServers(form.values.servers);
             config.values.app = { ...config.values.app, ...form.values.app };
@@ -283,23 +317,25 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
             centered
             title="Application Settings"
         >
-            <Tabs mih="25rem" defaultValue="servers">
-                <Tabs.List>
-                    <Tabs.Tab value="servers" p="lg">Servers</Tabs.Tab>
-                    <Tabs.Tab value="integrations" p="lg">Integrations</Tabs.Tab>
-                </Tabs.List>
-                <Tabs.Panel value="servers" pt="md" h="22rem">
-                    <Flex h="100%" gap="0.5rem">
-                        <ServerListPanel form={form} current={currentServerIndex} setCurrent={setCurrentServerIndex} />
-                        {currentServerIndex === -1
-                            ? <></>
-                            : <ServerPanel form={form} current={currentServerIndex} />}
-                    </Flex>
-                </Tabs.Panel>
-                <Tabs.Panel value="integrations" pt="md" h="22rem">
-                    <IntegrationsPanel form={form} />
-                </Tabs.Panel>
-            </Tabs>
+            <form>
+                <Tabs mih="25rem" defaultValue="servers">
+                    <Tabs.List>
+                        <Tabs.Tab value="servers" p="lg">Servers</Tabs.Tab>
+                        <Tabs.Tab value="integrations" p="lg">Integrations</Tabs.Tab>
+                    </Tabs.List>
+                    <Tabs.Panel value="servers" pt="md" h="22rem">
+                        <Flex h="100%" gap="0.5rem">
+                            <ServerListPanel form={form} current={currentServerIndex} setCurrent={setCurrentServerIndex} />
+                            {currentServerIndex === -1
+                                ? <></>
+                                : <ServerPanel form={form} current={currentServerIndex} />}
+                        </Flex>
+                    </Tabs.Panel>
+                    <Tabs.Panel value="integrations" pt="md" h="22rem">
+                        <IntegrationsPanel form={form} />
+                    </Tabs.Panel>
+                </Tabs>
+            </form>
         </SaveCancelModal>
     );
 }
