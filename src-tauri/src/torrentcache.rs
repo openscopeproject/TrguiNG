@@ -53,6 +53,7 @@ pub struct TorrentCacheHandle(Arc<Mutex<TorrentCache>>);
 pub async fn process_response(
     app: &AppHandle,
     response: Response<Body>,
+    toast: bool,
 ) -> hyper::Result<Response<Body>> {
     let status = response.status();
     let headers = response.headers().clone();
@@ -68,7 +69,7 @@ pub async fn process_response(
             }
             match server_response.arguments {
                 Some(Arguments { torrents }) => {
-                    process_torrents(app, torrents, original_url).await;
+                    process_torrents(app, torrents, original_url, toast).await;
                 }
                 None => println!("Server returned success but no arguments!"),
             }
@@ -87,7 +88,7 @@ pub async fn process_response(
     Ok(response_builder.body(body).unwrap())
 }
 
-async fn process_torrents(app: &AppHandle, mut torrents: Vec<Torrent>, original_url: &str) {
+async fn process_torrents(app: &AppHandle, mut torrents: Vec<Torrent>, original_url: &str, toast: bool) {
     // This is a hacky way to determine if details of a single torrent were
     // requested or a full update. Proper way would be to inspect the request.
     let partial_update = torrents.len() <= 1;
@@ -107,7 +108,7 @@ async fn process_torrents(app: &AppHandle, mut torrents: Vec<Torrent>, original_
             if let Some(new_torrent) = map.get(id) {
                 // If status switches from downloading (4) to seeding (6) or queued to seed (5)
                 // then show a "download complete" notification
-                if new_torrent.status > 4 && old_torrent.status == 4 {
+                if toast && new_torrent.status > 4 && old_torrent.status == 4 {
                     play_sound = true;
                     show_notification(app, &new_torrent.name);
                 }
@@ -133,7 +134,7 @@ async fn process_torrents(app: &AppHandle, mut torrents: Vec<Torrent>, original_
 fn show_notification(app: &AppHandle, name: &String) {
     if let Err(e) = Notification::new(app.config().tauri.bundle.identifier.as_str())
         .title("Download complete")
-        .body(format!("{} has finished downloading", name))
+        .body(name)
         .show()
     {
         println!("Cannot show notification: {:?}", e);

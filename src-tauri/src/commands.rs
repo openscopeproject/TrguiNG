@@ -98,9 +98,10 @@ pub async fn shell_open(path: String) -> Result<(), String> {
 pub async fn set_poller_config(
     poller_handle: State<'_, PollerHandle>,
     configs: Vec<PollerConfig>,
+    toast: bool,
 ) -> Result<(), ()> {
     let mut poller = poller_handle.0.lock().await;
-    poller.set_configs(&configs);
+    poller.set_configs(configs, toast);
     Ok(())
 }
 

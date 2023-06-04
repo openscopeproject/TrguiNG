@@ -71,12 +71,15 @@ export class TransmissionClient {
     timeout: number;
     sessionInfo: SessionInfo;
 
-    constructor(connection: ServerConnection, timeout = 15) {
+    constructor(connection: ServerConnection, toastNotifications: boolean, timeout = 15) {
         this.url = encodeURIComponent(connection.url);
         this.headers = {};
+        if (toastNotifications) {
+            this.headers["X-Transguing-toast"] = "true";
+        }
         if (connection.username !== "" || connection.password !== "") {
             const auth = "Basic " + Buffer.from(connection.username + ":" + connection.password, "utf-8").toString("base64");
-            this.headers = { Authorization: auth };
+            this.headers.Authorization = auth;
         }
         this.timeout = timeout;
         this.sessionInfo = {};
@@ -322,7 +325,8 @@ export class TransmissionClient {
     }
 }
 
-export const ClientContext = React.createContext(new TransmissionClient({ url: "", username: "", password: "" }));
+export const ClientContext = React.createContext(
+    new TransmissionClient({ url: "", username: "", password: "" }, false));
 
 export function useTransmissionClient() {
     return useContext(ClientContext);

@@ -62,8 +62,6 @@ export function VersionModal({ opened, close }: ModalState) {
             <Flex gap="md" align="center">
                 <img src={AppLogo} />
                 <Grid>
-                    <Grid.Col span={4}>Source code</Grid.Col>
-                    <Grid.Col span={8}><Box component="span" mr="sm"><Github /></Box><Anchor href="https://github.com/openscopeproject/transguing/" target="_blank" rel="noreferrer">github</Anchor></Grid.Col>
                     <Grid.Col span={4}>Version</Grid.Col>
                     <Grid.Col span={8}>{appVersion.gitVersion}</Grid.Col>
                     <Grid.Col span={4}>Backend</Grid.Col>
@@ -72,6 +70,8 @@ export function VersionModal({ opened, close }: ModalState) {
                     <Grid.Col span={8}>{frontend}</Grid.Col>
                     <Grid.Col span={4}>Build date</Grid.Col>
                     <Grid.Col span={8}>{new Date(appVersion.buildDate).toLocaleString()}</Grid.Col>
+                    <Grid.Col span={4}>Source code</Grid.Col>
+                    <Grid.Col span={8}><Box component="span" mr="sm"><Github /></Box><Anchor href="https://github.com/openscopeproject/transguing/" target="_blank" rel="noreferrer">github</Anchor></Grid.Col>
                 </Grid>
             </Flex>
             <Divider px="sm" my="xl" />

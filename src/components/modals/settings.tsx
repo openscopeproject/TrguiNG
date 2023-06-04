@@ -22,13 +22,14 @@ import {
 } from "@mantine/core";
 import type { ServerConfig, WindowCloseOption, WindowMinimizeOption } from "config";
 import { ConfigContext, WindowCloseOptions, WindowMinimizeOptions } from "config";
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ModalState } from "./common";
 import { SaveCancelModal } from "./common";
 import * as Icon from "react-bootstrap-icons";
 import { invoke } from "@tauri-apps/api";
 import type { UseFormReturnType } from "@mantine/form";
 import { useForm } from "@mantine/form";
+import UserAgent from "ua-parser-js";
 
 interface FormValues {
     servers: ServerConfig[],
@@ -179,6 +180,11 @@ function ServerPanel(props: ServerPanelProps) {
 const bigSwitchStyles = { track: { flexGrow: 1 } };
 
 function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
+    const platform = useMemo(() => {
+        const ua = new UserAgent();
+        return ua.getOS().name ?? "unknown";
+    }, []);
+
     const [autostart, setAutostart] = useState(false);
 
     const associateTorrent = useCallback(() => {
@@ -189,10 +195,12 @@ function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
     }, []);
 
     useEffect(() => {
-        invoke("app_integration", { mode: "getautostart" })
-            .then((result) => { setAutostart(result as boolean); })
-            .catch(console.error);
-    }, []);
+        if (platform === "Windows") {
+            invoke("app_integration", { mode: "getautostart" })
+                .then((result) => { setAutostart(result as boolean); })
+                .catch(console.error);
+        }
+    }, [platform]);
 
     const onChangeAutostart = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const state = e.target.checked;
@@ -214,15 +222,17 @@ function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                     {...form.getInputProps("app.toastNotifications", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={4}></Grid.Col>
-            <Grid.Col span={6}>Launch on startup</Grid.Col>
-            <Grid.Col span={2}>
-                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
-                    checked={autostart} onChange={onChangeAutostart} />
-            </Grid.Col>
-            <Grid.Col span={4}></Grid.Col>
-            <Grid.Col span={6}>Associate application</Grid.Col>
-            <Grid.Col span={3}><Button onClick={associateTorrent}>.torrent files</Button></Grid.Col>
-            <Grid.Col span={3}><Button onClick={associateMagnet}>magnet links</Button></Grid.Col>
+            {platform === "Windows" && <>
+                <Grid.Col span={6}>Launch on startup</Grid.Col>
+                <Grid.Col span={2}>
+                    <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                        checked={autostart} onChange={onChangeAutostart} />
+                </Grid.Col>
+                <Grid.Col span={4}></Grid.Col>
+                <Grid.Col span={6}>Associate application</Grid.Col>
+                <Grid.Col span={3}><Button onClick={associateTorrent}>.torrent files</Button></Grid.Col>
+                <Grid.Col span={3}><Button onClick={associateMagnet}>magnet links</Button></Grid.Col>
+            </>}
             <Grid.Col span={6}>When minimized</Grid.Col>
             <Grid.Col span={6}>
                 <SegmentedControl data={WindowMinimizeOptions as unknown as string[]}
@@ -270,7 +280,6 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
                     url: (value) => {
                         try {
                             const url = new URL(value);
-                            console.log(url.protocol);
                             if (!["http:", "https:"].includes(url.protocol)) {
                                 return "Only http/https URLs are supported";
                             }

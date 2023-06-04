@@ -82,6 +82,7 @@ function FontSizeToggle() {
 
 const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function ServerTabs(props, ref) {
     const config = useContext(ConfigContext);
+    const servers = config.getServers();
 
     const [tabs, setTabs] = useState({
         openTabs: config.getOpenTabs(),
@@ -99,8 +100,8 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
                 interval: serverConfig.intervals.torrentsMinimized,
             };
         });
-        void invoke("set_poller_config", { configs: pollerConfigs });
-    }, [config, tabs.currentTab, tabs.openTabs]);
+        void invoke("set_poller_config", { configs: pollerConfigs, toast: config.values.app.toastNotifications });
+    }, [config, servers, config.values.app.toastNotifications, tabs]);
 
     const { setCurrentServer, setServers } = props;
 
@@ -111,7 +112,7 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
 
     const openTab = useCallback((name: string) => {
         if (tabs.openTabs.includes(name)) return;
-        props.clientManager.open(name);
+        props.clientManager.open(name, config.values.app.toastNotifications);
         setCurrentServer(config.getServer(name));
         setTabs({ ...tabs, openTabs: [...tabs.openTabs, name], currentTab: tabs.openTabs.length });
     }, [tabs, props.clientManager, setCurrentServer, config]);
@@ -135,7 +136,6 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
         setTabs(newTabs);
     }, [tabs, props.clientManager, setCurrentServer, config]);
 
-    const servers = config.getServers();
     const unopenedTabs = useMemo(() => {
         return servers.filter((s) => !tabs.openTabs.includes(s.name)).map((s) => s.name);
     }, [servers, tabs.openTabs]);
@@ -150,9 +150,9 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
     const onServerSave = useCallback((servers: ServerConfig[]) => {
         const newOpenTabs: string[] = [];
         tabs.openTabs.forEach((serverName) => {
-            if (servers.find((s) => s.name === serverName) === undefined) {
-                props.clientManager.close(serverName);
-            } else {
+            props.clientManager.close(serverName);
+            if (servers.find((s) => s.name === serverName) !== undefined) {
+                props.clientManager.open(serverName, config.values.app.toastNotifications);
                 newOpenTabs.push(serverName);
             }
         });
@@ -236,7 +236,7 @@ export default function App() {
     const config = useContext(ConfigContext);
     const clientManager = useMemo(() => {
         const cm = new ClientManager(config);
-        config.getOpenTabs().forEach((tab) => { cm.open(tab); });
+        config.getOpenTabs().forEach((tab) => { cm.open(tab, config.values.app.toastNotifications); });
         return cm;
     }, [config]);
 

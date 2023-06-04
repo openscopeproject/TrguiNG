@@ -50,6 +50,7 @@ struct PollerConfigData {
 #[derive(Default)]
 pub struct Poller {
     configs: HashMap<String, PollerConfigData>,
+    toast: bool,
     app_handle: Option<AppHandle>,
 }
 
@@ -58,39 +59,27 @@ impl Poller {
         self.app_handle = Some(app_handle.clone());
     }
 
-    pub fn set_configs(&mut self, configs: &Vec<PollerConfig>) {
+    pub fn set_configs(&mut self, mut configs: Vec<PollerConfig>, toast: bool) {
+        self.toast = toast;
+
         let mut old_configs = std::mem::replace(&mut self.configs, HashMap::new());
-
-        for config in configs {
-            match old_configs.remove(&config.name) {
-                Some(old_config) => {
-                    if &old_config.config == config {
-                        // reuse it
-                        self.configs.insert(config.name.clone(), old_config);
-                    } else {
-                        // recreate it
-                        old_config.join_handle.abort();
-                        self.add_config(config);
-                    }
-                }
-                None => {
-                    self.add_config(config);
-                }
-            }
-        }
-
         old_configs.drain().for_each(|(_, c)| {
             c.join_handle.abort();
-        })
+        });
+
+        configs.drain(..).for_each(|c| {
+            self.add_config(c);
+        });
     }
 
-    fn add_config(&mut self, config: &PollerConfig) {
+    fn add_config(&mut self, config: PollerConfig) {
         if let Some(app) = &self.app_handle {
-            let join_handle = async_runtime::spawn(polling_task(app.clone(), config.name.clone()));
+            let join_handle =
+                async_runtime::spawn(polling_task(app.clone(), config.name.clone(), self.toast));
             self.configs.insert(
                 config.name.clone(),
                 PollerConfigData {
-                    config: config.clone(),
+                    config,
                     transmission_session: None,
                     join_handle,
                 },
@@ -102,7 +91,7 @@ impl Poller {
 #[derive(Default)]
 pub struct PollerHandle(pub Arc<Mutex<Poller>>);
 
-async fn polling_task(app: AppHandle, name: String) {
+async fn polling_task(app: AppHandle, name: String, toast: bool) {
     let poller_handle: State<PollerHandle> = app.state();
     let interval;
 
@@ -114,17 +103,18 @@ async fn polling_task(app: AppHandle, name: String) {
 
     loop {
         tokio::time::sleep(Duration::from_secs(interval)).await;
+
         let connection;
         let session;
-        {
-            // Acquire lock only to get copies of data needed for polling
-            let poller = poller_handle.0.lock().await;
-            let data = poller.configs.get(&name).unwrap();
-            connection = data.config.connection.clone();
-            session = data.transmission_session.clone();
-        }
 
-        let result = poll(&app.clone(), connection.clone(), session).await;
+        // Acquire lock only to get copies of data needed for polling
+        let poller = poller_handle.0.lock().await;
+        let data = poller.configs.get(&name).unwrap();
+        connection = data.config.connection.clone();
+        session = data.transmission_session.clone();
+        drop(poller);
+
+        let result = poll(&app.clone(), connection.clone(), session, toast).await;
         let mut new_session = None;
 
         match result {
@@ -133,7 +123,7 @@ async fn polling_task(app: AppHandle, name: String) {
             }
             Err(Some(session)) => {
                 // try again with new session token
-                if let Ok(session) = poll(&app.clone(), connection, Some(session)).await {
+                if let Ok(session) = poll(&app.clone(), connection, Some(session), toast).await {
                     new_session = Some(session);
                 }
             }
@@ -162,6 +152,7 @@ async fn poll(
     app: &AppHandle,
     connection: Connection,
     session: Option<String>,
+    toast: bool,
 ) -> Result<String, Option<String>> {
     let mut req = Request::builder()
         .uri(connection.url.clone())
@@ -202,7 +193,7 @@ async fn poll(
                     f.to_str().unwrap_or_default().to_string()
                 });
                 if response.status().is_success() {
-                    let _ = process_response(app, response).await;
+                    let _ = process_response(app, response, toast).await;
                     Ok(session_str)
                 } else {
                     Err(Some(session_str))

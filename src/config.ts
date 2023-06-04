@@ -76,8 +76,6 @@ interface Settings {
     servers: ServerConfig[],
     openTabs: string[],
     app: {
-        tables: Record<TableName, TableSettings>,
-        sashSizes: Record<SashName, [number, number]>,
         window: {
             size: [number, number],
             position: [number, number] | undefined,
@@ -91,23 +89,16 @@ interface Settings {
         fontSizeBase: number,
         fontSize: number,
     },
+    interface: {
+        tables: Record<TableName, TableSettings>,
+        sashSizes: Record<SashName, [number, number]>,
+    },
 }
 
 const DefaultSettings: Settings = {
     servers: [],
     openTabs: [],
     app: {
-        tables: Object.fromEntries(TableNames.map((table) => [table, {
-            columns: [],
-            columnVisibility: {},
-            columnOrder: [],
-            columnSizes: {},
-            sortBy: [],
-        }])) as unknown as Record<TableName, TableSettings>,
-        sashSizes: {
-            vertical: [70, 30],
-            horizontal: [20, 80],
-        },
         window: {
             size: [1024, 800],
             position: undefined,
@@ -120,6 +111,19 @@ const DefaultSettings: Settings = {
         onClose: "quit",
         fontSizeBase: 0.9,
         fontSize: 0.9,
+    },
+    interface: {
+        tables: Object.fromEntries(TableNames.map((table) => [table, {
+            columns: [],
+            columnVisibility: {},
+            columnOrder: [],
+            columnSizes: {},
+            sortBy: [],
+        }])) as unknown as Record<TableName, TableSettings>,
+        sashSizes: {
+            vertical: [70, 30],
+            horizontal: [20, 80],
+        },
     },
 };
 
@@ -181,35 +185,35 @@ export class Config {
     }
 
     setTableColumnSizes(table: TableName, sizes: ColumnSizingState) {
-        this.values.app.tables[table].columnSizes = sizes;
+        this.values.interface.tables[table].columnSizes = sizes;
     }
 
     getTableColumnSizes(table: TableName): ColumnSizingState {
-        return this.values.app.tables[table].columnSizes;
+        return this.values.interface.tables[table].columnSizes;
     }
 
     setTableColumnVisibility(table: TableName, visibility: VisibilityState) {
-        this.values.app.tables[table].columnVisibility = visibility;
+        this.values.interface.tables[table].columnVisibility = visibility;
     }
 
     getTableColumnVisibility(table: TableName): VisibilityState {
-        return this.values.app.tables[table].columnVisibility;
+        return this.values.interface.tables[table].columnVisibility;
     }
 
     setTableColumnOrder(table: TableName, order: ColumnOrderState) {
-        this.values.app.tables[table].columnOrder = order;
+        this.values.interface.tables[table].columnOrder = order;
     }
 
     getTableColumnOrder(table: TableName): ColumnOrderState {
-        return this.values.app.tables[table].columnOrder;
+        return this.values.interface.tables[table].columnOrder;
     }
 
     setTableSortBy(table: TableName, sortBy: SortingState) {
-        this.values.app.tables[table].sortBy = sortBy;
+        this.values.interface.tables[table].sortBy = sortBy;
     }
 
     getTableSortBy(table: TableName): SortingState {
-        return this.values.app.tables[table].sortBy;
+        return this.values.interface.tables[table].sortBy;
     }
 
     addSaveDir(serverName: string, dir: string) {
