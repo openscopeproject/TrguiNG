@@ -180,7 +180,7 @@ function useTableVirtualizer(count: number): [React.MutableRefObject<null>, numb
 
     useEffect(() => {
         const lineHeight = getComputedStyle(document.body).lineHeight.match(/[\d.]+/)?.[0];
-        setRowHeight(Math.ceil(Number(lineHeight) * 1.1));
+        setRowHeight(Math.ceil(Number(lineHeight) * 1.05));
     }, [fontSize]);
 
     const rowVirtualizer = useVirtualizer({
@@ -328,8 +328,14 @@ function HeaderRow<TData>(
                                             {(provided) => (
                                                 <Group ref={provided.innerRef} {...provided.draggableProps} noWrap>
                                                     <Menu.Item
-                                                        icon={visible ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
-                                                        onClick={() => { onColumnMenuItemClick(column.id, !visible); }}
+                                                        icon={column.id === "name"
+                                                            ? <Icon.Lock size="1rem" />
+                                                            : visible ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                                                        onClick={() => {
+                                                            if (column.id !== "name") {
+                                                                onColumnMenuItemClick(column.id, !visible);
+                                                            }
+                                                        }}
                                                     >
                                                         {column.columnDef.header as string}
                                                     </Menu.Item>

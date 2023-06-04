@@ -85,7 +85,9 @@ const AllFields: readonly TableField[] = [
     { name: "totalSize", label: "Size", component: ByteSizeField },
     { name: "sizeWhenDone", label: "Size to download", component: ByteSizeField },
     { name: "leftUntilDone", label: "Size left", component: ByteSizeField },
-    { name: "haveValid", label: "Downloaded", component: ByteSizeField },
+    { name: "haveValid", label: "Have", component: ByteSizeField },
+    { name: "downloadedEver", label: "Downloaded", component: ByteSizeField },
+    { name: "uploadedEver", label: "Uploaded", component: ByteSizeField },
     {
         name: "percentDone",
         label: "Done",

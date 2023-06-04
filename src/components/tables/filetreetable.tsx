@@ -250,7 +250,6 @@ function FiletreeContextMenu(props: {
         if (entry === undefined) return;
         onRowDoubleClick(entry);
     }, [onRowDoubleClick, props.fileTree, props.selected]);
-    console.log("Selected", props.selected);
 
     const mutation = useMutateTorrent();
 

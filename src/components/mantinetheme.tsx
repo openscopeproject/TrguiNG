@@ -51,9 +51,9 @@ const Theme: (colorScheme: ColorScheme) => MantineThemeOverride = (colorScheme) 
         },
         Checkbox: {
             styles: {
-                inner: {
+                input: {
                     ".selected &": {
-                        boxShadow: "0 0 3px 1px white",
+                        boxShadow: "inset 0 0 3px 0 white",
                     },
                 },
             },
