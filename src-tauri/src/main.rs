@@ -21,6 +21,7 @@
 
 use std::sync::Arc;
 
+use createtorrent::CreationRequestsHandle;
 use poller::PollerHandle;
 use tauri::{api::cli::get_matches, async_runtime, App, AppHandle, Manager, State};
 use tokio::sync::RwLock;
@@ -33,6 +34,7 @@ mod torrentcache;
 mod tray;
 mod integrations;
 mod sound;
+mod createtorrent;
 
 struct ListenerHandle(Arc<RwLock<ipc::Ipc>>);
 
@@ -124,11 +126,17 @@ fn main() {
             commands::remove_file,
             commands::shell_open,
             commands::set_poller_config,
-            commands::app_integration
+            commands::app_integration,
+            commands::create_torrent,
+            commands::check_create_torrent,
+            commands::cancel_create_torrent,
+            commands::save_create_torrent,
+            commands::pass_to_window,
         ])
         .manage(ListenerHandle(Arc::new(RwLock::new(ipc))))
         .manage(TorrentCacheHandle::default())
         .manage(PollerHandle::default())
+        .manage(CreationRequestsHandle::default())
         .system_tray(tray::create_tray())
         .on_system_tray_event(tray::on_tray_event)
         .setup(setup)

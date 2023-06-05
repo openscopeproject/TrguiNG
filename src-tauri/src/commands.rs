@@ -16,9 +16,9 @@
 
 use base64::{engine::general_purpose::STANDARD as b64engine, Engine as _};
 use lava_torrent::torrent::v1::Torrent;
-use tauri::State;
+use tauri::{State, Manager};
 
-use crate::{poller::PollerConfig, PollerHandle};
+use crate::{createtorrent::{TorrentCreateInfo, CreationRequestsHandle, CreateCheckResult}, poller::PollerConfig, PollerHandle};
 
 #[derive(serde::Serialize)]
 pub struct TorrentFileEntry {
@@ -108,4 +108,97 @@ pub async fn set_poller_config(
 #[tauri::command]
 pub async fn app_integration(mode: String) -> bool {
     crate::integrations::app_integration_impl(mode)
+}
+
+#[tauri::command]
+pub async fn create_torrent(
+    window: tauri::Window,
+    creation_requests_handle: State<'_, CreationRequestsHandle>,
+    info: TorrentCreateInfo,
+) -> Result<(), String> {
+    let label_split: Vec<&str> = window.label().split("-").collect();
+
+    if label_split.len() != 2 {
+        return Err("Incorrect window label".to_string());
+    }
+
+    let id = label_split[1].parse::<i32>().map_err(|_| "Incorrect window label".to_string())?;
+
+    let mut requests = creation_requests_handle.0.lock().await;
+    requests.add(id, info).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn check_create_torrent(
+    window: tauri::Window,
+    creation_requests_handle: State<'_, CreationRequestsHandle>,
+) -> Result<CreateCheckResult, String> {
+    let label_split: Vec<&str> = window.label().split("-").collect();
+
+    if label_split.len() != 2 {
+        return Err("Incorrect window label".to_string());
+    }
+
+    let id = label_split[1].parse::<i32>().map_err(|_| "Incorrect window label".to_string())?;
+
+    let mut requests = creation_requests_handle.0.lock().await;
+
+    Ok(requests.check(id))
+}
+
+#[tauri::command]
+pub async fn cancel_create_torrent(
+    window: tauri::Window,
+    creation_requests_handle: State<'_, CreationRequestsHandle>,
+) -> Result<(), String> {
+    let label_split: Vec<&str> = window.label().split("-").collect();
+
+    if label_split.len() != 2 {
+        return Err("Incorrect window label".to_string());
+    }
+
+    let id = label_split[1].parse::<i32>().map_err(|_| "Incorrect window label".to_string())?;
+
+    let mut requests = creation_requests_handle.0.lock().await;
+
+    requests.cancel(id)
+}
+
+#[tauri::command]
+pub async fn save_create_torrent(
+    window: tauri::Window,
+    creation_requests_handle: State<'_, CreationRequestsHandle>,
+    path: String,
+) -> Result<(), String> {
+    let label_split: Vec<&str> = window.label().split("-").collect();
+
+    if label_split.len() != 2 {
+        return Err("Incorrect window label".to_string());
+    }
+
+    let id = label_split[1].parse::<i32>().map_err(|_| "Incorrect window label".to_string())?;
+
+    let mut requests = creation_requests_handle.0.lock().await;
+
+    requests.save(id, &path)
+}
+
+#[derive(serde::Serialize, Clone)]
+struct PassEventData {
+    from: String,
+    payload: String,
+}
+
+#[tauri::command]
+pub async fn pass_to_window(
+    app_handle: tauri::AppHandle,
+    window: tauri::Window,
+    to: String,
+    payload: String,
+) {
+    if let Some(dest) = app_handle.get_window(to.as_str()) {
+        let _ = dest.emit("pass-from-window", PassEventData { from: window.label().to_string(), payload});
+    }
 }

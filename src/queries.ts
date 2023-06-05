@@ -71,7 +71,7 @@ export function useTorrentList(enabled: boolean, fields: TorrentFieldsType[]) {
         queryKey: TorrentKeys.listAll(serverConfig.name, fields),
         refetchInterval,
         refetchIntervalInBackground: true,
-        staleTime: 1000 * 60,
+        staleTime: 1000,
         enabled,
         queryFn: useCallback(async () => {
             return await client.getTorrents(fields);
@@ -86,7 +86,7 @@ export function useTorrentDetails(torrentId: number, enabled: boolean, disableRe
     return useQuery({
         queryKey: TorrentKeys.details(serverConfig.name, torrentId),
         refetchInterval: disableRefetch === true ? undefined : 1000 * serverConfig.intervals.details,
-        staleTime: 1000 * 60,
+        staleTime: 1000 * 5,
         enabled,
         queryFn: useCallback(async () => {
             return await client.getTorrentDetails(torrentId);

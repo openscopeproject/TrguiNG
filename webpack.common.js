@@ -40,11 +40,24 @@ await writeFile(path.resolve(path.join(__dirname, "src/build/version.json")), ve
 
 export default (mode) => ({
     mode,
-    entry: "./src/index.tsx",
+    entry: {
+        main: "./src/index.tsx",
+        createtorrent: "./src/createtorrent.tsx",
+    },
     plugins: [
         new HtmlWebpackPlugin({
             title: "Transmission Remote GUI",
             template: "src/index.html",
+            chunks: ["main"],
+            templateParameters: {
+                reactDevTools: mode === "production" ? "" : "<script src=\"http://localhost:8097\"></script>",
+            },
+        }),
+        new HtmlWebpackPlugin({
+            title: "Create torrent",
+            template: "src/index.html",
+            filename: "createtorrent.html",
+            chunks: ["createtorrent"],
             templateParameters: {
                 reactDevTools: mode === "production" ? "" : "<script src=\"http://localhost:8097\"></script>",
             },

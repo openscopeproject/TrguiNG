@@ -33,6 +33,7 @@ import { Notifications } from "@mantine/notifications";
 import { ClientContext } from "rpc/client";
 import { VersionModal } from "./modals/version";
 import { useFontSize } from "fontsize";
+import { WebviewWindow, appWindow } from "@tauri-apps/api/window";
 
 interface ServerTabsProps {
     clientManager: ClientManager,
@@ -76,6 +77,54 @@ function FontSizeToggle() {
             my="auto"
         >
             <Icon.Fonts size="1.1rem" />
+        </ActionIcon>
+    );
+}
+
+interface PassEventData {
+    from: string,
+    payload: string,
+}
+
+function CreateTorrentButton() {
+    const { colorScheme } = useMantineColorScheme();
+
+    useEffect(() => {
+        const unlisten = appWindow.listen<PassEventData>("pass-from-window", ({ payload: data }) => {
+            if (data.payload === "ready") {
+                console.log("full send", data, colorScheme);
+                void invoke("pass_to_window", { to: data.from, payload: colorScheme });
+            }
+        });
+        return () => { void unlisten.then((u) => { u(); }); };
+    }, [colorScheme]);
+
+    const onClick = useCallback(() => {
+        const webview = new WebviewWindow(`createtorrent-${Math.floor(Math.random() * 2 ** 30)}`, {
+            url: "createtorrent.html",
+            width: 600,
+            height: 600,
+            visible: false,
+            center: true,
+            title: "Create torrent",
+        });
+        void webview.once("tauri://created", (e) => {
+            void webview.show();
+        });
+        void webview.once("tauri://error", (e) => {
+            console.log("Webview error", e);
+        });
+    }, []);
+
+    return (
+        <ActionIcon
+            variant="default"
+            size="lg"
+            onClick={onClick}
+            title="Create new torrent file"
+            my="auto"
+        >
+            <Icon.Stars size="1.1rem" />
         </ActionIcon>
     );
 }
@@ -224,6 +273,7 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
                 </ActionIcon>
                 <ColorSchemeToggle />
                 <FontSizeToggle />
+                <CreateTorrentButton />
                 <ActionIcon size="lg" variant="default" my="auto" onClick={serverConfigHandlers.open}>
                     <Icon.GearFill size="1.1rem" />
                 </ActionIcon>

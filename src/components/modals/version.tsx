@@ -32,7 +32,7 @@ interface AppVersion {
     readonly buildDate: number,
 }
 
-const appVersion: AppVersion = appVersionJson;
+export const appVersion: AppVersion = appVersionJson;
 
 export function VersionModal({ opened, close }: ModalState) {
     const [frontend, setFrontend] = useState<string>();

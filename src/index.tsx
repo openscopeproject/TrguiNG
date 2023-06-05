@@ -93,7 +93,7 @@ async function run(config: Config) {
 
     const size = config.values.app.window.size;
     if (size.length === 2 && size[0] > 100 && size[1] > 100) {
-        await appWindow.setSize(new PhysicalSize(...config.values.app.window.size));
+        await appWindow.setSize(new PhysicalSize(...size));
     }
 
     const pos = config.values.app.window.position;
