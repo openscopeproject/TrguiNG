@@ -3,6 +3,25 @@
 version = 3
 
 [[package]]
+name = "TransguiNG"
+version = "0.1.0"
+dependencies = [
+ "base64 0.21.0",
+ "hyper",
+ "hyper-tls",
+ "lava_torrent",
+ "opener",
+ "rodio",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tokio",
+ "urlencoding",
+ "winreg 0.50.0",
+]
+
+[[package]]
 name = "adler"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4088,25 +4107,6 @@ dependencies = [
  "tracing",
  "tracing-core",
  "tracing-log",
-]
-
-[[package]]
-name = "transgui-ng"
-version = "0.1.0"
-dependencies = [
- "base64 0.21.0",
- "hyper",
- "hyper-tls",
- "lava_torrent",
- "opener",
- "rodio",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tokio",
- "urlencoding",
- "winreg 0.50.0",
 ]
 
 [[package]]

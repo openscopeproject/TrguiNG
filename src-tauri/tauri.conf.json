@@ -1,6 +1,6 @@
 {
   "package": {
-    "productName": "transgui-ng",
+    "productName": "TransguiNG",
     "version": "0.1.0"
   },
   "build": {
@@ -13,7 +13,7 @@
     "bundle": {
       "active": true,
       "targets": ["app", "deb", "nsis"],
-      "identifier": "org.openscopeproject.transgui-ng",
+      "identifier": "org.openscopeproject.TransguiNG",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
@@ -50,7 +50,7 @@
     "allowlist": {
       "fs": {
         "scope": [
-          "$CONFIG/transgui-ng.json"
+          "$CONFIG/TransguiNG.json"
         ],
         "readFile": true,
         "writeFile": true

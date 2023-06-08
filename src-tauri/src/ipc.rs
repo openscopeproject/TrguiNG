@@ -1,5 +1,5 @@
-// transgui-ng - next gen remote GUI for transmission torrent daemon
-// Copyright (C) 2022  qu1ck (mail at qu1ck.org)
+// TransguiNG - next gen remote GUI for transmission torrent daemon
+// Copyright (C) 2023  qu1ck (mail at qu1ck.org)
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -102,7 +102,7 @@ async fn http_response(
             drop(lock);
 
             Ok(Response::builder()
-                .body(Body::from("transgui-ng OK"))
+                .body(Body::from("TransguiNG OK"))
                 .unwrap())
         }
         (&Method::OPTIONS, _) => {
