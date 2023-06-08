@@ -460,7 +460,7 @@ export function TransguiTable<TData>(props: {
             </Box>
             <div ref={parentRef} className="torrent-table-rows" onScroll={onTableScroll}>
                 <div className="torrent-table"
-                    style={{ height: `calc(${virtualizer.getTotalSize()}px + 0.75em)`, width: `${width}px` }}>
+                    style={{ height: `${virtualizer.getTotalSize()}px`, width: `${width}px` }}>
                     {virtualizer.getVirtualItems()
                         // drop first row if it is odd one to keep nth-child(odd) selector
                         // stable this prevents flickering row background on scroll

@@ -56,13 +56,9 @@ svg, img {
 
 .scrollable {
     position: relative;
-    overflow: hidden;
+    overflow: auto;
     height: 100%;
     width: 100%;
-}
-
-.scrollable:hover {
-    overflow: overlay;
 }
 
 .scrollable>* {

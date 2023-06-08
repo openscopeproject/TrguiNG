@@ -53,12 +53,7 @@
 .torrent-table-rows {
     flex-grow: 1;
     position: relative;
-    overflow-y: overlay;
-    overflow-x: hidden;
-}
-
-.torrent-table-rows:hover {
-    overflow-x: overlay;
+    overflow: auto;
 }
 
 .torrent-table {
