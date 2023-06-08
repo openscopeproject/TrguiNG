@@ -13,7 +13,8 @@
     "bundle": {
       "active": true,
       "targets": ["app", "deb", "nsis"],
-      "identifier": "org.openscopeproject.TransguiNG",
+      "identifier": "org.openscopeproject.transguing",
+      "publisher": "OpenScopeProject",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
@@ -24,9 +25,9 @@
       "resources": [],
       "externalBin": [],
       "copyright": "",
-      "category": "DeveloperTool",
-      "shortDescription": "",
-      "longDescription": "",
+      "category": "Utility",
+      "shortDescription": "Transmission torrent daemon remote GUI",
+      "longDescription": "Remote control GUI for the Transmission torrent daemon",
       "deb": {
         "depends": []
       },
@@ -50,7 +51,7 @@
     "allowlist": {
       "fs": {
         "scope": [
-          "$CONFIG/TransguiNG.json"
+          "$CONFIG/transguing.json"
         ],
         "readFile": true,
         "writeFile": true

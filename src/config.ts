@@ -128,7 +128,7 @@ const DefaultSettings: Settings = {
 };
 
 export class Config {
-    fileName = "TransguiNG.json";
+    fileName = "transguing.json";
     values = DefaultSettings;
 
     async read() {
