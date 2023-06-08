@@ -203,9 +203,13 @@ impl Ipc {
             listening: false,
             listener: None,
             stop_signal: Default::default(),
-            args_sem: Semaphore::new(0).into(),
+            args_sem: Semaphore::new(1).into(),
             args_lock: None,
         }
+    }
+
+    pub async fn init(&mut self) {
+        self.args_lock = self.args_sem.clone().acquire_owned().await.ok();
     }
 
     pub fn try_bind(&mut self) {
@@ -252,9 +256,6 @@ impl Ipc {
     }
 
     pub fn start(&mut self) {
-        if self.args_sem.available_permits() == 0 {
-            self.args_sem.add_permits(1);
-        }
         drop(self.args_lock.take());
     }
 

@@ -71,6 +71,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         let listener_lock = listener_state.0.clone();
 
         let mut listener = listener_lock.write().await;
+        listener.init().await;
         listener.listen(app.clone()).await.ok();
 
         if listener.listening {
