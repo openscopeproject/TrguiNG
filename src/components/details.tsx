@@ -193,7 +193,7 @@ function TorrentDetails(props: { torrent: Torrent }) {
             <tbody>
                 <tr>
                     <td>Full path:</td>
-                    <td><TextInput styles={readonlyInputStyles} variant="unstyled" readOnly defaultValue={fullPath} /></td>
+                    <td><TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={fullPath} /></td>
                     <td>Created:</td>
                     <td>
                         <span>
@@ -215,7 +215,7 @@ function TorrentDetails(props: { torrent: Torrent }) {
                 <tr>
                     <td>Hash:</td>
                     <td>
-                        <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly defaultValue={props.torrent.hashString} />
+                        <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.hashString} />
                     </td>
                     <td>Comment:</td><td><Urlize text={props.torrent.comment} /></td>
                 </tr>
@@ -226,7 +226,7 @@ function TorrentDetails(props: { torrent: Torrent }) {
                 <tr>
                     <td>Magnet link:</td>
                     <td>
-                        <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly defaultValue={props.torrent.magnetLink} />
+                        <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.magnetLink} />
                     </td>
                     <td>Labels:</td><td><LabelsField {...props} fieldName="labels" /></td>
                 </tr>
