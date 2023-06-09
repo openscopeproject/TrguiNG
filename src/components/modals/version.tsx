@@ -64,8 +64,6 @@ export function VersionModal({ opened, close }: ModalState) {
                 <Grid>
                     <Grid.Col span={4}>Version</Grid.Col>
                     <Grid.Col span={8}>{appVersion.gitVersion}</Grid.Col>
-                    <Grid.Col span={4}>Backend</Grid.Col>
-                    <Grid.Col span={8}>{appVersion.backendVersion}</Grid.Col>
                     <Grid.Col span={4}>Frontend</Grid.Col>
                     <Grid.Col span={8}>{frontend}</Grid.Col>
                     <Grid.Col span={4}>Build date</Grid.Col>
