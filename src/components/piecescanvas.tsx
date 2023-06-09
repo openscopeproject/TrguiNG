@@ -70,7 +70,7 @@ export function PiecesCanvas(props: { torrent: Torrent }) {
         let mid = 10;
         let rows = 1;
 
-        while (right - left > 0.2) {
+        while (right - left > 0.05) {
             [rows] = check(mid);
             if (rows < 0) right = mid;
             else left = mid;

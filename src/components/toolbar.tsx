@@ -17,19 +17,18 @@
  */
 
 import type { MantineTheme } from "@mantine/core";
-import { Button, Flex, Menu, TextInput } from "@mantine/core";
+import { Button, Flex, Kbd, Menu, TextInput, useMantineTheme } from "@mantine/core";
 import debounce from "lodash-es/debounce";
-import React, { forwardRef, memo, useCallback, useEffect, useMemo, useState } from "react";
+import React, { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Icon from "react-bootstrap-icons";
 import type { PriorityNumberType } from "rpc/transmission";
 import { BandwidthPriority } from "rpc/transmission";
-import type { TorrentMutationVariables } from "queries";
 import { useTorrentAction, useMutateSession, useMutateTorrent } from "queries";
-import type { UseMutationResult } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import type { ServerTorrentData } from "rpc/torrent";
 import type { TorrentActionMethodsType } from "rpc/client";
 import type { ModalCallbacks } from "./modals/servermodals";
+import { useHotkeys } from "@mantine/hooks";
 
 interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {
     depressed?: boolean,
@@ -61,64 +60,75 @@ interface ToolbarProps {
     altSpeedMode: boolean,
 }
 
-function useSimpleActionHandler(method: TorrentActionMethodsType, props: ToolbarProps) {
-    const mutation = useTorrentAction();
-
-    return useCallback(() => {
-        mutation.mutate(
-            {
-                method,
-                torrentIds: Array.from(props.serverData.current.selected),
-            },
-            {
-                onError: (e) => {
-                    console.log("Error running torrent update method", method, e);
-                    notifications.show({
-                        message: "Error updating torrent",
-                        color: "red",
-                    });
-                },
-            },
-        );
-    }, [mutation, method, props.serverData]);
-}
-
-function usePriorityHandler(
-    priority: PriorityNumberType,
+function useButtonHandlers(
     props: ToolbarProps,
-    mutation: UseMutationResult<void, unknown, TorrentMutationVariables>,
+    altSpeedMode: boolean | undefined,
+    setAltSpeedMode: React.Dispatch<boolean | undefined>,
 ) {
-    return useCallback(() => {
-        mutation.mutate(
-            {
-                torrentIds: Array.from(props.serverData.current.selected),
-                fields: { bandwidthPriority: priority },
-            },
-            {
-                onSuccess: () => {
-                    notifications.show({
-                        message: "Priority is updated",
-                        color: "green",
-                    });
-                },
-                onError: (error) => {
-                    notifications.show({
-                        title: "Failed to update priority",
-                        message: String(error),
-                        color: "red",
-                    });
-                },
-            },
-        );
-    }, [props.serverData, priority, mutation]);
-}
+    const actionMutation = useTorrentAction();
+    const priorityMutation = useMutateTorrent();
 
-function Toolbar(props: ToolbarProps) {
-    const debouncedSetSearchTerms = useMemo(
-        () => debounce(props.setSearchTerms, 500, { trailing: true, leading: false }),
-        [props.setSearchTerms]);
+    const handlers = useMemo(() => {
+        const checkSelected = (action?: () => void) => {
+            return () => {
+                if (props.serverData.current?.selected.size > 0) action?.();
+            };
+        };
+        const action = (method: TorrentActionMethodsType) => () => {
+            actionMutation.mutate(
+                {
+                    method,
+                    torrentIds: Array.from(props.serverData.current.selected),
+                },
+                {
+                    onError: (e) => {
+                        console.log("Error running torrent update method", method, e);
+                        notifications.show({
+                            message: "Error updating torrent",
+                            color: "red",
+                        });
+                    },
+                },
+            );
+        };
+        const priority = (bandwidthPriority: PriorityNumberType) => () => {
+            priorityMutation.mutate(
+                {
+                    torrentIds: Array.from(props.serverData.current.selected),
+                    fields: { bandwidthPriority },
+                },
+                {
+                    onSuccess: () => {
+                        notifications.show({
+                            message: "Priority is updated",
+                            color: "green",
+                        });
+                    },
+                    onError: (error) => {
+                        notifications.show({
+                            title: "Failed to update priority",
+                            message: String(error),
+                            color: "red",
+                        });
+                    },
+                },
+            );
+        };
 
-    const [altSpeedMode, setAltSpeedMode] = useState<boolean>();
+        return {
+            start: checkSelected(action("torrent-start")),
+            pause: checkSelected(action("torrent-stop")),
+            remove: checkSelected(props.modals.current?.remove),
+            queueDown: checkSelected(action("queue-move-down")),
+            queueUp: checkSelected(action("queue-move-up")),
+            move: checkSelected(props.modals.current?.move),
+            setLabels: checkSelected(props.modals.current?.setLabels),
+            setPriorityHigh: checkSelected(priority(BandwidthPriority.high)),
+            setPriorityNormal: checkSelected(priority(BandwidthPriority.normal)),
+            setPriorityLow: checkSelected(priority(BandwidthPriority.low)),
+            daemonSettings: () => { props.modals.current?.daemonSettings(); },
+        };
+    }, [actionMutation, priorityMutation, props.modals, props.serverData]);
 
     const sessionMutation = useMutateSession();
 
@@ -129,13 +139,37 @@ function Toolbar(props: ToolbarProps) {
             },
         });
         setAltSpeedMode(altSpeedMode !== true);
-    }, [altSpeedMode, sessionMutation]);
+    }, [altSpeedMode, sessionMutation, setAltSpeedMode]);
+
+    useHotkeys([
+        ["F3", handlers.start],
+        ["F4", handlers.pause],
+        ["del", handlers.remove],
+        ["F6", handlers.move],
+        ["F7", handlers.setLabels],
+        ["mod + H", handlers.setPriorityHigh],
+        ["mod + N", handlers.setPriorityNormal],
+        ["mod + L", handlers.setPriorityLow],
+        ["F8", toggleAltSpeedMode],
+        ["F9", handlers.daemonSettings],
+    ]);
+
+    return {
+        ...handlers,
+        toggleAltSpeedMode,
+    };
+}
+
+function Toolbar(props: ToolbarProps) {
+    const debouncedSetSearchTerms = useMemo(
+        () => debounce(props.setSearchTerms, 500, { trailing: true, leading: false }),
+        [props.setSearchTerms]);
+
+    const [altSpeedMode, setAltSpeedMode] = useState<boolean>();
 
     useEffect(() => {
         if (props.altSpeedMode !== undefined) setAltSpeedMode(props.altSpeedMode);
     }, [props.altSpeedMode]);
-
-    const torrentMutation = useMutateTorrent();
 
     const onSearchInput = useCallback((e: React.FormEvent) => {
         debouncedSetSearchTerms(
@@ -145,63 +179,91 @@ function Toolbar(props: ToolbarProps) {
                 .filter((s) => s !== ""));
     }, [debouncedSetSearchTerms]);
 
+    const theme = useMantineTheme();
+    const handlers = useButtonHandlers(props, altSpeedMode, setAltSpeedMode);
+
+    const searchRef = useRef<HTMLInputElement>(null);
+
+    useHotkeys([
+        ["mod + F", () => searchRef.current?.focus()],
+    ]);
+
     return (
         <Flex w="100%" align="stretch">
             <Button.Group mx="sm">
-                <ToolbarButton onClick={() => { props.modals.current?.addTorrent(); }}>
-                    <Icon.FileArrowDownFill size="1.5rem" color="seagreen" />
+                <ToolbarButton
+                    title="Add torrent file"
+                    onClick={() => { props.modals.current?.addTorrent(); }}>
+                    <Icon.FileArrowDownFill size="1.5rem" color={theme.colors.green[8]} />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => { props.modals.current?.addMagnet(); }}>
-                    <Icon.MagnetFill size="1.5rem" color="seagreen" />
-                </ToolbarButton>
-            </Button.Group>
-
-            <Button.Group mx="sm">
-                <ToolbarButton onClick={useSimpleActionHandler("torrent-start", props)} >
-                    <Icon.PlayCircleFill size="1.5rem" color="steelblue" />
-                </ToolbarButton>
-                <ToolbarButton onClick={useSimpleActionHandler("torrent-stop", props)} >
-                    <Icon.PauseCircleFill size="1.5rem" color="steelblue" />
-                </ToolbarButton>
-                <ToolbarButton onClick={() => { props.modals.current?.remove(); }}>
-                    <Icon.XCircleFill size="1.5rem" color="tomato" />
+                <ToolbarButton
+                    title="Add magnet link"
+                    onClick={() => { props.modals.current?.addMagnet(); }}>
+                    <Icon.MagnetFill size="1.5rem" color={theme.colors.green[8]} />
                 </ToolbarButton>
             </Button.Group>
 
             <Button.Group mx="sm">
-                <ToolbarButton onClick={useSimpleActionHandler("queue-move-up", props)} >
-                    <Icon.ArrowUpCircleFill size="1.5rem" color="seagreen" />
+                <ToolbarButton
+                    title="Start torrent (F3)"
+                    onClick={handlers.start} >
+                    <Icon.PlayCircleFill size="1.5rem" color={theme.colors.blue[6]} />
                 </ToolbarButton>
-                <ToolbarButton onClick={useSimpleActionHandler("queue-move-down", props)} >
-                    <Icon.ArrowDownCircleFill size="1.5rem" color="seagreen" />
+                <ToolbarButton
+                    title="Pause torrent (F4)"
+                    onClick={handlers.pause} >
+                    <Icon.PauseCircleFill size="1.5rem" color={theme.colors.blue[6]} />
+                </ToolbarButton>
+                <ToolbarButton
+                    title="Remove torrent (del)"
+                    onClick={handlers.remove}>
+                    <Icon.XCircleFill size="1.5rem" color={theme.colors.red[6]} />
                 </ToolbarButton>
             </Button.Group>
 
             <Button.Group mx="sm">
-                <ToolbarButton onClick={() => { props.modals.current?.move(); }}>
-                    <Icon.FolderFill size="1.5rem" color="gold" />
+                <ToolbarButton
+                    title="Move up in queue"
+                    onClick={handlers.queueUp} >
+                    <Icon.ArrowUpCircleFill size="1.5rem" color={theme.colors.green[8]} />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => { props.modals.current?.setLabels(); }} >
-                    <Icon.TagsFill size="1.5rem" color="steelblue" />
+                <ToolbarButton
+                    title="Move down in queue"
+                    onClick={handlers.queueDown} >
+                    <Icon.ArrowDownCircleFill size="1.5rem" color={theme.colors.green[8]} />
+                </ToolbarButton>
+            </Button.Group>
+
+            <Button.Group mx="sm">
+                <ToolbarButton
+                    title="Move torrent (F6)"
+                    onClick={handlers.move}>
+                    <Icon.FolderFill size="1.5rem" color={theme.colors.yellow[4]} stroke={theme.colors.yellow[5]} />
+                </ToolbarButton>
+                <ToolbarButton
+                    title="Set labels (F7)"
+                    onClick={handlers.setLabels} >
+                    <Icon.TagsFill size="1.5rem" color={theme.colors.blue[6]} />
                 </ToolbarButton>
 
-                <Menu shadow="md" width={200} withinPortal middlewares={{ shift: true, flip: false }}>
+                <Menu shadow="md" width="10rem" withinPortal middlewares={{ shift: true, flip: false }}>
                     <Menu.Target>
-                        <ToolbarButton><Icon.ExclamationDiamondFill size="1.5rem" color="gold" /></ToolbarButton>
+                        <ToolbarButton title="Set priority">
+                            <Icon.ExclamationCircleFill size="1.5rem" color={theme.colors.yellow[4]} />
+                        </ToolbarButton>
                     </Menu.Target>
 
                     <Menu.Dropdown>
-                        <Menu.Label>Set priority</Menu.Label>
-                        <Menu.Item icon={<Icon.CircleFill color="tomato" />}
-                            onClick={usePriorityHandler(BandwidthPriority.high, props, torrentMutation)}>
+                        <Menu.Item icon={<Icon.CircleFill color={theme.colors.orange[7]} />}
+                            onClick={handlers.setPriorityHigh} rightSection={<Kbd>Ctrl H</Kbd>}>
                             High
                         </Menu.Item>
-                        <Menu.Item icon={<Icon.CircleFill color="seagreen" />}
-                            onClick={usePriorityHandler(BandwidthPriority.normal, props, torrentMutation)}>
+                        <Menu.Item icon={<Icon.CircleFill color={theme.colors.teal[9]} />}
+                            onClick={handlers.setPriorityNormal} rightSection={<Kbd>Ctrl N</Kbd>}>
                             Normal
                         </Menu.Item>
-                        <Menu.Item icon={<Icon.CircleFill color="gold" />}
-                            onClick={usePriorityHandler(BandwidthPriority.low, props, torrentMutation)}>
+                        <Menu.Item icon={<Icon.CircleFill color={theme.colors.yellow[6]} />}
+                            onClick={handlers.setPriorityLow} rightSection={<Kbd>Ctrl L</Kbd>}>
                             Low
                         </Menu.Item>
                     </Menu.Dropdown>
@@ -209,21 +271,23 @@ function Toolbar(props: ToolbarProps) {
             </Button.Group>
 
             <ToolbarButton
-                title={`Turn alternative bandwidth mode ${altSpeedMode === true ? "off" : "on"}`}
-                onClick={toggleAltSpeedMode}
+                title={`Turn alternative bandwidth mode ${altSpeedMode === true ? "off" : "on"} (F8)`}
+                onClick={handlers.toggleAltSpeedMode}
                 depressed={altSpeedMode}
             >
                 <Icon.Speedometer2 size="1.5rem" />
             </ToolbarButton>
 
-            <TextInput mx="sm"
+            <TextInput mx="sm" ref={searchRef}
                 icon={<Icon.Search size="1rem" />}
-                placeholder="search"
+                placeholder="search (ctrl + f)"
                 onInput={onSearchInput}
                 styles={{ root: { flexGrow: 1 }, input: { height: "auto" } }}
             />
 
-            <ToolbarButton onClick={() => { props.modals.current?.daemonSettings(); }}>
+            <ToolbarButton
+                title="Polling intervals and server settings (F9)"
+                onClick={handlers.daemonSettings}>
                 <Icon.Tools size="1.5rem" />
             </ToolbarButton>
         </Flex>

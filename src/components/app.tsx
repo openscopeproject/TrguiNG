@@ -24,7 +24,7 @@ import * as Icon from "react-bootstrap-icons";
 import { AppSettingsModal } from "./modals/settings";
 import { ClientManager } from "../clientmanager";
 import { ActionIcon, Box, Button, Flex, Menu, Stack, Tabs, useMantineColorScheme } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
+import { useDisclosure, useHotkeys } from "@mantine/hooks";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { invoke } from "@tauri-apps/api";
@@ -159,6 +159,15 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
         setTabs({ ...tabs, currentTab: tab });
     }, [config, setCurrentServer, tabs]);
 
+    useHotkeys([
+        ["mod + TAB", useCallback(() => {
+            tabSwitch((tabs.currentTab + 1) % tabs.openTabs.length);
+        }, [tabSwitch, tabs])],
+        ["mod + shift + TAB", useCallback(() => {
+            tabSwitch((tabs.currentTab + tabs.openTabs.length - 1) % tabs.openTabs.length);
+        }, [tabSwitch, tabs])],
+    ]);
+
     const openTab = useCallback((name: string) => {
         if (tabs.openTabs.includes(name)) return;
         props.clientManager.open(name, config.values.app.toastNotifications);
@@ -225,12 +234,16 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
             radius="lg"
             value={String(tabs.currentTab)}
             onTabChange={(value) => { tabSwitch(Number(value)); }}
-            styles={() => ({
+            styles={(theme) => ({
                 tab: {
                     minWidth: "12rem",
                 },
                 tabLabel: {
                     marginInline: "auto",
+                    color: theme.colors.gray[6],
+                    "[data-active] &": {
+                        color: theme.colorScheme === "dark" ? theme.colors.gray[3] : theme.colors.dark[8],
+                    },
                 },
                 tabRightSection: {
                     padding: "0.2rem",

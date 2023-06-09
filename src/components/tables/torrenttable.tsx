@@ -28,7 +28,7 @@ import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
 import { EditableNameField, TransguiTable } from "./common";
 import { getTrackerAnnounceState } from "./trackertable";
-import { Badge, Box, Button, Menu, Portal, Text } from "@mantine/core";
+import { Badge, Box, Button, Kbd, Menu, Portal, Text } from "@mantine/core";
 import { ConfigContext, ServerConfigContext } from "config";
 import { StatusIconMap, Error as StatusIconError } from "components/statusicons";
 import { useMutateTorrentPath, useTorrentAction } from "queries";
@@ -491,24 +491,27 @@ function TorrentContextMenu(props: {
                     Queue
                 </Menu.Item>
                 <Menu.Item
-                    onClick={() => props.modals.current?.setLabels()}
-                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
-                    icon={<Icon.TagsFill size="1.1rem" />}
-                    disabled={props.serverData.current.selected.size === 0}>
-                    Set labels...
-                </Menu.Item>
-                <Menu.Item
                     onClick={() => props.modals.current?.move()}
                     onMouseEnter={() => { setQueueSubmenuOpened(false); }}
                     icon={<Icon.FolderFill size="1.1rem" />}
-                    disabled={props.serverData.current.selected.size === 0}>
+                    disabled={props.serverData.current.selected.size === 0}
+                    rightSection={<Kbd>F6</Kbd>}>
                     Move...
+                </Menu.Item>
+                <Menu.Item
+                    onClick={() => props.modals.current?.setLabels()}
+                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
+                    icon={<Icon.TagsFill size="1.1rem" />}
+                    disabled={props.serverData.current.selected.size === 0}
+                    rightSection={<Kbd>F7</Kbd>}>
+                    Set labels...
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => props.modals.current?.remove()}
                     onMouseEnter={() => { setQueueSubmenuOpened(false); }}
                     icon={<Icon.XCircleFill color="red" size="1.1rem" />}
-                    disabled={props.serverData.current.selected.size === 0}>
+                    disabled={props.serverData.current.selected.size === 0}
+                    rightSection={<Kbd>del</Kbd>}>
                     Remove...
                 </Menu.Item>
                 <Menu.Divider />
