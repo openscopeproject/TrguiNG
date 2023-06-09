@@ -12,7 +12,7 @@
   "tauri": {
     "bundle": {
       "active": true,
-      "targets": ["app", "deb", "nsis"],
+      "targets": ["app", "deb", "nsis", "msi"],
       "identifier": "org.openscopeproject.trguing",
       "publisher": "OpenScopeProject",
       "icon": [
