@@ -1,6 +1,6 @@
 # Transmission Remote GUI (next gen)
 
-`TransguiNG` is a rewrite of [transgui](https://github.com/transmission-remote-gui/transgui)
+`TrguiNG` is a rewrite of [transgui](https://github.com/transmission-remote-gui/transgui)
 project using [tauri](https://tauri.studio/) and modern technology stack: react.js and rust.
 
 Some new features are planned to extend the functionality of the original transgui app:

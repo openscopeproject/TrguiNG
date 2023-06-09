@@ -4091,7 +4091,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "transguing"
+name = "treediff"
+version = "4.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "52984d277bdf2a751072b5df30ec0377febdb02f7696d64c2d7d54630bac4303"
+dependencies = [
+ "serde_json",
+]
+
+[[package]]
+name = "trguing"
 version = "0.1.0"
 dependencies = [
  "base64 0.21.0",
@@ -4107,15 +4116,6 @@ dependencies = [
  "tokio",
  "urlencoding",
  "winreg 0.50.0",
-]
-
-[[package]]
-name = "treediff"
-version = "4.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52984d277bdf2a751072b5df30ec0377febdb02f7696d64c2d7d54630bac4303"
-dependencies = [
- "serde_json",
 ]
 
 [[package]]

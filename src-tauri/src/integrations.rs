@@ -1,4 +1,4 @@
-// TransguiNG - next gen remote GUI for transmission torrent daemon
+// TrguiNG - next gen remote GUI for transmission torrent daemon
 // Copyright (C) 2023  qu1ck (mail at qu1ck.org)
 //
 // This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 use winreg::RegKey;
 
 #[cfg(target_os = "windows")]
-const APP_NAME: &str = "TransguiNG";
+const APP_NAME: &str = "TrguiNG";
 
 #[cfg(target_os = "windows")]
 fn register_app_class() -> std::io::Result<()> {

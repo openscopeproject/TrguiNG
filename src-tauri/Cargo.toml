@@ -1,11 +1,11 @@
 [package]
-name = "transguing"
+name = "trguing"
 version = "0.1.0"
-description = "Transmission Remote GUI - next gen client for transmission torrent daemon"
+description = "Remote control GUI for Transmission torrent daemon"
 authors = ["qu1ck"]
 license = "GNU-AGPL-3.0"
-repository = ""
-default-run = "transguing"
+repository = "https://github.com/openscopeproject/trguing/"
+default-run = "trguing"
 edition = "2021"
 rust-version = "1.57"
 

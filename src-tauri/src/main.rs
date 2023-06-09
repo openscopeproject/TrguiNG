@@ -1,4 +1,4 @@
-// TransguiNG - next gen remote GUI for transmission torrent daemon
+// TrguiNG - next gen remote GUI for transmission torrent daemon
 // Copyright (C) 2023  qu1ck (mail at qu1ck.org)
 //
 // This program is free software: you can redistribute it and/or modify
@@ -45,7 +45,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 
     if args.contains_key("help") {
         println!("{}", args["help"].value.as_str().unwrap());
-        app.get_window("main").unwrap().close().ok();
+        app.handle().exit(0);
         return Ok(());
     }
 

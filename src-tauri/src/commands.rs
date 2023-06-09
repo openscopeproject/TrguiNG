@@ -1,4 +1,4 @@
-// TransguiNG - next gen remote GUI for transmission torrent daemon
+// TrguiNG - next gen remote GUI for transmission torrent daemon
 // Copyright (C) 2023  qu1ck (mail at qu1ck.org)
 //
 // This program is free software: you can redistribute it and/or modify

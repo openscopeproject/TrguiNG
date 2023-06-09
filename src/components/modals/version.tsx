@@ -1,5 +1,5 @@
 /**
- * TransguiNG - next gen remote GUI for transmission torrent daemon
+ * TrguiNG - next gen remote GUI for transmission torrent daemon
  * Copyright (C) 2023  qu1ck (mail at qu1ck.org)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -71,7 +71,7 @@ export function VersionModal({ opened, close }: ModalState) {
                     <Grid.Col span={4}>Build date</Grid.Col>
                     <Grid.Col span={8}>{new Date(appVersion.buildDate).toLocaleString()}</Grid.Col>
                     <Grid.Col span={4}>Source code</Grid.Col>
-                    <Grid.Col span={8}><Box component="span" mr="sm"><Github /></Box><Anchor href="https://github.com/openscopeproject/transguing/" target="_blank" rel="noreferrer">github</Anchor></Grid.Col>
+                    <Grid.Col span={8}><Box component="span" mr="sm"><Github /></Box><Anchor href="https://github.com/openscopeproject/trguing/" target="_blank" rel="noreferrer">github</Anchor></Grid.Col>
                 </Grid>
             </Flex>
             <Divider px="sm" my="xl" />

@@ -1,4 +1,4 @@
-// TransguiNG - next gen remote GUI for transmission torrent daemon
+// TrguiNG - next gen remote GUI for transmission torrent daemon
 // Copyright (C) 2023  qu1ck (mail at qu1ck.org)
 //
 // This program is free software: you can redistribute it and/or modify
@@ -88,7 +88,7 @@ impl CreationRequests {
             .set_announce(info.announce_list.get(0).map(|s| s.clone()))
             .add_extra_field(
                 "created by".into(),
-                BencodeElem::String(format!("TransguiNG {}", info.version)),
+                BencodeElem::String(format!("TrguiNG {}", info.version)),
             )
             .add_extra_field(
                 "creation date".into(),

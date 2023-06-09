@@ -1,6 +1,6 @@
 {
   "package": {
-    "productName": "TransguiNG",
+    "productName": "TrguiNG",
     "version": "0.1.0"
   },
   "build": {
@@ -13,7 +13,7 @@
     "bundle": {
       "active": true,
       "targets": ["app", "deb", "nsis"],
-      "identifier": "org.openscopeproject.transguing",
+      "identifier": "org.openscopeproject.trguing",
       "publisher": "OpenScopeProject",
       "icon": [
         "icons/32x32.png",
@@ -27,7 +27,7 @@
       "copyright": "",
       "category": "Utility",
       "shortDescription": "Transmission torrent daemon remote GUI",
-      "longDescription": "Remote control GUI for the Transmission torrent daemon",
+      "longDescription": "Remote control GUI for Transmission torrent daemon",
       "deb": {
         "depends": []
       },
@@ -51,7 +51,7 @@
     "allowlist": {
       "fs": {
         "scope": [
-          "$CONFIG/transguing.json"
+          "$CONFIG/trguing.json"
         ],
         "readFile": true,
         "writeFile": true
@@ -92,7 +92,7 @@
       "csp": null
     },
     "cli": {
-      "description": "Next gen remote GUI for transmission torrent daemon",
+      "description": "TrguiNG - Remote control GUI for the Transmission torrent daemon",
       "args": [
         {
           "name": "torrent",
