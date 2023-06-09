@@ -50,7 +50,7 @@ export interface ServerConfig {
 
 export interface SortByConfig {
     id: string,
-    desc: boolean,
+    desc: boolean
 }
 
 interface TableSettings {
