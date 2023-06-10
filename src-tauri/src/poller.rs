@@ -62,7 +62,7 @@ impl Poller {
     pub fn set_configs(&mut self, mut configs: Vec<PollerConfig>, toast: bool) {
         self.toast = toast;
 
-        let mut old_configs = std::mem::replace(&mut self.configs, HashMap::new());
+        let mut old_configs = std::mem::take(&mut self.configs);
         old_configs.drain().for_each(|(_, c)| {
             c.join_handle.abort();
         });
@@ -104,14 +104,11 @@ async fn polling_task(app: AppHandle, name: String, toast: bool) {
     loop {
         tokio::time::sleep(Duration::from_secs(interval)).await;
 
-        let connection;
-        let session;
-
         // Acquire lock only to get copies of data needed for polling
         let poller = poller_handle.0.lock().await;
         let data = poller.configs.get(&name).unwrap();
-        connection = data.config.connection.clone();
-        session = data.transmission_session.clone();
+        let connection = data.config.connection.clone();
+        let session = data.transmission_session.clone();
         drop(poller);
 
         let result = poll(&app.clone(), connection.clone(), session, toast).await;

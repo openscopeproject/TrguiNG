@@ -32,7 +32,7 @@ use crate::torrentcache::process_response;
 use crate::tray::toggle_main_window;
 
 const ADDRESS: &str = "127.123.45.67:8080";
-const ALLOW_ORIGINS: &'static [&'static str] = if cfg!(feature = "custom-protocol") {
+const ALLOW_ORIGINS: &[&str] = if cfg!(feature = "custom-protocol") {
     &["tauri://localhost", "https://tauri.localhost"]
 } else {
     &["http://localhost:8080"]
@@ -110,7 +110,7 @@ async fn http_response(
                 .status(200u16)
                 .body(Body::empty())
                 .unwrap();
-            cors(&req.headers(), &mut response, ALLOW_ORIGINS);
+            cors(req.headers(), &mut response, ALLOW_ORIGINS);
             Ok(response)
         }
         (&Method::POST, "/post") => proxy_fetch(req).await,
@@ -131,9 +131,9 @@ async fn http_response(
 async fn proxy_fetch(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     if let Some(query) = req.uri().query() {
         if let Some(url) = query
-            .split("&")
+            .split('&')
             .map(|p| {
-                let parts: Vec<&str> = p.split("=").collect();
+                let parts: Vec<&str> = p.split('=').collect();
                 (parts[0], parts[1])
             })
             .find_map(|p| if p.0 == "url" { Some(p.1) } else { None })
@@ -287,7 +287,7 @@ impl Ipc {
                 if let Ok(resp_bytes) = hyper::body::to_bytes(resp.into_body()).await {
                     println!(
                         "Got response: {}",
-                        std::str::from_utf8(&resp_bytes.to_vec()).unwrap()
+                        std::str::from_utf8(&resp_bytes).unwrap()
                     );
                 }
             }

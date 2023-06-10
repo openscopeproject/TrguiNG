@@ -18,7 +18,7 @@ use std::io::Cursor;
 
 use rodio::{OutputStream, Decoder, Sink};
 
-static PING: &'static [u8] = include_bytes!("../sound/ping.mp3");
+static PING: &[u8] = include_bytes!("../sound/ping.mp3");
 
 pub fn play_ping() {
     if let Ok((_stream, stream_handle)) = OutputStream::try_default() {

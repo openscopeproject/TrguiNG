@@ -16,15 +16,20 @@
 
 use base64::{engine::general_purpose::STANDARD as b64engine, Engine as _};
 use lava_torrent::torrent::v1::Torrent;
-use tauri::{State, Manager};
+use tauri::{Manager, State};
 
-use crate::{createtorrent::{TorrentCreateInfo, CreationRequestsHandle, CreateCheckResult}, poller::PollerConfig, PollerHandle};
+use crate::{
+    createtorrent::{CreateCheckResult, CreationRequestsHandle, TorrentCreateInfo},
+    poller::PollerConfig,
+    PollerHandle,
+};
 
 #[derive(serde::Serialize)]
 pub struct TorrentFileEntry {
     name: String,
     length: i64,
 }
+
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TorrentReadResult {
@@ -49,7 +54,7 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
     }
 
     let read_result = tokio::fs::read(path.clone()).await;
-    if let Err(_) = read_result {
+    if read_result.is_err() {
         return Err(format!("Failed to read file {:?}", path));
     }
 
@@ -79,10 +84,8 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
 
 #[tauri::command]
 pub async fn remove_file(path: String) {
-    if path.to_lowercase().ends_with(".torrent") {
-        if let Err(_) = std::fs::remove_file(path.clone()) {
-            println!("Unable to remove file {}", path);
-        }
+    if path.to_lowercase().ends_with(".torrent") && std::fs::remove_file(path.clone()).is_err() {
+        println!("Unable to remove file {}", path);
     }
 }
 
@@ -116,13 +119,15 @@ pub async fn create_torrent(
     creation_requests_handle: State<'_, CreationRequestsHandle>,
     info: TorrentCreateInfo,
 ) -> Result<(), String> {
-    let label_split: Vec<&str> = window.label().split("-").collect();
+    let label_split: Vec<&str> = window.label().split('-').collect();
 
     if label_split.len() != 2 {
         return Err("Incorrect window label".to_string());
     }
 
-    let id = label_split[1].parse::<i32>().map_err(|_| "Incorrect window label".to_string())?;
+    let id = label_split[1]
+        .parse::<i32>()
+        .map_err(|_| "Incorrect window label".to_string())?;
 
     let mut requests = creation_requests_handle.0.lock().await;
     requests.add(id, info).map_err(|e| e.to_string())?;
@@ -135,13 +140,15 @@ pub async fn check_create_torrent(
     window: tauri::Window,
     creation_requests_handle: State<'_, CreationRequestsHandle>,
 ) -> Result<CreateCheckResult, String> {
-    let label_split: Vec<&str> = window.label().split("-").collect();
+    let label_split: Vec<&str> = window.label().split('-').collect();
 
     if label_split.len() != 2 {
         return Err("Incorrect window label".to_string());
     }
 
-    let id = label_split[1].parse::<i32>().map_err(|_| "Incorrect window label".to_string())?;
+    let id = label_split[1]
+        .parse::<i32>()
+        .map_err(|_| "Incorrect window label".to_string())?;
 
     let mut requests = creation_requests_handle.0.lock().await;
 
@@ -153,13 +160,15 @@ pub async fn cancel_create_torrent(
     window: tauri::Window,
     creation_requests_handle: State<'_, CreationRequestsHandle>,
 ) -> Result<(), String> {
-    let label_split: Vec<&str> = window.label().split("-").collect();
+    let label_split: Vec<&str> = window.label().split('-').collect();
 
     if label_split.len() != 2 {
         return Err("Incorrect window label".to_string());
     }
 
-    let id = label_split[1].parse::<i32>().map_err(|_| "Incorrect window label".to_string())?;
+    let id = label_split[1]
+        .parse::<i32>()
+        .map_err(|_| "Incorrect window label".to_string())?;
 
     let mut requests = creation_requests_handle.0.lock().await;
 
@@ -172,13 +181,15 @@ pub async fn save_create_torrent(
     creation_requests_handle: State<'_, CreationRequestsHandle>,
     path: String,
 ) -> Result<(), String> {
-    let label_split: Vec<&str> = window.label().split("-").collect();
+    let label_split: Vec<&str> = window.label().split('-').collect();
 
     if label_split.len() != 2 {
         return Err("Incorrect window label".to_string());
     }
 
-    let id = label_split[1].parse::<i32>().map_err(|_| "Incorrect window label".to_string())?;
+    let id = label_split[1]
+        .parse::<i32>()
+        .map_err(|_| "Incorrect window label".to_string())?;
 
     let mut requests = creation_requests_handle.0.lock().await;
 
@@ -199,6 +210,12 @@ pub async fn pass_to_window(
     payload: String,
 ) {
     if let Some(dest) = app_handle.get_window(to.as_str()) {
-        let _ = dest.emit("pass-from-window", PassEventData { from: window.label().to_string(), payload});
+        let _ = dest.emit(
+            "pass-from-window",
+            PassEventData {
+                from: window.label().to_string(),
+                payload,
+            },
+        );
     }
 }

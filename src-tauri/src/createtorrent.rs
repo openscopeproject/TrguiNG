@@ -79,13 +79,13 @@ impl CreationRequests {
             .announce_list
             .split(|s| s.is_empty())
             .filter(|tier| !(*tier).is_empty())
-            .map(|tier| tier.iter().map(|s| s.clone()).collect::<Vec<String>>())
+            .map(|tier| tier.to_vec())
             .collect::<Vec<Vec<String>>>();
 
         let mut builder = TorrentBuilder::new(info.path, info.piece_length)
             .set_name(info.name)
             .add_extra_field("comment".into(), BencodeElem::String(info.comment.clone()))
-            .set_announce(info.announce_list.get(0).map(|s| s.clone()))
+            .set_announce(info.announce_list.get(0).cloned())
             .add_extra_field(
                 "created by".into(),
                 BencodeElem::String(format!("TrguiNG {}", info.version)),
@@ -99,10 +99,10 @@ impl CreationRequests {
                 ),
             );
 
-        if url_list.len() > 0 {
+        if !url_list.is_empty() {
             builder = builder.add_extra_field("url-list".into(), BencodeElem::List(url_list));
         }
-        if info.announce_list.len() > 0 {
+        if !info.announce_list.is_empty() {
             builder = builder.set_announce_list(announce_list);
         }
 

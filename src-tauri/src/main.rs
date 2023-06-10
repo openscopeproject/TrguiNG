@@ -121,6 +121,7 @@ fn main() {
 
     let context = tauri::generate_context!();
 
+    #[allow(clippy::single_match)]
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             commands::read_file,

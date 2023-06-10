@@ -67,7 +67,7 @@ pub fn toggle_main_window(app: AppHandle, window: Option<Window>) {
     match window {
         Some(window) => {
             app.tray_handle()
-                .get_item("showhide".into())
+                .get_item("showhide")
                 .set_title("Show")
                 .ok();
             async_runtime::spawn(async move {
@@ -80,7 +80,7 @@ pub fn toggle_main_window(app: AppHandle, window: Option<Window>) {
                     .build()
                     .unwrap();
             app.tray_handle()
-                .get_item("showhide".into())
+                .get_item("showhide")
                 .set_title("Hide")
                 .ok();
             window.set_title("Transmission Remote GUI").ok();

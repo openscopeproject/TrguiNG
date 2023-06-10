@@ -124,7 +124,7 @@ async fn process_torrents(app: &AppHandle, mut torrents: Vec<Torrent>, original_
             }
         });
         if play_sound {
-            async_runtime::spawn_blocking(|| play_ping());
+            async_runtime::spawn_blocking(play_ping);
         }
     }
 
