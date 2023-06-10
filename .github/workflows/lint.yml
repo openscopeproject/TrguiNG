@@ -58,15 +58,15 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v3
-
       - uses: Swatinem/rust-cache@v2
         with:
           key: clippy
           workspaces: |
             src-tauri
 
-      - name: install dependencies (ubuntu only)
+      - name: install dependencies
         run: |
+          mkdir -p dist
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev webkit2gtk-4.0 libappindicator3-dev librsvg2-dev patchelf libasound2-dev
 
