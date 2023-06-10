@@ -55,7 +55,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
             .value
             .as_array()
             .unwrap()
-            .into_iter()
+            .iter()
             .map(|v| v.as_str().unwrap().to_string())
             .collect();
     }
