@@ -17,8 +17,7 @@
  */
 
 import { useDisclosure } from "@mantine/hooks";
-import { emit, listen } from "@tauri-apps/api/event";
-import { appWindow } from "@tauri-apps/api/window";
+import { appWindow } from "taurishim";
 import React, { memo, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import type { ServerTorrentData } from "rpc/torrent";
 import { EditLabelsModal } from "./editlabels";
@@ -84,7 +83,7 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
     const [addQueue, setAddQueue] = useState<string[]>([]);
 
     useEffect(() => {
-        const listenResult = listen<string>("app-arg", (event) => {
+        const listenResult = appWindow.listen<string>("app-arg", (event) => {
             const args = JSON.parse(event.payload) as string[];
             console.log("Got app-arg:", args);
             setAddQueue([...addQueue, ...args]);
@@ -93,7 +92,7 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
             void appWindow.setFocus();
             void appWindow.emit("window-shown");
         }).then((unlisten) => {
-            void emit("listener-start", {});
+            void appWindow.emit("listener-start", {});
             return unlisten;
         });
 

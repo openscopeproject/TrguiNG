@@ -21,12 +21,12 @@ import {
     Badge, Button, CloseButton, Divider, Group, Loader, Modal, MultiSelect,
     Text, TextInput, ActionIcon, Menu, ScrollArea,
 } from "@mantine/core";
-import { dialog } from "@tauri-apps/api";
 import { ConfigContext, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { pathMapFromServer, pathMapToServer } from "util";
 import * as Icon from "react-bootstrap-icons";
 import type { ServerTorrentData } from "rpc/torrent";
+import { dialogOpen } from "taurishim";
 
 export interface ModalState {
     opened: boolean,
@@ -104,7 +104,7 @@ export function useTorrentLocation(): LocationData {
 
     const browseHandler = useCallback(() => {
         const mappedLocation = pathMapFromServer(path, serverConfig);
-        dialog.open({
+        dialogOpen({
             title: "Select directory",
             defaultPath: mappedLocation,
             directory: true,

@@ -33,12 +33,12 @@ import { ConfigContext, ServerConfigContext } from "config";
 import { StatusIconMap, Error as StatusIconError } from "components/statusicons";
 import { useMutateTorrentPath, useTorrentAction } from "queries";
 import { notifications } from "@mantine/notifications";
-import { tauri } from "@tauri-apps/api";
 import type { ContextMenuInfo } from "components/contextmenu";
 import { ContextMenu, useContextMenu } from "components/contextmenu";
 import type { ModalCallbacks } from "components/modals/servermodals";
 import type { TorrentActionMethodsType } from "rpc/client";
 import * as Icon from "react-bootstrap-icons";
+import { invoke } from "taurishim";
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -315,7 +315,7 @@ export function TorrentTable(props: {
         if (torrent.downloadDir === undefined || torrent.downloadDir === "") return;
         let path = `${torrent.downloadDir as string}/${torrent.name as string}`;
         path = pathMapFromServer(path, serverConfig);
-        tauri.invoke("shell_open", { path }).catch((e) => { console.error("Error opening", path, e); });
+        invoke("shell_open", { path }).catch((e) => { console.error("Error opening", path, e); });
     }, [serverConfig]);
 
     const [info, setInfo, handler] = useContextMenu();

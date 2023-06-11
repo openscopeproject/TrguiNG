@@ -17,7 +17,7 @@
  */
 
 import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
-import { appWindow } from "@tauri-apps/api/window";
+import { appWindow } from "taurishim";
 import type { CachedFileTree } from "cachedfiletree";
 import { ServerConfigContext } from "config";
 import { useCallback, useContext, useEffect, useState } from "react";

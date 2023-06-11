@@ -53,10 +53,10 @@ function SplitLayout({ left, right, bottom }: { left: React.ReactNode, right: Re
     const config = useContext(ConfigContext);
 
     const onVerticalDragEnd = useCallback((sizes: [number, number]) => {
-        config.values.interface.sashSizes.vertical = sizes;
+        config.setSashSizes("vertical", sizes);
     }, [config]);
     const onHorizontalDragEnd = useCallback((sizes: [number, number]) => {
-        config.values.interface.sashSizes.horizontal = sizes;
+        config.setSashSizes("horizontal", sizes);
     }, [config]);
 
     return (
@@ -69,7 +69,7 @@ function SplitLayout({ left, right, bottom }: { left: React.ReactNode, right: Re
         } >
             <Split
                 direction="vertical"
-                sizes={config.values.interface.sashSizes.vertical}
+                sizes={config.getSashSizes("vertical")}
                 snapOffset={0}
                 gutterSize={6}
                 className="split-vertical"
@@ -77,7 +77,7 @@ function SplitLayout({ left, right, bottom }: { left: React.ReactNode, right: Re
             >
                 <Split
                     direction="horizontal"
-                    sizes={config.values.interface.sashSizes.horizontal}
+                    sizes={config.getSashSizes("horizontal")}
                     snapOffset={0}
                     gutterSize={6}
                     className="split-horizontal"

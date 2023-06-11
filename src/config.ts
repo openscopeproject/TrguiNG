@@ -16,12 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as fs from "@tauri-apps/api/fs";
 import React from "react";
 import type {
     SortingState, ColumnSizingState, VisibilityState, ColumnOrderState,
 } from "@tanstack/react-table";
 import type { ColorScheme } from "@mantine/core";
+import { readConfigText, writeConfigText } from "taurishim";
 
 export interface ServerConnection {
     url: string,
@@ -65,7 +65,7 @@ const TableNames = ["torrents", "filetree", "filetreebrief", "trackers", "peers"
 export type TableName = typeof TableNames[number];
 
 const Sashes = ["vertical", "horizontal"] as const;
-export type SashName = typeof Sashes[number];
+type SashName = typeof Sashes[number];
 
 export const WindowMinimizeOptions = ["minimize", "hide"] as const;
 export const WindowCloseOptions = ["hide", "close", "quit"] as const;
@@ -79,7 +79,6 @@ interface Settings {
         window: {
             size: [number, number],
             position: [number, number] | undefined,
-            theme: ColorScheme | undefined,
         },
         numLastSaveDirs: number,
         deleteAdded: boolean,
@@ -90,6 +89,7 @@ interface Settings {
         fontSize: number,
     },
     interface: {
+        theme: ColorScheme | undefined,
         tables: Record<TableName, TableSettings>,
         sashSizes: Record<SashName, [number, number]>,
     },
@@ -102,7 +102,6 @@ const DefaultSettings: Settings = {
         window: {
             size: [1024, 800],
             position: undefined,
-            theme: undefined,
         },
         numLastSaveDirs: 20,
         deleteAdded: false,
@@ -113,6 +112,7 @@ const DefaultSettings: Settings = {
         fontSize: 0.9,
     },
     interface: {
+        theme: undefined,
         tables: Object.fromEntries(TableNames.map((table) => [table, {
             columns: [],
             columnVisibility: {},
@@ -128,17 +128,12 @@ const DefaultSettings: Settings = {
 };
 
 export class Config {
-    fileName = "trguing.json";
     values = DefaultSettings;
 
     async read() {
-        let text = "{}";
         const merge = (await import(/* webpackChunkName: "lodash" */ "lodash-es/merge")).default;
         try {
-            text = await fs.readTextFile(
-                this.fileName,
-                { dir: fs.BaseDirectory.Config },
-            );
+            const text = await readConfigText();
             merge(this.values, JSON.parse(text));
         } catch (e) {
             console.log(e);
@@ -154,10 +149,23 @@ export class Config {
 
     async save() {
         const configText = JSON.stringify(this.values, null, "    ");
-        await fs.writeFile(
-            { path: this.fileName, contents: configText },
-            { dir: fs.BaseDirectory.Config },
-        );
+        await writeConfigText(configText);
+    }
+
+    getTheme() {
+        return this.values.interface.theme;
+    }
+
+    setTheme(value: ColorScheme) {
+        this.values.interface.theme = value;
+    }
+
+    getSashSizes(sash: SashName) {
+        return this.values.interface.sashSizes[sash];
+    }
+
+    setSashSizes(sash: SashName, sizes: [number, number]) {
+        this.values.interface.sashSizes[sash] = sizes;
     }
 
     getServers(): ServerConfig[] {

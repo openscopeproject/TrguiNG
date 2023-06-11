@@ -25,13 +25,13 @@ import { PriorityColors, PriorityStrings } from "../../rpc/transmission";
 import { bytesToHumanReadableStr, pathMapFromServer } from "../../util";
 import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
-import { tauri } from "@tauri-apps/api";
 import { EditableNameField, TransguiTable } from "./common";
 import { Badge, Box, Checkbox, Loader, Menu, Text, useMantineTheme } from "@mantine/core";
 import { refreshFileTree, useMutateTorrent, useMutateTorrentPath } from "queries";
 import { notifications } from "@mantine/notifications";
 import type { ContextMenuInfo } from "components/contextmenu";
 import { ContextMenu, useContextMenu } from "components/contextmenu";
+import { invoke } from "taurishim";
 
 type FileDirEntryKey = keyof FileDirEntry;
 type EntryWantedChangeHandler = (entry: FileDirEntry, state: boolean) => void;
@@ -207,7 +207,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
         if (props.downloadDir === undefined || props.downloadDir === "") return;
         let path = `${props.downloadDir}/${row.fullpath}`;
         path = pathMapFromServer(path, serverConfig);
-        tauri.invoke("shell_open", { path }).catch((e) => { console.error("Error opening", path, e); });
+        invoke("shell_open", { path }).catch((e) => { console.error("Error opening", path, e); });
     }, [props.downloadDir, serverConfig]);
 
     const [info, setInfo, handler] = useContextMenu();

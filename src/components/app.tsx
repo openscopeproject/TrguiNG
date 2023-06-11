@@ -27,13 +27,12 @@ import { ActionIcon, Box, Button, Flex, Menu, Stack, Tabs, useMantineColorScheme
 import { useDisclosure, useHotkeys } from "@mantine/hooks";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { invoke } from "@tauri-apps/api";
 import { queryClient } from "queries";
 import { Notifications } from "@mantine/notifications";
 import { ClientContext } from "rpc/client";
 import { VersionModal } from "./modals/version";
 import { useFontSize } from "fontsize";
-import { WebviewWindow, appWindow } from "@tauri-apps/api/window";
+import { appWindow, invoke, makeCreateTorrentView } from "taurishim";
 
 interface ServerTabsProps {
     clientManager: ClientManager,
@@ -100,20 +99,7 @@ function CreateTorrentButton() {
     }, [colorScheme]);
 
     const onClick = useCallback(() => {
-        const webview = new WebviewWindow(`createtorrent-${Math.floor(Math.random() * 2 ** 30)}`, {
-            url: "createtorrent.html",
-            width: 600,
-            height: 600,
-            visible: false,
-            center: true,
-            title: "Create torrent",
-        });
-        void webview.once("tauri://created", (e) => {
-            void webview.show();
-        });
-        void webview.once("tauri://error", (e) => {
-            console.log("Webview error", e);
-        });
+        void makeCreateTorrentView();
     }, []);
 
     return (

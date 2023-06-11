@@ -22,12 +22,12 @@ import type { ActionModalState, LabelsData, LocationData } from "./common";
 import { TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
 import type { PriorityNumberType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings } from "rpc/transmission";
-import { dialog, tauri } from "@tauri-apps/api";
 import { CachedFileTree } from "cachedfiletree";
 import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable";
 import { notifications } from "@mantine/notifications";
 import { useAddTorrent, useFileTree } from "queries";
 import { ConfigContext } from "config";
+import { dialogOpen, invoke } from "taurishim";
 
 interface AddCommonProps {
     location: LocationData,
@@ -184,12 +184,12 @@ export function AddTorrent(props: AddCommonModalProps) {
                 props.close();
                 return undefined;
             }
-            return await tauri.invoke("read_file", { path });
+            return await invoke("read_file", { path });
         };
 
         const pathPromise = props.uri !== undefined
             ? Promise.resolve(props.uri)
-            : dialog.open({
+            : dialogOpen({
                 title: "Select torrent file",
                 filters: [{
                     name: "Torrent",
@@ -239,7 +239,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             {
                 onSuccess: () => {
                     if (config.values.app.deleteAdded && path !== undefined) {
-                        void tauri.invoke("remove_file", { path });
+                        void invoke("remove_file", { path });
                     }
                 },
                 onError: (e) => {

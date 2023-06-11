@@ -116,11 +116,11 @@ export default function CustomMantineProvider({ children }: { children: React.Re
 
     const preferredColorScheme = useColorScheme();
     const [colorScheme, setColorScheme] = useState<ColorScheme>(
-        config.values.app.window.theme ?? preferredColorScheme);
+        config.getTheme() ?? preferredColorScheme);
 
     const toggleColorScheme = useCallback((value?: ColorScheme) => {
         value = value ?? (colorScheme === "dark" ? "light" : "dark");
-        config.values.app.window.theme = value;
+        config.setTheme(value);
         setColorScheme(value);
     }, [config, colorScheme]);
 

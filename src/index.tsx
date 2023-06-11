@@ -16,14 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { appWindow, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
-
 import { Config, ConfigContext } from "./config";
 import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import React, { lazy, Suspense } from "react";
-import { invoke } from "@tauri-apps/api";
-import { emit } from "@tauri-apps/api/event";
+import { appWindow, invoke } from "taurishim";
 
 const App = lazy(async () => await import(/* webpackChunkName: "app" */ "components/app"));
 const CustomMantineProvider = lazy(
@@ -31,7 +28,7 @@ const CustomMantineProvider = lazy(
 
 async function onCloseRequested(app: Root, config: Config) {
     await config.save();
-    await emit("listener-pause", {});
+    await appWindow.emit("listener-pause", {});
     app.unmount();
     const configs = config.getOpenServers().map((serverConfig) => ({
         name: serverConfig.name,
@@ -61,7 +58,7 @@ function setupEvents(config: Config, app: Root) {
         } else if (config.values.app.onClose === "quit") {
             event.preventDefault();
             config.save().finally(() => {
-                void emit("app-exit");
+                void appWindow.emit("app-exit");
             });
         } else {
             void onCloseRequested(app, config);
@@ -93,12 +90,12 @@ async function run(config: Config) {
 
     const size = config.values.app.window.size;
     if (size.length === 2 && size[0] > 100 && size[1] > 100) {
-        await appWindow.setSize(new PhysicalSize(...size));
+        await appWindow.setSize(size);
     }
 
     const pos = config.values.app.window.position;
     if (pos?.length === 2 && pos?.[0] > -32000 && pos?.[1] > -32000) {
-        await appWindow.setPosition(new PhysicalPosition(...pos));
+        await appWindow.setPosition(pos);
     } else {
         await appWindow.center();
     }

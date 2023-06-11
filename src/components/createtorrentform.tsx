@@ -19,10 +19,10 @@
 import type { ColorScheme, Styles, TextInputStylesNames } from "@mantine/core";
 import { Box, Button, Flex, Group, Slider, Text, TextInput, Textarea, useMantineColorScheme } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { dialog, invoke } from "@tauri-apps/api";
+import { dialog } from "@tauri-apps/api";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { appVersion } from "./modals/version";
-import { appWindow } from "@tauri-apps/api/window";
+import { appWindow, invoke } from "taurishim";
 import { ProgressBar } from "./progressbar";
 
 interface FormValues {
