@@ -31,7 +31,7 @@ import { refreshFileTree, useMutateTorrent, useMutateTorrentPath } from "queries
 import { notifications } from "@mantine/notifications";
 import type { ContextMenuInfo } from "components/contextmenu";
 import { ContextMenu, useContextMenu } from "components/contextmenu";
-import { invoke } from "taurishim";
+const { invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 type FileDirEntryKey = keyof FileDirEntry;
 type EntryWantedChangeHandler = (entry: FileDirEntry, state: boolean) => void;

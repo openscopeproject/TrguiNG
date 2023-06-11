@@ -48,7 +48,7 @@ export default (mode) => ({
         new HtmlWebpackPlugin({
             title: "Transmission GUI",
             template: "src/index.html",
-            chunks: ["main"],
+            excludeChunks: ["createtorrent"],
             templateParameters: {
                 reactDevTools: mode === "production" ? "" : "<script src=\"http://localhost:8097\"></script>",
             },
@@ -67,9 +67,12 @@ export default (mode) => ({
         }),
     ],
     output: {
-        filename: "[name].bundle.js",
+        filename: "[name].[contenthash].bundle.js",
         path: path.resolve(__dirname, "dist"),
         clean: true,
+    },
+    experiments: {
+        topLevelAwait: true,
     },
     module: {
         rules: [
@@ -87,6 +90,12 @@ export default (mode) => ({
                 type: "asset/resource",
             },
         ],
+        parser: {
+            javascript: {
+                exportsPresence: "error",
+                importExportsPresence: "error",
+            },
+        },
     },
     resolve: {
         extensions: [".tsx", ".ts", ".js"],
@@ -120,7 +129,7 @@ export default (mode) => ({
                 },
                 tauri: {
                     test: /[\\/]node_modules[\\/]@tauri-apps[\\/]/,
-                    name: "tauri",
+                    name: "tauri-api",
                 },
                 icons: {
                     test: /[\\/]node_modules[\\/]react-bootstrap-icons[\\/]/,
@@ -133,5 +142,6 @@ export default (mode) => ({
                 // },
             },
         },
+        runtimeChunk: "single",
     },
 });

@@ -17,7 +17,6 @@
  */
 
 import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
-import { appWindow } from "taurishim";
 import type { CachedFileTree } from "cachedfiletree";
 import { ServerConfigContext } from "config";
 import { useCallback, useContext, useEffect, useState } from "react";
@@ -25,6 +24,7 @@ import type { SessionInfo, TorrentActionMethodsType, TorrentAddParams } from "rp
 import { useTransmissionClient } from "rpc/client";
 import type { Torrent } from "rpc/torrent";
 import type { TorrentMutableFieldsType, TorrentFieldsType } from "rpc/transmission";
+const { appWindow } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export const queryClient = new QueryClient();
 

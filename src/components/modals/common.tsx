@@ -26,7 +26,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from "re
 import { pathMapFromServer, pathMapToServer } from "util";
 import * as Icon from "react-bootstrap-icons";
 import type { ServerTorrentData } from "rpc/torrent";
-import { dialogOpen } from "taurishim";
+const { dialogOpen } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface ModalState {
     opened: boolean,

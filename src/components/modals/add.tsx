@@ -27,7 +27,7 @@ import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable
 import { notifications } from "@mantine/notifications";
 import { useAddTorrent, useFileTree } from "queries";
 import { ConfigContext } from "config";
-import { dialogOpen, invoke } from "taurishim";
+const { dialogOpen, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface AddCommonProps {
     location: LocationData,

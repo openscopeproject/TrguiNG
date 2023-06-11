@@ -16,16 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import "css/loader.css";
 import { Config, ConfigContext } from "./config";
 import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import React, { lazy, Suspense } from "react";
-import { TAURI, appWindow, invoke } from "taurishim";
+const { TAURI, appWindow, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
-const TauriApp = lazy(async () => await import(/* webpackChunkName: "app" */ "components/app"));
-const WebApp = lazy(async () => await import(/* webpackChunkName: "app" */ "components/webapp"));
+const TauriApp = lazy(async () => await import("components/app"));
+const WebApp = lazy(async () => await import("components/webapp"));
 const CustomMantineProvider = lazy(
-    async () => await import(/* webpackChunkName: "app" */ "components/mantinetheme"));
+    async () => await import("components/mantinetheme"));
 
 async function onCloseRequested(app: Root, config: Config) {
     await config.save();
@@ -83,6 +84,14 @@ function setupEvents(config: Config, app: Root) {
     });
 }
 
+function Loader() {
+    return (
+        <div className="lds-ring">
+            <div></div><div></div><div></div><div></div>
+        </div>
+    );
+}
+
 async function run(config: Config) {
     const appnode = document.getElementById("app") as HTMLElement;
     const app = createRoot(appnode);
@@ -104,7 +113,7 @@ async function run(config: Config) {
     app.render(
         <React.StrictMode>
             <ConfigContext.Provider value={config}>
-                <Suspense fallback={<div />}>
+                <Suspense fallback={<Loader />}>
                     <CustomMantineProvider>
                         {TAURI && <TauriApp />}
                         {!TAURI && <WebApp />}

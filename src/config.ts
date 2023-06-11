@@ -21,7 +21,7 @@ import type {
     SortingState, ColumnSizingState, VisibilityState, ColumnOrderState,
 } from "@tanstack/react-table";
 import type { ColorScheme } from "@mantine/core";
-import { readConfigText, writeConfigText } from "taurishim";
+const { readConfigText, writeConfigText } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface ServerConnection {
     url: string,

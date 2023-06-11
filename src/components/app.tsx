@@ -32,7 +32,7 @@ import { Notifications } from "@mantine/notifications";
 import { ClientContext } from "rpc/client";
 import { VersionModal } from "./modals/version";
 import { useFontSize } from "fontsize";
-import { appWindow, invoke, makeCreateTorrentView } from "taurishim";
+const { appWindow, invoke, makeCreateTorrentView } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface ServerTabsProps {
     clientManager: ClientManager,

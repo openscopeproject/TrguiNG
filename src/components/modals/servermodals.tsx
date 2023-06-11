@@ -17,7 +17,6 @@
  */
 
 import { useDisclosure } from "@mantine/hooks";
-import { appWindow } from "taurishim";
 import React, { memo, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import type { ServerTorrentData } from "rpc/torrent";
 import { EditLabelsModal } from "./editlabels";
@@ -26,6 +25,7 @@ import { MoveModal } from "./move";
 import { AddMagnet, AddTorrent } from "./add";
 import { DaemonSettingsModal } from "./daemon";
 import { EditTorrent } from "./edittorrent";
+const { appWindow } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface ModalCallbacks {
     setLabels: () => void,

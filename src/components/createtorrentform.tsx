@@ -22,8 +22,8 @@ import { useForm } from "@mantine/form";
 import { dialog } from "@tauri-apps/api";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { appVersion } from "./modals/version";
-import { appWindow, invoke } from "taurishim";
 import { ProgressBar } from "./progressbar";
+const { appWindow, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface FormValues {
     path: string,

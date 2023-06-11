@@ -16,19 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ClientManager } from "clientmanager";
 import type { ServerConfig } from "config";
 import { ConfigContext, ServerConfigContext } from "config";
 import React, { useContext, useMemo } from "react";
-import { ClientContext } from "rpc/client";
+import { ClientContext, TransmissionClient } from "rpc/client";
 import { Server } from "./server";
 import { App } from "./app";
 
 export default function WebApp() {
     const config = useContext(ConfigContext);
 
-    const { server, clientManager } = useMemo(() => {
-        const server: ServerConfig = config.values.servers.length > 0
+    const { serverConfig, client } = useMemo(() => {
+        const serverConfig: ServerConfig = config.values.servers.length > 0
             ? config.values.servers[0]
             : {
                 name: "transmission",
@@ -40,20 +39,19 @@ export default function WebApp() {
             };
 
         if (config.values.servers.length === 0) {
-            config.values.servers.push(server);
+            config.values.servers.push(serverConfig);
         }
 
-        const clientManager = new ClientManager(config);
-        clientManager.open(server.name, false);
+        const client = new TransmissionClient(serverConfig.connection, false);
 
-        return { server, clientManager };
+        return { serverConfig, client };
     }, [config]);
 
     return (
         <App>
-            <ServerConfigContext.Provider value={server}>
-                <ClientContext.Provider value={clientManager.getClient(server.name)}>
-                    <Server hostname={clientManager.getHostname(server.name)} />
+            <ServerConfigContext.Provider value={serverConfig}>
+                <ClientContext.Provider value={client}>
+                    <Server hostname={client.hostname} />
                 </ClientContext.Provider>
             </ServerConfigContext.Provider>
         </App>

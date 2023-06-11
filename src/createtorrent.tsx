@@ -21,7 +21,7 @@ import { createRoot } from "react-dom/client";
 
 const CreateTorrentForm = lazy(async () => await import(/* webpackChunkName: "createtorrentform" */ "components/createtorrentform"));
 const CustomMantineProvider = lazy(
-    async () => await import(/* webpackChunkName: "app" */ "components/mantinetheme"));
+    async () => await import("components/mantinetheme"));
 
 async function run() {
     const appnode = document.getElementById("app") as HTMLElement;

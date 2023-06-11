@@ -38,7 +38,7 @@ import { ContextMenu, useContextMenu } from "components/contextmenu";
 import type { ModalCallbacks } from "components/modals/servermodals";
 import type { TorrentActionMethodsType } from "rpc/client";
 import * as Icon from "react-bootstrap-icons";
-import { invoke } from "taurishim";
+const { invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface TableFieldProps {
     torrent: Torrent,

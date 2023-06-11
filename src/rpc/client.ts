@@ -85,7 +85,9 @@ export class TransmissionClient {
         this.sessionInfo = {};
         this.hostname = "unknown";
         try {
-            this.hostname = new URL(connection.url).hostname;
+            this.hostname = connection.url === ""
+                ? window.location.host
+                : new URL(connection.url).hostname;
         } catch {
             // TODO handle errors
             // console.log("Invalid URL", connection.url);
@@ -102,7 +104,9 @@ export class TransmissionClient {
     }
 
     async _sendRpc(data: Record<string, any>) {
-        const url = `http://127.123.45.67:8080/${data.method === "torrent-get" ? "torrentget" : "post"}?url=${this.url}`;
+        const url = this.url === ""
+            ? "../rpc"
+            : `http://127.123.45.67:8080/${data.method === "torrent-get" ? "torrentget" : "post"}?url=${this.url}`;
         const body = JSON.stringify(data);
         let response = await fetch(
             url, { method: "POST", redirect: "manual", headers: this.headers, body });

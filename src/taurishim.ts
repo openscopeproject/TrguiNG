@@ -21,12 +21,12 @@ import type { EventCallback } from "@tauri-apps/api/event";
 import type { CloseRequestedEvent, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
 
 export const TAURI = Object.prototype.hasOwnProperty.call(window, "__TAURI__");
-const realAppWindow = TAURI ? (await import("@tauri-apps/api/window")).appWindow : undefined;
+const realAppWindow = TAURI ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/window")).appWindow : undefined;
 const WebviewWindow = TAURI
-    ? (await import("@tauri-apps/api/window")).WebviewWindow
+    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/window")).WebviewWindow
     : undefined;
 const fs = TAURI
-    ? (await import("@tauri-apps/api")).fs
+    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api")).fs
     : undefined;
 
 export const appWindow = {
@@ -46,13 +46,13 @@ export const appWindow = {
 
     setSize: async (size: [number, number]) => {
         if (realAppWindow !== undefined) {
-            const PhysicalSize = (await import("@tauri-apps/api/window")).PhysicalSize;
+            const PhysicalSize = (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/window")).PhysicalSize;
             await realAppWindow.setSize(new PhysicalSize(...size));
         }
     },
     setPosition: async (position: [number, number]) => {
         if (realAppWindow !== undefined) {
-            const PhysicalPosition = (await import("@tauri-apps/api/window")).PhysicalPosition;
+            const PhysicalPosition = (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/window")).PhysicalPosition;
             await realAppWindow.setPosition(new PhysicalPosition(...position));
         }
     },
@@ -67,12 +67,12 @@ export const appWindow = {
 };
 
 export const invoke = TAURI
-    ? (await import("@tauri-apps/api")).invoke
+    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api")).invoke
     : async <T>(c: string, a: unknown) =>
         await Promise.reject<T>(new Error("Running outside of tauri app"));
 
 export const dialogOpen = TAURI
-    ? (await import("@tauri-apps/api/dialog")).open
+    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/dialog")).open
     : async (options?: OpenDialogOptions) =>
         await Promise.reject<string[] | string | null>(new Error("Running outside of tauri app"));
 

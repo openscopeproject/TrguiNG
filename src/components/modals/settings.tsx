@@ -26,10 +26,10 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from "re
 import type { ModalState } from "./common";
 import { SaveCancelModal } from "./common";
 import * as Icon from "react-bootstrap-icons";
-import { invoke } from "taurishim";
 import type { UseFormReturnType } from "@mantine/form";
 import { useForm } from "@mantine/form";
 import UserAgent from "ua-parser-js";
+const { invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface FormValues {
     servers: ServerConfig[],
