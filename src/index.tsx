@@ -20,9 +20,10 @@ import { Config, ConfigContext } from "./config";
 import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import React, { lazy, Suspense } from "react";
-import { appWindow, invoke } from "taurishim";
+import { TAURI, appWindow, invoke } from "taurishim";
 
-const App = lazy(async () => await import(/* webpackChunkName: "app" */ "components/app"));
+const TauriApp = lazy(async () => await import(/* webpackChunkName: "app" */ "components/app"));
+const WebApp = lazy(async () => await import(/* webpackChunkName: "app" */ "components/webapp"));
 const CustomMantineProvider = lazy(
     async () => await import(/* webpackChunkName: "app" */ "components/mantinetheme"));
 
@@ -105,7 +106,8 @@ async function run(config: Config) {
             <ConfigContext.Provider value={config}>
                 <Suspense fallback={<div />}>
                     <CustomMantineProvider>
-                        <App />
+                        {TAURI && <TauriApp />}
+                        {!TAURI && <WebApp />}
                     </CustomMantineProvider>
                 </Suspense>
             </ConfigContext.Provider>

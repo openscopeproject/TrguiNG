@@ -287,7 +287,17 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
     </>);
 });
 
-export default function App() {
+export function App(props: React.PropsWithChildren) {
+    return (
+        <QueryClientProvider client={queryClient}>
+            <Notifications limit={3} style={{ bottom: "2.5rem" }} />
+            {props.children}
+            <ReactQueryDevtools toggleButtonProps={{ style: { marginBottom: "2rem" } }} />
+        </QueryClientProvider>
+    );
+}
+
+export default function TauriApp() {
     const config = useContext(ConfigContext);
     const clientManager = useMemo(() => {
         const cm = new ClientManager(config);
@@ -302,8 +312,7 @@ export default function App() {
     const [servers, setServers] = useState(config.getServers());
 
     return (
-        <QueryClientProvider client={queryClient}>
-            <Notifications limit={3} style={{ bottom: "2.5rem" }} />
+        <App>
             <Flex direction="column" h="100%" w="100%" >
                 <ServerTabs ref={tabsRef}
                     clientManager={clientManager}
@@ -329,8 +338,7 @@ export default function App() {
                         </Stack>
                     </Flex>
                 }
-                <ReactQueryDevtools toggleButtonProps={{ style: { marginBottom: "2rem" } }} />
             </Flex>
-        </QueryClientProvider>
+        </App>
     );
 }
