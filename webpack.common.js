@@ -121,27 +121,36 @@ export default (mode) => ({
             cacheGroups: {
                 react: {
                     test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
-                    name: "react",
+                    name: "vendors/react",
                 },
                 mantine: {
                     test: /[\\/]node_modules[\\/]@mantine[\\/]/,
-                    name: "mantine",
+                    name: "vendors/mantine",
+                },
+                tanstack: {
+                    test: /[\\/]node_modules[\\/]@tanstack[\\/]/,
+                    name: "vendors/tanstack",
+                },
+                reactdnd: {
+                    test: /[\\/]node_modules[\\/]react-beautiful-dnd[\\/]/,
+                    name: "vendors/reactdnd",
                 },
                 tauri: {
                     test: /[\\/]node_modules[\\/]@tauri-apps[\\/]/,
-                    name: "tauri-api",
+                    name: "vendors/tauri-api",
                 },
                 icons: {
                     test: /[\\/]node_modules[\\/]react-bootstrap-icons[\\/]/,
-                    name: "bootstrap-icons",
+                    name: "vendors/bootstrap-icons",
                 },
                 // other: {
                 //     test: /[\\/]node_modules[\\/]/,
                 //     priority: -1,
-                //     name: "other",
+                //     name: "vendors/other",
                 // },
             },
         },
         runtimeChunk: "single",
+        moduleIds: "deterministic",
     },
 });

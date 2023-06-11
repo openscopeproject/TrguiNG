@@ -17,7 +17,6 @@
  */
 
 import type { ServerConfig } from "config";
-import { Duration } from "luxon";
 import { useReducer } from "react";
 
 const SISuffixes = ["B", "KB", "MB", "GB", "TB"];
@@ -47,11 +46,16 @@ export function byteRateToHumanReadableStr(value: number): string {
 }
 
 export function secondsToHumanReadableStr(value: number): string {
-    let duration = Duration.fromMillis(value * 1000).shiftTo("days", "hours", "minutes", "seconds");
+    let duration = {
+        days: Math.floor(value / 86400),
+        hours: Math.floor(value / 3600) % 24,
+        minutes: Math.floor(value / 60) % 60,
+        seconds: value % 60,
+    };
     // Make it coarse
-    if (duration.days >= 100) duration = duration.set({ hours: 0, minutes: 0, seconds: 0 });
-    else if (duration.days >= 10) duration = duration.set({ minutes: 0, seconds: 0 });
-    else if (duration.days > 0 || duration.hours >= 10) duration = duration.set({ seconds: 0 });
+    if (duration.days >= 10) duration = { days: duration.days, hours: 0, minutes: 0, seconds: 0 };
+    else if (duration.days > 0) duration = { ...duration, minutes: 0, seconds: 0 };
+    else if (duration.days > 0 || duration.hours > 0) duration.seconds = 0;
     let s = "";
     if (duration.days > 0) s = `${duration.days}d`;
     if (duration.hours > 0) s = (s !== "" ? s + " " : "") + `${duration.hours}hr`;
