@@ -138,7 +138,13 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
         currentTab: 0,
     });
 
-    useEffect(() => { config.setOpenTabs(tabs.openTabs); }, [config, tabs.openTabs]);
+    useEffect(() => {
+        config.setOpenTabs(tabs.openTabs);
+        if (tabs.currentTab < tabs.openTabs.length) {
+            const tab = tabs.openTabs[tabs.currentTab];
+            void appWindow.setTitle(`Transmission GUI - ${tab}`);
+        }
+    }, [config, tabs]);
 
     useEffect(() => {
         const pollerConfigs = tabs.openTabs.filter((_, i) => i !== tabs.currentTab).map((t) => {

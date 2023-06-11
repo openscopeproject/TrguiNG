@@ -80,7 +80,7 @@
     },
     "windows": [
       {
-        "title": "Transmission Remote GUI",
+        "title": "Transmission GUI",
         "width": 1024,
         "height": 800,
         "resizable": true,

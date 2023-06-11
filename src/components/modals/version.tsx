@@ -52,7 +52,7 @@ export function VersionModal({ opened, close }: ModalState) {
 
     return (
         <Modal opened={opened} onClose={close} size="lg" centered p="lg">
-            <Title order={2} mb="lg">Transmission Remote GUI (next gen)</Title>
+            <Title order={2} mb="lg">TrguiNG</Title>
             <Text>
                 Remote interface for&nbsp;
                 <Anchor href="https://transmissionbt.com/" target="_blank" rel="noreferrer">Transmission</Anchor>

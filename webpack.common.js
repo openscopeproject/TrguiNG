@@ -46,7 +46,7 @@ export default (mode) => ({
     },
     plugins: [
         new HtmlWebpackPlugin({
-            title: "Transmission Remote GUI",
+            title: "Transmission GUI",
             template: "src/index.html",
             chunks: ["main"],
             templateParameters: {

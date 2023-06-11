@@ -83,7 +83,7 @@ pub fn toggle_main_window(app: AppHandle, window: Option<Window>) {
                 .get_item("showhide")
                 .set_title("Hide")
                 .ok();
-            window.set_title("Transmission Remote GUI").ok();
+            window.set_title("Transmission GUI").ok();
             window.set_focus().ok();
         }
     }
