@@ -87,7 +87,7 @@ export default (mode) => ({
             },
             {
                 test: /\.svg$/,
-                type: "asset/resource",
+                type: "asset/inline",
             },
         ],
         parser: {

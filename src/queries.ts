@@ -49,6 +49,8 @@ const BandwidthGroupKeys = {
     all: (server: string) => [server, "bandwidth-group"] as const,
 };
 
+const TAURI = Object.prototype.hasOwnProperty.call(window, "__TAURI__");
+
 export function useTorrentList(enabled: boolean, fields: TorrentFieldsType[]) {
     const serverConfig = useContext(ServerConfigContext);
     const client = useTransmissionClient();
@@ -56,15 +58,29 @@ export function useTorrentList(enabled: boolean, fields: TorrentFieldsType[]) {
     const [refetchInterval, setRefetchInterval] = useState(1000 * serverConfig.intervals.torrents);
 
     useEffect(() => {
-        const unlisten1 = appWindow.listen("window-hidden",
-            () => { setRefetchInterval(1000 * serverConfig.intervals.torrentsMinimized); });
-        const unlisten2 = appWindow.listen("window-shown",
-            () => { setRefetchInterval(1000 * serverConfig.intervals.torrents); });
+        if (TAURI) {
+            const unlisten1 = appWindow.listen("window-hidden",
+                () => { setRefetchInterval(1000 * serverConfig.intervals.torrentsMinimized); });
+            const unlisten2 = appWindow.listen("window-shown",
+                () => { setRefetchInterval(1000 * serverConfig.intervals.torrents); });
 
-        return () => {
-            unlisten1.then((unlisten) => { unlisten(); }).catch(() => { });
-            unlisten2.then((unlisten) => { unlisten(); }).catch(() => { });
-        };
+            return () => {
+                unlisten1.then((unlisten) => { unlisten(); }).catch(() => { });
+                unlisten2.then((unlisten) => { unlisten(); }).catch(() => { });
+            };
+        } else {
+            const listener = () => {
+                if (document.visibilityState === "hidden") {
+                    setRefetchInterval(1000 * serverConfig.intervals.torrentsMinimized);
+                } else {
+                    setRefetchInterval(1000 * serverConfig.intervals.torrents);
+                }
+            };
+
+            document.addEventListener("visibilitychange", listener);
+
+            return () => { document.removeEventListener("visibilitychange", listener); };
+        }
     }, [serverConfig.intervals.torrents, serverConfig.intervals.torrentsMinimized]);
 
     return useQuery({

@@ -41,7 +41,7 @@ function PollingPanel({ form }: { form: UseFormReturnType<FormValues> }) {
     return (
         <Grid align="center">
             <Grid.Col span={12}><Text>Update intervals (sec)</Text></Grid.Col>
-            <Grid.Col span={4}>Session</Grid.Col>
+            <Grid.Col span={8}>Session</Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
                     min={1}
@@ -49,7 +49,8 @@ function PollingPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                     {...form.getInputProps("intervals.session")}
                 />
             </Grid.Col>
-            <Grid.Col span={4}>Torrent details</Grid.Col>
+            <Grid.Col span={2} />
+            <Grid.Col span={8}>Torrent details</Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
                     min={1}
@@ -57,7 +58,8 @@ function PollingPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                     {...form.getInputProps("intervals.details")}
                 />
             </Grid.Col>
-            <Grid.Col span={4}>Torrents</Grid.Col>
+            <Grid.Col span={2} />
+            <Grid.Col span={8}>Torrents active</Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
                     min={1}
@@ -65,7 +67,8 @@ function PollingPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                     {...form.getInputProps("intervals.torrents")}
                 />
             </Grid.Col>
-            <Grid.Col span={4}>Torrents minimized</Grid.Col>
+            <Grid.Col span={2} />
+            <Grid.Col span={8}>Torrents inactive/minimized</Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
                     min={1}
@@ -73,6 +76,7 @@ function PollingPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                     {...form.getInputProps("intervals.torrentsMinimized")}
                 />
             </Grid.Col>
+            <Grid.Col span={2} />
         </Grid>
     );
 }

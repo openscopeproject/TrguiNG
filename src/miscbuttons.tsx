@@ -1,0 +1,56 @@
+/**
+ * TrguiNG - next gen remote GUI for transmission torrent daemon
+ * Copyright (C) 2023  qu1ck (mail at qu1ck.org)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import type { MantineNumberSize } from "@mantine/core";
+import { ActionIcon, useMantineColorScheme } from "@mantine/core";
+import * as Icon from "react-bootstrap-icons";
+import React from "react";
+import { VersionModal } from "components/modals/version";
+import { useDisclosure } from "@mantine/hooks";
+
+export function ColorSchemeToggle(props: { sz?: string, btn?: MantineNumberSize }) {
+    const { colorScheme, toggleColorScheme } = useMantineColorScheme();
+    const dark = colorScheme === "dark";
+
+    return (
+        <ActionIcon
+            variant="default"
+            size={props.btn}
+            onClick={() => { toggleColorScheme(); }}
+            title="Toggle color scheme"
+            my="auto"
+        >
+            {dark
+                ? <Icon.Sun size={props.sz} color="yellow" />
+                : <Icon.MoonStars size={props.sz} color="blue" />}
+        </ActionIcon>
+    );
+}
+
+export function ShowVersion(props: { sz?: string, btn?: MantineNumberSize }) {
+    const [showVersionModal, { open: openVersionModal, close: closeVersionModal }] = useDisclosure(false);
+
+    return (
+        <>
+            <VersionModal opened={showVersionModal} close={closeVersionModal} />
+            <ActionIcon size={props.btn} ml="auto" my="auto" onClick={openVersionModal}>
+                <Icon.InfoCircle size={props.sz} />
+            </ActionIcon>
+        </>
+    );
+}

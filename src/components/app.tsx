@@ -30,8 +30,9 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { queryClient } from "queries";
 import { Notifications } from "@mantine/notifications";
 import { ClientContext } from "rpc/client";
-import { VersionModal } from "./modals/version";
 import { useFontSize } from "fontsize";
+import { ColorSchemeToggle, ShowVersion } from "miscbuttons";
+
 const { appWindow, invoke, makeCreateTorrentView } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface ServerTabsProps {
@@ -43,25 +44,6 @@ interface ServerTabsProps {
 interface ServerTabsRef {
     openTab: (tab: string) => void,
     configureServers: () => void,
-}
-
-function ColorSchemeToggle() {
-    const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-    const dark = colorScheme === "dark";
-
-    return (
-        <ActionIcon
-            variant="default"
-            size="lg"
-            onClick={() => { toggleColorScheme(); }}
-            title="Toggle color scheme"
-            my="auto"
-        >
-            {dark
-                ? <Icon.Sun size="1.1rem" color="yellow" />
-                : <Icon.MoonStars size="1.1rem" color="blue" />}
-        </ActionIcon>
-    );
 }
 
 function FontSizeToggle() {
@@ -214,13 +196,10 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
         setServers(servers);
     }, [tabs.openTabs, setCurrentServer, setServers, config, props.clientManager]);
 
-    const [showVersionModal, { open: openVersionModal, close: closeVersionModal }] = useDisclosure(false);
-
     return (<>
         <AppSettingsModal
             onSave={onServerSave}
             opened={showServerConfig} close={serverConfigHandlers.close} />
-        <VersionModal opened={showVersionModal} close={closeVersionModal} />
         <Tabs
             variant="outline"
             radius="lg"
@@ -273,10 +252,8 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
                         </Menu.Dropdown>
                     </Menu>
                     : <></>}
-                <ActionIcon size="lg" ml="auto" my="auto" onClick={openVersionModal}>
-                    <Icon.InfoCircle size="1.1rem" />
-                </ActionIcon>
-                <ColorSchemeToggle />
+                <ShowVersion btn="lg"/>
+                <ColorSchemeToggle btn="lg"/>
                 <FontSizeToggle />
                 <CreateTorrentButton />
                 <ActionIcon size="lg" variant="default" my="auto" onClick={serverConfigHandlers.open}>

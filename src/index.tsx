@@ -51,7 +51,7 @@ async function onFocusChange(focused: boolean, config: Config) {
     }
 }
 
-function setupEvents(config: Config, app: Root) {
+function setupTauriEvents(config: Config, app: Root) {
     void appWindow.onCloseRequested((event) => {
         if (config.values.app.onClose === "hide") {
             event.preventDefault();
@@ -84,6 +84,14 @@ function setupEvents(config: Config, app: Root) {
     });
 }
 
+function setupWebEvents(config: Config) {
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+            config.save().catch((e) => { });
+        }
+    });
+}
+
 function Loader() {
     return (
         <div className="lds-ring">
@@ -96,7 +104,11 @@ async function run(config: Config) {
     const appnode = document.getElementById("app") as HTMLElement;
     const app = createRoot(appnode);
 
-    setupEvents(config, app);
+    if (TAURI) {
+        setupTauriEvents(config, app);
+    } else {
+        setupWebEvents(config);
+    }
 
     const size = config.values.app.window.size;
     if (size.length === 2 && size[0] > 100 && size[1] > 100) {

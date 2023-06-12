@@ -22,6 +22,9 @@ import * as Icon from "react-bootstrap-icons";
 import { Box, Group } from "@mantine/core";
 import type { SessionInfo } from "rpc/client";
 import type { Torrent } from "rpc/torrent";
+import { ColorSchemeToggle, ShowVersion } from "miscbuttons";
+
+const TAURI = Object.prototype.hasOwnProperty.call(window, "__TAURI__");
 
 export interface StatusbarProps {
     session: SessionInfo | undefined,
@@ -89,6 +92,12 @@ export function Statusbar({ session, filteredTorrents, selectedTorrents, hostnam
             <div>
                 {`Selected: ${sizeSelected}, done ${sizeDone}, left ${sizeLeft}`}
             </div>
+            <div style={{ flexGrow: 1 }} />
+            {!TAURI &&
+                <div style={{ flexShrink: 0, display: "flex" }}>
+                    <ShowVersion sz="0.9rem" btn="md"/>
+                    <ColorSchemeToggle sz="0.9rem" btn="md"/>
+                </div>}
         </Group>
     );
 }
