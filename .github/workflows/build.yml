@@ -66,14 +66,16 @@ jobs:
         path: "${{ join(fromJSON(steps.tauri_build.outputs.artifacts), '\n') }}"
 
     - name: pack webapp
+      if: matrix.platform.os == 'ubuntu-latest'
       working-directory: dist
       id: pack-webapp
       run: |
         GIT_VERSION=`git describe --tags --always`
         zip "trguing-web-$GIT_VERSION" ./* -x create\* -x \*.map
-        echo "GIT_VERSION=$GIT_VERSION" >> $GITHUB_OUTPUT
+        echo "ZIPFILE=trguing-web-$GIT_VERSION.zip" >> $GITHUB_OUTPUT
 
     - uses: actions/upload-artifact@v3
+      if: matrix.platform.os == 'ubuntu-latest'
       with:
         name: build web
-        path: "${{ steps.pack-webapp.outputs.GIT_VERSION }}"
+        path: "dist/${{ steps.pack-webapp.outputs.ZIPFILE }}"
