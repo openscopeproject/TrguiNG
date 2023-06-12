@@ -64,3 +64,16 @@ jobs:
       with:
         name: build ${{ matrix.platform.os }} ${{ matrix.platform.rust_target }}
         path: "${{ join(fromJSON(steps.tauri_build.outputs.artifacts), '\n') }}"
+
+    - name: pack webapp
+      working-directory: dist
+      id: pack-webapp
+      run: |
+        GIT_VERSION=`git describe --tags --always`
+        zip "trguing-web-$GIT_VERSION" ./* -x create\* -x \*.map
+        echo "GIT_VERSION=$GIT_VERSION" >> $GITHUB_OUTPUT
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: build web
+        path: "${{ steps.pack-webapp.outputs.GIT_VERSION }}"
