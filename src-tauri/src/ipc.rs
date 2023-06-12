@@ -31,7 +31,7 @@ use tokio::sync::{oneshot, OwnedSemaphorePermit, Semaphore};
 use crate::torrentcache::process_response;
 use crate::tray::toggle_main_window;
 
-const ADDRESS: &str = "127.123.45.67:8080";
+const ADDRESS: &str = "127.123.45.67:44321";
 const ALLOW_ORIGINS: &[&str] = if cfg!(feature = "custom-protocol") {
     &["tauri://localhost", "https://tauri.localhost"]
 } else {

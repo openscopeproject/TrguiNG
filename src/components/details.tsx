@@ -179,10 +179,12 @@ function Urlize(props: { text: string }) {
 const readonlyInputStyles = (theme: MantineTheme) => ({
     root: {
         backgroundColor: (theme.colorScheme === "dark" ? theme.colors.dark[4] : theme.colors.gray[2]),
+        height: "1.25rem",
     },
     input: {
-        minHeight: "1rem",
-        height: "1rem",
+        minHeight: "1.25rem",
+        height: "1.25rem",
+        lineHeight: "1rem",
     },
 });
 
