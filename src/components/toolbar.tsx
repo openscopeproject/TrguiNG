@@ -144,7 +144,7 @@ function useButtonHandlers(
     useHotkeys([
         ["F3", handlers.start],
         ["F4", handlers.pause],
-        ["del", handlers.remove],
+        ["delete", handlers.remove],
         ["F6", handlers.move],
         ["F7", handlers.setLabels],
         ["mod + H", handlers.setPriorityHigh],
