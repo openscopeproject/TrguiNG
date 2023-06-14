@@ -5,9 +5,9 @@
   ],
   "type": "module",
   "scripts": {
-    "tauri dev": "tauri dev",
+    "tauri-dev": "tauri dev",
     "build": "tauri build",
-    "webpack serve": "webpack serve --config webpack.dev.js",
+    "webpack-serve": "webpack serve --config webpack.dev.js",
     "webpack-dev": "webpack --config webpack.dev.js",
     "webpack-prod": "webpack --config webpack.prod.js",
     "info": "tauri info",
