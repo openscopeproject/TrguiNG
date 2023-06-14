@@ -17,7 +17,7 @@
  */
 
 import { Box, Button, Checkbox, Divider, Group, Modal, SegmentedControl, Text, TextInput } from "@mantine/core";
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ActionModalState, LabelsData, LocationData } from "./common";
 import { TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
 import type { PriorityNumberType } from "rpc/transmission";
@@ -27,7 +27,7 @@ import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable
 import { notifications } from "@mantine/notifications";
 import { useAddTorrent, useFileTree } from "queries";
 import { ConfigContext } from "config";
-const { dialogOpen, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
+const { TAURI, dialogOpen, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface AddCommonProps {
     location: LocationData,
@@ -160,7 +160,6 @@ interface TorrentFileData {
     torrentPath: string,
     metadata: string,
     name: string,
-    length: number,
     hash: string,
     files: Array<{
         name: string,
@@ -173,40 +172,88 @@ export function AddTorrent(props: AddCommonModalProps) {
     const common = useCommonProps(props);
     const [torrentData, setTorrentData] = useState<TorrentFileData>();
 
-    useEffect(() => {
-        if (!props.opened) {
-            setTorrentData(undefined);
-            return;
-        }
+    const filesInputRef = useRef<HTMLInputElement>(null);
 
-        const readFile = async (path: string | null) => {
-            if (path === null) {
-                props.close();
-                return undefined;
+    const { close } = props;
+
+    useEffect(() => {
+        const input = filesInputRef.current;
+        const fileInputListener = (e: Event) => {
+            const element = e.target as HTMLInputElement;
+            if (element.files == null) {
+                close();
+            } else {
+                const [file] = element.files;
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const b64 = (reader.result as string).match(/data:.*\/.*;base64,(.*)/)?.[1];
+                    if (b64 === undefined) {
+                        notifications.show({
+                            title: "Error reading file",
+                            message: file.name,
+                            color: "red",
+                        });
+                        close();
+                        return;
+                    }
+                    setTorrentData({
+                        torrentPath: "",
+                        metadata: b64,
+                        name: "",
+                        hash: "",
+                        files: null,
+                    });
+                };
+                reader.readAsDataURL(file);
             }
-            return await invoke("read_file", { path });
         };
 
-        const pathPromise = props.uri !== undefined
-            ? Promise.resolve(props.uri)
-            : dialogOpen({
-                title: "Select torrent file",
-                filters: [{
-                    name: "Torrent",
-                    extensions: ["torrent"],
-                }],
-            }) as Promise<string | null>;
+        if (!TAURI) {
+            input?.addEventListener("change", fileInputListener);
+        }
+        return () => {
+            if (!TAURI) input?.removeEventListener("change", fileInputListener);
+        };
+    }, [close]);
 
-        pathPromise.then(readFile)
-            .then((torrentData) => { setTorrentData(torrentData as TorrentFileData); })
-            .catch((e) => {
-                notifications.show({
-                    title: "Error reading torrent",
-                    message: String(e),
-                    color: "red",
+    useEffect(() => {
+        if (!TAURI && props.opened) {
+            filesInputRef.current?.click();
+            close();
+        }
+    }, [props.opened, close]);
+
+    useEffect(() => {
+        if (TAURI && props.opened) {
+            const readFile = async (path: string | null) => {
+                if (path === null) {
+                    props.close();
+                    return undefined;
+                }
+                return await invoke("read_file", { path });
+            };
+
+            const pathPromise = props.uri !== undefined
+                ? Promise.resolve(props.uri)
+                : dialogOpen({
+                    title: "Select torrent file",
+                    filters: [{
+                        name: "Torrent",
+                        extensions: ["torrent"],
+                    }],
+                }) as Promise<string | null>;
+
+            pathPromise.then(readFile)
+                .then((torrentData) => { setTorrentData(torrentData as TorrentFileData); })
+                .catch((e) => {
+                    notifications.show({
+                        title: "Error reading torrent",
+                        message: String(e),
+                        color: "red",
+                    });
+                    props.close();
                 });
-                props.close();
-            });
+        }
     }, [props]);
 
     const fileTree = useMemo(() => new CachedFileTree(torrentData?.hash ?? "", -1), [torrentData]);
@@ -221,7 +268,6 @@ export function AddTorrent(props: AddCommonModalProps) {
 
     const onCheckboxChange = useUnwantedFiles(fileTree, false);
 
-    const { close } = props;
     const mutation = useAddTorrent();
 
     const onAdd = useCallback(() => {
@@ -237,8 +283,24 @@ export function AddTorrent(props: AddCommonModalProps) {
                 unwanted: torrentData?.files == null ? [] : fileTree.getUnwanted(),
             },
             {
-                onSuccess: () => {
-                    if (config.values.app.deleteAdded && path !== undefined) {
+                onSuccess: (response: any) => {
+                    const duplicate = response.arguments["torrent-duplicate"];
+                    if (duplicate !== undefined) {
+                        notifications.show({
+                            title: "Torrent already exists",
+                            message: duplicate.name,
+                            color: "green",
+                        });
+                    }
+                    const added = response.arguments["torrent-added"];
+                    if (added !== undefined) {
+                        notifications.show({
+                            title: "Torrent added",
+                            message: added.name,
+                            color: "green",
+                        });
+                    }
+                    if (TAURI && config.values.app.deleteAdded && path !== undefined) {
                         void invoke("remove_file", { path });
                     }
                 },
@@ -254,15 +316,23 @@ export function AddTorrent(props: AddCommonModalProps) {
         );
 
         common.location.addPath(common.location.path);
+        setTorrentData(undefined);
         close();
     }, [mutation, close, torrentData, common, fileTree, config]);
 
-    return (
-        torrentData === undefined
+    const modalClose = useCallback(() => {
+        setTorrentData(undefined);
+        close();
+    }, [close]);
+
+    return (<>
+        {!TAURI && <input ref={filesInputRef} type="file" accept=".torrent"
+            style={{ position: "absolute", top: "-20rem", zIndex: -1 }} />}
+        {torrentData === undefined
             ? <></>
-            : <Modal opened={props.opened} onClose={props.close} title="Add torrent" centered size="lg">
+            : <Modal opened={torrentData !== undefined} onClose={modalClose} title="Add torrent" centered size="lg">
                 <Divider my="sm" />
-                <Text>Name: {torrentData.name}</Text>
+                {TAURI && <Text>Name: {torrentData.name}</Text>}
                 <AddCommon {...common.props} />
                 {torrentData.files == null
                     ? <></>
@@ -277,8 +347,8 @@ export function AddTorrent(props: AddCommonModalProps) {
                 <Divider my="sm" />
                 <Group position="center" spacing="md">
                     <Button onClick={onAdd} variant="filled">Add</Button>
-                    <Button onClick={props.close} variant="light">Cancel</Button>
+                    <Button onClick={modalClose} variant="light">Cancel</Button>
                 </Group>
-            </Modal>
-    );
+            </Modal>}
+    </>);
 }

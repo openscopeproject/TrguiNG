@@ -26,7 +26,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from "re
 import { pathMapFromServer, pathMapToServer } from "util";
 import * as Icon from "react-bootstrap-icons";
 import type { ServerTorrentData } from "rpc/torrent";
-const { dialogOpen } = await import(/* webpackChunkName: "taurishim" */"taurishim");
+const { TAURI, dialogOpen } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface ModalState {
     opened: boolean,
@@ -153,7 +153,7 @@ export function TorrentLocation(props: LocationData) {
                         </Menu.Dropdown>
                     </Menu>
                 } />
-            <Button onClick={props.browseHandler}>Browse</Button>
+            {TAURI && <Button onClick={props.browseHandler}>Browse</Button>}
         </Group>
     );
 }
