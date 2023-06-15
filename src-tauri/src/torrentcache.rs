@@ -158,6 +158,7 @@ fn show_notification(app: &AppHandle, name: &str) {
     notification.auto_icon();
 
     let config = app.config();
+    #[allow(unused_variables)]
     let identifier = config.tauri.bundle.identifier.as_str();
 
     #[cfg(windows)]

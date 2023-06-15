@@ -23,7 +23,7 @@ Some differentiating features:
 
 Planned:
 
-* Better system integration with Linux and possibly MacOS with mime types (needs support in tauri)
+* Better system integration with MacOS with mime types (needs support in tauri)
 * Better bandwidth groups support when API is ready (https://github.com/transmission/transmission/issues/5455)
 
 Currently transmission v2.80 or later is required, goal is to have v2.40 and up compatibility.

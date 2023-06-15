@@ -1,0 +1,9 @@
+[Desktop Entry]
+Categories={{{categories}}}
+Exec={{{exec}}} %u
+Icon={{{icon}}}
+Name={{{name}}}
+Comment={{{comment}}}
+Terminal=false
+Type=Application
+MimeType=application/x-bittorrent;x-scheme-handler/magnet;

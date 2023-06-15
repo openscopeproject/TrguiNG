@@ -29,7 +29,8 @@
       "shortDescription": "Transmission torrent daemon remote GUI",
       "longDescription": "Remote control GUI for Transmission torrent daemon",
       "deb": {
-        "depends": []
+        "depends": ["libasound2"],
+        "desktopTemplate": "app.desktop"
       },
       "macOS": {
         "frameworks": [],
