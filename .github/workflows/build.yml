@@ -41,7 +41,7 @@ jobs:
 
     - uses: Swatinem/rust-cache@v2
       with:
-        key: ${{ matrix.platform.rust_target }}
+        shared-key: ${{ matrix.platform.rust_target }}
         workspaces: |
           src-tauri
 
@@ -54,7 +54,7 @@ jobs:
     - name: install npm packages
       run: npm ci
 
-    - uses: JonasKruckenberg/tauri-build@v1.3.0
+    - uses: qu1ck/action-tauri-build@5c69c9fdbb4231a738b4a668a2caddf6af45eab8
       id: tauri_build
       with:
         target: ${{ matrix.platform.rust_target }}
@@ -62,7 +62,7 @@ jobs:
     # The artifacts output can now be used to upload the artifacts
     - uses: actions/upload-artifact@v3
       with:
-        name: build ${{ matrix.platform.os }} ${{ matrix.platform.rust_target }}
+        name: ${{ matrix.platform.rust_target }}
         path: "${{ join(fromJSON(steps.tauri_build.outputs.artifacts), '\n') }}"
 
     - name: pack webapp
@@ -71,7 +71,7 @@ jobs:
       id: pack-webapp
       run: |
         GIT_VERSION=`git describe --tags --always`
-        zip "trguing-web-$GIT_VERSION" ./* -x create\* -x \*.map
+        zip "trguing-web-$GIT_VERSION.zip" ./* -x create\* -x \*.map
         echo "ZIPFILE=trguing-web-$GIT_VERSION.zip" >> $GITHUB_OUTPUT
 
     - uses: actions/upload-artifact@v3
@@ -79,3 +79,31 @@ jobs:
       with:
         name: build web
         path: "dist/${{ steps.pack-webapp.outputs.ZIPFILE }}"
+
+  publish:
+    needs: build-binaries
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      # Download the previously uploaded artifacts
+      - uses: actions/download-artifact@v3
+        id: download
+        with:
+          path: artifacts
+      - name: Rename mac app archives
+        run: |
+          mv artifacts/x86_64-apple-darwin/TrguiNG.app.tar.gz artifacts/x86_64-apple-darwin/TrguiNG_x86_64.app.tar.gz
+          mv artifacts/aarch64-apple-darwin/TrguiNG.app.tar.gz artifacts/aarch64-apple-darwin/TrguiNG_aarch64.app.tar.gz
+      - name: Downloaded artifacts
+        run: ls -lhR artifacts/
+      # And create a release with the artifacts attached
+      - name: 'create release'
+        uses: softprops/action-gh-release@v0.1.15
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        with:
+          draft: true
+          files: ./artifacts/**/*
