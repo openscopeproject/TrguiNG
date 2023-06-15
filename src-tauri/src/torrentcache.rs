@@ -18,7 +18,11 @@ use std::{collections::HashMap, sync::Arc};
 
 use hyper::{body::to_bytes, Body, Response};
 use serde::Deserialize;
-use tauri::{api::notification::Notification, async_runtime::{Mutex, self}, AppHandle, Manager, State};
+use tauri::{
+    // api::notification::Notification,
+    async_runtime::{self, Mutex},
+    AppHandle, Manager, State,
+};
 
 use crate::sound::play_ping;
 
@@ -88,7 +92,12 @@ pub async fn process_response(
     Ok(response_builder.body(body).unwrap())
 }
 
-async fn process_torrents(app: &AppHandle, mut torrents: Vec<Torrent>, original_url: &str, toast: bool) {
+async fn process_torrents(
+    app: &AppHandle,
+    mut torrents: Vec<Torrent>,
+    original_url: &str,
+    toast: bool,
+) {
     // This is a hacky way to determine if details of a single torrent were
     // requested or a full update. Proper way would be to inspect the request.
     let partial_update = torrents.len() <= 1;
@@ -110,7 +119,7 @@ async fn process_torrents(app: &AppHandle, mut torrents: Vec<Torrent>, original_
                 // then show a "download complete" notification
                 if toast && new_torrent.status > 4 && old_torrent.status == 4 {
                     play_sound = true;
-                    show_notification(app, &new_torrent.name);
+                    show_notification(app, new_torrent.name.as_str());
                 }
             } else if partial_update {
                 map.insert(
@@ -131,12 +140,48 @@ async fn process_torrents(app: &AppHandle, mut torrents: Vec<Torrent>, original_
     cache.server_data.insert(original_url.into(), map);
 }
 
-fn show_notification(app: &AppHandle, name: &String) {
-    if let Err(e) = Notification::new(app.config().tauri.bundle.identifier.as_str())
-        .title("Download complete")
-        .body(name)
-        .show()
+fn show_notification(app: &AppHandle, name: &str) {
+    // Temporarily use notify_rust directly because default sound on windows is forced
+    // see https://github.com/tauri-apps/tauri/issues/7210
+
+    // if let Err(e) = Notification::new(app.config().tauri.bundle.identifier.as_str())
+    //     .title("Download complete")
+    //     .body(name)
+    //     .show()
+    // {
+    //     println!("Cannot show notification: {:?}", e);
+    // }
+
+    let mut notification = notify_rust::Notification::new();
+    notification.summary("Download complete");
+    notification.body(name);
+    notification.auto_icon();
+
+    let config = app.config();
+    let identifier = config.tauri.bundle.identifier.as_str();
+
+    #[cfg(windows)]
     {
-        println!("Cannot show notification: {:?}", e);
+        let exe = tauri_utils::platform::current_exe().expect("failed to get exe");
+        let exe_dir = exe.parent().expect("failed to get exe directory");
+        let curr_dir = exe_dir.display().to_string();
+        // set the notification's System.AppUserModel.ID only when running the installed app
+        if !(curr_dir.ends_with("\\target\\debug")
+            || curr_dir.ends_with("\\target\\release"))
+        {
+            notification.app_id(identifier);
+        }
     }
+    #[cfg(target_os = "macos")]
+    {
+        let _ = notify_rust::set_application(if cfg!(feature = "custom-protocol") {
+            identifier
+        } else {
+            "com.apple.Terminal"
+        });
+    }
+
+    async_runtime::spawn(async move {
+        let _ = notification.show();
+    });
 }
