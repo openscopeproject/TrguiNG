@@ -30,8 +30,8 @@ Currently transmission v2.80 or later is required, goal is to have v2.40 and up 
 
 ## Compiling
 
-Get [Node.js 16](https://nodejs.org/) or later and [rust 1.69](https://www.rust-lang.org/)
-or later and simply run
+Get [Node.js 16](https://nodejs.org/) or later and [rust 1.60](https://www.rust-lang.org/)
+or later and run
 
 ```
 $ npm install
