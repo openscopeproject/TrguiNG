@@ -13,6 +13,9 @@ You can use this program in 2 ways: as a native Windows/Linux/Mac app and as a w
 served by transmission itself by setting `$TRANSMISSION_WEB_HOME` environment variable
 to point to TrguiNG web assets.
 
+There are screenshots of the app available on the
+[project wiki](https://github.com/openscopeproject/TrguiNG/wiki).
+
 Some differentiating features:
 
 * Multi tabbed interface for concurrent server connections (native app only)
