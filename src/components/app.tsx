@@ -252,11 +252,14 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
                         </Menu.Dropdown>
                     </Menu>
                     : <></>}
-                <ShowVersion btn="lg"/>
-                <ColorSchemeToggle btn="lg"/>
+                <ShowVersion btn="lg" />
+                <ColorSchemeToggle btn="lg" />
                 <FontSizeToggle />
                 <CreateTorrentButton />
-                <ActionIcon size="lg" variant="default" my="auto" onClick={serverConfigHandlers.open}>
+                <ActionIcon
+                    size="lg" variant="default" my="auto"
+                    title="Configure servers"
+                    onClick={serverConfigHandlers.open}>
                     <Icon.GearFill size="1.1rem" />
                 </ActionIcon>
             </Tabs.List>
