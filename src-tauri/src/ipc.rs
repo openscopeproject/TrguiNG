@@ -145,7 +145,8 @@ async fn proxy_fetch(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
             let mut req_builder = Request::builder()
                 .method(Method::POST)
                 .uri(url.clone())
-                .header("content-type", "application/json");
+                .header(hyper::header::CONTENT_TYPE, "application/json")
+                .header(hyper::header::ACCEPT_ENCODING, "gzip, deflate");
             if tr_header.is_some() {
                 req_builder = req_builder.header(TRANSMISSION_SESSION_ID, tr_header.unwrap());
             }

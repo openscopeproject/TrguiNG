@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, io::Read};
 
 use hyper::{body::to_bytes, Body, Response};
 use serde::Deserialize;
@@ -64,9 +64,37 @@ pub async fn process_response(
     let original_url = headers.get("X-Original-URL").unwrap().to_str().unwrap();
     let version = response.version();
 
-    let bytes = to_bytes(response.into_body()).await?;
+    let response_bytes = to_bytes(response.into_body()).await?;
+    let data_bytes;
+    let mut buf = Vec::new();
 
-    match serde_json::from_slice::<ServerResponse>(bytes.as_ref()) {
+    match headers.get(hyper::header::CONTENT_ENCODING) {
+        Some(value) => {
+            match value.to_str().unwrap().to_lowercase().as_str() {
+                "deflate" => {
+                    let mut deflater = flate2::bufread::DeflateDecoder::new(response_bytes.as_ref());
+                    buf.reserve(128 * 1024);
+                    deflater.read_to_end(&mut buf).ok();
+                    data_bytes = buf.as_slice();
+                },
+                "gzip" => {
+                    let mut unzipper = flate2::bufread::GzDecoder::new(response_bytes.as_ref());
+                    buf.reserve(128 * 1024);
+                    unzipper.read_to_end(&mut buf).ok();
+                    data_bytes = buf.as_slice();
+                },
+                encoding => {
+                    println!("Unexpected response encoding: {}", encoding);
+                    data_bytes = response_bytes.as_ref();
+                },
+            }
+        }
+        None => {
+            data_bytes = response_bytes.as_ref();
+        }
+    }
+
+    match serde_json::from_slice::<ServerResponse>(data_bytes) {
         Ok(server_response) => {
             if server_response.result != "success" {
                 println!("Server returned error {:?}", server_response.result);
@@ -88,7 +116,7 @@ pub async fn process_response(
             .unwrap()
             .insert(name, value.clone());
     });
-    let body = Body::from(bytes);
+    let body = Body::from(response_bytes);
     Ok(response_builder.body(body).unwrap())
 }
 
