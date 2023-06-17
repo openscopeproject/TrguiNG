@@ -31,7 +31,7 @@ import { queryClient } from "queries";
 import { Notifications } from "@mantine/notifications";
 import { ClientContext } from "rpc/client";
 import { useFontSize } from "fontsize";
-import { ColorSchemeToggle, ShowVersion } from "miscbuttons";
+import { ColorSchemeToggle, ShowVersion } from "components/miscbuttons";
 
 const { appWindow, invoke, makeCreateTorrentView } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 

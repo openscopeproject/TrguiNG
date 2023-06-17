@@ -22,7 +22,7 @@ import * as Icon from "react-bootstrap-icons";
 import { Box, Group } from "@mantine/core";
 import type { SessionInfo } from "rpc/client";
 import type { Torrent } from "rpc/torrent";
-import { ColorSchemeToggle, ShowVersion } from "miscbuttons";
+import { ColorSchemeToggle, ShowVersion } from "components/miscbuttons";
 
 const TAURI = Object.prototype.hasOwnProperty.call(window, "__TAURI__");
 
