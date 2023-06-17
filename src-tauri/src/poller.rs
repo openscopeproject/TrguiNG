@@ -153,6 +153,7 @@ async fn poll(
 ) -> Result<String, Option<String>> {
     let mut req = Request::builder()
         .uri(connection.url.clone())
+        .header(hyper::header::ACCEPT_ENCODING, "gzip, deflate")
         .method(Method::POST);
     if let Some(session) = session {
         req = req.header(
