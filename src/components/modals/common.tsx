@@ -100,7 +100,11 @@ export function useTorrentLocation(): LocationData {
     const serverConfig = useContext(ServerConfigContext);
     const lastPaths = useMemo(() => serverConfig.lastSaveDirs, [serverConfig]);
 
-    const [path, setPath] = useState<string>(lastPaths.length > 0 ? lastPaths[0] : "");
+    const [path, setPath] = useState<string>("");
+
+    useEffect(() => {
+        setPath(lastPaths.length > 0 ? lastPaths[0] : "");
+    }, [lastPaths]);
 
     const browseHandler = useCallback(() => {
         const mappedLocation = pathMapFromServer(path, serverConfig);
