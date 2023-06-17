@@ -31,7 +31,7 @@ import { refreshFileTree, useMutateTorrent, useMutateTorrentPath } from "queries
 import { notifications } from "@mantine/notifications";
 import type { ContextMenuInfo } from "components/contextmenu";
 import { ContextMenu, useContextMenu } from "components/contextmenu";
-const { invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
+const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 type FileDirEntryKey = keyof FileDirEntry;
 type EntryWantedChangeHandler = (entry: FileDirEntry, state: boolean) => void;
@@ -281,13 +281,15 @@ function FiletreeContextMenu(props: {
 
     return (
         <ContextMenu contextMenuInfo={props.contextMenuInfo} setContextMenuInfo={props.setContextMenuInfo}>
-            <Menu.Item
-                onClick={onOpen}
-                icon={<Icon.BoxArrowUpRight size="1.1rem" />}
-                disabled={props.selected.length !== 1}>
-                <Text weight="bold">Open</Text>
-            </Menu.Item>
-            <Menu.Divider />
+            {TAURI && <>
+                <Menu.Item
+                    onClick={onOpen}
+                    icon={<Icon.BoxArrowUpRight size="1.1rem" />}
+                    disabled={props.selected.length !== 1}>
+                    <Text weight="bold">Open</Text>
+                </Menu.Item>
+                <Menu.Divider />
+            </>}
             <Menu.Item
                 onClick={() => { setPriority("priority-high"); }}
                 icon={<Icon.CircleFill color="tomato" size="1.1rem" />}

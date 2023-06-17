@@ -38,7 +38,7 @@ import { ContextMenu, useContextMenu } from "components/contextmenu";
 import type { ModalCallbacks } from "components/modals/servermodals";
 import type { TorrentActionMethodsType } from "rpc/client";
 import * as Icon from "react-bootstrap-icons";
-const { invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
+const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -454,14 +454,16 @@ function TorrentContextMenu(props: {
         </Menu>
         <ContextMenu contextMenuInfo={props.contextMenuInfo} setContextMenuInfo={props.setContextMenuInfo}>
             <Box miw="10rem">
-                <Menu.Item
-                    onClick={onOpen}
-                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
-                    icon={<Icon.BoxArrowUpRight size="1.1rem" />}
-                    disabled={props.serverData.current.selected.size !== 1}>
-                    <Text weight="bold">Open</Text>
-                </Menu.Item>
-                <Menu.Divider />
+                {TAURI && <>
+                    <Menu.Item
+                        onClick={onOpen}
+                        onMouseEnter={() => { setQueueSubmenuOpened(false); }}
+                        icon={<Icon.BoxArrowUpRight size="1.1rem" />}
+                        disabled={props.serverData.current.selected.size !== 1}>
+                        <Text weight="bold">Open</Text>
+                    </Menu.Item>
+                    <Menu.Divider />
+                </>}
                 <Menu.Item
                     onClick={() => { torrentAction("torrent-start-now", "Torrents started"); }}
                     onMouseEnter={() => { setQueueSubmenuOpened(false); }}
