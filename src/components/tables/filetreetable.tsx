@@ -207,7 +207,13 @@ export function FileTreeTable(props: FileTreeTableProps) {
         if (props.downloadDir === undefined || props.downloadDir === "") return;
         let path = `${props.downloadDir}/${row.fullpath}`;
         path = pathMapFromServer(path, serverConfig);
-        invoke("shell_open", { path }).catch((e) => { console.error("Error opening", path, e); });
+        invoke("shell_open", { path }).catch((e) => {
+            notifications.show({
+                title: "Error opening path",
+                message: path,
+                color: "red",
+            });
+        });
     }, [props.downloadDir, serverConfig]);
 
     const [info, setInfo, handler] = useContextMenu();

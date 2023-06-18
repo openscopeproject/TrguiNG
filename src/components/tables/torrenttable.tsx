@@ -313,9 +313,19 @@ export function TorrentTable(props: {
 
     const onRowDoubleClick = useCallback((torrent: Torrent) => {
         if (torrent.downloadDir === undefined || torrent.downloadDir === "") return;
-        let path = `${torrent.downloadDir as string}/${torrent.name as string}`;
+        let path = torrent.downloadDir as string;
+        if (!path.endsWith("/") && !path.endsWith("\\")) {
+            path = path + "/";
+        }
+        path = path + (torrent.name as string);
         path = pathMapFromServer(path, serverConfig);
-        invoke("shell_open", { path }).catch((e) => { console.error("Error opening", path, e); });
+        invoke("shell_open", { path }).catch((e) => {
+            notifications.show({
+                title: "Error opening path",
+                message: path,
+                color: "red",
+            });
+        });
     }, [serverConfig]);
 
     const [info, setInfo, handler] = useContextMenu();
