@@ -71,7 +71,7 @@ jobs:
         id: pack-webapp
         run: |
           GIT_VERSION=`git describe --tags --always`
-          zip "trguing-web-$GIT_VERSION.zip" ./* -x create\* -x \*.map
+          zip -r "trguing-web-$GIT_VERSION.zip" ./* -x create\* -x \*.map
           echo "ZIPFILE=trguing-web-$GIT_VERSION.zip" >> $GITHUB_OUTPUT
 
       - uses: actions/upload-artifact@v3
