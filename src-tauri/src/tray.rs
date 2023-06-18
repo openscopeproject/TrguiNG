@@ -39,15 +39,6 @@ pub fn on_tray_event(app: &AppHandle, event: SystemTrayEvent) {
     let main_window = app.get_window("main");
     match event {
         SystemTrayEvent::LeftClick { .. } => {
-            if let Some(window) = main_window.as_ref() {
-                if !window.is_visible().unwrap() {
-                    window.show().ok();
-                    window.unminimize().ok();
-                    window.set_focus().ok();
-                    window.emit("window-shown", "").ok();
-                    return;
-                }
-            }
             toggle_main_window(app.clone(), main_window);
         }
         SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
@@ -66,6 +57,17 @@ pub fn on_tray_event(app: &AppHandle, event: SystemTrayEvent) {
 pub fn toggle_main_window(app: AppHandle, window: Option<Window>) {
     match window {
         Some(window) => {
+            if !window.is_visible().unwrap() {
+                window.show().ok();
+                window.unminimize().ok();
+                window.set_focus().ok();
+                window.emit("window-shown", "").ok();
+                app.tray_handle()
+                    .get_item("showhide")
+                    .set_title("Hide")
+                    .ok();
+                return;
+            }
             app.tray_handle()
                 .get_item("showhide")
                 .set_title("Show")

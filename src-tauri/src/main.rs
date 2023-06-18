@@ -28,13 +28,13 @@ use tokio::sync::RwLock;
 use torrentcache::TorrentCacheHandle;
 
 mod commands;
+mod createtorrent;
+mod integrations;
 mod ipc;
 mod poller;
+mod sound;
 mod torrentcache;
 mod tray;
-mod integrations;
-mod sound;
-mod createtorrent;
 
 struct ListenerHandle(Arc<RwLock<ipc::Ipc>>);
 
@@ -109,6 +109,15 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         app.listen_global("app-exit", move |_| {
             println!("Exiting");
             app_clone.exit(0);
+        });
+
+        let app_clone = app.clone();
+        app.listen_global("window-hidden", move |_| {
+            app_clone
+                .tray_handle()
+                .get_item("showhide")
+                .set_title("Show")
+                .ok();
         })
     });
 
@@ -121,8 +130,7 @@ fn main() {
 
     let context = tauri::generate_context!();
 
-    #[allow(clippy::single_match)]
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             commands::read_file,
             commands::remove_file,
@@ -143,11 +151,13 @@ fn main() {
         .on_system_tray_event(tray::on_tray_event)
         .setup(setup)
         .build(context)
-        .expect("error while running tauri application")
-        .run(|_app_handle, event| match event {
-            tauri::RunEvent::ExitRequested { api, .. } => {
-                api.prevent_exit();
-            }
-            _ => {}
-        });
+        .expect("error while running tauri application");
+
+    #[allow(clippy::single_match)]
+    app.run(|_app_handle, event| match event {
+        tauri::RunEvent::ExitRequested { api, .. } => {
+            api.prevent_exit();
+        }
+        _ => {}
+    });
 }
