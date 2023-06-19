@@ -70,33 +70,33 @@ export function Statusbar({ session, filteredTorrents, selectedTorrents, hostnam
 
     return (
         <Group className="statusbar" h="100%" sx={{ flexWrap: "nowrap" }}>
-            <div>
+            <div style={{ flexBasis: "23%" }}>
                 <Box component="span" my="auto" mr="xs"><Icon.Diagram2 /></Box>
                 <span>{`${session?.version as string ?? "<not connected>"} at ${hostname}`}</span>
             </div>
-            <div>
+            <div style={{ flexBasis: "15%" }}>
                 <Box component="span" my="auto" mr="xs"><Icon.ArrowDown /></Box>
                 <span>{`${downRate}/s (${byteRateToHumanReadableStr(serverFields.downRateLimit * 1024)})`}</span>
             </div>
-            <div>
+            <div style={{ flexBasis: "15%" }}>
                 <Box component="span" my="auto" mr="xs"><Icon.ArrowUp /></Box>
                 <span>{`${upRate}/s (${byteRateToHumanReadableStr(serverFields.upRateLimit * 1024)})`}</span>
             </div>
-            <div>
+            <div style={{ flexBasis: "12%" }}>
                 <Box component="span" my="auto" mr="xs"><Icon.Hdd /></Box>
                 <span>{`Free: ${bytesToHumanReadableStr(serverFields.free)}`}</span>
             </div>
-            <div>
+            <div style={{ flexBasis: "12%" }}>
                 {`Total: ${sizeTotal}`}
             </div>
-            <div>
+            <div style={{ flexBasis: "23%" }}>
                 {`Selected: ${sizeSelected}, done ${sizeDone}, left ${sizeLeft}`}
             </div>
             <div style={{ flexGrow: 1 }} />
             {!TAURI &&
                 <div style={{ flexShrink: 0, display: "flex" }}>
-                    <ShowVersion sz="0.9rem" btn="md"/>
-                    <ColorSchemeToggle sz="0.9rem" btn="md"/>
+                    <ShowVersion sz="0.9rem" btn="md" />
+                    <ColorSchemeToggle sz="0.9rem" btn="md" />
                 </div>}
         </Group>
     );
