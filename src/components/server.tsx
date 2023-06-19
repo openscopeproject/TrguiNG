@@ -21,7 +21,7 @@ import type { CSSObject } from "@mantine/core";
 import { Box, Flex, Loader, Overlay, Title } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import Split from "react-split";
-import { ConfigContext } from "../config";
+import { ConfigContext, ServerConfigContext } from "../config";
 import type { Torrent } from "../rpc/torrent";
 import { useServerTorrentData } from "../rpc/torrent";
 import { MemoizedDetails } from "./details";
@@ -159,9 +159,11 @@ export function Server({ hostname }: { hostname: string }) {
     const overlayVisible = sessionIsError || sessionIsLoading ||
         session?.["rpc-version"] === undefined || session["rpc-version"] < 15;
 
+    const serverConfig = useContext(ServerConfigContext);
+
     return (
         <Flex direction="column" w="100%" h="100%" sx={{ position: "relative" }}>
-            <MemoizedServerModals ref={modals} {...{ serverData, runUpdates }} />
+            <MemoizedServerModals ref={modals} {...{ serverData, runUpdates }} serverName={serverConfig.name} />
             {overlayVisible && <Overlay blur={10}>
                 <Flex align="center" justify="center" h="100%" direction="column" gap="xl">
                     {sessionIsLoading

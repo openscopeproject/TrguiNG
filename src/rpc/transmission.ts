@@ -98,6 +98,7 @@ export const TorrentFields = [
     "etaIdle", // number tr_stat
     "file-count", // number tr_info
     "group", // string
+    "hashString", // string tr_torrent_view
     "haveUnchecked", // number tr_stat
     "honorsSessionLimits", // boolean tr_torrent
     "isFinished", // boolean tr_stat
@@ -142,7 +143,6 @@ export const TorrentAllFields = [
     "creator", // string tr_torrent_view
     "files", // array (see below)", //n/a
     "fileStats", // array (see below)", //n/a
-    "hashString", // string tr_torrent_view
     "magnetLink", // string", //n/a
     "peers", // array (see below)", //n/a
     "peersFrom", // object (see below)", //n/a

@@ -16,12 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Button, Checkbox, Divider, Group, Modal, SegmentedControl, Text, TextInput } from "@mantine/core";
+import { Box, Button, Checkbox, Divider, Flex, Group, Modal, Overlay, SegmentedControl, Text, TextInput, useMantineTheme } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ActionModalState, LabelsData, LocationData } from "./common";
 import { TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
 import type { PriorityNumberType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings } from "rpc/transmission";
+import type { Torrent } from "rpc/torrent";
 import { CachedFileTree } from "cachedfiletree";
 import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable";
 import { notifications } from "@mantine/notifications";
@@ -62,6 +63,7 @@ function AddCommon(props: AddCommonProps) {
 }
 
 interface AddCommonModalProps extends ActionModalState {
+    serverName: string,
     uri: string | undefined,
 }
 
@@ -156,26 +158,7 @@ export function AddMagnet(props: AddCommonModalProps) {
     );
 }
 
-interface TorrentFileData {
-    torrentPath: string,
-    metadata: string,
-    name: string,
-    hash: string,
-    files: Array<{
-        name: string,
-        length: number,
-    }> | null,
-}
-
-export function AddTorrent(props: AddCommonModalProps) {
-    const config = useContext(ConfigContext);
-    const common = useCommonProps(props);
-    const [torrentData, setTorrentData] = useState<TorrentFileData>();
-
-    const filesInputRef = useRef<HTMLInputElement>(null);
-
-    const { close } = props;
-
+function useFilesInput(filesInputRef: React.RefObject<HTMLInputElement>, close: () => void, setTorrentData: React.Dispatch<React.SetStateAction<TorrentFileData | undefined>>) {
     useEffect(() => {
         const input = filesInputRef.current;
         const fileInputListener = (e: Event) => {
@@ -214,7 +197,39 @@ export function AddTorrent(props: AddCommonModalProps) {
         return () => {
             if (!TAURI) input?.removeEventListener("change", fileInputListener);
         };
-    }, [close]);
+    }, [close, filesInputRef, setTorrentData]);
+}
+
+interface TorrentFileData {
+    torrentPath: string,
+    metadata: string,
+    name: string,
+    hash: string,
+    files: Array<{
+        name: string,
+        length: number,
+    }> | null,
+}
+
+export function AddTorrent(props: AddCommonModalProps) {
+    const config = useContext(ConfigContext);
+    const common = useCommonProps(props);
+    const [torrentData, setTorrentData] = useState<TorrentFileData>();
+
+    const filesInputRef = useRef<HTMLInputElement>(null);
+
+    const { close } = props;
+
+    useFilesInput(filesInputRef, close, setTorrentData);
+
+    const [existingTorrent, setExistingTorrent] = useState<Torrent>();
+
+    useEffect(() => {
+        if (props.opened) {
+            const torrent = props.serverData.current?.torrents.find((t) => t.hashString === torrentData?.hash);
+            setExistingTorrent(torrent);
+        }
+    }, [props.opened, props.serverData, props.serverName, torrentData]);
 
     useEffect(() => {
         if (!TAURI && props.opened) {
@@ -268,12 +283,12 @@ export function AddTorrent(props: AddCommonModalProps) {
 
     const onCheckboxChange = useUnwantedFiles(fileTree, false);
 
-    const mutation = useAddTorrent();
+    const addMutation = useAddTorrent();
 
     const onAdd = useCallback(() => {
         const path = torrentData?.torrentPath;
 
-        mutation.mutate(
+        addMutation.mutate(
             {
                 metainfo: torrentData?.metadata,
                 downloadDir: common.location.path,
@@ -318,12 +333,16 @@ export function AddTorrent(props: AddCommonModalProps) {
         common.location.addPath(common.location.path);
         setTorrentData(undefined);
         close();
-    }, [mutation, close, torrentData, common, fileTree, config]);
+    }, [addMutation, close, torrentData, common, fileTree, config]);
 
     const modalClose = useCallback(() => {
         setTorrentData(undefined);
         close();
     }, [close]);
+
+    const torrentExists = existingTorrent !== undefined;
+
+    const theme = useMantineTheme();
 
     return (<>
         {!TAURI && <input ref={filesInputRef} type="file" accept=".torrent"
@@ -333,20 +352,30 @@ export function AddTorrent(props: AddCommonModalProps) {
             : <Modal opened={torrentData !== undefined} onClose={modalClose} title="Add torrent" centered size="lg">
                 <Divider my="sm" />
                 {TAURI && <Text>Name: {torrentData.name}</Text>}
-                <AddCommon {...common.props} />
-                {torrentData.files == null
-                    ? <></>
-                    : <Box w="100%" h="15rem">
-                        <FileTreeTable
-                            fileTree={fileTree}
-                            data={data}
-                            brief
-                            onCheckboxChange={onCheckboxChange} />
-                    </Box>
-                }
+                <div style={{ position: "relative" }}>
+                    {torrentExists &&
+                        <Overlay
+                            opacity={0.6} blur={3}
+                            color={theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.white}>
+                            <Flex align="center" justify="center" h="100%">
+                                <Text color="red" fw="bold" fz="lg">Torrent already exists</Text>
+                            </Flex>
+                        </Overlay>}
+                    <AddCommon {...common.props} />
+                    {torrentData.files == null
+                        ? <></>
+                        : <Box w="100%" h="15rem">
+                            <FileTreeTable
+                                fileTree={fileTree}
+                                data={data}
+                                brief
+                                onCheckboxChange={onCheckboxChange} />
+                        </Box>
+                    }
+                </div>
                 <Divider my="sm" />
                 <Group position="center" spacing="md">
-                    <Button onClick={onAdd} variant="filled">Add</Button>
+                    <Button onClick={onAdd} variant="filled" disabled={torrentExists}>Add</Button>
                     <Button onClick={modalClose} variant="light">Cancel</Button>
                 </Group>
             </Modal>}

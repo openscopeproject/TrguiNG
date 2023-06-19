@@ -278,6 +278,7 @@ function getRequiredFields(visibilityState: VisibilityState): TorrentFieldsType[
 
     // add bare minimum fields
     TorrentMinimumFields.forEach((f) => set.add(f));
+    if (TAURI) set.add("hashString");
 
     return Array.from(set).sort();
 }

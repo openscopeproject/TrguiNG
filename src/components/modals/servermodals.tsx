@@ -38,6 +38,7 @@ export interface ModalCallbacks {
 }
 
 interface ServerModalsProps {
+    serverName: string,
     serverData: React.MutableRefObject<ServerTorrentData>,
     runUpdates: (run: boolean) => void,
 }
@@ -147,10 +148,12 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
             serverData={props.serverData}
             opened={showMoveModal} close={closeMoveModal} />
         <AddMagnet
+            serverName={props.serverName}
             serverData={props.serverData}
             uri={magnetLink}
             opened={showAddMagnetModal} close={closeAddMagnetModalAndPop} />
         <AddTorrent
+            serverName={props.serverName}
             serverData={props.serverData}
             uri={torrentPath}
             opened={showAddTorrentModal} close={closeAddTorrentModalAndPop} />
