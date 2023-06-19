@@ -126,7 +126,7 @@ function useTable<TData>(
 
 function useSelectHandler<TData>(
     table: Table<TData>,
-    selectedReducer: ({ verb, ids }: { verb: "add" | "set", ids: string[] }) => void,
+    selectedReducer: TableSelectReducer,
     getRowId: (row: TData) => string,
     setCurrent?: (id: string) => void,
 ): [number, (event: React.MouseEvent<Element>, index: number, lastIndex: number) => void] {
@@ -154,7 +154,7 @@ function useSelectHandler<TData>(
             const ids = genIds();
             selectedReducer({ verb: "set", ids });
         } else if (event.ctrlKey) {
-            selectedReducer({ verb: "add", ids: [getRowId(rows[index].original)] });
+            selectedReducer({ verb: "toggle", ids: [getRowId(rows[index].original)] });
         } else {
             selectedReducer({ verb: "set", ids: [getRowId(rows[index].original)] });
         }
@@ -197,11 +197,20 @@ function useTableVirtualizer(count: number): [React.MutableRefObject<null>, numb
     return [parentRef, rowHeight, rowVirtualizer];
 }
 
-export function useStandardSelect(): [string[], React.Dispatch<{ verb: "add" | "set", ids: string[] }>] {
+export type TableSelectReducer = React.Dispatch<{ verb: "add" | "set" | "toggle", ids: string[] }>;
+
+export function useStandardSelect(): [string[], TableSelectReducer] {
     const [selected, selectedReducer] = useReducer(
-        (old: string[], action: { verb: "add" | "set", ids: string[] }) => {
+        (old: string[], action: { verb: "add" | "set" | "toggle", ids: string[] }) => {
             if (action.verb === "set") return action.ids;
-            else {
+            if (action.verb === "toggle") {
+                const newset = new Set(old);
+                action.ids.forEach((id) => {
+                    if (newset.has(id)) newset.delete(id);
+                    else newset.add(id);
+                });
+                return Array.from(newset);
+            } else {
                 const newset = new Set(old);
                 action.ids.forEach((id) => newset.add(id));
                 return Array.from(newset);
@@ -399,7 +408,7 @@ export function TransguiTable<TData>(props: {
     selected: string[],
     getRowId: (r: TData) => string,
     getSubRows?: (r: TData) => TData[],
-    selectedReducer: ({ verb, ids }: { verb: "add" | "set", ids: string[] }) => void,
+    selectedReducer: TableSelectReducer,
     setCurrent?: (id: string) => void,
     onRowDoubleClick?: (row: TData) => void,
     onVisibilityChange?: React.Dispatch<VisibilityState>,

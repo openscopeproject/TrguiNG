@@ -34,19 +34,25 @@ import type { TorrentFieldsType } from "rpc/transmission";
 import type { ModalCallbacks } from "./modals/servermodals";
 import { MemoizedServerModals } from "./modals/servermodals";
 
-function selectedTorrentsReducer(selected: Set<number>, action: { verb: string, ids: string[] }) {
+function selectedTorrentsReducer(
+    selected: Set<number>,
+    action: { verb: "add" | "set" | "toggle" | "filter", ids: string[] },
+) {
+    let result = new Set(selected);
     const ids = action.ids.map((t) => +t);
     if (action.verb === "set") {
-        selected.clear();
-        for (const id of ids) selected.add(id);
+        result.clear();
+        for (const id of ids) result.add(id);
     } else if (action.verb === "add") {
-        for (const id of ids) selected.add(id);
+        for (const id of ids) result.add(id);
     } else if (action.verb === "filter") {
-        selected = new Set(Array.from(selected).filter((t) => ids.includes(t)));
+        result = new Set(Array.from(result).filter((t) => ids.includes(t)));
     } else if (action.verb === "toggle") {
-        if (!selected.delete(ids[0])) selected.add(ids[0]);
+        for (const id of ids) {
+            if (!result.delete(id)) result.add(id);
+        }
     }
-    return new Set(selected);
+    return result;
 }
 
 function SplitLayout({ left, right, bottom }: { left: React.ReactNode, right: React.ReactNode, bottom: React.ReactNode }) {
@@ -123,9 +129,7 @@ export function Server({ hostname }: { hostname: string }) {
         [setCurrentTorrentInt]);
 
     const [selectedTorrents, selectedReducer] = useReducer(
-        useCallback((selected: Set<number>, action: { verb: string, ids: string[] }) =>
-            selectedTorrentsReducer(selected, action), []),
-        new Set<number>());
+        selectedTorrentsReducer, new Set<number>());
 
     const allLabels = useMemo(() => {
         const labels = new Set<string>();

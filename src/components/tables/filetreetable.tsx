@@ -198,7 +198,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
 
     const [selected, setSelected] = useState<string[]>([]);
 
-    const selectedReducer = useCallback((action: { verb: "add" | "set", ids: string[] }) => {
+    const selectedReducer = useCallback((action: { verb: "add" | "set" | "toggle", ids: string[] }) => {
         props.fileTree.selectAction(action);
         setSelected(props.fileTree.getSelected());
     }, [props.fileTree]);

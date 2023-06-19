@@ -26,6 +26,7 @@ import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { bytesToHumanReadableStr, pathMapFromServer, secondsToHumanReadableStr, timestampToDateString } from "util";
 import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
+import type { TableSelectReducer } from "./common";
 import { EditableNameField, TransguiTable } from "./common";
 import { getTrackerAnnounceState } from "./trackertable";
 import { Badge, Box, Button, Kbd, Menu, Portal, Text } from "@mantine/core";
@@ -295,7 +296,7 @@ export function TorrentTable(props: {
     torrents: Torrent[],
     setCurrentTorrent: (id: string) => void,
     selectedTorrents: Set<number>,
-    selectedReducer: React.Dispatch<{ verb: string, ids: string[] }>,
+    selectedReducer: TableSelectReducer,
     onColumnVisibilityChange: React.Dispatch<TorrentFieldsType[]>,
     scrollToRow?: { id: string },
 }) {

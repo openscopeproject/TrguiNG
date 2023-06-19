@@ -316,7 +316,7 @@ export class CachedFileTree {
         dir.isSelected = value;
     }
 
-    selectAction({ verb, ids }: { verb: "add" | "set", ids: string[] }) {
+    selectAction({ verb, ids }: { verb: "add" | "set" | "toggle", ids: string[] }) {
         if (verb === "set") {
             this.setSelection(this.tree, false);
         }
@@ -326,10 +326,18 @@ export class CachedFileTree {
                 console.log("What the horse?", id);
                 return;
             }
-            if (isDirEntry(entry)) {
-                this.setSelection(entry, true);
+            if (verb !== "toggle" || !entry.isSelected) {
+                if (isDirEntry(entry)) {
+                    this.setSelection(entry, true);
+                } else {
+                    entry.isSelected = true;
+                }
             } else {
-                entry.isSelected = true;
+                if (isDirEntry(entry)) {
+                    this.setSelection(entry, false);
+                } else {
+                    entry.isSelected = false;
+                }
             }
         });
     }
