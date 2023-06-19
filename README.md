@@ -57,5 +57,22 @@ $ npm run tauri-dev
 Webpack will automatically watch changes in `src/` and refresh the app view, tauri will watch changes
 in `src-tauri/` and rebuild/restart the app as needed.
 
+## How to use TrguiNG as a web interface
+
+Transmission supports custom web interfaces, all you have to do is run the daemon with
+`$TRANSMISSION_WEB_HOME` variable pointing to the web assets that transmissinon will serve
+over it's `.../transmission/web/` endpoint.
+
+Example steps for debian:
+1. Download latest `trguing-web-xxxx.zip` zip from [releases](https://github.com/openscopeproject/TrguiNG/releases)
+   page.
+2. Unpack it anywhere, make sure that the user transmission runs under (by default `debian-transmission`)
+   has read permissions.
+3. Edit transmission daemon systemd unit file `/etc/systemd/system/multi-user.target.wants/transmission-daemon.service`
+   and add following to `[Service]` section:
+   ```
+   Environment=TRANSMISSION_WEB_HOME=/path/to/extracted/trguing/zip
+   ```
+
 ## License
 Project is distributed under GNU Affero General Public License v3, see `LICENSE.txt` for details.
