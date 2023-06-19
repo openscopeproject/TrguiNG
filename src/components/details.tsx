@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { memo, useCallback, useEffect, useMemo } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import type { Torrent, TrackerStats } from "../rpc/torrent";
 import { getTorrentError } from "../rpc/torrent";
 import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr, timestampToDateString } from "../util";
@@ -28,7 +28,7 @@ import { TrackersTable } from "./tables/trackertable";
 import { PeersTable } from "./tables/peerstable";
 import type { SessionStatEntry } from "rpc/transmission";
 import type { MantineTheme } from "@mantine/core";
-import { Anchor, Box, Flex, Container, Group, Table, Tabs, TextInput } from "@mantine/core";
+import { Anchor, Box, Flex, Container, Group, Table, Tabs, TextInput, LoadingOverlay } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
 import type { FileDirEntry } from "cachedfiletree";
 import { CachedFileTree } from "cachedfiletree";
@@ -348,8 +348,15 @@ function ServerStats() {
 }
 
 function Details(props: DetailsProps) {
-    const { data: torrent } = useTorrentDetails(
+    const { data: fetchedTorrent, isLoading } = useTorrentDetails(
         props.torrentId ?? -1, props.torrentId !== undefined && props.updates);
+
+    const [torrent, setTorrent] = useState<Torrent>();
+
+    useEffect(() => {
+        if (props.torrentId === undefined) setTorrent(undefined);
+        else if (fetchedTorrent !== undefined) setTorrent(fetchedTorrent);
+    }, [fetchedTorrent, props.torrentId]);
 
     return (
         <Tabs variant="outline" defaultValue="general" keepMounted={false}
@@ -392,7 +399,11 @@ function Details(props: DetailsProps) {
                     </Group>
                 </Tabs.Tab>
             </Tabs.List>
-            <div style={{ flexGrow: 1 }}>
+            <div style={{ flexGrow: 1, position: "relative" }}>
+                <LoadingOverlay
+                    visible={props.torrentId !== undefined && isLoading} transitionDuration={500}
+                    loaderProps={{ size: "xl" }}
+                    overlayOpacity={0.35} />
                 <Tabs.Panel value="general" h="100%">
                     {torrent !== undefined
                         ? <GeneralPane torrent={torrent} />
