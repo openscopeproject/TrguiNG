@@ -66,6 +66,13 @@ export type TableName = typeof TableNames[number];
 
 const Sashes = ["vertical", "horizontal"] as const;
 type SashName = typeof Sashes[number];
+const FilterSections = ["Status", "Directories", "Labels", "Trackers"] as const;
+type FilterSectionName = typeof FilterSections[number];
+
+export type FilterSectionsVisibility = Array<{
+    section: FilterSectionName,
+    visible: boolean,
+}>;
 
 export const WindowMinimizeOptions = ["minimize", "hide"] as const;
 export const WindowCloseOptions = ["hide", "close", "quit"] as const;
@@ -92,6 +99,7 @@ interface Settings {
         theme: ColorScheme | undefined,
         tables: Record<TableName, TableSettings>,
         sashSizes: Record<SashName, [number, number]>,
+        filterSections: FilterSectionsVisibility,
     },
 }
 
@@ -124,6 +132,24 @@ const DefaultSettings: Settings = {
             vertical: [70, 30],
             horizontal: [20, 80],
         },
+        filterSections: [
+            {
+                section: "Status",
+                visible: true,
+            },
+            {
+                section: "Directories",
+                visible: true,
+            },
+            {
+                section: "Labels",
+                visible: true,
+            },
+            {
+                section: "Trackers",
+                visible: true,
+            },
+        ],
     },
 };
 

@@ -22,9 +22,15 @@ import { getTorrentError, getTorrentMainTracker } from "../rpc/torrent";
 import { Status } from "../rpc/transmission";
 import * as Icon from "react-bootstrap-icons";
 import * as StatusIcons from "./statusicons";
-import { ServerConfigContext } from "../config";
-import { Divider, Flex } from "@mantine/core";
-import { useForceRender } from "util";
+import type { FilterSectionsVisibility } from "../config";
+import { ConfigContext, ServerConfigContext } from "../config";
+import { Box, Divider, Flex, Group, Menu } from "@mantine/core";
+import { reorderElements, useForceRender } from "util";
+import type { ContextMenuInfo } from "./contextmenu";
+import { ContextMenu, useContextMenu } from "./contextmenu";
+import type { DropResult } from "react-beautiful-dnd";
+import { DragDropContext, Draggable } from "react-beautiful-dnd";
+import { StrictModeDroppable } from "./strictmodedroppable";
 
 export interface TorrentFilter {
     id: string,
@@ -229,7 +235,71 @@ function flattenTree(root: Directory): Directory[] {
     return result;
 }
 
+function SectionsContextMenu(props: {
+    sections: FilterSectionsVisibility,
+    setSections: React.Dispatch<FilterSectionsVisibility>,
+    contextMenuInfo: ContextMenuInfo,
+    setContextMenuInfo: (i: ContextMenuInfo) => void,
+}) {
+    const { setSections } = props;
+
+    const onSectionMenuItemClick = useCallback((index: number) => {
+        const sections = [...props.sections];
+        sections[index].visible = !sections[index].visible;
+        setSections(sections);
+    }, [props.sections, setSections]);
+
+    const onDragEnd = useCallback((result: DropResult) => {
+        if (result.destination != null) {
+            const sections = reorderElements(props.sections, result.source.index, result.destination.index);
+            setSections(sections);
+        }
+    }, [props.sections, setSections]);
+
+    return (
+        <ContextMenu
+            contextMenuInfo={props.contextMenuInfo}
+            setContextMenuInfo={props.setContextMenuInfo}
+            closeOnItemClick={false}
+        >
+            <DragDropContext onDragEnd={onDragEnd}>
+                <StrictModeDroppable droppableId="filterscontextmenu">
+                    {provided => (
+                        <div ref={provided.innerRef} {...provided.droppableProps}>
+                            {props.sections.map((section, index) => {
+                                return (
+                                    <Draggable draggableId={section.section} index={index} key={section.section}>
+                                        {(provided) => (
+                                            <Group ref={provided.innerRef} {...provided.draggableProps} noWrap>
+                                                <Menu.Item
+                                                    icon={section.visible ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                                                    onClick={() => { onSectionMenuItemClick(index); }}
+                                                >
+                                                    {section.section}
+                                                </Menu.Item>
+                                                <div {...provided.dragHandleProps}>
+                                                    <Icon.GripVertical size="12" />
+                                                </div>
+                                            </Group>
+                                        )}
+                                    </Draggable>
+                                );
+                            })}
+                            {provided.placeholder}
+                        </div>
+                    )}
+                </StrictModeDroppable>
+            </DragDropContext>
+        </ContextMenu>
+    );
+}
+
+function getSectionsMap(sections: FilterSectionsVisibility) {
+    return Object.fromEntries(sections.map((section, index) => [section.section, index]));
+}
+
 export function Filters(props: FiltersProps) {
+    const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
     const forceRender = useForceRender();
 
@@ -282,27 +352,45 @@ export function Filters(props: FiltersProps) {
         };
     }, [props.allLabels, props.allTrackers]);
 
+    const [sections, setSections] = useState(config.values.interface.filterSections);
+    const [sectionsMap, setSectionsMap] = useState(getSectionsMap(sections));
+
+    useEffect(() => {
+        config.values.interface.filterSections = sections;
+        setSectionsMap(getSectionsMap(sections));
+    }, [config, sections]);
+
+    const [info, setInfo, handler] = useContextMenu();
+
     return (
-        <div style={{ width: "100%", whiteSpace: "nowrap", cursor: "default", userSelect: "none" }}>
-            <Divider mx="sm" label="Status" labelPosition="center" />
-            {allFilters.statusFilters.map((f) =>
-                <FilterRow key={`status-${f.label}`} id={`status-${f.label}`}
-                    filter={f} {...props} />)}
-            <Divider mx="sm" mt="md" label="Directories" labelPosition="center" />
-            {paths.length > 0
-                ? dirs.map((d) =>
+        <Flex direction="column" style={{ width: "100%", whiteSpace: "nowrap", cursor: "default", userSelect: "none" }} onContextMenu={handler}>
+            <SectionsContextMenu
+                sections={sections} setSections={setSections}
+                contextMenuInfo={info} setContextMenuInfo={setInfo} />
+            {sections[sectionsMap.Status].visible && <div style={{ order: sectionsMap.Status }}>
+                <Divider mx="sm" label="Status" labelPosition="center" />
+                {allFilters.statusFilters.map((f) =>
+                    <FilterRow key={`status-${f.label}`} id={`status-${f.label}`}
+                        filter={f} {...props} />)}
+            </div>}
+            {sections[sectionsMap.Directories].visible && <div style={{ order: sectionsMap.Directories }}>
+                <Divider mx="sm" mt="md" label="Directories" labelPosition="center" />
+                {dirs.map((d) =>
                     <DirFilterRow key={`dir-${d.path}`} id={`dir-${d.path}`}
-                        dir={d} expandedReducer={expandedReducer} {...props} />)
-                : <></>
-            }
-            <Divider mx="sm" mt="md" label="Labels" labelPosition="center" />
-            {allFilters.labelFilters.map((f) =>
-                <FilterRow key={`labels-${f.label}`} id={`labels-${f.label}`}
-                    filter={f} {...props} />)}
-            <Divider mx="sm" mt="md" label="Trackers" labelPosition="center" />
-            {allFilters.trackerFilters.map((f) =>
-                <FilterRow key={`trackers-${f.label}`} id={`trackers-${f.label}`}
-                    filter={f} {...props} />)}
-        </div>
+                        dir={d} expandedReducer={expandedReducer} {...props} />)}
+            </div>}
+            {sections[sectionsMap.Labels].visible && <div style={{ order: sectionsMap.Labels }}>
+                <Divider mx="sm" mt="md" label="Labels" labelPosition="center" />
+                {allFilters.labelFilters.map((f) =>
+                    <FilterRow key={`labels-${f.label}`} id={`labels-${f.label}`}
+                        filter={f} {...props} />)}
+            </div>}
+            {sections[sectionsMap.Trackers].visible && <div style={{ order: sectionsMap.Trackers }}>
+                <Divider mx="sm" mt="md" label="Trackers" labelPosition="center" />
+                {allFilters.trackerFilters.map((f) =>
+                    <FilterRow key={`trackers-${f.label}`} id={`trackers-${f.label}`}
+                        filter={f} {...props} />)}
+            </div>}
+        </Flex>
     );
 }
