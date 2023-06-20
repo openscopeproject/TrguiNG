@@ -18,7 +18,7 @@
 
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Torrent } from "../rpc/torrent";
-import { getTorrentError } from "../rpc/torrent";
+import { getTorrentError, getTorrentMainTracker } from "../rpc/torrent";
 import { Status } from "../rpc/transmission";
 import * as Icon from "react-bootstrap-icons";
 import * as StatusIcons from "./statusicons";
@@ -101,6 +101,7 @@ export const DefaultFilter = statusFilters[0].filter;
 interface FiltersProps {
     torrents: Torrent[],
     allLabels: string[],
+    allTrackers: string[],
     currentFilter: TorrentFilter,
     setCurrentFilter: (filter: TorrentFilter) => void,
 }
@@ -108,6 +109,7 @@ interface FiltersProps {
 interface AllFilters {
     statusFilters: LabeledFilter[],
     labelFilters: LabeledFilter[],
+    trackerFilters: LabeledFilter[],
 }
 
 function FilterRow(props: FiltersProps & { id: string, filter: LabeledFilter }) {
@@ -265,11 +267,20 @@ export function Filters(props: FiltersProps) {
                 icon: StatusIcons.Label,
             });
         });
+        const trackerFilters: LabeledFilter[] = [];
+        props.allTrackers.forEach((tracker) => {
+            trackerFilters.push({
+                label: tracker,
+                filter: (t: Torrent) => getTorrentMainTracker(t) === tracker,
+                icon: StatusIcons.Tracker,
+            });
+        });
         return {
             statusFilters,
             labelFilters,
+            trackerFilters,
         };
-    }, [props.allLabels]);
+    }, [props.allLabels, props.allTrackers]);
 
     return (
         <div style={{ width: "100%", whiteSpace: "nowrap", cursor: "default", userSelect: "none" }}>
@@ -287,6 +298,10 @@ export function Filters(props: FiltersProps) {
             <Divider mx="sm" mt="md" label="Labels" labelPosition="center" />
             {allFilters.labelFilters.map((f) =>
                 <FilterRow key={`labels-${f.label}`} id={`labels-${f.label}`}
+                    filter={f} {...props} />)}
+            <Divider mx="sm" mt="md" label="Trackers" labelPosition="center" />
+            {allFilters.trackerFilters.map((f) =>
+                <FilterRow key={`trackers-${f.label}`} id={`trackers-${f.label}`}
                     filter={f} {...props} />)}
         </div>
     );

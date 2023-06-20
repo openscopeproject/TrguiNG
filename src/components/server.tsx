@@ -23,7 +23,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef,
 import Split from "react-split";
 import { ConfigContext, ServerConfigContext } from "../config";
 import type { Torrent } from "../rpc/torrent";
-import { useServerTorrentData } from "../rpc/torrent";
+import { getTorrentMainTracker, useServerTorrentData } from "../rpc/torrent";
 import { MemoizedDetails } from "./details";
 import { DefaultFilter, Filters } from "./filters";
 import { Statusbar } from "./statusbar";
@@ -131,10 +131,12 @@ export function Server({ hostname }: { hostname: string }) {
     const [selectedTorrents, selectedReducer] = useReducer(
         selectedTorrentsReducer, new Set<number>());
 
-    const allLabels = useMemo(() => {
+    const [allLabels, allTrackers] = useMemo(() => {
         const labels = new Set<string>();
         torrents?.forEach((t) => t.labels?.forEach((l: string) => labels.add(l)));
-        return Array.from(labels).sort();
+        const trackers = new Set<string>();
+        torrents?.forEach((t) => trackers.add(getTorrentMainTracker(t)));
+        return [Array.from(labels).sort(), Array.from(trackers).sort()];
     }, [torrents]);
 
     const serverData = useServerTorrentData(torrents ?? [], selectedTorrents, currentTorrent, allLabels);
@@ -192,6 +194,7 @@ export function Server({ hostname }: { hostname: string }) {
                         <Filters
                             torrents={torrents ?? []}
                             allLabels={allLabels}
+                            allTrackers={allTrackers}
                             currentFilter={currentFilter}
                             setCurrentFilter={setCurrentFilter} />
                     </div>

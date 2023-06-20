@@ -52,6 +52,14 @@ export function getTorrentError(t: Torrent): string {
     }
 }
 
+export function getTorrentMainTracker(t: Torrent): string {
+    if (t.trackerStats.length === 0) return "<No trackers>";
+    const host = t.trackerStats[0].host as string;
+    const portMatch = /:\d+$/.exec(host);
+    if (portMatch != null) return host.substring(0, portMatch.index);
+    return host;
+}
+
 export interface ServerTorrentData {
     torrents: Torrent[],
     selected: Set<number>,

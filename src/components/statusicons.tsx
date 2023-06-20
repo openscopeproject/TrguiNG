@@ -66,6 +66,11 @@ export function Label() {
     return <Icon.TagsFill size="1rem" stroke={theme.colors.indigo[9]} fill={theme.colors.blue[4]} />;
 }
 
+export function Tracker() {
+    const theme = useMantineTheme();
+    return <Icon.Wifi size="1rem" stroke={theme.colors.indigo[9]} fill={theme.colors.blue[4]} />;
+}
+
 export const StatusIconMap: Record<number, React.FC> = {
     [Status.stopped]: Stopped,
     [Status.queuedToVerify]: Waiting,
