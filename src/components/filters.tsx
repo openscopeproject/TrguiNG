@@ -108,8 +108,11 @@ interface FiltersProps {
     torrents: Torrent[],
     allLabels: string[],
     allTrackers: string[],
-    currentFilter: TorrentFilter,
-    setCurrentFilter: (filter: TorrentFilter) => void,
+    currentFilters: TorrentFilter[],
+    setCurrentFilters: React.Dispatch<{
+        verb: "set" | "toggle",
+        filter: TorrentFilter,
+    }>,
 }
 
 interface AllFilters {
@@ -126,8 +129,13 @@ function FilterRow(props: FiltersProps & { id: string, filter: LabeledFilter }) 
     }
 
     return <Flex align="center" gap="sm" px="xs"
-        className={props.currentFilter.id === props.id ? "selected" : ""}
-        onClick={() => { props.setCurrentFilter({ id: props.id, filter: props.filter.filter }); }}>
+        className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
+        onClick={(event) => {
+            props.setCurrentFilters({
+                verb: event.ctrlKey ? "toggle" : "set",
+                filter: { id: props.id, filter: props.filter.filter },
+            });
+        }}>
         <div style={{ flexShrink: 0 }}><props.filter.icon /></div>
         <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.filter.label}</div>
         <div style={{ flexShrink: 0 }}>{`(${count})`}</div>
@@ -161,8 +169,13 @@ function DirFilterRow(props: DirFilterRowProps) {
     return (
         <Flex align="center" gap="sm"
             style={{ paddingLeft: `${props.dir.level * 1.4 + 0.25}em`, cursor: "default" }}
-            className={props.currentFilter.id === props.id ? "selected" : ""}
-            onClick={() => { props.setCurrentFilter({ id: props.id, filter }); }}>
+            className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
+            onClick={(event) => {
+                props.setCurrentFilters({
+                    verb: event.ctrlKey ? "toggle" : "set",
+                    filter: { id: props.id, filter },
+                });
+            }}>
             <div style={{ flexShrink: 0 }}>
                 {expandable
                     ? props.dir.expanded

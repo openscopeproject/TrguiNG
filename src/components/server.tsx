@@ -25,6 +25,7 @@ import { ConfigContext, ServerConfigContext } from "../config";
 import type { Torrent } from "../rpc/torrent";
 import { getTorrentMainTracker, useServerTorrentData } from "../rpc/torrent";
 import { MemoizedDetails } from "./details";
+import type { TorrentFilter } from "./filters";
 import { DefaultFilter, Filters } from "./filters";
 import { Statusbar } from "./statusbar";
 import { TorrentTable, useInitialTorrentRequiredFields } from "./tables/torrenttable";
@@ -98,8 +99,20 @@ function SplitLayout({ left, right, bottom }: { left: React.ReactNode, right: Re
     );
 }
 
+function currentFiltersReducer(
+    oldFilters: TorrentFilter[],
+    action: { verb: "set" | "toggle", filter: TorrentFilter },
+) {
+    if (action.verb === "set") return [action.filter];
+    const newFilters = oldFilters.filter((filter) => filter.id !== action.filter.id);
+    if (newFilters.length === oldFilters.length) {
+        newFilters.push(action.filter);
+    }
+    return newFilters;
+}
+
 export function Server({ hostname }: { hostname: string }) {
-    const [currentFilter, setCurrentFilter] = useState({ id: "", filter: DefaultFilter });
+    const [currentFilters, setCurrentFilters] = useReducer(currentFiltersReducer, [{ id: "", filter: DefaultFilter }]);
 
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
     const searchFilter = useCallback((t: Torrent) => {
@@ -134,8 +147,10 @@ export function Server({ hostname }: { hostname: string }) {
     const [allLabels, allTrackers] = useMemo(() => {
         const labels = new Set<string>();
         torrents?.forEach((t) => t.labels?.forEach((l: string) => labels.add(l)));
+
         const trackers = new Set<string>();
         torrents?.forEach((t) => trackers.add(getTorrentMainTracker(t)));
+
         return [Array.from(labels).sort(), Array.from(trackers).sort()];
     }, [torrents]);
 
@@ -144,17 +159,22 @@ export function Server({ hostname }: { hostname: string }) {
     const [filteredTorrents, setFilteredTorrents] = useState<Torrent[]>([]);
     useEffect(() => {
         if ((torrents?.findIndex((t) => t.id === currentTorrent) ?? -1) === -1) setCurrentTorrentInt(undefined);
-        const filtered = torrents?.filter(currentFilter.filter).filter(searchFilter) ?? [];
+
+        const filtered = torrents?.filter((t) => {
+            return currentFilters.find((f) => !f.filter(t)) === undefined;
+        }).filter(searchFilter) ?? [];
+
         const ids: string[] = filtered.map((t) => t.id);
+
         selectedReducer({ verb: "filter", ids });
         setFilteredTorrents(filtered);
-    }, [torrents, currentFilter, searchFilter, currentTorrent]);
+    }, [torrents, currentFilters, searchFilter, currentTorrent]);
 
     const [scrollToRow, setScrollToRow] = useState<{ id: string }>();
 
     useEffect(() => {
         if (currentTorrent !== undefined) setScrollToRow({ id: `${currentTorrent}` });
-    }, [currentFilter, currentTorrent]);
+    }, [currentFilters, currentTorrent]);
 
     const modals = useRef<ModalCallbacks>(null);
 
@@ -195,8 +215,8 @@ export function Server({ hostname }: { hostname: string }) {
                             torrents={torrents ?? []}
                             allLabels={allLabels}
                             allTrackers={allTrackers}
-                            currentFilter={currentFilter}
-                            setCurrentFilter={setCurrentFilter} />
+                            currentFilters={currentFilters}
+                            setCurrentFilters={setCurrentFilters} />
                     </div>
                 }
                 right={
