@@ -154,7 +154,7 @@ function useSelectHandler<TData>(
             selectedReducer({ verb: "set", ids });
         } else if (event.ctrlKey) {
             selectedReducer({ verb: "toggle", ids: [getRowId(rows[index].original)] });
-        } else {
+        } else if (event.button !== 2 || !rows[index].getIsSelected()) {
             selectedReducer({ verb: "set", ids: [getRowId(rows[index].original)] });
         }
 
