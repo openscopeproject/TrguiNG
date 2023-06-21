@@ -22,15 +22,11 @@ import { getTorrentError, getTorrentMainTracker } from "../rpc/torrent";
 import { Status } from "../rpc/transmission";
 import * as Icon from "react-bootstrap-icons";
 import * as StatusIcons from "./statusicons";
-import type { FilterSectionsVisibility } from "../config";
 import { ConfigContext, ServerConfigContext } from "../config";
-import { Box, Divider, Flex, Group, Menu } from "@mantine/core";
-import { reorderElements, useForceRender } from "util";
-import type { ContextMenuInfo } from "./contextmenu";
-import { ContextMenu, useContextMenu } from "./contextmenu";
-import type { DropResult } from "react-beautiful-dnd";
-import { DragDropContext, Draggable } from "react-beautiful-dnd";
-import { StrictModeDroppable } from "./strictmodedroppable";
+import { Divider, Flex } from "@mantine/core";
+import { useForceRender } from "util";
+import { useContextMenu } from "./contextmenu";
+import { SectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
 
 export interface TorrentFilter {
     id: string,
@@ -246,69 +242,6 @@ function flattenTree(root: Directory): Directory[] {
     };
     append(root);
     return result;
-}
-
-function SectionsContextMenu(props: {
-    sections: FilterSectionsVisibility,
-    setSections: React.Dispatch<FilterSectionsVisibility>,
-    contextMenuInfo: ContextMenuInfo,
-    setContextMenuInfo: (i: ContextMenuInfo) => void,
-}) {
-    const { setSections } = props;
-
-    const onSectionMenuItemClick = useCallback((index: number) => {
-        const sections = [...props.sections];
-        sections[index].visible = !sections[index].visible;
-        setSections(sections);
-    }, [props.sections, setSections]);
-
-    const onDragEnd = useCallback((result: DropResult) => {
-        if (result.destination != null) {
-            const sections = reorderElements(props.sections, result.source.index, result.destination.index);
-            setSections(sections);
-        }
-    }, [props.sections, setSections]);
-
-    return (
-        <ContextMenu
-            contextMenuInfo={props.contextMenuInfo}
-            setContextMenuInfo={props.setContextMenuInfo}
-            closeOnItemClick={false}
-        >
-            <DragDropContext onDragEnd={onDragEnd}>
-                <StrictModeDroppable droppableId="filterscontextmenu">
-                    {provided => (
-                        <div ref={provided.innerRef} {...provided.droppableProps}>
-                            {props.sections.map((section, index) => {
-                                return (
-                                    <Draggable draggableId={section.section} index={index} key={section.section}>
-                                        {(provided) => (
-                                            <Group ref={provided.innerRef} {...provided.draggableProps} noWrap>
-                                                <Menu.Item
-                                                    icon={section.visible ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
-                                                    onClick={() => { onSectionMenuItemClick(index); }}
-                                                >
-                                                    {section.section}
-                                                </Menu.Item>
-                                                <div {...provided.dragHandleProps}>
-                                                    <Icon.GripVertical size="12" />
-                                                </div>
-                                            </Group>
-                                        )}
-                                    </Draggable>
-                                );
-                            })}
-                            {provided.placeholder}
-                        </div>
-                    )}
-                </StrictModeDroppable>
-            </DragDropContext>
-        </ContextMenu>
-    );
-}
-
-function getSectionsMap(sections: FilterSectionsVisibility) {
-    return Object.fromEntries(sections.map((section, index) => [section.section, index]));
 }
 
 export function Filters(props: FiltersProps) {

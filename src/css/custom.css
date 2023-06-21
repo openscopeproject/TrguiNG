@@ -74,7 +74,6 @@ img {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    flex-shrink: 1;
 }
 
 .filters>* {

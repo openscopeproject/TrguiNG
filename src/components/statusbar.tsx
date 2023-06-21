@@ -16,13 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useMemo } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { byteRateToHumanReadableStr, bytesToHumanReadableStr } from "../util";
 import * as Icon from "react-bootstrap-icons";
-import { Box, Group } from "@mantine/core";
+import { Box, Flex } from "@mantine/core";
 import type { SessionInfo } from "rpc/client";
 import type { Torrent } from "rpc/torrent";
 import { ColorSchemeToggle, ShowVersion } from "components/miscbuttons";
+import { ConfigContext } from "config";
+import { useContextMenu } from "./contextmenu";
+import { SectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
 
 const TAURI = Object.prototype.hasOwnProperty.call(window, "__TAURI__");
 
@@ -34,6 +37,8 @@ export interface StatusbarProps {
 }
 
 export function Statusbar({ session, filteredTorrents, selectedTorrents, hostname }: StatusbarProps) {
+    const config = useContext(ConfigContext);
+
     const serverFields = useMemo(() => ({
         downRateLimit: session !== undefined
             ? session["alt-speed-enabled"] === true
@@ -68,36 +73,54 @@ export function Statusbar({ session, filteredTorrents, selectedTorrents, hostnam
         ];
     }, [filteredTorrents, selectedTorrents]);
 
+    const [sections, setSections] = useState(config.values.interface.statusBarSections);
+    const [sectionsMap, setSectionsMap] = useState(getSectionsMap(sections));
+
+    useEffect(() => {
+        config.values.interface.statusBarSections = sections;
+        setSectionsMap(getSectionsMap(sections));
+    }, [config, sections]);
+
+    const [info, setInfo, handler] = useContextMenu();
+
     return (
-        <Group className="statusbar" h="100%" sx={{ flexWrap: "nowrap" }}>
-            <div style={{ flexBasis: "23%" }}>
-                <Box component="span" my="auto" mr="xs"><Icon.Diagram2 /></Box>
-                <span>{`${session?.version as string ?? "<not connected>"} at ${hostname}`}</span>
-            </div>
-            <div style={{ flexBasis: "15%" }}>
-                <Box component="span" my="auto" mr="xs"><Icon.ArrowDown /></Box>
-                <span>{`${downRate}/s (${byteRateToHumanReadableStr(serverFields.downRateLimit * 1024)})`}</span>
-            </div>
-            <div style={{ flexBasis: "15%" }}>
-                <Box component="span" my="auto" mr="xs"><Icon.ArrowUp /></Box>
-                <span>{`${upRate}/s (${byteRateToHumanReadableStr(serverFields.upRateLimit * 1024)})`}</span>
-            </div>
-            <div style={{ flexBasis: "12%" }}>
-                <Box component="span" my="auto" mr="xs"><Icon.Hdd /></Box>
-                <span>{`Free: ${bytesToHumanReadableStr(serverFields.free)}`}</span>
-            </div>
-            <div style={{ flexBasis: "12%" }}>
-                {`Total: ${sizeTotal}`}
-            </div>
-            <div style={{ flexBasis: "23%" }}>
-                {`Selected: ${sizeSelected}, done ${sizeDone}, left ${sizeLeft}`}
-            </div>
-            <div style={{ flexGrow: 1 }} />
+        <Flex className="statusbar" sx={{ flexWrap: "nowrap" }} onContextMenu={handler} gap="md">
+            <SectionsContextMenu
+                sections={sections} setSections={setSections}
+                contextMenuInfo={info} setContextMenuInfo={setInfo} />
+            {sections[sectionsMap.Connection].visible &&
+                <div style={{ flex: "1 1 23%", order: sectionsMap.Connection }}>
+                    <Box component="span" my="auto" mr="xs"><Icon.Diagram2 /></Box>
+                    <span>{`${session?.version as string ?? "<not connected>"} at ${hostname}`}</span>
+                </div>}
+            {sections[sectionsMap["Download speed "]].visible &&
+                <div style={{ flex: "1 1 15%", order: sectionsMap["Download speed "] }}>
+                    <Box component="span" my="auto" mr="xs"><Icon.ArrowDown /></Box>
+                    <span>{`${downRate}/s (${byteRateToHumanReadableStr(serverFields.downRateLimit * 1024)})`}</span>
+                </div>}
+            {sections[sectionsMap["Upload speed"]].visible &&
+                <div style={{ flex: "1 1 15%", order: sectionsMap["Upload speed"] }}>
+                    <Box component="span" my="auto" mr="xs"><Icon.ArrowUp /></Box>
+                    <span>{`${upRate}/s (${byteRateToHumanReadableStr(serverFields.upRateLimit * 1024)})`}</span>
+                </div>}
+            {sections[sectionsMap["Free space"]].visible &&
+                <div style={{ flex: "1 1 12%", order: sectionsMap["Free space"] }}>
+                    <Box component="span" my="auto" mr="xs"><Icon.Hdd /></Box>
+                    <span>{`Free: ${bytesToHumanReadableStr(serverFields.free)}`}</span>
+                </div>}
+            {sections[sectionsMap.Total].visible &&
+                <div style={{ flex: "1 1 12%", order: sectionsMap.Total }}>
+                    {`Total: ${sizeTotal}`}
+                </div>}
+            {sections[sectionsMap.Selected].visible &&
+                <div style={{ flex: "1 1 23%", order: sectionsMap.Selected }}>
+                    {`Selected: ${sizeSelected}, done ${sizeDone}, left ${sizeLeft}`}
+                </div>}
             {!TAURI &&
-                <div style={{ flexShrink: 0, display: "flex" }}>
+                <div style={{ flexShrink: 0, display: "flex", order: 100 }}>
                     <ShowVersion sz="0.9rem" btn="md" />
                     <ColorSchemeToggle sz="0.9rem" btn="md" />
                 </div>}
-        </Group>
+        </Flex>
     );
 }

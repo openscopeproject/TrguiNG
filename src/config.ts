@@ -66,11 +66,17 @@ export type TableName = typeof TableNames[number];
 
 const Sashes = ["vertical", "horizontal"] as const;
 type SashName = typeof Sashes[number];
+
 const FilterSections = ["Status", "Directories", "Labels", "Trackers"] as const;
 type FilterSectionName = typeof FilterSections[number];
 
-export type FilterSectionsVisibility = Array<{
-    section: FilterSectionName,
+const StatusbarSections = [
+    "Connection", "Download speed ", "Upload speed", "Free space", "Total", "Selected",
+] as const;
+type StatusbarSectionName = typeof StatusbarSections[number];
+
+export type SectionsVisibility<S extends string> = Array<{
+    section: S,
     visible: boolean,
 }>;
 
@@ -99,7 +105,8 @@ interface Settings {
         theme: ColorScheme | undefined,
         tables: Record<TableName, TableSettings>,
         sashSizes: Record<SashName, [number, number]>,
-        filterSections: FilterSectionsVisibility,
+        filterSections: SectionsVisibility<FilterSectionName>,
+        statusBarSections: SectionsVisibility<StatusbarSectionName>,
     },
 }
 
@@ -132,24 +139,14 @@ const DefaultSettings: Settings = {
             vertical: [70, 30],
             horizontal: [20, 80],
         },
-        filterSections: [
-            {
-                section: "Status",
-                visible: true,
-            },
-            {
-                section: "Directories",
-                visible: true,
-            },
-            {
-                section: "Labels",
-                visible: true,
-            },
-            {
-                section: "Trackers",
-                visible: true,
-            },
-        ],
+        filterSections: FilterSections.map((section) => ({
+            section,
+            visible: true,
+        })),
+        statusBarSections: StatusbarSections.map((section) => ({
+            section,
+            visible: true,
+        })),
     },
 };
 
