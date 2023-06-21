@@ -135,7 +135,6 @@ function useSelectHandler<TData>(
     const onRowClick = useCallback((event: React.MouseEvent<Element>, index: number, lastIndex: number) => {
         const rows = table.getRowModel().rows;
         event.preventDefault();
-        event.stopPropagation();
 
         function genIds() {
             const minIndex = Math.min(index, lastIndex);
@@ -274,6 +273,9 @@ function TableRow<TData>(props: {
             className={`tr${props.selected ? " selected" : ""}`}
             style={{ height: `${props.height}px`, transform: `translateY(${props.start}px)` }}
             onClick={(e) => {
+                props.onRowClick(e, props.index, props.lastIndex);
+            }}
+            onContextMenu={(e) => {
                 props.onRowClick(e, props.index, props.lastIndex);
             }}
             onDoubleClick={onRowDoubleClick}
