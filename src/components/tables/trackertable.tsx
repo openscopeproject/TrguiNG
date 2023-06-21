@@ -19,19 +19,10 @@
 import type { AccessorFn, CellContext, ColumnDef } from "@tanstack/react-table";
 import React, { useCallback } from "react";
 import type { Torrent, TrackerStats } from "rpc/torrent";
+import { getTrackerAnnounceState } from "rpc/torrent";
 import type { TrackerStatsFieldsType } from "rpc/transmission";
 import { secondsToHumanReadableStr } from "util";
 import { TransguiTable, useStandardSelect } from "./common";
-
-export function getTrackerAnnounceState(tracker: TrackerStats) {
-    if (tracker.announceState === 2 || tracker.announceState === 3) return "Working";
-    if (tracker.hasAnnounced as boolean) {
-        if (tracker.lastAnnounceSucceeded as boolean) return "Working";
-        if (tracker.lastAnnounceResult === "Success") return "Working";
-        return tracker.lastAnnounceResult;
-    }
-    return "";
-}
 
 interface TableFieldProps {
     entry: TrackerStats,

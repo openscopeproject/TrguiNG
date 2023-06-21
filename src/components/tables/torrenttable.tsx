@@ -18,8 +18,8 @@
 
 import "css/torrenttable.css";
 import React, { memo, useCallback, useContext, useMemo, useRef, useState } from "react";
-import type { ServerTorrentData, Torrent, TrackerStats } from "rpc/torrent";
-import { getTorrentError } from "rpc/torrent";
+import type { ServerTorrentData, Torrent } from "rpc/torrent";
+import { getTorrentError, getTorrentMainTracker, getTrackerStatus } from "rpc/torrent";
 import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
@@ -28,7 +28,6 @@ import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
 import type { TableSelectReducer } from "./common";
 import { EditableNameField, TransguiTable } from "./common";
-import { getTrackerAnnounceState } from "./trackertable";
 import { Badge, Box, Button, Kbd, Menu, Portal, Text } from "@mantine/core";
 import { ConfigContext, ServerConfigContext } from "config";
 import { StatusIconMap, Error as StatusIconError } from "components/statusicons";
@@ -103,7 +102,13 @@ const AllFields: readonly TableField[] = [
     { name: "peersGettingFromUs", label: "Peers", component: StringField },
     { name: "eta", label: "ETA", component: EtaField },
     { name: "uploadRatio", label: "Ratio", component: StringField },
-    { name: "trackerStats", label: "Tracker", component: TrackerField },
+    {
+        name: "trackerStats",
+        label: "Tracker",
+        component: TrackerField,
+        columnId: "tracker",
+        accessorFn: getTorrentMainTracker,
+    },
     {
         name: "trackerStats",
         label: "Tracker status",
@@ -170,14 +175,7 @@ export function EtaField(props: TableFieldProps) {
 }
 
 export function TrackerField(props: TableFieldProps) {
-    const trackers = props.torrent.trackerStats;
-    return <div>{trackers.length > 0 ? trackers[0].host : "No tracker"}</div>;
-}
-
-function getTrackerStatus(torrent: Torrent): string {
-    const trackers = torrent.trackerStats as TrackerStats[];
-    if (torrent.status === Status.stopped || trackers.length === 0) return "";
-    return getTrackerAnnounceState(trackers[0]);
+    return <div>{getTorrentMainTracker(props.torrent)}</div>;
 }
 
 function TrackerStatusField(props: TableFieldProps) {

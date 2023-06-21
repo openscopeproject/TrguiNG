@@ -52,6 +52,22 @@ export function getTorrentError(t: Torrent): string {
     }
 }
 
+export function getTrackerAnnounceState(tracker: TrackerStats) {
+    if (tracker.announceState === 2 || tracker.announceState === 3) return "Working";
+    if (tracker.hasAnnounced as boolean) {
+        if (tracker.lastAnnounceSucceeded as boolean) return "Working";
+        if (tracker.lastAnnounceResult === "Success") return "Working";
+        return tracker.lastAnnounceResult;
+    }
+    return "";
+}
+
+export function getTrackerStatus(torrent: Torrent): string {
+    const trackers = torrent.trackerStats as TrackerStats[];
+    if (torrent.status === Status.stopped || trackers.length === 0) return "";
+    return getTrackerAnnounceState(trackers[0]);
+}
+
 export function getTorrentMainTracker(t: Torrent): string {
     if (t.trackerStats.length === 0) return "<No trackers>";
     const host = t.trackerStats[0].host as string;
