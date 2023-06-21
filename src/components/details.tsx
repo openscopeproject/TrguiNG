@@ -110,9 +110,9 @@ function TransferTable(props: { torrent: Torrent }) {
         <Table mb="sm">
             <tbody>
                 <tr>
-                    <td>Status:</td><td><StatusField {...props} fieldName="status" /></td>
-                    <td>Error:</td><td>{getTorrentError(props.torrent)}</td>
-                    <td>Remaining:</td><td><EtaField {...props} fieldName="eta" />{` (${bytesToHumanReadableStr(props.torrent.leftUntilDone)})`}</td>
+                    <td style={{ width: "10em" }}>Status:</td><td><StatusField {...props} fieldName="status" /></td>
+                    <td style={{ width: "10em" }}>Error:</td><td>{getTorrentError(props.torrent)}</td>
+                    <td style={{ width: "10em" }}>Remaining:</td><td><EtaField {...props} fieldName="eta" />{` (${bytesToHumanReadableStr(props.torrent.leftUntilDone)})`}</td>
                 </tr>
                 <tr>
                     <td>Downloaded:</td><td>{bytesToHumanReadableStr(props.torrent.downloadedEver)}</td>
@@ -194,9 +194,9 @@ function TorrentDetails(props: { torrent: Torrent }) {
         <Table mb="sm">
             <tbody>
                 <tr>
-                    <td>Full path:</td>
+                    <td style={{ width: "10em" }}>Full path:</td>
                     <td><TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={fullPath} /></td>
-                    <td>Created:</td>
+                    <td style={{ width: "10em" }}>Created:</td>
                     <td>
                         <span>
                             {props.torrent.dateCreated > 0
@@ -311,16 +311,23 @@ function Stats(props: { stats: SessionStatEntry }) {
     return <Table mb="sm">
         <tbody>
             <tr>
-                <td>Downloaded</td><td>{bytesToHumanReadableStr(props.stats.downloadedBytes)}</td>
-                <td>Uploaded</td><td>{bytesToHumanReadableStr(props.stats.uploadedBytes)}</td>
+                <td style={{ width: "10em" }}>Downloaded</td>
+                <td>{bytesToHumanReadableStr(props.stats.downloadedBytes)}</td>
             </tr>
             <tr>
-                <td>Files added</td><td>{props.stats.filesAdded}</td>
-                <td>Active</td><td>{secondsToHumanReadableStr(props.stats.secondsActive)}</td>
+                <td>Uploaded</td>
+                <td>{bytesToHumanReadableStr(props.stats.uploadedBytes)}</td>
             </tr>
-            {props.stats.sessionCount > 1
-                ? <tr><td>Sesssion count</td><td>{props.stats.sessionCount}</td><td></td><td></td></tr>
-                : <></>}
+            <tr>
+                <td>Files added</td>
+                <td>{props.stats.filesAdded}</td>
+            </tr>
+            <tr>
+                <td>Active</td>
+                <td>{secondsToHumanReadableStr(props.stats.secondsActive)}</td>
+            </tr>
+            {props.stats.sessionCount > 1 &&
+                <tr><td>Sesssion count</td><td>{props.stats.sessionCount}</td></tr>}
         </tbody>
     </Table>;
 }

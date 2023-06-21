@@ -65,7 +65,7 @@ export function secondsToHumanReadableStr(value: number): string {
 }
 
 export function timestampToDateString(value: number): string {
-    return new Date(value * 1000).toLocaleString();
+    return value === 0 ? "-" : new Date(value * 1000).toLocaleString();
 }
 
 export function ensurePathDelimiter(path: string): string {
