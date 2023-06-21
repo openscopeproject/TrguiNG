@@ -158,7 +158,11 @@ export function AddMagnet(props: AddCommonModalProps) {
     );
 }
 
-function useFilesInput(filesInputRef: React.RefObject<HTMLInputElement>, close: () => void, setTorrentData: React.Dispatch<React.SetStateAction<TorrentFileData | undefined>>) {
+function useFilesInput(
+    filesInputRef: React.RefObject<HTMLInputElement>,
+    close: () => void,
+    setTorrentData: React.Dispatch<TorrentFileData | undefined>,
+) {
     useEffect(() => {
         const input = filesInputRef.current;
         const fileInputListener = (e: Event) => {
@@ -169,7 +173,7 @@ function useFilesInput(filesInputRef: React.RefObject<HTMLInputElement>, close: 
                 const [file] = element.files;
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                    const b64 = (reader.result as string).match(/data:.*\/.*;base64,(.*)/)?.[1];
+                    const b64 = (reader.result as string).match(/data:[^/]*\/[^;]*;base64,(.*)/)?.[1];
                     if (b64 === undefined) {
                         notifications.show({
                             title: "Error reading file",
@@ -225,11 +229,11 @@ export function AddTorrent(props: AddCommonModalProps) {
     const [existingTorrent, setExistingTorrent] = useState<Torrent>();
 
     useEffect(() => {
-        if (props.opened) {
+        if (torrentData !== undefined) {
             const torrent = props.serverData.current?.torrents.find((t) => t.hashString === torrentData?.hash);
             setExistingTorrent(torrent);
         }
-    }, [props.opened, props.serverData, props.serverName, torrentData]);
+    }, [props.serverData, props.serverName, torrentData]);
 
     useEffect(() => {
         if (!TAURI && props.opened) {
