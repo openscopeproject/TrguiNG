@@ -78,7 +78,8 @@ function SpeedLimit(props: { torrent: Torrent, field: "download" | "upload" }) {
 function Seeds(props: { torrent: Torrent }) {
     const sending = props.torrent.peersSendingToUs as number;
     let totalSeeds = props.torrent.trackerStats.length > 0 ? 0 : -1;
-    props.torrent.trackerStats.forEach((tracker: any) => { totalSeeds += tracker.seederCount as number; });
+    props.torrent.trackerStats.forEach(
+        (tracker: TrackerStats) => { totalSeeds += Math.max(0, tracker.seederCount as number); });
     if (totalSeeds < 0) {
         return <>{sending}</>;
     } else {
@@ -89,7 +90,8 @@ function Seeds(props: { torrent: Torrent }) {
 function Peers(props: { torrent: Torrent }) {
     const getting = props.torrent.peersGettingFromUs as number;
     let totalLeechers = props.torrent.trackerStats.length > 0 ? 0 : -1;
-    props.torrent.trackerStats.forEach((tracker: any) => { totalLeechers += tracker.leecherCount as number; });
+    props.torrent.trackerStats.forEach(
+        (tracker: TrackerStats) => { totalLeechers += Math.max(0, tracker.leecherCount as number); });
     if (totalLeechers < 0) {
         return <>{getting}</>;
     } else {

@@ -18,7 +18,7 @@
 
 import "css/torrenttable.css";
 import React, { memo, useCallback, useContext, useMemo, useRef, useState } from "react";
-import type { ServerTorrentData, Torrent } from "rpc/torrent";
+import type { ServerTorrentData, Torrent, TrackerStats } from "rpc/torrent";
 import { getTorrentError, getTorrentMainTracker, getTrackerStatus } from "rpc/torrent";
 import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
@@ -98,10 +98,10 @@ const AllFields: readonly TableField[] = [
     { name: "rateUpload", label: "Up speed", component: ByteRateField },
     { name: "status", label: "Status", component: StatusField },
     { name: "addedDate", label: "Added on", component: DateField },
-    { name: "peersSendingToUs", label: "Seeds", component: StringField },
-    { name: "peersGettingFromUs", label: "Peers", component: StringField },
+    { name: "peersSendingToUs", label: "Seeds", component: SeedsField },
+    { name: "peersGettingFromUs", label: "Peers", component: PeersField },
     { name: "eta", label: "ETA", component: EtaField },
-    { name: "uploadRatio", label: "Ratio", component: StringField },
+    { name: "uploadRatio", label: "Ratio", component: NumberField },
     {
         name: "trackerStats",
         label: "Tracker",
@@ -163,6 +163,38 @@ function StringField(props: TableFieldProps) {
     return (
         <div>
             {props.torrent[props.fieldName]}
+        </div>
+    );
+}
+
+function NumberField(props: TableFieldProps) {
+    return (
+        <div style={{ width: "100%", textAlign: "right" }}>
+            {props.torrent[props.fieldName]}
+        </div>
+    );
+}
+
+function SeedsField(props: TableFieldProps) {
+    const sending = props.torrent.peersSendingToUs as number;
+    let totalSeeds = props.torrent.trackerStats.length > 0 ? 0 : -1;
+    props.torrent.trackerStats.forEach(
+        (tracker: TrackerStats) => { totalSeeds += Math.max(0, tracker.seederCount as number); });
+    return (
+        <div style={{ width: "100%", textAlign: "right" }}>
+            {totalSeeds < 0 ? `${sending}` : `${sending} / ${totalSeeds}`}
+        </div>
+    );
+}
+
+function PeersField(props: TableFieldProps) {
+    const getting = props.torrent.peersGettingFromUs as number;
+    let totalLeechers = props.torrent.trackerStats.length > 0 ? 0 : -1;
+    props.torrent.trackerStats.forEach(
+        (tracker: TrackerStats) => { totalLeechers += Math.max(0, tracker.leecherCount as number); });
+    return (
+        <div style={{ width: "100%", textAlign: "right" }}>
+            {totalLeechers < 0 ? `${getting}` : `${getting} / ${totalLeechers}`}
         </div>
     );
 }
