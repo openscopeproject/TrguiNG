@@ -84,6 +84,6 @@ img {
 }
 
 .selected {
-    background-color: royalblue;
+    background-color: rgb(50, 80, 170);
     color: white;
 }

@@ -28,7 +28,7 @@ export function All() {
 
 export function Downloading() {
     const theme = useMantineTheme();
-    return <Icon.CaretDownSquareFill size="1rem" fill={theme.colors.indigo[5]} />;
+    return <Icon.CaretDownSquareFill size="1rem" fill={theme.colors.indigo[4]} />;
 }
 
 export function Completed() {
