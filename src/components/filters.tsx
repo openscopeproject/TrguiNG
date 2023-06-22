@@ -301,10 +301,13 @@ export function Filters(props: FiltersProps) {
     const [sections, setSections] = useState(config.values.interface.filterSections);
     const [sectionsMap, setSectionsMap] = useState(getSectionsMap(sections));
 
+    const { setCurrentFilters } = props;
+
     useEffect(() => {
         config.values.interface.filterSections = sections;
         setSectionsMap(getSectionsMap(sections));
-    }, [config, sections]);
+        setCurrentFilters({ verb: "set", filter: { id: "", filter: DefaultFilter } });
+    }, [config, sections, setCurrentFilters]);
 
     const [info, setInfo, handler] = useContextMenu();
 
