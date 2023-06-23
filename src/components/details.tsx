@@ -23,7 +23,7 @@ import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr
 import { FileTreeTable, useUnwantedFiles } from "./tables/filetreetable";
 import { PiecesCanvas } from "./piecescanvas";
 import { ProgressBar } from "./progressbar";
-import { DateField, EtaField, LabelsField, StatusField, TrackerField } from "./tables/torrenttable";
+import { DateField, LabelsField, StatusField, TrackerField } from "./tables/torrenttable";
 import { TrackersTable } from "./tables/trackertable";
 import { PeersTable } from "./tables/peerstable";
 import type { SessionStatEntry } from "rpc/transmission";
@@ -114,7 +114,7 @@ function TransferTable(props: { torrent: Torrent }) {
                 <tr>
                     <td style={{ width: "10em" }}>Status:</td><td><StatusField {...props} fieldName="status" /></td>
                     <td style={{ width: "10em" }}>Error:</td><td>{getTorrentError(props.torrent)}</td>
-                    <td style={{ width: "10em" }}>Remaining:</td><td><EtaField {...props} fieldName="eta" />{` (${bytesToHumanReadableStr(props.torrent.leftUntilDone)})`}</td>
+                    <td style={{ width: "10em" }}>Remaining:</td><td>{`${secondsToHumanReadableStr(props.torrent.eta)} (${bytesToHumanReadableStr(props.torrent.leftUntilDone)})`}</td>
                 </tr>
                 <tr>
                     <td>Downloaded:</td><td>{bytesToHumanReadableStr(props.torrent.downloadedEver)}</td>
