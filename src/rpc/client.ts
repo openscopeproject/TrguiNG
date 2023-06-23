@@ -106,7 +106,7 @@ export class TransmissionClient {
     async _sendRpc(data: Record<string, any>) {
         const url = this.url === ""
             ? "../rpc"
-            : `http://127.123.45.67:44321/${data.method === "torrent-get" ? "torrentget" : "post"}?url=${this.url}`;
+            : `http://127.0.0.1:44321/${data.method === "torrent-get" ? "torrentget" : "post"}?url=${this.url}`;
         const body = JSON.stringify(data);
         let response = await fetch(
             url, { method: "POST", redirect: "manual", headers: this.headers, body });

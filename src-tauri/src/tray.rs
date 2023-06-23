@@ -39,6 +39,7 @@ pub fn on_tray_event(app: &AppHandle, event: SystemTrayEvent) {
     let main_window = app.get_window("main");
     match event {
         SystemTrayEvent::LeftClick { .. } => {
+            #[cfg(not(target_os = "macos"))]
             toggle_main_window(app.clone(), main_window);
         }
         SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
