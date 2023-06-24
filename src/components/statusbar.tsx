@@ -63,6 +63,10 @@ export function Statusbar({ session, filteredTorrents, selectedTorrents, hostnam
         bytesToHumanReadableStr(filteredTorrents.reduce((p, t) => p + (t.sizeWhenDone as number), 0)),
     ], [filteredTorrents]);
 
+    useEffect(() => {
+        document.title = `TrguiNG ↓${downRate}/s ↑${upRate}/s`;
+    }, [downRate, upRate]);
+
     const [sizeSelected, sizeDone, sizeLeft] = useMemo(() => {
         const selected = filteredTorrents.filter((t) => selectedTorrents.has(t.id));
 

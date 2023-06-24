@@ -21,6 +21,7 @@ import path from "path";
 import { readFile, writeFile, mkdir } from "fs/promises";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
+import CopyPlugin from "copy-webpack-plugin";
 import * as url from "url";
 
 export const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
@@ -64,6 +65,11 @@ export default (mode) => ({
         }),
         new MiniCssExtractPlugin({
             filename: "[name].bundle.css",
+        }),
+        new CopyPlugin({
+            patterns: [
+                { from: "./src-tauri/icons/32x32.png", to: "favicon.png" },
+            ],
         }),
     ],
     output: {
