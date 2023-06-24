@@ -207,7 +207,8 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
             onTabChange={(value) => { tabSwitch(Number(value)); }}
             styles={(theme) => ({
                 tab: {
-                    minWidth: "12rem",
+                    flexBasis: "12rem",
+                    flexShrink: 1,
                 },
                 tabLabel: {
                     marginInline: "auto",
@@ -218,6 +219,9 @@ const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function Ser
                 },
                 tabRightSection: {
                     padding: "0.2rem",
+                },
+                tabsList: {
+                    flexWrap: "nowrap",
                 },
             })}
         >
