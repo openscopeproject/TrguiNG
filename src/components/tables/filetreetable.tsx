@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useContext, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Row, ColumnDef, CellContext } from "@tanstack/react-table";
 import type { CachedFileTree, FileDirEntry } from "../../cachedfiletree";
 import { isDirEntry } from "../../cachedfiletree";
@@ -31,6 +31,7 @@ import { refreshFileTree, useMutateTorrent, useMutateTorrentPath } from "queries
 import { notifications } from "@mantine/notifications";
 import type { ContextMenuInfo } from "components/contextmenu";
 import { ContextMenu, useContextMenu } from "components/contextmenu";
+import { useHotkeysContext } from "hotkeys";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 type FileDirEntryKey = keyof FileDirEntry;
@@ -157,6 +158,31 @@ export function useUnwantedFiles(ft: CachedFileTree, setUpdating: boolean): Entr
     return changeHandler;
 }
 
+function useSelected(props: FileTreeTableProps) {
+    const [selected, setSelected] = useState<string[]>([]);
+
+    const selectAll = useRef(() => { });
+    const hk = useHotkeysContext();
+
+    selectAll.current = useCallback(() => {
+        const ids = props.data.map((entry) => entry.fullpath);
+        props.fileTree.selectAction({ verb: "set", ids });
+        setSelected(props.fileTree.getSelected());
+    }, [props.data, props.fileTree]);
+
+    useEffect(() => {
+        return () => { hk.handlers.selectAll = () => { }; };
+    }, [hk]);
+
+    const selectedReducer = useCallback((action: { verb: "add" | "set" | "toggle", ids: string[] }) => {
+        props.fileTree.selectAction(action);
+        setSelected(props.fileTree.getSelected());
+        hk.handlers.selectAll = () => { selectAll.current?.(); };
+    }, [props.fileTree, hk]);
+
+    return { selected, selectedReducer };
+}
+
 export function FileTreeTable(props: FileTreeTableProps) {
     const serverConfig = useContext(ServerConfigContext);
     const onCheckboxChange = props.onCheckboxChange;
@@ -196,12 +222,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
         return [];
     }, []);
 
-    const [selected, setSelected] = useState<string[]>([]);
-
-    const selectedReducer = useCallback((action: { verb: "add" | "set" | "toggle", ids: string[] }) => {
-        props.fileTree.selectAction(action);
-        setSelected(props.fileTree.getSelected());
-    }, [props.fileTree]);
+    const { selected, selectedReducer } = useSelected(props);
 
     const onRowDoubleClick = useCallback((row: FileDirEntry) => {
         if (props.downloadDir === undefined || props.downloadDir === "") return;

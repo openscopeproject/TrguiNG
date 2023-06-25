@@ -28,7 +28,8 @@ import { notifications } from "@mantine/notifications";
 import type { ServerTorrentData } from "rpc/torrent";
 import type { TorrentActionMethodsType } from "rpc/client";
 import type { ModalCallbacks } from "./modals/servermodals";
-import { useHotkeys } from "@mantine/hooks";
+import type { HotkeyHandlers } from "hotkeys";
+import { useHotkeysContext } from "hotkeys";
 
 interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {
     depressed?: boolean,
@@ -141,18 +142,14 @@ function useButtonHandlers(
         setAltSpeedMode(altSpeedMode !== true);
     }, [altSpeedMode, sessionMutation, setAltSpeedMode]);
 
-    useHotkeys([
-        ["F3", handlers.start],
-        ["F4", handlers.pause],
-        ["delete", handlers.remove],
-        ["F6", handlers.move],
-        ["F7", handlers.setLabels],
-        ["mod + H", handlers.setPriorityHigh],
-        ["mod + N", handlers.setPriorityNormal],
-        ["mod + L", handlers.setPriorityLow],
-        ["F8", toggleAltSpeedMode],
-        ["F9", handlers.daemonSettings],
-    ]);
+    const hk = useHotkeysContext();
+
+    useEffect(() => {
+        hk.handlers = { ...hk.handlers, ...handlers };
+        return () => {
+            Object.keys(handlers).forEach((k) => { hk.handlers[k as keyof HotkeyHandlers] = () => { }; });
+        };
+    }, [hk, handlers]);
 
     return {
         ...handlers,
@@ -184,9 +181,12 @@ function Toolbar(props: ToolbarProps) {
 
     const searchRef = useRef<HTMLInputElement>(null);
 
-    useHotkeys([
-        ["mod + F", () => searchRef.current?.focus()],
-    ]);
+    const hk = useHotkeysContext();
+
+    useEffect(() => {
+        hk.handlers.focusSearch = () => searchRef.current?.focus();
+        return () => { hk.handlers.focusSearch = () => { }; };
+    }, [hk]);
 
     return (
         <Flex w="100%" align="stretch">

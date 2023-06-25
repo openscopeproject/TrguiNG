@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Button, Checkbox, Divider, Group, Modal, Text } from "@mantine/core";
+import { Button, Checkbox, Divider, Group, Text } from "@mantine/core";
 import type { ActionModalState } from "./common";
-import { TorrentsNames } from "./common";
+import { HkModal, TorrentsNames } from "./common";
 import React, { useCallback, useState } from "react";
 import { useRemoveTorrents } from "queries";
 import { notifications } from "@mantine/notifications";
@@ -48,7 +48,7 @@ export function RemoveModal(props: ActionModalState) {
     }, [mutation, props, deleteData]);
 
     return (
-        <Modal opened={props.opened} onClose={props.close} title="Remove torrents" centered size="lg">
+        <HkModal opened={props.opened} onClose={props.close} title="Remove torrents" centered size="lg">
             <Divider my="sm" />
             <Text mb="md">Are you sure you want to remove following torrents?</Text>
             <TorrentsNames serverData={props.serverData} />
@@ -62,6 +62,6 @@ export function RemoveModal(props: ActionModalState) {
                 <Button onClick={onDelete} variant="filled" color="red">{deleteData ? "Delete" : "Remove"}</Button>
                 <Button onClick={props.close} variant="light">Cancel</Button>
             </Group>
-        </Modal>
+        </HkModal>
     );
 }

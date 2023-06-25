@@ -16,8 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Anchor, Box, Divider, Flex, Grid, Modal, Text, Title } from "@mantine/core";
+import { Anchor, Box, Divider, Flex, Grid, Text, Title } from "@mantine/core";
 import type { ModalState } from "./common";
+import { HkModal } from "./common";
 import appVersionJson from "build/version.json";
 import React, { useEffect, useState } from "react";
 import ReactLogo from "svg/reactjs.svg";
@@ -51,7 +52,7 @@ export function VersionModal({ opened, close }: ModalState) {
     }, [opened, frontend]);
 
     return (
-        <Modal opened={opened} onClose={close} size="lg" centered p="lg">
+        <HkModal opened={opened} onClose={close} size="lg" centered p="lg">
             <Title order={2} mb="lg">TrguiNG</Title>
             <Text>
                 Remote interface for&nbsp;
@@ -81,6 +82,6 @@ export function VersionModal({ opened, close }: ModalState) {
                 <Anchor href="https://react.dev/" target="_blank" rel="noreferrer"><img src={ReactLogo} /></Anchor>
                 <Anchor href="https://tauri.app/" target="_blank" rel="noreferrer"><img src={TauriLogo} /></Anchor>
             </Flex>
-        </Modal>
+        </HkModal>
     );
 }

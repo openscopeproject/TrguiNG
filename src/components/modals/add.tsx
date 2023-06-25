@@ -16,10 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Button, Checkbox, Divider, Flex, Group, Modal, Overlay, SegmentedControl, Text, TextInput, useMantineTheme } from "@mantine/core";
+import { Box, Button, Checkbox, Divider, Flex, Group, Overlay, SegmentedControl, Text, TextInput, useMantineTheme } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ActionModalState, LabelsData, LocationData } from "./common";
-import { TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
+import { HkModal, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
 import type { PriorityNumberType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings } from "rpc/transmission";
 import type { Torrent } from "rpc/torrent";
@@ -142,7 +142,7 @@ export function AddMagnet(props: AddCommonModalProps) {
     }, [mutation, magnet, common.location, common.labels, common.start, common.priority, close]);
 
     return (
-        <Modal opened={props.opened} onClose={close} title="Add torrent by magnet link or URL" centered size="lg">
+        <HkModal opened={props.opened} onClose={close} title="Add torrent by magnet link or URL" centered size="lg">
             <Divider my="sm" />
             <TextInput
                 label="Link" w="100%"
@@ -154,7 +154,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                 <Button onClick={onAdd} variant="filled">Add</Button>
                 <Button onClick={props.close} variant="light">Cancel</Button>
             </Group>
-        </Modal>
+        </HkModal>
     );
 }
 
@@ -353,7 +353,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             style={{ position: "absolute", top: "-20rem", zIndex: -1 }} />}
         {torrentData === undefined
             ? <></>
-            : <Modal opened={torrentData !== undefined} onClose={modalClose} title="Add torrent" centered size="lg">
+            : <HkModal opened={torrentData !== undefined} onClose={modalClose} title="Add torrent" centered size="lg">
                 <Divider my="sm" />
                 {TAURI && <Text>Name: {torrentData.name}</Text>}
                 <div style={{ position: "relative" }}>
@@ -382,6 +382,6 @@ export function AddTorrent(props: AddCommonModalProps) {
                     <Button onClick={onAdd} variant="filled" disabled={torrentExists}>Add</Button>
                     <Button onClick={modalClose} variant="light">Cancel</Button>
                 </Group>
-            </Modal>}
+            </HkModal>}
     </>);
 }

@@ -26,11 +26,24 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from "re
 import { pathMapFromServer, pathMapToServer } from "util";
 import * as Icon from "react-bootstrap-icons";
 import type { ServerTorrentData } from "rpc/torrent";
+import { useHotkeysContext } from "hotkeys";
 const { TAURI, dialogOpen } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface ModalState {
     opened: boolean,
     close: () => void,
+}
+
+export function HkModal(props: ModalProps) {
+    const hk = useHotkeysContext();
+
+    useEffect(() => {
+        hk.active = !props.opened;
+
+        return () => { hk.active = true; };
+    }, [props.opened, hk]);
+
+    return <Modal {...props}>{props.children}</Modal>;
 }
 
 export interface ActionModalState extends ModalState {
@@ -45,7 +58,7 @@ interface SaveCancelModalProps extends ModalProps {
 
 export function SaveCancelModal({ onSave, onClose, children, saveLoading, ...other }: SaveCancelModalProps) {
     return (
-        <Modal onClose={onClose} {...other}>
+        <HkModal onClose={onClose} {...other}>
             <Divider my="sm" />
             {children}
             <Divider my="sm" />
@@ -55,7 +68,7 @@ export function SaveCancelModal({ onSave, onClose, children, saveLoading, ...oth
                 </Button>
                 <Button onClick={onClose} variant="light">Cancel</Button>
             </Group>
-        </Modal>
+        </HkModal>
     );
 }
 

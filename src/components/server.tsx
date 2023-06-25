@@ -34,27 +34,7 @@ import { useSession, useTorrentList } from "queries";
 import type { TorrentFieldsType } from "rpc/transmission";
 import type { ModalCallbacks } from "./modals/servermodals";
 import { MemoizedServerModals } from "./modals/servermodals";
-
-function selectedTorrentsReducer(
-    selected: Set<number>,
-    action: { verb: "add" | "set" | "toggle" | "filter", ids: string[] },
-) {
-    let result = new Set(selected);
-    const ids = action.ids.map((t) => +t);
-    if (action.verb === "set") {
-        result.clear();
-        for (const id of ids) result.add(id);
-    } else if (action.verb === "add") {
-        for (const id of ids) result.add(id);
-    } else if (action.verb === "filter") {
-        result = new Set(Array.from(result).filter((t) => ids.includes(t)));
-    } else if (action.verb === "toggle") {
-        for (const id of ids) {
-            if (!result.delete(id)) result.add(id);
-        }
-    }
-    return result;
-}
+import { useAppHotkeys, useHotkeysContext } from "hotkeys";
 
 function SplitLayout({ left, right, bottom }: { left: React.ReactNode, right: React.ReactNode, bottom: React.ReactNode }) {
     const config = useContext(ConfigContext);
@@ -111,7 +91,44 @@ function currentFiltersReducer(
     return newFilters;
 }
 
+function useSelected(torrents: Torrent[] | undefined) {
+    const hk = useHotkeysContext();
+    const selectAll = useRef(() => { });
+
+    const [selectedTorrents, selectedReducer] = useReducer((
+        selected: Set<number>,
+        action: { verb: "add" | "set" | "toggle" | "filter", ids: string[] },
+    ) => {
+        let result = new Set(selected);
+        const ids = action.ids.map((t) => +t);
+        if (action.verb === "set") {
+            result.clear();
+            for (const id of ids) result.add(id);
+        } else if (action.verb === "add") {
+            for (const id of ids) result.add(id);
+        } else if (action.verb === "filter") {
+            result = new Set(Array.from(result).filter((t) => ids.includes(t)));
+        } else if (action.verb === "toggle") {
+            for (const id of ids) {
+                if (!result.delete(id)) result.add(id);
+            }
+        }
+
+        if (action.verb !== "filter") hk.handlers.selectAll = () => { selectAll.current?.(); };
+
+        return result;
+    }, new Set<number>());
+
+    useEffect(() => {
+        return () => { hk.handlers.selectAll = () => { }; };
+    }, [hk]);
+
+    return { selectedTorrents, selectedReducer, selectAll };
+}
+
 export function Server({ hostname }: { hostname: string }) {
+    useAppHotkeys();
+
     const [currentFilters, setCurrentFilters] = useReducer(currentFiltersReducer, [{ id: "", filter: DefaultFilter }]);
 
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
@@ -141,9 +158,6 @@ export function Server({ hostname }: { hostname: string }) {
         (id: string) => { setCurrentTorrentInt(+id); },
         [setCurrentTorrentInt]);
 
-    const [selectedTorrents, selectedReducer] = useReducer(
-        selectedTorrentsReducer, new Set<number>());
-
     const [allLabels, allTrackers] = useMemo(() => {
         const labels = new Set<string>();
         torrents?.forEach((t) => t.labels?.forEach((l: string) => labels.add(l)));
@@ -154,7 +168,7 @@ export function Server({ hostname }: { hostname: string }) {
         return [Array.from(labels).sort(), Array.from(trackers).sort()];
     }, [torrents]);
 
-    const serverData = useServerTorrentData(torrents ?? [], selectedTorrents, currentTorrent, allLabels);
+    const { selectedTorrents, selectedReducer, selectAll } = useSelected(torrents);
 
     const [filteredTorrents, setFilteredTorrents] = useState<Torrent[]>([]);
     useEffect(() => {
@@ -168,7 +182,12 @@ export function Server({ hostname }: { hostname: string }) {
 
         selectedReducer({ verb: "filter", ids });
         setFilteredTorrents(filtered);
-    }, [torrents, currentFilters, searchFilter, currentTorrent]);
+    }, [torrents, currentFilters, searchFilter, currentTorrent, selectedReducer]);
+
+    selectAll.current = useCallback(() => {
+        const ids = filteredTorrents.map((t) => t.id) ?? [];
+        selectedReducer({ verb: "set", ids });
+    }, [filteredTorrents, selectedReducer]);
 
     const [scrollToRow, setScrollToRow] = useState<{ id: string }>();
 
@@ -180,6 +199,8 @@ export function Server({ hostname }: { hostname: string }) {
 
     const overlayVisible = sessionIsError || sessionIsLoading ||
         session?.["rpc-version"] === undefined || session["rpc-version"] < 15;
+
+    const serverData = useServerTorrentData(torrents ?? [], selectedTorrents, currentTorrent, allLabels);
 
     const serverConfig = useContext(ServerConfigContext);
 

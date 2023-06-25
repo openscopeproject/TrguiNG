@@ -16,10 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Button, Checkbox, Divider, Group, Modal, Text } from "@mantine/core";
+import { Button, Checkbox, Divider, Group, Text } from "@mantine/core";
 import React, { useCallback, useEffect, useState } from "react";
 import type { ActionModalState } from "./common";
-import { TorrentLocation, TorrentsNames, useTorrentLocation } from "./common";
+import { HkModal, TorrentLocation, TorrentsNames, useTorrentLocation } from "./common";
 import { useTorrentChangeDirectory } from "queries";
 import { notifications } from "@mantine/notifications";
 
@@ -63,7 +63,7 @@ export function MoveModal(props: ActionModalState) {
     }, [props.opened, setPath, calculateInitialLocation]);
 
     return (
-        <Modal opened={props.opened} onClose={props.close} title="Move torrents" centered size="lg">
+        <HkModal opened={props.opened} onClose={props.close} title="Move torrents" centered size="lg">
             <Divider my="sm" />
             <Text mb="md">Enter new location for</Text>
             <TorrentsNames serverData={props.serverData} />
@@ -78,6 +78,6 @@ export function MoveModal(props: ActionModalState) {
                 <Button onClick={onMove} variant="filled">Move</Button>
                 <Button onClick={props.close} variant="light">Cancel</Button>
             </Group>
-        </Modal>
+        </HkModal>
     );
 }
