@@ -109,7 +109,7 @@ function TrackerUpdate(props: { torrent: Torrent }) {
 function TransferTable(props: { torrent: Torrent }) {
     const shareRatio = `${props.torrent.uploadRatio as number} (${secondsToHumanReadableStr(props.torrent.secondsSeeding)})`;
     return (
-        <Table mb="sm">
+        <Table mb="sm" sx={{ maxWidth: "100em" }}>
             <tbody>
                 <tr>
                     <td style={{ width: "10em" }}>Status:</td><td><StatusField {...props} fieldName="status" /></td>
@@ -193,7 +193,7 @@ const readonlyInputStyles = (theme: MantineTheme) => ({
 function TorrentDetails(props: { torrent: Torrent }) {
     const fullPath = ensurePathDelimiter(props.torrent.downloadDir) + (props.torrent.name as string);
     return (
-        <Table mb="sm">
+        <Table mb="sm" sx={{ maxWidth: "100em" }}>
             <tbody>
                 <tr>
                     <td style={{ width: "10em" }}>Full path:</td>
@@ -310,7 +310,7 @@ function FileTreePane(props: { torrent: Torrent }) {
 }
 
 function Stats(props: { stats: SessionStatEntry }) {
-    return <Table mb="sm">
+    return <Table mb="sm" sx={{ maxWidth: "25em" }}>
         <tbody>
             <tr>
                 <td style={{ width: "10em" }}>Downloaded</td>

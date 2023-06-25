@@ -21,18 +21,22 @@ import { ActionIcon, useMantineColorScheme } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
 import React from "react";
 import { VersionModal } from "components/modals/version";
-import { useDisclosure } from "@mantine/hooks";
+import { useDisclosure, useHotkeys } from "@mantine/hooks";
 
 export function ColorSchemeToggle(props: { sz?: string, btn?: MantineNumberSize }) {
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
     const dark = colorScheme === "dark";
+
+    useHotkeys([
+        ["mod + U", () => { toggleColorScheme(); }],
+    ]);
 
     return (
         <ActionIcon
             variant="default"
             size={props.btn}
             onClick={() => { toggleColorScheme(); }}
-            title="Toggle color scheme"
+            title="Toggle color scheme (Ctrl + U)"
             my="auto"
         >
             {dark

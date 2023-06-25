@@ -49,12 +49,16 @@ interface ServerTabsRef {
 function FontSizeToggle() {
     const { toggle } = useFontSize();
 
+    useHotkeys([
+        ["mod + =", () => { toggle(); }],
+    ]);
+
     return (
         <ActionIcon
             variant="default"
             size="lg"
             onClick={() => { toggle(); }}
-            title="Toggle font size"
+            title="Toggle font size (Ctrl + =)"
             my="auto"
         >
             <Icon.Fonts size="1.1rem" />
@@ -84,12 +88,16 @@ function CreateTorrentButton() {
         void makeCreateTorrentView();
     }, []);
 
+    useHotkeys([
+        ["mod + T", onClick],
+    ]);
+
     return (
         <ActionIcon
             variant="default"
             size="lg"
             onClick={onClick}
-            title="Create new torrent file"
+            title="Create new torrent file (Ctrl + T)"
             my="auto"
         >
             <Icon.Stars size="1.1rem" />
