@@ -37,7 +37,6 @@ export class ClientManager {
     }
 
     close(server: string) {
-        if (this.clients.has(server)) return;
         this.clients.delete(server);
     }
 
