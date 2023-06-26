@@ -107,6 +107,8 @@ interface Settings {
         sashSizes: Record<SashName, [number, number]>,
         filterSections: SectionsVisibility<FilterSectionName>,
         statusBarSections: SectionsVisibility<StatusbarSectionName>,
+        showFiltersPanel: boolean,
+        showDetailsPanel: boolean,
     },
 }
 
@@ -147,6 +149,8 @@ const DefaultSettings: Settings = {
             section,
             visible: true,
         })),
+        showFiltersPanel: true,
+        showDetailsPanel: true,
     },
 };
 

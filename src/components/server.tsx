@@ -17,10 +17,8 @@
  */
 
 import "../css/custom.css";
-import type { CSSObject } from "@mantine/core";
 import { Box, Flex, Loader, Overlay, Title } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import Split from "react-split";
 import { ConfigContext, ServerConfigContext } from "../config";
 import type { Torrent } from "../rpc/torrent";
 import { getTorrentMainTracker, useServerTorrentData } from "../rpc/torrent";
@@ -35,49 +33,8 @@ import type { TorrentFieldsType } from "rpc/transmission";
 import type { ModalCallbacks } from "./modals/servermodals";
 import { MemoizedServerModals } from "./modals/servermodals";
 import { useAppHotkeys, useHotkeysContext } from "hotkeys";
-
-function SplitLayout({ left, right, bottom }: { left: React.ReactNode, right: React.ReactNode, bottom: React.ReactNode }) {
-    const config = useContext(ConfigContext);
-
-    const onVerticalDragEnd = useCallback((sizes: [number, number]) => {
-        config.setSashSizes("vertical", sizes);
-    }, [config]);
-    const onHorizontalDragEnd = useCallback((sizes: [number, number]) => {
-        config.setSashSizes("horizontal", sizes);
-    }, [config]);
-
-    return (
-        <Box sx={(theme): CSSObject => ({
-            flexGrow: 1,
-            "& .gutter": {
-                backgroundColor: theme.colorScheme === "dark" ? theme.colors.gray[7] : theme.colors.gray[3],
-            },
-        })
-        } >
-            <Split
-                direction="vertical"
-                sizes={config.getSashSizes("vertical")}
-                snapOffset={0}
-                gutterSize={6}
-                className="split-vertical"
-                onDragEnd={onVerticalDragEnd}
-            >
-                <Split
-                    direction="horizontal"
-                    sizes={config.getSashSizes("horizontal")}
-                    snapOffset={0}
-                    gutterSize={6}
-                    className="split-horizontal"
-                    onDragEnd={onHorizontalDragEnd}
-                >
-                    {left}
-                    {right}
-                </Split>
-                {bottom}
-            </Split>
-        </ Box>
-    );
-}
+import { SplitLayout } from "./splitlayout";
+import { useDisclosure } from "@mantine/hooks";
 
 function currentFiltersReducer(
     oldFilters: TorrentFilter[],
@@ -202,7 +159,16 @@ export function Server({ hostname }: { hostname: string }) {
 
     const serverData = useServerTorrentData(torrents ?? [], selectedTorrents, currentTorrent, allLabels);
 
+    const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
+
+    const [showFiltersPanel, { toggle: toggleFiltersPanel }] = useDisclosure(config.values.interface.showFiltersPanel);
+    const [showDetailsPanel, { toggle: toggleDetailsPanel }] = useDisclosure(config.values.interface.showDetailsPanel);
+
+    useEffect(() => {
+        config.values.interface.showFiltersPanel = showFiltersPanel;
+        config.values.interface.showDetailsPanel = showDetailsPanel;
+    }, [config, showFiltersPanel, showDetailsPanel]);
 
     return (
         <Flex direction="column" w="100%" h="100%" sx={{ position: "relative" }}>
@@ -227,11 +193,13 @@ export function Server({ hostname }: { hostname: string }) {
                     modals={modals}
                     serverData={serverData}
                     altSpeedMode={session?.["alt-speed-enabled"] ?? false}
+                    toggleFiltersPanel={toggleFiltersPanel}
+                    toggleDetailsPanel={toggleDetailsPanel}
                 />
             </Box>
-            <SplitLayout
-                left={
-                    <div className="scrollable">
+            <SplitLayout key={`split-${showFiltersPanel ? "filter" : "nofilter"}-${showDetailsPanel ? "details" : "nodetails"}`}
+                left={showFiltersPanel
+                    ? <div className="scrollable">
                         <Filters
                             torrents={torrents ?? []}
                             allLabels={allLabels}
@@ -239,7 +207,7 @@ export function Server({ hostname }: { hostname: string }) {
                             currentFilters={currentFilters}
                             setCurrentFilters={setCurrentFilters} />
                     </div>
-                }
+                    : undefined}
                 right={
                     <TorrentTable
                         serverData={serverData}
@@ -251,9 +219,9 @@ export function Server({ hostname }: { hostname: string }) {
                         onColumnVisibilityChange={setTableRequiredFields}
                         scrollToRow={scrollToRow} />
                 }
-                bottom={
-                    <MemoizedDetails torrentId={currentTorrent} updates={updates} />
-                }
+                bottom={showDetailsPanel
+                    ? <MemoizedDetails torrentId={currentTorrent} updates={updates} />
+                    : undefined}
             />
             <Box px="xs" sx={(theme) => ({ borderTop: "1px solid", borderColor: theme.colors.dark[3] })}>
                 <Statusbar {...{

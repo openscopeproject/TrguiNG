@@ -30,6 +30,7 @@ import type { TorrentActionMethodsType } from "rpc/client";
 import type { ModalCallbacks } from "./modals/servermodals";
 import type { HotkeyHandlers } from "hotkeys";
 import { useHotkeysContext } from "hotkeys";
+import { useHotkeys } from "@mantine/hooks";
 
 interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {
     depressed?: boolean,
@@ -39,13 +40,16 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(function
     { children, depressed, ...other }: ToolbarButtonProps, ref,
 ) {
     return (
-        <Button variant="light" color="gray" compact h="2.5rem" {...other} ref={ref}
+        <Button variant="light" compact h="2.5rem" {...other} ref={ref}
             styles={(theme: MantineTheme) => ({
                 root: {
                     backgroundColor: theme.colorScheme === "dark"
                         ? theme.colors.gray[depressed === true ? 8 : 9]
                         : theme.colors.gray[depressed === true ? 3 : 1],
                     transform: depressed === true ? "scale(-1, 1)" : "none",
+                    color: theme.colorScheme === "dark"
+                        ? theme.colors.gray[3]
+                        : theme.colors.gray[8],
                 },
             })}
         >
@@ -59,6 +63,8 @@ interface ToolbarProps {
     modals: React.RefObject<ModalCallbacks>,
     serverData: React.MutableRefObject<ServerTorrentData>,
     altSpeedMode: boolean,
+    toggleFiltersPanel: () => void,
+    toggleDetailsPanel: () => void,
 }
 
 function useButtonHandlers(
@@ -188,6 +194,11 @@ function Toolbar(props: ToolbarProps) {
         return () => { hk.handlers.focusSearch = () => { }; };
     }, [hk]);
 
+    useHotkeys([
+        ["mod + O", props.toggleFiltersPanel],
+        ["mod + I", props.toggleDetailsPanel],
+    ]);
+
     return (
         <Flex w="100%" align="stretch">
             <Button.Group mx="sm">
@@ -284,6 +295,25 @@ function Toolbar(props: ToolbarProps) {
                 onInput={onSearchInput}
                 styles={{ root: { flexGrow: 1 }, input: { height: "auto" } }}
             />
+
+            <Menu shadow="md" width="12rem" withinPortal middlewares={{ shift: true, flip: true }}>
+                <Menu.Target>
+                    <ToolbarButton title="Layout">
+                        <Icon.Grid1x2Fill size="1.5rem" style={{ transform: "rotate(-90deg)" }} />
+                    </ToolbarButton>
+                </Menu.Target>
+
+                <Menu.Dropdown>
+                    <Menu.Item
+                        onClick={props.toggleFiltersPanel} rightSection={<Kbd>Ctrl O</Kbd>}>
+                        Toggle filters
+                    </Menu.Item>
+                    <Menu.Item
+                        onClick={props.toggleDetailsPanel} rightSection={<Kbd>Ctrl I</Kbd>}>
+                        Toggle details
+                    </Menu.Item>
+                </Menu.Dropdown>
+            </Menu>
 
             <ToolbarButton
                 title="Polling intervals and server settings (F9)"
