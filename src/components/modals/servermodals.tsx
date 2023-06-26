@@ -83,15 +83,28 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
 
     const [addQueue, setAddQueue] = useState<string[]>([]);
 
+    const enqueue = useCallback((paths: string[]) => {
+        setAddQueue([...addQueue, ...paths]);
+        void appWindow.show();
+        void appWindow.unminimize();
+        void appWindow.setFocus();
+        void appWindow.emit("window-shown");
+    }, [addQueue]);
+
+    useEffect(() => {
+        const listenResult = appWindow.listen<string[]>("tauri://file-drop", (event) => {
+            const files = event.payload.filter((path) => path.toLowerCase().endsWith(".torrent"));
+            if (files.length > 0) enqueue(files);
+        });
+
+        return () => { void listenResult.then((unlisten) => { unlisten(); }); };
+    }, [enqueue]);
+
     useEffect(() => {
         const listenResult = appWindow.listen<string>("app-arg", (event) => {
             const args = JSON.parse(event.payload) as string[];
             console.log("Got app-arg:", args);
-            setAddQueue([...addQueue, ...args]);
-            void appWindow.show();
-            void appWindow.unminimize();
-            void appWindow.setFocus();
-            void appWindow.emit("window-shown");
+            enqueue(args);
         }).then((unlisten) => {
             void appWindow.emit("listener-start", {});
             return unlisten;
@@ -100,7 +113,7 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
         return () => {
             void listenResult.then((unlisten) => { unlisten(); });
         };
-    }, [addQueue]);
+    }, [enqueue]);
 
     useEffect(() => {
         if (addQueue.length > 0 && !showAddMagnetModal && !showAddTorrentModal) {
