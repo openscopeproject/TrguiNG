@@ -110,8 +110,11 @@ export function AddMagnet(props: AddCommonModalProps) {
     const [magnet, setMagnet] = useState<string>("");
 
     useEffect(() => {
-        if (typeof props.uri === "string") setMagnet(props.uri);
-    }, [props.uri]);
+        if (props.opened) {
+            if (typeof props.uri === "string") setMagnet(props.uri);
+            else setMagnet("");
+        }
+    }, [props.uri, props.opened]);
 
     const common = useCommonProps(props);
     const { close } = props;
