@@ -117,7 +117,7 @@ const AllFields: readonly TableField[] = [
         accessorFn: getTrackerStatus,
     },
     { name: "doneDate", label: "Completed on", component: DateField },
-    { name: "activityDate", label: "Last active", component: DateField },
+    { name: "activityDate", label: "Last active", component: DateDiffField },
     { name: "downloadDir", label: "Path", component: StringField },
     { name: "bandwidthPriority", label: "Priority", component: PriorityField },
     { name: "id", label: "ID", component: StringField },
@@ -240,6 +240,20 @@ export function DateField(props: TableFieldProps) {
         ? timestampToDateString(props.torrent[props.fieldName])
         : "";
     return <div>{date}</div>;
+}
+
+export function DateDiffField(props: TableFieldProps) {
+    const date = props.torrent[props.fieldName] > 0
+        ? timestampToDateString(props.torrent[props.fieldName])
+        : "";
+    const seconds = Math.floor(Date.now() / 1000) - props.torrent[props.fieldName];
+    return <div title={date} style={{ width: "100%", textAlign: "right" }}>
+        {seconds < 30
+            ? "now"
+            : date === ""
+                ? "never"
+                : `${secondsToHumanReadableStr(seconds)} ago`}
+    </div>;
 }
 
 function ByteSizeField(props: TableFieldProps) {
