@@ -64,7 +64,7 @@ function AddCommon(props: AddCommonProps) {
 
 interface AddCommonModalProps extends ActionModalState {
     serverName: string,
-    uri: string | undefined,
+    uri: string | File | undefined,
 }
 
 function useCommonProps(modalProps: AddCommonModalProps) {
@@ -110,7 +110,7 @@ export function AddMagnet(props: AddCommonModalProps) {
     const [magnet, setMagnet] = useState<string>("");
 
     useEffect(() => {
-        if (props.uri !== undefined) setMagnet(props.uri);
+        if (typeof props.uri === "string") setMagnet(props.uri);
     }, [props.uri]);
 
     const common = useCommonProps(props);
@@ -158,6 +158,20 @@ export function AddMagnet(props: AddCommonModalProps) {
     );
 }
 
+async function readLocalTorrent(file: File): Promise<string> {
+    return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const b64 = (reader.result as string).match(/data:[^/]*\/[^;]*;base64,(.*)/)?.[1];
+            if (b64 === undefined) {
+                throw Error("Error reading file");
+            }
+            resolve(b64);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
 function useFilesInput(
     filesInputRef: React.RefObject<HTMLInputElement>,
     close: () => void,
@@ -171,27 +185,22 @@ function useFilesInput(
                 close();
             } else {
                 const [file] = element.files;
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    const b64 = (reader.result as string).match(/data:[^/]*\/[^;]*;base64,(.*)/)?.[1];
-                    if (b64 === undefined) {
-                        notifications.show({
-                            title: "Error reading file",
-                            message: file.name,
-                            color: "red",
-                        });
-                        close();
-                        return;
-                    }
+                readLocalTorrent(file).then((b64) => {
                     setTorrentData({
                         torrentPath: "",
                         metadata: b64,
-                        name: "",
+                        name: file.name,
                         hash: "",
                         files: null,
                     });
-                };
-                reader.readAsDataURL(file);
+                }).catch(() => {
+                    notifications.show({
+                        title: "Error reading file",
+                        message: file.name,
+                        color: "red",
+                    });
+                    close();
+                });
             }
         };
 
@@ -237,10 +246,30 @@ export function AddTorrent(props: AddCommonModalProps) {
 
     useEffect(() => {
         if (!TAURI && props.opened) {
-            filesInputRef.current?.click();
-            close();
+            if (props.uri === undefined) {
+                filesInputRef.current?.click();
+                close();
+            } else {
+                const file = props.uri as File;
+                readLocalTorrent(file).then((b64) => {
+                    setTorrentData({
+                        torrentPath: "",
+                        metadata: b64,
+                        name: file.name,
+                        hash: "",
+                        files: null,
+                    });
+                }).catch(() => {
+                    notifications.show({
+                        title: "Error reading file",
+                        message: file.name,
+                        color: "red",
+                    });
+                    close();
+                });
+            }
         }
-    }, [props.opened, close]);
+    }, [props.opened, props.uri, close]);
 
     useEffect(() => {
         if (TAURI && props.opened) {
@@ -252,7 +281,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 return await invoke("read_file", { path });
             };
 
-            const pathPromise = props.uri !== undefined
+            const pathPromise = typeof props.uri === "string"
                 ? Promise.resolve(props.uri)
                 : dialogOpen({
                     title: "Select torrent file",
@@ -355,7 +384,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             ? <></>
             : <HkModal opened={torrentData !== undefined} onClose={modalClose} title="Add torrent" centered size="lg">
                 <Divider my="sm" />
-                {TAURI && <Text>Name: {torrentData.name}</Text>}
+                <Text>Name: {torrentData.name}</Text>
                 <div style={{ position: "relative" }}>
                     {torrentExists &&
                         <Overlay

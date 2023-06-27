@@ -25,7 +25,7 @@ import { MoveModal } from "./move";
 import { AddMagnet, AddTorrent } from "./add";
 import { DaemonSettingsModal } from "./daemon";
 import { EditTorrent } from "./edittorrent";
-const { appWindow } = await import(/* webpackChunkName: "taurishim" */"taurishim");
+const { TAURI, appWindow } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface ModalCallbacks {
     setLabels: () => void,
@@ -79,11 +79,11 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
     }));
 
     const [magnetLink, setMagnetLink] = useState<string>();
-    const [torrentPath, setTorrentPath] = useState<string>();
+    const [torrent, setTorrent] = useState<string | File>();
 
-    const [addQueue, setAddQueue] = useState<string[]>([]);
+    const [addQueue, setAddQueue] = useState<Array<string | File>>([]);
 
-    const enqueue = useCallback((paths: string[]) => {
+    const enqueue = useCallback((paths: string[] | File[]) => {
         setAddQueue([...addQueue, ...paths]);
         void appWindow.show();
         void appWindow.unminimize();
@@ -92,12 +92,31 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
     }, [addQueue]);
 
     useEffect(() => {
-        const listenResult = appWindow.listen<string[]>("tauri://file-drop", (event) => {
-            const files = event.payload.filter((path) => path.toLowerCase().endsWith(".torrent"));
-            if (files.length > 0) enqueue(files);
-        });
+        if (TAURI) {
+            const listenResult = appWindow.listen<string[]>("tauri://file-drop", (event) => {
+                const files = event.payload.filter((path) => path.toLowerCase().endsWith(".torrent"));
+                if (files.length > 0) enqueue(files);
+            });
 
-        return () => { void listenResult.then((unlisten) => { unlisten(); }); };
+            return () => { void listenResult.then((unlisten) => { unlisten(); }); };
+        } else {
+            document.ondragover = (e) => { e.preventDefault(); };
+            document.ondrop = (event) => {
+                event.preventDefault();
+
+                if (event.dataTransfer?.items !== undefined) {
+                    const files = [...event.dataTransfer.items]
+                        .filter((i) => i.kind === "file")
+                        .map((f) => f.getAsFile() as File);
+                    if (files.length > 0) enqueue(files);
+                }
+            };
+
+            return () => {
+                document.ondragover = null;
+                document.ondrop = null;
+            };
+        }
     }, [enqueue]);
 
     useEffect(() => {
@@ -118,15 +137,15 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
     useEffect(() => {
         if (addQueue.length > 0 && !showAddMagnetModal && !showAddTorrentModal) {
             const item = addQueue[0];
-            if (item.startsWith("magnet:?")) {
+            if (typeof item === "string" && item.startsWith("magnet:?")) {
                 setMagnetLink(item);
                 openAddMagnetModal();
             } else {
-                setTorrentPath(item);
+                setTorrent(item);
                 openAddTorrentModal();
             }
         }
-    }, [addQueue, showAddMagnetModal, showAddTorrentModal, setMagnetLink, setTorrentPath, openAddMagnetModal, openAddTorrentModal]);
+    }, [addQueue, showAddMagnetModal, showAddTorrentModal, setMagnetLink, setTorrent, openAddMagnetModal, openAddTorrentModal]);
 
     const closeAddMagnetModalAndPop = useCallback(() => {
         closeAddMagnetModal();
@@ -141,14 +160,14 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
 
     const closeAddTorrentModalAndPop = useCallback(() => {
         closeAddTorrentModal();
-        if (torrentPath !== undefined && addQueue.length > 0 && addQueue[0] === torrentPath) {
-            setTorrentPath(undefined);
+        if (torrent !== undefined && addQueue.length > 0 && addQueue[0] === torrent) {
+            setTorrent(undefined);
             setAddQueue(addQueue.slice(1));
         } else if (addQueue.length > 0) {
             // kick the queue again
             setAddQueue([...addQueue]);
         }
-    }, [closeAddTorrentModal, addQueue, torrentPath]);
+    }, [closeAddTorrentModal, addQueue, torrent]);
 
     return <>
         <EditLabelsModal
@@ -168,7 +187,7 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
         <AddTorrent
             serverName={props.serverName}
             serverData={props.serverData}
-            uri={torrentPath}
+            uri={torrent}
             opened={showAddTorrentModal} close={closeAddTorrentModalAndPop} />
         <DaemonSettingsModal
             opened={showDaemonSettingsModal} close={closeDaemonSettingsModal} />
