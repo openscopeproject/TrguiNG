@@ -254,7 +254,7 @@ function ByteSizeField(props: TableFieldProps) {
 function ByteRateField(props: TableFieldProps) {
     const field = props.torrent[props.fieldName];
     const stringValue = useMemo(() => {
-        return `${bytesToHumanReadableStr(field)}/s`;
+        return field > 0 ? `${bytesToHumanReadableStr(field)}/s` : "";
     }, [field]);
 
     return <div style={{ width: "100%", textAlign: "right" }}>{stringValue}</div>;
