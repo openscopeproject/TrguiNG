@@ -225,16 +225,18 @@ export function FileTreeTable(props: FileTreeTableProps) {
     const { selected, selectedReducer } = useSelected(props);
 
     const onRowDoubleClick = useCallback((row: FileDirEntry) => {
-        if (props.downloadDir === undefined || props.downloadDir === "") return;
-        let path = `${props.downloadDir}/${row.fullpath}`;
-        path = pathMapFromServer(path, serverConfig);
-        invoke("shell_open", { path }).catch((e) => {
-            notifications.show({
-                title: "Error opening path",
-                message: path,
-                color: "red",
+        if (TAURI) {
+            if (props.downloadDir === undefined || props.downloadDir === "") return;
+            let path = `${props.downloadDir}/${row.fullpath}`;
+            path = pathMapFromServer(path, serverConfig);
+            invoke("shell_open", { path }).catch((e) => {
+                notifications.show({
+                    title: "Error opening path",
+                    message: path,
+                    color: "red",
+                });
             });
-        });
+        }
     }, [props.downloadDir, serverConfig]);
 
     const [info, setInfo, handler] = useContextMenu();

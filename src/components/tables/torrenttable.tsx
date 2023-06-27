@@ -344,21 +344,25 @@ export function TorrentTable(props: {
     );
 
     const onRowDoubleClick = useCallback((torrent: Torrent) => {
-        if (torrent.downloadDir === undefined || torrent.downloadDir === "") return;
-        let path = torrent.downloadDir as string;
-        if (!path.endsWith("/") && !path.endsWith("\\")) {
-            path = path + "/";
-        }
-        path = path + (torrent.name as string);
-        path = pathMapFromServer(path, serverConfig);
-        invoke("shell_open", { path }).catch((e) => {
-            notifications.show({
-                title: "Error opening path",
-                message: path,
-                color: "red",
+        if (TAURI) {
+            if (torrent.downloadDir === undefined || torrent.downloadDir === "") return;
+            let path = torrent.downloadDir as string;
+            if (!path.endsWith("/") && !path.endsWith("\\")) {
+                path = path + "/";
+            }
+            path = path + (torrent.name as string);
+            path = pathMapFromServer(path, serverConfig);
+            invoke("shell_open", { path }).catch((e) => {
+                notifications.show({
+                    title: "Error opening path",
+                    message: path,
+                    color: "red",
+                });
             });
-        });
-    }, [serverConfig]);
+        } else {
+            props.modals.current?.editTorrent();
+        }
+    }, [props.modals, serverConfig]);
 
     const [info, setInfo, handler] = useContextMenu();
 
