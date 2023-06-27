@@ -31,6 +31,7 @@ import type { ModalCallbacks } from "./modals/servermodals";
 import type { HotkeyHandlers } from "hotkeys";
 import { useHotkeysContext } from "hotkeys";
 import { useHotkeys } from "@mantine/hooks";
+import { modKeyString } from "util";
 
 interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {
     depressed?: boolean,
@@ -266,15 +267,15 @@ function Toolbar(props: ToolbarProps) {
 
                     <Menu.Dropdown>
                         <Menu.Item icon={<Icon.CircleFill color={theme.colors.orange[7]} />}
-                            onClick={handlers.setPriorityHigh} rightSection={<Kbd>Ctrl H</Kbd>}>
+                            onClick={handlers.setPriorityHigh} rightSection={<Kbd>{`${modKeyString()} H`}</Kbd>}>
                             High
                         </Menu.Item>
                         <Menu.Item icon={<Icon.CircleFill color={theme.colors.teal[9]} />}
-                            onClick={handlers.setPriorityNormal} rightSection={<Kbd>Ctrl N</Kbd>}>
+                            onClick={handlers.setPriorityNormal} rightSection={<Kbd>{`${modKeyString()} N`}</Kbd>}>
                             Normal
                         </Menu.Item>
                         <Menu.Item icon={<Icon.CircleFill color={theme.colors.yellow[6]} />}
-                            onClick={handlers.setPriorityLow} rightSection={<Kbd>Ctrl L</Kbd>}>
+                            onClick={handlers.setPriorityLow} rightSection={<Kbd>{`${modKeyString()} L`}</Kbd>}>
                             Low
                         </Menu.Item>
                     </Menu.Dropdown>
@@ -291,7 +292,7 @@ function Toolbar(props: ToolbarProps) {
 
             <TextInput mx="sm" ref={searchRef}
                 icon={<Icon.Search size="1rem" />}
-                placeholder="search (ctrl + f)"
+                placeholder={`search (${modKeyString()} + f)`}
                 onInput={onSearchInput}
                 styles={{ root: { flexGrow: 1 }, input: { height: "auto" } }}
             />
@@ -305,11 +306,11 @@ function Toolbar(props: ToolbarProps) {
 
                 <Menu.Dropdown>
                     <Menu.Item
-                        onClick={props.toggleFiltersPanel} rightSection={<Kbd>Ctrl O</Kbd>}>
+                        onClick={props.toggleFiltersPanel} rightSection={<Kbd>{`${modKeyString()} O`}</Kbd>}>
                         Toggle filters
                     </Menu.Item>
                     <Menu.Item
-                        onClick={props.toggleDetailsPanel} rightSection={<Kbd>Ctrl I</Kbd>}>
+                        onClick={props.toggleDetailsPanel} rightSection={<Kbd>{`${modKeyString()} I`}</Kbd>}>
                         Toggle details
                     </Menu.Item>
                 </Menu.Dropdown>

@@ -24,7 +24,7 @@ import * as Icon from "react-bootstrap-icons";
 import * as StatusIcons from "./statusicons";
 import { ConfigContext, ServerConfigContext } from "../config";
 import { Divider, Flex } from "@mantine/core";
-import { useForceRender } from "util";
+import { eventHasModKey, useForceRender } from "util";
 import { useContextMenu } from "./contextmenu";
 import { SectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
 
@@ -128,7 +128,7 @@ function FilterRow(props: FiltersProps & { id: string, filter: LabeledFilter }) 
         className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
         onClick={(event) => {
             props.setCurrentFilters({
-                verb: event.ctrlKey ? "toggle" : "set",
+                verb: eventHasModKey(event) ? "toggle" : "set",
                 filter: { id: props.id, filter: props.filter.filter },
             });
         }}>
@@ -168,7 +168,7 @@ function DirFilterRow(props: DirFilterRowProps) {
             className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
             onClick={(event) => {
                 props.setCurrentFilters({
-                    verb: event.ctrlKey ? "toggle" : "set",
+                    verb: eventHasModKey(event) ? "toggle" : "set",
                     filter: { id: props.id, filter },
                 });
             }}>

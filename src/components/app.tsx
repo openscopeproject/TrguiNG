@@ -32,6 +32,7 @@ import { Notifications } from "@mantine/notifications";
 import { ClientContext } from "rpc/client";
 import { useFontSize } from "fontsize";
 import { ColorSchemeToggle, ShowVersion } from "components/miscbuttons";
+import { modKeyString } from "util";
 
 const { appWindow, invoke, makeCreateTorrentView } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -58,7 +59,7 @@ function FontSizeToggle() {
             variant="default"
             size="lg"
             onClick={() => { toggle(); }}
-            title="Toggle font size (Ctrl + =)"
+            title={`Toggle font size (${modKeyString()} + =)`}
             my="auto"
         >
             <Icon.Fonts size="1.1rem" />
@@ -97,7 +98,7 @@ function CreateTorrentButton() {
             variant="default"
             size="lg"
             onClick={onClick}
-            title="Create new torrent file (Ctrl + T)"
+            title={`Create new torrent file (${modKeyString()} + T)`}
             my="auto"
         >
             <Icon.Stars size="1.1rem" />

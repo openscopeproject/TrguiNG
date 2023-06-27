@@ -22,6 +22,7 @@ import * as Icon from "react-bootstrap-icons";
 import React from "react";
 import { VersionModal } from "components/modals/version";
 import { useDisclosure, useHotkeys } from "@mantine/hooks";
+import { modKeyString } from "util";
 
 export function ColorSchemeToggle(props: { sz?: string, btn?: MantineNumberSize }) {
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
@@ -36,7 +37,7 @@ export function ColorSchemeToggle(props: { sz?: string, btn?: MantineNumberSize 
             variant="default"
             size={props.btn}
             onClick={() => { toggleColorScheme(); }}
-            title="Toggle color scheme (Ctrl + U)"
+            title={`Toggle color scheme (${modKeyString()} + U)`}
             my="auto"
         >
             {dark

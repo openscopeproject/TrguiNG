@@ -35,7 +35,7 @@ import React, { memo, useReducer, useCallback, useContext, useEffect, useMemo, u
 import type { DropResult } from "react-beautiful-dnd";
 import { DragDropContext, Draggable } from "react-beautiful-dnd";
 import { StrictModeDroppable } from "components/strictmodedroppable";
-import { reorderElements } from "util";
+import { eventHasModKey, reorderElements } from "util";
 import { useFontSize } from "fontsize";
 
 const defaultColumn = {
@@ -135,6 +135,7 @@ function useSelectHandler<TData>(
     const onRowClick = useCallback((event: React.MouseEvent<Element>, index: number, lastIndex: number) => {
         const rows = table.getRowModel().rows;
         event.preventDefault();
+        const modKey = eventHasModKey(event);
 
         function genIds() {
             const minIndex = Math.min(index, lastIndex);
@@ -146,13 +147,13 @@ function useSelectHandler<TData>(
             return ids;
         }
 
-        if (event.shiftKey && event.ctrlKey && lastIndex !== -1) {
+        if (event.shiftKey && modKey && lastIndex !== -1) {
             const ids = genIds();
             selectedReducer({ verb: "add", ids });
         } else if (event.shiftKey && lastIndex !== -1) {
             const ids = genIds();
             selectedReducer({ verb: "set", ids });
-        } else if (event.ctrlKey) {
+        } else if (modKey) {
             selectedReducer({ verb: "toggle", ids: [getRowId(rows[index].original)] });
         } else if (event.button !== 2 || !rows[index].getIsSelected()) {
             selectedReducer({ verb: "set", ids: [getRowId(rows[index].original)] });
