@@ -284,8 +284,13 @@ export function AddTorrent(props: AddCommonModalProps) {
                 return await invoke("read_file", { path });
             };
 
-            const pathPromise = typeof props.uri === "string"
-                ? Promise.resolve(props.uri)
+            let uri = props.uri;
+            if (typeof uri === "string" && uri.startsWith("file://")) {
+                uri = decodeURIComponent(uri.substring(7));
+            }
+
+            const pathPromise = typeof uri === "string"
+                ? Promise.resolve(uri)
                 : dialogOpen({
                     title: "Select torrent file",
                     filters: [{

@@ -2338,6 +2338,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "objc-sys"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "99e1d07c6eab1ce8b6382b8e3c7246fe117ff3f8b34be065f5ebace6749fe845"
+
+[[package]]
+name = "objc2"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3cf6c364d54fa7b8be594c17b1506d5fe332038d3f6ef7b4ce36a5788798634c"
+dependencies = [
+ "objc-sys",
+ "objc2-encode",
+]
+
+[[package]]
+name = "objc2-encode"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "de517cb1d179b07c6c59fb4ce60f7511eba229a2488472bb41f00344d22a091e"
+
+[[package]]
 name = "objc_exception"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4049,6 +4071,8 @@ dependencies = [
  "hyper-tls",
  "lava_torrent",
  "notify-rust",
+ "objc2",
+ "once_cell",
  "opener",
  "rodio",
  "serde",

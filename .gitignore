@@ -5,3 +5,4 @@ webpack-report.html
 tests/manual.torrent
 *bkp
 src/build
+.DS_Store

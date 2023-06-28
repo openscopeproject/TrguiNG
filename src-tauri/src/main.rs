@@ -31,6 +31,8 @@ mod commands;
 mod createtorrent;
 mod integrations;
 mod ipc;
+#[cfg(target_os = "macos")]
+mod macos;
 mod poller;
 mod sound;
 mod torrentcache;
@@ -38,7 +40,29 @@ mod tray;
 
 struct ListenerHandle(Arc<RwLock<ipc::Ipc>>);
 
+#[cfg(target_os = "macos")]
+fn handle_uris(app: AppHandle, uris: Vec<String>) {
+    let listener_state: State<ListenerHandle> = app.state();
+    let listener_lock = listener_state.0.clone();
+    let app_handle = Arc::new(app.clone());
+    async_runtime::spawn(async move {
+        let listener = listener_lock.read().await;
+        if let Err(e) = listener.send(&uris, app_handle).await {
+            println!("Unable to send args to listener: {:?}", e);
+        }
+    });
+}
+
 fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
+    #[cfg(target_os = "macos")]
+    {
+        let app_handle = app.handle();
+        macos::set_handler(move |uris| {
+            handle_uris(app_handle.clone(), uris);
+        }).expect("Unable to set apple event handler");
+        macos::listen_url();
+    } 
+
     let config = app.config();
     let cli_config = &config.tauri.cli.as_ref().unwrap();
     let args = get_matches(cli_config, app.package_info()).unwrap().args;
@@ -100,8 +124,14 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         let app_clone = app.clone();
         async_runtime::spawn(async move {
             let listener = listener_lock.read().await;
-            if let Err(e) = listener.send(&torrents, app_clone).await {
+            if let Err(e) = listener.send(&torrents, app_clone.clone()).await {
                 println!("Unable to send args to listener: {:?}", e);
+            }
+
+            #[cfg(target_os = "macos")]
+            {
+                macos::listen_open_documents();
+                macos::listen_reopen_app();
             }
         });
 
