@@ -69,6 +69,7 @@ export default (mode) => ({
         new CopyPlugin({
             patterns: [
                 { from: "./src-tauri/icons/32x32.png", to: "favicon.png" },
+                { from: "./src-tauri/icons/128x128.png", to: "favicon128.png" },
             ],
         }),
     ],
