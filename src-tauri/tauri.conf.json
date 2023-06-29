@@ -43,7 +43,11 @@
       "windows": {
         "certificateThumbprint": null,
         "digestAlgorithm": "sha256",
-        "timestampUrl": ""
+        "timestampUrl": "",
+        "nsis": {
+          "template": "installer.nsi",
+          "license": "../LICENSE.txt"
+        }
       }
     },
     "updater": {
