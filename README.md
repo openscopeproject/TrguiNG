@@ -26,7 +26,6 @@ Some differentiating features:
 
 Planned:
 
-* Better system integration with MacOS with mime types (needs support in tauri)
 * Better bandwidth groups support when API is ready (https://github.com/transmission/transmission/issues/5455)
 
 Currently transmission v2.80 or later is required, goal is to have v2.40 and up compatibility.
@@ -73,6 +72,8 @@ Example steps for debian:
    ```
    Environment=TRANSMISSION_WEB_HOME=/path/to/extracted/trguing/zip
    ```
+4. Reload the unit file with `sudo systemctl daemon-reload`
+   and restart the service `sudo systemctl restart transmission-daemon`
 
 ## License
 Project is distributed under GNU Affero General Public License v3, see `LICENSE.txt` for details.
