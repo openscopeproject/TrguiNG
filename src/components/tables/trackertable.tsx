@@ -41,8 +41,8 @@ const AllFields: readonly TableField[] = [
     { name: "announce", label: "Announce URL" },
     { name: "announceState", label: "Status", columnId: "status", accessorFn: getTrackerAnnounceState },
     { name: "nextAnnounceTime", label: "Next update", component: NextUpdateField },
-    { name: "seederCount", label: "Seeds" },
-    { name: "leecherCount", label: "Peers" },
+    { name: "seederCount", label: "Seeds", component: NumberField },
+    { name: "leecherCount", label: "Peers", component: NumberField },
 ] as const;
 
 const Columns = AllFields.map((field): ColumnDef<TrackerStats> => {
@@ -66,6 +66,12 @@ function NextUpdateField(props: TableFieldProps) {
     const seconds = props.entry[props.fieldName] - Math.floor(Date.now() / 1000);
     if (seconds > 0) return <div>{secondsToHumanReadableStr(seconds)}</div>;
     return <div>-</div>;
+}
+
+function NumberField(props: TableFieldProps) {
+    const count = props.entry[props.fieldName] as number;
+
+    return <div style={{ width: "100%", textAlign: "right" }}>{count >= 0 ? count : ""}</div>;
 }
 
 export function TrackersTable(props: { torrent: Torrent }) {
