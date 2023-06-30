@@ -87,14 +87,14 @@ function getTorrentMainTracker(t: TorrentBase): string {
 function getSeedsTotal(t: TorrentBase) {
     let seeds = t.trackerStats.length > 0 ? 0 : -1;
     t.trackerStats.forEach(
-        (tracker: TrackerStats) => { seeds += Math.max(0, tracker.seederCount as number); });
+        (tracker: TrackerStats) => { seeds = Math.max(seeds, tracker.seederCount as number); });
     return seeds;
 }
 
 function getPeersTotal(t: TorrentBase) {
     let peers = t.trackerStats.length > 0 ? 0 : -1;
     t.trackerStats.forEach(
-        (tracker: TrackerStats) => { peers += Math.max(0, tracker.leecherCount as number); });
+        (tracker: TrackerStats) => { peers = Math.max(peers, tracker.leecherCount as number); });
     return peers;
 }
 
