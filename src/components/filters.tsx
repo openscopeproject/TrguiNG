@@ -18,7 +18,6 @@
 
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Torrent } from "../rpc/torrent";
-import { getTorrentError, getTorrentMainTracker } from "../rpc/torrent";
 import { Status } from "../rpc/transmission";
 import * as Icon from "react-bootstrap-icons";
 import * as StatusIcons from "./statusicons";
@@ -79,7 +78,7 @@ const statusFilters: LabeledFilter[] = [
     },
     {
         label: "Error",
-        filter: (t: Torrent) => (t.error !== 0 || getTorrentError(t) !== ""),
+        filter: (t: Torrent) => (t.error !== 0 || t.cachedError !== ""),
         icon: StatusIcons.Error,
     },
     {
@@ -287,7 +286,7 @@ export function Filters(props: FiltersProps) {
         props.allTrackers.forEach((tracker) => {
             trackerFilters.push({
                 label: tracker,
-                filter: (t: Torrent) => getTorrentMainTracker(t) === tracker,
+                filter: (t: Torrent) => t.cachedMainTracker === tracker,
                 icon: StatusIcons.Tracker,
             });
         });

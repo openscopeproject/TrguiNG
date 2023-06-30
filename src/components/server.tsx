@@ -21,7 +21,7 @@ import { Box, Flex, Loader, Overlay, Title } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { ConfigContext, ServerConfigContext } from "../config";
 import type { Torrent } from "../rpc/torrent";
-import { getTorrentMainTracker, useServerTorrentData } from "../rpc/torrent";
+import { useServerTorrentData } from "../rpc/torrent";
 import { MemoizedDetails } from "./details";
 import type { TorrentFilter } from "./filters";
 import { DefaultFilter, Filters } from "./filters";
@@ -120,7 +120,7 @@ export function Server({ hostname }: { hostname: string }) {
         torrents?.forEach((t) => t.labels?.forEach((l: string) => labels.add(l)));
 
         const trackers = new Set<string>();
-        torrents?.forEach((t) => trackers.add(getTorrentMainTracker(t)));
+        torrents?.forEach((t) => trackers.add(t.cachedMainTracker));
 
         return [Array.from(labels).sort(), Array.from(trackers).sort()];
     }, [torrents]);

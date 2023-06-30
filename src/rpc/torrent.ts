@@ -20,12 +20,20 @@ import type { BandwidthGroupFieldType, PeerStatsFieldsType, TorrentAllFieldsType
 import { Status } from "./transmission";
 import { useRef, useEffect } from "react";
 
-export type Torrent = Partial<Record<TorrentAllFieldsType, any>>;
 export type TrackerStats = Partial<Record<TrackerStatsFieldsType, any>>;
 export type PeerStats = Partial<Record<PeerStatsFieldsType, any>>;
 export type BandwidthGroup = Record<BandwidthGroupFieldType, any>;
+export type TorrentBase = Partial<Record<TorrentAllFieldsType, any>>;
 
-export function getTorrentError(t: Torrent): string {
+export interface Torrent extends TorrentBase {
+    cachedError: string,
+    cachedTrackerStatus: string,
+    cachedMainTracker: string,
+    cachedPeersTotal: number,
+    cachedSeedsTotal: number,
+}
+
+function getTorrentError(t: TorrentBase): string {
     let torrentError = t.errorString;
     let trackerError = "";
     let noTrackerError = false;
@@ -62,18 +70,43 @@ export function getTrackerAnnounceState(tracker: TrackerStats) {
     return "";
 }
 
-export function getTrackerStatus(torrent: Torrent): string {
+function getTrackerStatus(torrent: TorrentBase): string {
     const trackers = torrent.trackerStats as TrackerStats[];
     if (torrent.status === Status.stopped || trackers.length === 0) return "";
     return getTrackerAnnounceState(trackers[0]);
 }
 
-export function getTorrentMainTracker(t: Torrent): string {
+function getTorrentMainTracker(t: TorrentBase): string {
     if (t.trackerStats.length === 0) return "<No trackers>";
     const host = t.trackerStats[0].host as string;
     const portMatch = /:\d+$/.exec(host);
     if (portMatch != null) return host.substring(0, portMatch.index);
     return host;
+}
+
+function getSeedsTotal(t: TorrentBase) {
+    let seeds = t.trackerStats.length > 0 ? 0 : -1;
+    t.trackerStats.forEach(
+        (tracker: TrackerStats) => { seeds += Math.max(0, tracker.seederCount as number); });
+    return seeds;
+}
+
+function getPeersTotal(t: TorrentBase) {
+    let peers = t.trackerStats.length > 0 ? 0 : -1;
+    t.trackerStats.forEach(
+        (tracker: TrackerStats) => { peers += Math.max(0, tracker.leecherCount as number); });
+    return peers;
+}
+
+export function processTorrent(t: TorrentBase): Torrent {
+    return {
+        ...t,
+        cachedError: getTorrentError(t),
+        cachedTrackerStatus: getTrackerStatus(t),
+        cachedMainTracker: getTorrentMainTracker(t),
+        cachedSeedsTotal: getSeedsTotal(t),
+        cachedPeersTotal: getPeersTotal(t),
+    };
 }
 
 export interface ServerTorrentData {

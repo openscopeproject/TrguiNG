@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { Torrent } from "./rpc/torrent";
+import type { Torrent, TorrentBase } from "./rpc/torrent";
 import type { PriorityNumberType } from "rpc/transmission";
 
 interface Entry {
@@ -128,7 +128,7 @@ export class CachedFileTree {
         dir.priority = priority.size === 1 ? [...priority][0] : undefined;
     }
 
-    parse(torrent: Torrent, fromFile: boolean) {
+    parse(torrent: TorrentBase, fromFile: boolean) {
         this.torrenthash = torrent.hashString;
 
         this.files = torrent.files.map((entry: any, index: number): FileEntry => {

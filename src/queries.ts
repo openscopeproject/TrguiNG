@@ -23,7 +23,8 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import type { SessionInfo, TorrentActionMethodsType, TorrentAddParams } from "rpc/client";
 import { useTransmissionClient } from "rpc/client";
 import type { Torrent } from "rpc/torrent";
-import type { TorrentMutableFieldsType, TorrentFieldsType } from "rpc/transmission";
+import { processTorrent } from "rpc/torrent";
+import type { TorrentMutableFieldsType, TorrentFieldsType, TorrentAllFieldsType } from "rpc/transmission";
 const { appWindow } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export const queryClient = new QueryClient();
@@ -90,7 +91,8 @@ export function useTorrentList(enabled: boolean, fields: TorrentFieldsType[]) {
         staleTime: 1000,
         enabled,
         queryFn: useCallback(async () => {
-            return await client.getTorrents(fields);
+            const torrents = await client.getTorrents(fields);
+            return torrents.map(processTorrent);
         }, [client, fields]),
     });
 }
@@ -105,7 +107,7 @@ export function useTorrentDetails(torrentId: number, enabled: boolean, disableRe
         staleTime: 1000 * 5,
         enabled,
         queryFn: useCallback(async () => {
-            return await client.getTorrentDetails(torrentId);
+            return processTorrent(await client.getTorrentDetails(torrentId));
         }, [client, torrentId]),
     });
 }
@@ -115,7 +117,11 @@ export interface TorrentMutationVariables {
     fields: Partial<Record<TorrentMutableFieldsType, any>>,
 }
 
-function updateCachedTorrentFields(serverName: string, torrentIds: number[], fields: Torrent) {
+function updateCachedTorrentFields(
+    serverName: string,
+    torrentIds: number[],
+    fields: Partial<Record<TorrentMutableFieldsType | TorrentAllFieldsType, any>>,
+) {
     queryClient.setQueriesData(
         {
             predicate: (query) => {
@@ -145,7 +151,7 @@ function updateCachedTorrentFields(serverName: string, torrentIds: number[], fie
                     torrentIds.includes((key[2] as { torrentId: number }).torrentId);
             },
         },
-        (t: Torrent | undefined) => ({ ...t, ...fields }),
+        (t: Torrent | undefined) => t === undefined ? undefined : { ...t, ...fields },
     );
 }
 

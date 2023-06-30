@@ -21,7 +21,7 @@ import { Buffer } from "buffer";
 import type { PriorityNumberType, SessionAllFieldsType, SessionStatistics, TorrentFieldsType } from "./transmission";
 import { SessionAllFields, SessionFields, TorrentAllFields } from "./transmission";
 import type { ServerConnection } from "../config";
-import type { BandwidthGroup, Torrent } from "./torrent";
+import type { BandwidthGroup, TorrentBase } from "./torrent";
 import React, { useContext } from "react";
 
 class ApiError extends Error {
@@ -141,7 +141,7 @@ export class TransmissionClient {
         }
     }
 
-    async getTorrents(fields: TorrentFieldsType[]): Promise<Torrent[]> {
+    async getTorrents(fields: TorrentFieldsType[]): Promise<TorrentBase[]> {
         const request = {
             method: "torrent-get",
             arguments: { fields },
@@ -156,7 +156,7 @@ export class TransmissionClient {
         return response.arguments.torrents;
     }
 
-    async getTorrentDetails(id: number): Promise<Torrent> {
+    async getTorrentDetails(id: number): Promise<TorrentBase> {
         const request = {
             method: "torrent-get",
             arguments: {
@@ -171,7 +171,7 @@ export class TransmissionClient {
             throw new ApiError("torrent-get response is not torrents");
         }
 
-        const torrent = response.arguments.torrents.find((torrent: Torrent) => torrent.id === id);
+        const torrent = response.arguments.torrents.find((torrent: TorrentBase) => torrent.id === id);
 
         if (torrent === undefined) {
             throw new ApiError(`Torrent with id ${id} was not found`);

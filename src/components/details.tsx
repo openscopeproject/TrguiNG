@@ -18,7 +18,6 @@
 
 import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import type { Torrent, TrackerStats } from "../rpc/torrent";
-import { getTorrentError } from "../rpc/torrent";
 import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr, timestampToDateString } from "../util";
 import { FileTreeTable, useUnwantedFiles } from "./tables/filetreetable";
 import { PiecesCanvas } from "./piecescanvas";
@@ -77,9 +76,7 @@ function SpeedLimit(props: { torrent: Torrent, field: "download" | "upload" }) {
 
 function Seeds(props: { torrent: Torrent }) {
     const sending = props.torrent.peersSendingToUs as number;
-    let totalSeeds = props.torrent.trackerStats.length > 0 ? 0 : -1;
-    props.torrent.trackerStats.forEach(
-        (tracker: TrackerStats) => { totalSeeds += Math.max(0, tracker.seederCount as number); });
+    const totalSeeds = props.torrent.cachedSeedsTotal;
     if (totalSeeds < 0) {
         return <>{sending}</>;
     } else {
@@ -89,13 +86,11 @@ function Seeds(props: { torrent: Torrent }) {
 
 function Peers(props: { torrent: Torrent }) {
     const getting = props.torrent.peersGettingFromUs as number;
-    let totalLeechers = props.torrent.trackerStats.length > 0 ? 0 : -1;
-    props.torrent.trackerStats.forEach(
-        (tracker: TrackerStats) => { totalLeechers += Math.max(0, tracker.leecherCount as number); });
-    if (totalLeechers < 0) {
+    const totalPeers = props.torrent.cachedPeersTotal;
+    if (totalPeers < 0) {
         return <>{getting}</>;
     } else {
-        return <>{`${getting} of ${totalLeechers} connected`}</>;
+        return <>{`${getting} of ${totalPeers} connected`}</>;
     }
 }
 
@@ -113,7 +108,7 @@ function TransferTable(props: { torrent: Torrent }) {
             <tbody>
                 <tr>
                     <td style={{ width: "10em" }}>Status:</td><td><StatusField {...props} fieldName="status" /></td>
-                    <td style={{ width: "10em" }}>Error:</td><td>{getTorrentError(props.torrent)}</td>
+                    <td style={{ width: "10em" }}>Error:</td><td>{props.torrent.cachedError}</td>
                     <td style={{ width: "10em" }}>Remaining:</td><td>{`${secondsToHumanReadableStr(props.torrent.eta)} (${bytesToHumanReadableStr(props.torrent.leftUntilDone)})`}</td>
                 </tr>
                 <tr>

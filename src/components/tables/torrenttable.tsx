@@ -18,8 +18,7 @@
 
 import "css/torrenttable.css";
 import React, { memo, useCallback, useContext, useMemo, useRef, useState } from "react";
-import type { ServerTorrentData, Torrent, TrackerStats } from "rpc/torrent";
-import { getTorrentError, getTorrentMainTracker, getTrackerStatus } from "rpc/torrent";
+import type { ServerTorrentData, Torrent } from "rpc/torrent";
 import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
@@ -98,8 +97,20 @@ const AllFields: readonly TableField[] = [
     { name: "rateUpload", label: "Up speed", component: ByteRateField },
     { name: "status", label: "Status", component: StatusField },
     { name: "addedDate", label: "Added on", component: DateField },
-    { name: "peersSendingToUs", label: "Seeds", component: SeedsField },
-    { name: "peersGettingFromUs", label: "Peers", component: PeersField },
+    {
+        name: "peersSendingToUs",
+        label: "Seeds",
+        component: SeedsField,
+        columnId: "peersSendingToUs",
+        accessorFn: (t) => t.peersSendingToUs * 1e+6 + t.cachedSeedsTotal,
+    },
+    {
+        name: "peersGettingFromUs",
+        label: "Peers",
+        component: PeersField,
+        columnId: "peersGettingFromUs",
+        accessorFn: (t) => t.peersGettingFromUs * 1e+6 + t.cachedPeersTotal,
+    },
     { name: "eta", label: "ETA", component: EtaField },
     { name: "uploadRatio", label: "Ratio", component: NumberField },
     {
@@ -107,14 +118,14 @@ const AllFields: readonly TableField[] = [
         label: "Tracker",
         component: TrackerField,
         columnId: "tracker",
-        accessorFn: getTorrentMainTracker,
+        accessorFn: (t) => t.cachedMainTracker,
     },
     {
         name: "trackerStats",
         label: "Tracker status",
         component: TrackerStatusField,
         columnId: "trackerStatus",
-        accessorFn: getTrackerStatus,
+        accessorFn: (t) => t.cachedTrackerStatus,
     },
     { name: "doneDate", label: "Completed on", component: DateField },
     { name: "activityDate", label: "Last active", component: DateDiffField },
@@ -131,7 +142,7 @@ const AllFields: readonly TableField[] = [
 function NameField(props: TableFieldProps) {
     let StatusIcon = StatusIconMap[props.torrent.status];
     if ((props.torrent.error !== undefined && props.torrent.error > 0) ||
-        getTorrentError(props.torrent) !== "") {
+        props.torrent.cachedError !== "") {
         StatusIcon = StatusIconError;
     }
 
@@ -177,9 +188,7 @@ function NumberField(props: TableFieldProps) {
 
 function SeedsField(props: TableFieldProps) {
     const sending = props.torrent.peersSendingToUs as number;
-    let totalSeeds = props.torrent.trackerStats.length > 0 ? 0 : -1;
-    props.torrent.trackerStats.forEach(
-        (tracker: TrackerStats) => { totalSeeds += Math.max(0, tracker.seederCount as number); });
+    const totalSeeds = props.torrent.cachedSeedsTotal;
     return (
         <div style={{ width: "100%", textAlign: "right" }}>
             {totalSeeds < 0 ? `${sending}` : `${sending} / ${totalSeeds}`}
@@ -189,12 +198,10 @@ function SeedsField(props: TableFieldProps) {
 
 function PeersField(props: TableFieldProps) {
     const getting = props.torrent.peersGettingFromUs as number;
-    let totalLeechers = props.torrent.trackerStats.length > 0 ? 0 : -1;
-    props.torrent.trackerStats.forEach(
-        (tracker: TrackerStats) => { totalLeechers += Math.max(0, tracker.leecherCount as number); });
+    const totalPeers = props.torrent.cachedPeersTotal;
     return (
         <div style={{ width: "100%", textAlign: "right" }}>
-            {totalLeechers < 0 ? `${getting}` : `${getting} / ${totalLeechers}`}
+            {totalPeers < 0 ? `${getting}` : `${getting} / ${totalPeers}`}
         </div>
     );
 }
@@ -207,11 +214,11 @@ export function EtaField(props: TableFieldProps) {
 }
 
 export function TrackerField(props: TableFieldProps) {
-    return <div>{getTorrentMainTracker(props.torrent)}</div>;
+    return <div>{props.torrent.cachedMainTracker}</div>;
 }
 
 function TrackerStatusField(props: TableFieldProps) {
-    return <div>{getTrackerStatus(props.torrent)}</div>;
+    return <div>{props.torrent.cachedTrackerStatus}</div>;
 }
 
 function PriorityField(props: TableFieldProps) {
