@@ -19,17 +19,16 @@
 import type { AccessorFn, CellContext, ColumnDef } from "@tanstack/react-table";
 import React, { useMemo, useCallback } from "react";
 import type { Torrent, PeerStats } from "rpc/torrent";
-import type { PeerStatsFieldsType } from "rpc/transmission";
 import { bytesToHumanReadableStr } from "util";
 import { TransguiTable, useStandardSelect } from "./common";
 
 interface TableFieldProps {
     entry: PeerStats,
-    fieldName: PeerStatsFieldsType,
+    fieldName: keyof PeerStats,
 }
 
 interface TableField {
-    name: PeerStatsFieldsType,
+    name: keyof PeerStats,
     label: string,
     columnId?: string,
     accessorFn?: AccessorFn<PeerStats>,
@@ -44,6 +43,11 @@ const AllFields: readonly TableField[] = [
     { name: "progress", label: "Have", component: PercentField },
     { name: "rateToPeer", label: "Up speed", component: ByteRateField },
     { name: "rateToClient", label: "Down speed", component: ByteRateField },
+    { name: "cachedEncrypted", label: "Encrypted" },
+    { name: "cachedFrom", label: "From" },
+    { name: "cachedConnection", label: "Connection" },
+    { name: "cachedProtocol", label: "Protocol" },
+    { name: "cachedStatus", label: "Status" },
 ] as const;
 
 function ByteRateField(props: TableFieldProps) {
@@ -71,6 +75,7 @@ const Columns = AllFields.map((field): ColumnDef<PeerStats> => {
     const column: ColumnDef<PeerStats> = {
         header: field.label,
         accessorKey: field.name,
+        id: field.columnId,
         accessorFn: field.accessorFn,
         cell,
     };

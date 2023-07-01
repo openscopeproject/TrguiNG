@@ -21,7 +21,6 @@ import { Status } from "./transmission";
 import { useRef, useEffect } from "react";
 
 export type TrackerStats = Partial<Record<TrackerStatsFieldsType, any>>;
-export type PeerStats = Partial<Record<PeerStatsFieldsType, any>>;
 export type BandwidthGroup = Record<BandwidthGroupFieldType, any>;
 export type TorrentBase = Partial<Record<TorrentAllFieldsType, any>>;
 
@@ -106,6 +105,7 @@ export function processTorrent(t: TorrentBase): Torrent {
         cachedMainTracker: getTorrentMainTracker(t),
         cachedSeedsTotal: getSeedsTotal(t),
         cachedPeersTotal: getPeersTotal(t),
+        peers: t.peers?.map(processPeerStats),
     };
 }
 
@@ -133,4 +133,48 @@ export function useServerTorrentData(torrents: Torrent[], selectedTorrents: Set<
         };
     }, [torrents, selectedTorrents, currentTorrent, allLabels]);
     return serverData;
+}
+
+type PeerStatsBase = Partial<Record<PeerStatsFieldsType, any>>;
+
+export interface PeerStats extends PeerStatsBase {
+    cachedEncrypted: string,
+    cachedFrom: string,
+    cachedConnection: string,
+    cachedProtocol: string,
+    cachedStatus: string,
+}
+
+// Flag meanings: https://github.com/transmission/transmission/blob/main/docs/Peer-Status-Text.md
+
+const statusFlagStrings = {
+    O: "optimistic",
+    D: "downloading",
+    d: "can download from",
+    U: "uploading",
+    u: "can upload to",
+    K: "not interested",
+    "?": "peer not interested",
+} as const;
+
+function processPeerStats(peer: PeerStatsBase): PeerStats {
+    const flags = peer.flagStr as string;
+
+    const cachedFrom = flags.includes("X")
+        ? "PEX"
+        : flags.includes("H")
+            ? "DHT"
+            : "Tracker";
+
+    const status = [...flags.matchAll(/[ODdUuK?]/g)].map(
+        (s) => statusFlagStrings[s[0] as keyof (typeof statusFlagStrings)]);
+
+    return {
+        ...peer,
+        cachedEncrypted: flags.includes("E") ? "yes" : "no",
+        cachedFrom,
+        cachedConnection: flags.includes("I") ? "incoming" : "outgoing",
+        cachedProtocol: flags.includes("T") ? "µTP" : "TCP",
+        cachedStatus: (status ?? []).join(", "),
+    };
 }
