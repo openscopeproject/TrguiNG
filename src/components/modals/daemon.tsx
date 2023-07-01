@@ -241,6 +241,9 @@ function NetworkPanel(
                     label="Enable UPnP port forwarding"
                     {...form.getInputProps("session.port-forwarding-enabled", { type: "checkbox" })} />
             </Grid.Col>
+            <Grid.Col>
+                <Text my="md" italic>[Test port] checks current incoming port, if you made changes save them before testing.</Text>
+            </Grid.Col>
             <Grid.Col span={3}>
                 Encryption:
             </Grid.Col>
