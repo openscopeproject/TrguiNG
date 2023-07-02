@@ -74,6 +74,8 @@ export const TorrentMinimumFields = [
     "error", // number tr_stat
     "errorString", // string tr_stat
     "trackerStats", // array (see below)", //n/a
+    // for copy magnet links menu
+    "magnetLink",
     // following are needed by status bar
     "rateDownload", // number tr_stat
     "rateUpload", // number tr_stat

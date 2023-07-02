@@ -54,6 +54,9 @@
       "active": false
     },
     "allowlist": {
+      "clipboard": {
+        "writeText": true
+      },
       "fs": {
         "scope": [
           "$CONFIG/trguing.json"

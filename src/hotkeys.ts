@@ -32,6 +32,7 @@ export interface HotkeyHandlers {
     daemonSettings: () => void,
     selectAll: () => void,
     focusSearch: () => void,
+    copyToClipboard: () => void,
 }
 
 const Hotkeys: {
@@ -53,6 +54,7 @@ const Hotkeys: {
         daemonSettings: () => { },
         selectAll: () => { },
         focusSearch: () => { },
+        copyToClipboard: () => { },
     },
     run(handler) {
         if (this.active) this.handlers[handler]();
@@ -80,5 +82,6 @@ export function useAppHotkeys() {
         ["F9", () => { hk.run("daemonSettings"); }],
         ["mod + A", () => { hk.run("selectAll"); }],
         ["mod + F", () => { hk.run("focusSearch"); }],
+        ["mod + C", () => { hk.run("copyToClipboard"); }],
     ]);
 }

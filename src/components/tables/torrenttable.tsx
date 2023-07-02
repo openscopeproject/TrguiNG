@@ -17,12 +17,12 @@
  */
 
 import "css/torrenttable.css";
-import React, { memo, useCallback, useContext, useMemo, useRef, useState } from "react";
+import React, { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ServerTorrentData, Torrent } from "rpc/torrent";
 import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
-import { bytesToHumanReadableStr, pathMapFromServer, secondsToHumanReadableStr, timestampToDateString } from "util";
+import { bytesToHumanReadableStr, modKeyString, pathMapFromServer, secondsToHumanReadableStr, timestampToDateString } from "util";
 import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
 import type { TableSelectReducer } from "./common";
@@ -37,6 +37,8 @@ import { ContextMenu, useContextMenu } from "components/contextmenu";
 import type { ModalCallbacks } from "components/modals/servermodals";
 import type { TorrentActionMethodsType } from "rpc/client";
 import * as Icon from "react-bootstrap-icons";
+import { copyToClipboard } from "taurishim";
+import { useHotkeysContext } from "hotkeys";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface TableFieldProps {
@@ -461,6 +463,29 @@ function TorrentContextMenu(props: {
         setQueueSubmenuOpened(true);
     }, [props.selected]);
 
+    const copyMagnetLinks = useCallback(() => {
+        const selected = props.serverData.current.selected;
+        if (selected.size === 0) return;
+
+        const links = props.serverData.current.torrents
+            .filter((t) => selected.has(t.id))
+            .map((t) => t.magnetLink);
+
+        copyToClipboard(links.join("\n"));
+
+        notifications.show({
+            message: `Magnet ${selected.size > 1 ? "links" : "link"} copied to clipboard`,
+            color: "green",
+        });
+    }, [props.serverData]);
+
+    const hk = useHotkeysContext();
+
+    useEffect(() => {
+        hk.handlers.copyToClipboard = copyMagnetLinks;
+        return () => { hk.handlers.copyToClipboard = () => { }; };
+    }, [copyMagnetLinks, hk]);
+
     return (<>
         <Menu
             openDelay={100}
@@ -522,7 +547,7 @@ function TorrentContextMenu(props: {
             </Portal>
         </Menu>
         <ContextMenu contextMenuInfo={props.contextMenuInfo} setContextMenuInfo={props.setContextMenuInfo}>
-            <Box miw="10rem">
+            <Box miw="14rem">
                 {TAURI && <>
                     <Menu.Item
                         onClick={onOpen}
@@ -553,6 +578,14 @@ function TorrentContextMenu(props: {
                     icon={<Icon.Wifi size="1.1rem" />}
                     disabled={props.selected.length === 0}>
                     Reannounce
+                </Menu.Item>
+                <Menu.Item
+                    onClick={copyMagnetLinks}
+                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
+                    icon={<Icon.MagnetFill size="1.1rem" />}
+                    disabled={props.selected.length === 0}
+                    rightSection={<Kbd>{`${modKeyString()} C`}</Kbd>}>
+                    Copy magnet {props.selected.length > 1 ? "links" : "link"}
                 </Menu.Item>
                 <Menu.Item ref={queueRef}
                     icon={<Icon.ThreeDots size="1.1rem" />}

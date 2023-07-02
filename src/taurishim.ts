@@ -28,6 +28,9 @@ const WebviewWindow = TAURI
 const fs = TAURI
     ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api")).fs
     : undefined;
+const clipboard = TAURI
+    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api")).clipboard
+    : undefined;
 
 export const appWindow = {
     emit: async (event: string, payload?: unknown) => await realAppWindow?.emit(event, payload),
@@ -110,5 +113,28 @@ export async function writeConfigText(contents: string) {
         );
     } else {
         localStorage.setItem("trguing-config", contents);
+    }
+}
+
+export function copyToClipboard(text: string) {
+    if (TAURI) void clipboard?.writeText(text);
+    else {
+        const textArea = document.createElement("textarea");
+        textArea.classList.add("clipboard-temp");
+        textArea.value = text;
+
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            if (document.execCommand("copy")) {
+                console.log("Copied to clipboard.");
+            }
+        } catch (err) {
+            console.log("Can not copy to clipboard.");
+        }
+
+        document.body.removeChild(textArea);
     }
 }
