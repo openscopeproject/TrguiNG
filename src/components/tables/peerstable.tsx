@@ -21,6 +21,7 @@ import React, { useMemo, useCallback } from "react";
 import type { Torrent, PeerStats } from "rpc/torrent";
 import { bytesToHumanReadableStr } from "util";
 import { TransguiTable, useStandardSelect } from "./common";
+import { ProgressBar } from "components/progressbar";
 
 interface TableFieldProps {
     entry: PeerStats,
@@ -53,15 +54,20 @@ const AllFields: readonly TableField[] = [
 function ByteRateField(props: TableFieldProps) {
     const field = props.entry[props.fieldName];
     const stringValue = useMemo(() => {
-        return `${bytesToHumanReadableStr(field)}/s`;
+        return field > 0 ? `${bytesToHumanReadableStr(field)}/s` : "";
     }, [field]);
 
-    return <div>{stringValue}</div>;
+    return <div style={{ width: "100%", textAlign: "right" }}>{stringValue}</div>;
 }
 
 function PercentField(props: TableFieldProps) {
-    const value = props.entry[props.fieldName];
-    return <div>{`${Math.round(value * 1000) / 10}%`}</div>;
+    const now = props.entry[props.fieldName] * 100;
+    const active = props.entry.rateToClient > 0 || props.entry.rateToPeer > 0;
+
+    return <ProgressBar
+        now={now}
+        className="white-outline"
+        animate={active} />;
 }
 
 const Columns = AllFields.map((field): ColumnDef<PeerStats> => {
