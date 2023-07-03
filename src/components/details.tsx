@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
+import React, { memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Torrent, TrackerStats } from "../rpc/torrent";
-import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr, timestampToDateString } from "../util";
+import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr, timestampToDateString } from "../trutil";
 import { FileTreeTable, useUnwantedFiles } from "./tables/filetreetable";
 import { PiecesCanvas } from "./piecescanvas";
 import { ProgressBar } from "./progressbar";
@@ -32,6 +32,7 @@ import * as Icon from "react-bootstrap-icons";
 import type { FileDirEntry } from "cachedfiletree";
 import { CachedFileTree } from "cachedfiletree";
 import { useFileTree, useMutateTorrent, useSessionStats, useTorrentDetails } from "queries";
+import { ConfigContext } from "config";
 
 interface DetailsProps {
     torrentId?: number,
@@ -352,8 +353,12 @@ function ServerStats() {
 }
 
 function Details(props: DetailsProps) {
+    const config = useContext(ConfigContext);
+    const peersTableVisibility = config.getTableColumnVisibility("peers");
+    const countryVisible = peersTableVisibility.country ?? true;
+
     const { data: fetchedTorrent, isLoading } = useTorrentDetails(
-        props.torrentId ?? -1, props.torrentId !== undefined && props.updates);
+        props.torrentId ?? -1, props.torrentId !== undefined && props.updates, countryVisible);
 
     const [torrent, setTorrent] = useState<Torrent>();
 

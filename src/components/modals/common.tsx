@@ -23,7 +23,7 @@ import {
 } from "@mantine/core";
 import { ConfigContext, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { pathMapFromServer, pathMapToServer } from "util";
+import { pathMapFromServer, pathMapToServer } from "trutil";
 import * as Icon from "react-bootstrap-icons";
 import type { ServerTorrentData } from "rpc/torrent";
 import { useHotkeysContext } from "hotkeys";

@@ -32,8 +32,16 @@ Currently transmission v2.80 or later is required, goal is to have v2.40 and up 
 
 ## Compiling
 
-Get [Node.js 16](https://nodejs.org/) or later and [rust 1.60](https://www.rust-lang.org/)
-or later and run
+Prerequisites:
+- [Node.js 16](https://nodejs.org/) or later
+- [rust 1.69](https://www.rust-lang.org/) or later
+- Geoip lookup database in mmdb format, put it in `src-tauri`
+   ```
+   wget -nv -O- "https://download.db-ip.com/free/dbip-country-lite-2023-07.mmdb.gz" | zcat > src-tauri/dbip.mmdb
+   ```
+   You can get latest db from [db-ip.com](https://db-ip.com/db/download/ip-to-country-lite).
+
+To compile simply run
 
 ```
 $ npm install
@@ -43,8 +51,9 @@ $ npm run build
 This will generate optimized bundle in `dist` and a release binary in `src-tauri/target/release` folder.
 Also installer package will be available in `src-tauri/target/release/bundle/...`.
 
-The binary is statically linked and embeds all necessary assets. It is completely self sufficient
-and can be used as a portable executable.
+The binary is statically linked and embeds all necessary assets except for the geoip database.
+It is completely self sufficient and can be used as a portable executable but for geoip lookup to work you
+need to install the app with provided installer.
 
 For development run in parallel
 

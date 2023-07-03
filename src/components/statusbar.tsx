@@ -17,7 +17,7 @@
  */
 
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import { byteRateToHumanReadableStr, bytesToHumanReadableStr } from "../util";
+import { byteRateToHumanReadableStr, bytesToHumanReadableStr } from "../trutil";
 import * as Icon from "react-bootstrap-icons";
 import { Box, Flex } from "@mantine/core";
 import type { SessionInfo } from "rpc/client";

@@ -26,6 +26,7 @@ import TauriLogo from "svg/tauri.svg";
 import AppLogo from "svg/app.svg";
 import { Github } from "react-bootstrap-icons";
 import UserAgent from "ua-parser-js";
+const { TAURI } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface AppVersion {
     readonly gitVersion: string,
@@ -71,10 +72,10 @@ export function VersionModal({ opened, close }: ModalState) {
                     <Grid.Col span={8}>{new Date(appVersion.buildDate).toLocaleString()}</Grid.Col>
                     <Grid.Col span={4}>Source code</Grid.Col>
                     <Grid.Col span={8}><Box component="span" mr="sm"><Github /></Box><Anchor href="https://github.com/openscopeproject/trguing/" target="_blank" rel="noreferrer">github</Anchor></Grid.Col>
+                    <Grid.Col mt="xl">{TAURI && <Anchor href="https://db-ip.com" target="_blank" rel="noreferrer">IP Geolocation by DB-IP</Anchor>}</Grid.Col>
                 </Grid>
             </Flex>
             <Divider px="sm" my="xl" />
-
             <Text align="center">
                 powered by
             </Text>

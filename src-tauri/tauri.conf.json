@@ -22,7 +22,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "resources": [],
+      "resources": ["dbip.mmdb"],
       "externalBin": [],
       "copyright": "",
       "category": "Utility",

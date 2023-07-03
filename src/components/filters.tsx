@@ -23,7 +23,7 @@ import * as Icon from "react-bootstrap-icons";
 import * as StatusIcons from "./statusicons";
 import { ConfigContext, ServerConfigContext } from "../config";
 import { Divider, Flex } from "@mantine/core";
-import { eventHasModKey, useForceRender } from "util";
+import { eventHasModKey, useForceRender } from "trutil";
 import { useContextMenu } from "./contextmenu";
 import { SectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
 

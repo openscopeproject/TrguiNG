@@ -19,9 +19,12 @@
 import type { AccessorFn, CellContext, ColumnDef } from "@tanstack/react-table";
 import React, { useMemo, useCallback } from "react";
 import type { Torrent, PeerStats } from "rpc/torrent";
-import { bytesToHumanReadableStr } from "util";
+import { bytesToHumanReadableStr } from "trutil";
 import { TransguiTable, useStandardSelect } from "./common";
 import { ProgressBar } from "components/progressbar";
+import { Flex } from "@mantine/core";
+const { TAURI } = await import(/* webpackChunkName: "taurishim" */"taurishim");
+if (TAURI) await import(/* webpackChunkName: "flag-icons" */"flagsshim");
 
 interface TableFieldProps {
     entry: PeerStats,
@@ -36,7 +39,7 @@ interface TableField {
     component?: React.FunctionComponent<TableFieldProps>,
 }
 
-const AllFields: readonly TableField[] = [
+const AllFields: TableField[] = [
     { name: "address", label: "Address" },
     { name: "port", label: "Port" },
     { name: "clientName", label: "Client" },
@@ -49,7 +52,17 @@ const AllFields: readonly TableField[] = [
     { name: "cachedConnection", label: "Connection" },
     { name: "cachedProtocol", label: "Protocol" },
     { name: "cachedStatus", label: "Status" },
-] as const;
+];
+
+if (TAURI) AllFields.splice(1, 0, { name: "cachedCountryName", label: "Country", columnId: "country", component: CountryField });
+
+function CountryField(props: TableFieldProps) {
+    const iso = props.entry.cachedCountryIso;
+    return <Flex gap="sm" style={{ width: "100%" }}>
+        {iso !== undefined && <span className={`fi fi-${iso.toLowerCase()}`} />}
+        <span>{props.entry.cachedCountryName}</span>
+    </Flex>;
+}
 
 function ByteRateField(props: TableFieldProps) {
     const field = props.entry[props.fieldName];

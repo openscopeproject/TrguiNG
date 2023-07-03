@@ -120,7 +120,6 @@ export function copyToClipboard(text: string) {
     if (TAURI) void clipboard?.writeText(text);
     else {
         const textArea = document.createElement("textarea");
-        textArea.classList.add("clipboard-temp");
         textArea.value = text;
 
         document.body.appendChild(textArea);
@@ -128,9 +127,7 @@ export function copyToClipboard(text: string) {
         textArea.select();
 
         try {
-            if (document.execCommand("copy")) {
-                console.log("Copied to clipboard.");
-            }
+            document.execCommand("copy");
         } catch (err) {
             console.log("Can not copy to clipboard.");
         }

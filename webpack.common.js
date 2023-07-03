@@ -150,6 +150,12 @@ export default (mode) => ({
                     test: /[\\/]node_modules[\\/]react-bootstrap-icons[\\/]/,
                     name: "vendors/bootstrap-icons",
                 },
+                flags: {
+                    test: /[\\/]node_modules[\\/]flag-icons[\\/]/,
+                    name: "vendors/flag-icons",
+                    reuseExistingChunk: false,
+                    enforce: true,
+                },
                 // other: {
                 //     test: /[\\/]node_modules[\\/]/,
                 //     priority: -1,

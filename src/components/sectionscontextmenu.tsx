@@ -22,7 +22,7 @@ import type { ContextMenuInfo } from "./contextmenu";
 import { ContextMenu } from "./contextmenu";
 import type { DropResult } from "react-beautiful-dnd";
 import { DragDropContext, Draggable } from "react-beautiful-dnd";
-import { reorderElements } from "util";
+import { reorderElements } from "trutil";
 import { StrictModeDroppable } from "./strictmodedroppable";
 import { Box, Group, Menu } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";

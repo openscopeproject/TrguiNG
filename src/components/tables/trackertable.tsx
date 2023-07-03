@@ -21,7 +21,7 @@ import React, { useCallback } from "react";
 import type { Torrent, TrackerStats } from "rpc/torrent";
 import { getTrackerAnnounceState } from "rpc/torrent";
 import type { TrackerStatsFieldsType } from "rpc/transmission";
-import { secondsToHumanReadableStr } from "util";
+import { secondsToHumanReadableStr } from "trutil";
 import { TransguiTable, useStandardSelect } from "./common";
 
 interface TableFieldProps {

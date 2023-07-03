@@ -22,7 +22,7 @@ import type { CachedFileTree, FileDirEntry } from "../../cachedfiletree";
 import { isDirEntry } from "../../cachedfiletree";
 import { ServerConfigContext } from "../../config";
 import { PriorityColors, PriorityStrings } from "../../rpc/transmission";
-import { bytesToHumanReadableStr, pathMapFromServer } from "../../util";
+import { bytesToHumanReadableStr, pathMapFromServer } from "../../trutil";
 import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
 import { EditableNameField, TransguiTable } from "./common";

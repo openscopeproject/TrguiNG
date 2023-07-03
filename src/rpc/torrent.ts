@@ -19,6 +19,7 @@
 import type { BandwidthGroupFieldType, PeerStatsFieldsType, TorrentAllFieldsType, TrackerStatsFieldsType } from "./transmission";
 import { Status } from "./transmission";
 import { useRef, useEffect } from "react";
+import type { TransmissionClient } from "./client";
 
 export type TrackerStats = Partial<Record<TrackerStatsFieldsType, any>>;
 export type BandwidthGroup = Record<BandwidthGroupFieldType, any>;
@@ -97,7 +98,11 @@ function getPeersTotal(t: TorrentBase) {
     return peers;
 }
 
-export function processTorrent(t: TorrentBase): Torrent {
+export async function processTorrent(t: TorrentBase, lookupIps: boolean, client: TransmissionClient): Promise<Torrent> {
+    const peers = t.peers === undefined
+        ? undefined
+        : await Promise.all(t.peers.map(async (p: PeerStatsBase) => await processPeerStats(p, lookupIps, client)));
+
     return {
         ...t,
         cachedError: getTorrentError(t),
@@ -105,7 +110,7 @@ export function processTorrent(t: TorrentBase): Torrent {
         cachedMainTracker: getTorrentMainTracker(t),
         cachedSeedsTotal: getSeedsTotal(t),
         cachedPeersTotal: getPeersTotal(t),
-        peers: t.peers?.map(processPeerStats),
+        peers,
     };
 }
 
@@ -143,6 +148,8 @@ export interface PeerStats extends PeerStatsBase {
     cachedConnection: string,
     cachedProtocol: string,
     cachedStatus: string,
+    cachedCountryIso?: string,
+    cachedCountryName?: string,
 }
 
 // Flag meanings: https://github.com/transmission/transmission/blob/main/docs/Peer-Status-Text.md
@@ -157,7 +164,7 @@ const statusFlagStrings = {
     "?": "peer not interested",
 } as const;
 
-function processPeerStats(peer: PeerStatsBase): PeerStats {
+async function processPeerStats(peer: PeerStatsBase, lookupIps: boolean, client: TransmissionClient): Promise<PeerStats> {
     const flags = peer.flagStr as string;
 
     const cachedFrom = flags.includes("X")
@@ -169,6 +176,10 @@ function processPeerStats(peer: PeerStatsBase): PeerStats {
     const status = [...flags.matchAll(/[ODdUuK?]/g)].map(
         (s) => statusFlagStrings[s[0] as keyof (typeof statusFlagStrings)]);
 
+    const country = lookupIps
+        ? await client.ipsBatcher.fetch(peer.address)
+        : undefined;
+
     return {
         ...peer,
         cachedEncrypted: flags.includes("E") ? "yes" : "no",
@@ -176,5 +187,7 @@ function processPeerStats(peer: PeerStatsBase): PeerStats {
         cachedConnection: flags.includes("I") ? "incoming" : "outgoing",
         cachedProtocol: flags.includes("T") ? "µTP" : "TCP",
         cachedStatus: (status ?? []).join(", "),
+        cachedCountryIso: country?.isoCode,
+        cachedCountryName: country?.name,
     };
 }

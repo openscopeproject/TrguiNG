@@ -35,7 +35,7 @@ import React, { memo, useReducer, useCallback, useContext, useEffect, useMemo, u
 import type { DropResult } from "react-beautiful-dnd";
 import { DragDropContext, Draggable } from "react-beautiful-dnd";
 import { StrictModeDroppable } from "components/strictmodedroppable";
-import { eventHasModKey, reorderElements } from "util";
+import { eventHasModKey, reorderElements } from "trutil";
 import { useFontSize } from "fontsize";
 
 const defaultColumn = {

@@ -22,6 +22,7 @@
 use std::sync::Arc;
 
 use createtorrent::CreationRequestsHandle;
+use geoip::MmdbReaderHandle;
 use poller::PollerHandle;
 use tauri::{api::cli::get_matches, async_runtime, App, AppHandle, Manager, State};
 use tokio::sync::RwLock;
@@ -29,6 +30,7 @@ use torrentcache::TorrentCacheHandle;
 
 mod commands;
 mod createtorrent;
+mod geoip;
 mod integrations;
 mod ipc;
 #[cfg(target_os = "macos")]
@@ -59,9 +61,10 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         let app_handle = app.handle();
         macos::set_handler(move |uris| {
             handle_uris(app_handle.clone(), uris);
-        }).expect("Unable to set apple event handler");
+        })
+        .expect("Unable to set apple event handler");
         macos::listen_url();
-    } 
+    }
 
     let config = app.config();
     let cli_config = &config.tauri.cli.as_ref().unwrap();
@@ -176,6 +179,7 @@ fn main() {
         .manage(ListenerHandle(Arc::new(RwLock::new(ipc))))
         .manage(TorrentCacheHandle::default())
         .manage(PollerHandle::default())
+        .manage(MmdbReaderHandle::default())
         .manage(CreationRequestsHandle::default())
         .system_tray(tray::create_tray())
         .on_system_tray_event(tray::on_tray_event)

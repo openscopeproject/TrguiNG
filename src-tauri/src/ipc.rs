@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::net::TcpListener;
+use std::net::{IpAddr, TcpListener};
 use std::sync::Arc;
 
-use hyper::body::Bytes;
+use hyper::body::{to_bytes, Bytes};
 use hyper::header::{
     self, HeaderValue, ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS,
     ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_EXPOSE_HEADERS, AUTHORIZATION, ORIGIN,
@@ -101,9 +101,7 @@ async fn http_response(
             send_payoad(&app, payload).await;
             drop(lock);
 
-            Ok(Response::builder()
-                .body(Body::from("TrguiNG OK"))
-                .unwrap())
+            Ok(Response::builder().body(Body::from("TrguiNG OK")).unwrap())
         }
         (&Method::OPTIONS, _) => {
             let mut response = Response::builder()
@@ -124,7 +122,52 @@ async fn http_response(
             }
             Err(e) => Err(e),
         },
+        (&Method::POST, "/iplookup") => geoip_lookup(&app, req).await,
         _ => Ok(not_found()),
+    }
+}
+
+async fn geoip_lookup(
+    app: &Arc<AppHandle>,
+    req: Request<Body>,
+) -> Result<Response<Body>, hyper::Error> {
+    let headers = req.headers().clone();
+    let request_body = to_bytes(req.into_body()).await?;
+    let request_bytes = request_body.as_ref();
+
+    match serde_json::from_slice::<Vec<String>>(request_bytes) {
+        Ok(ipstr) => {
+            let ips: Vec<_> = ipstr.iter().map(|ip| ip.parse::<IpAddr>()).collect();
+            let error_ips: Vec<_> = ips
+                .iter()
+                .enumerate()
+                .filter(|(_, ip)| ip.is_err())
+                .map(|(i, r)| (i, r.clone().err().unwrap()))
+                .collect();
+            if !error_ips.is_empty() {
+                let msgs: Vec<_> = error_ips
+                    .into_iter()
+                    .map(|(i, e)| format!("{}: {}", ipstr[i], e))
+                    .collect();
+                let msg = format!("{}\n", msgs.join("\n"));
+                return Ok(invalid_request(&headers, msg.as_str()));
+            }
+
+            let good_ips = ips.into_iter().map(|r| r.unwrap()).collect();
+
+            let lookup_response = serde_json::to_string(&crate::geoip::lookup(app, good_ips).await);
+
+            let mut response = Response::builder()
+                .status(StatusCode::OK)
+                .body(lookup_response.unwrap_or("Error serializing response".to_string()).into())
+                .unwrap();
+            cors(&headers, &mut response, ALLOW_ORIGINS);
+            Ok(response)
+        }
+        Err(e) => Ok(invalid_request(
+            &headers,
+            format!("Can not parse json: {}\n", e).as_str(),
+        )),
     }
 }
 

@@ -22,10 +22,10 @@ import { ServerConfigContext } from "config";
 import { useCallback, useContext, useEffect, useState } from "react";
 import type { SessionInfo, TorrentActionMethodsType, TorrentAddParams } from "rpc/client";
 import { useTransmissionClient } from "rpc/client";
-import type { Torrent } from "rpc/torrent";
+import type { Torrent, TorrentBase } from "rpc/torrent";
 import { processTorrent } from "rpc/torrent";
 import type { TorrentMutableFieldsType, TorrentFieldsType, TorrentAllFieldsType } from "rpc/transmission";
-const { appWindow } = await import(/* webpackChunkName: "taurishim" */"taurishim");
+const { TAURI, appWindow } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export const queryClient = new QueryClient();
 
@@ -49,8 +49,6 @@ const SessionStatsKeys = {
 const BandwidthGroupKeys = {
     all: (server: string) => [server, "bandwidth-group"] as const,
 };
-
-const TAURI = Object.prototype.hasOwnProperty.call(window, "__TAURI__");
 
 export function useTorrentList(enabled: boolean, fields: TorrentFieldsType[]) {
     const serverConfig = useContext(ServerConfigContext);
@@ -92,12 +90,13 @@ export function useTorrentList(enabled: boolean, fields: TorrentFieldsType[]) {
         enabled,
         queryFn: useCallback(async () => {
             const torrents = await client.getTorrents(fields);
-            return torrents.map(processTorrent);
+            return await Promise.all(torrents.map(
+                async (t: TorrentBase) => await processTorrent(t, false, client)));
         }, [client, fields]),
     });
 }
 
-export function useTorrentDetails(torrentId: number, enabled: boolean, disableRefetch?: boolean) {
+export function useTorrentDetails(torrentId: number, enabled: boolean, lookupIps: boolean, disableRefetch?: boolean) {
     const serverConfig = useContext(ServerConfigContext);
     const client = useTransmissionClient();
 
@@ -107,8 +106,8 @@ export function useTorrentDetails(torrentId: number, enabled: boolean, disableRe
         staleTime: 1000 * 5,
         enabled,
         queryFn: useCallback(async () => {
-            return processTorrent(await client.getTorrentDetails(torrentId));
-        }, [client, torrentId]),
+            return await processTorrent(await client.getTorrentDetails(torrentId), TAURI && lookupIps, client);
+        }, [client, torrentId, lookupIps]),
     });
 }
 
@@ -341,4 +340,17 @@ export function useFileTree(name: string, fileTree: CachedFileTree) {
 
 export function refreshFileTree(name: string) {
     void queryClient.refetchQueries({ queryKey: [name] });
+}
+
+export function useIpLookup(ip: string) {
+    const client = useTransmissionClient();
+
+    return useQuery({
+        queryKey: ["ips", ip],
+        staleTime: Infinity,
+        cacheTime: 10 * 60 * 1000,
+        queryFn: async () => {
+            return await client.ipsBatcher.fetch(ip);
+        },
+    });
 }

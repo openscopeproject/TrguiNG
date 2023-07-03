@@ -22,7 +22,7 @@ import type { ServerTorrentData, Torrent } from "rpc/torrent";
 import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
-import { bytesToHumanReadableStr, modKeyString, pathMapFromServer, secondsToHumanReadableStr, timestampToDateString } from "util";
+import { bytesToHumanReadableStr, modKeyString, pathMapFromServer, secondsToHumanReadableStr, timestampToDateString } from "trutil";
 import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
 import type { TableSelectReducer } from "./common";
@@ -37,9 +37,8 @@ import { ContextMenu, useContextMenu } from "components/contextmenu";
 import type { ModalCallbacks } from "components/modals/servermodals";
 import type { TorrentActionMethodsType } from "rpc/client";
 import * as Icon from "react-bootstrap-icons";
-import { copyToClipboard } from "taurishim";
 import { useHotkeysContext } from "hotkeys";
-const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
+const { TAURI, invoke, copyToClipboard } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface TableFieldProps {
     torrent: Torrent,

@@ -23,10 +23,10 @@ import { SessionAllFields, SessionFields, TorrentAllFields } from "./transmissio
 import type { ServerConnection } from "../config";
 import type { BandwidthGroup, TorrentBase } from "./torrent";
 import React, { useContext } from "react";
+import type { Batcher } from "@yornaath/batshit";
+import { create, keyResolver } from "@yornaath/batshit";
 
-class ApiError extends Error {
-
-}
+class ApiError extends Error { }
 
 class ApiResponse {
     result: string = "";
@@ -64,12 +64,19 @@ export interface TorrentAddParams {
     unwanted?: number[],
 }
 
+interface IpLookupResult {
+    ip: string,
+    isoCode?: string,
+    name?: string,
+}
+
 export class TransmissionClient {
     url: string;
     hostname: string;
     headers: Record<string, string>;
     timeout: number;
     sessionInfo: SessionInfo;
+    ipsBatcher: Batcher<IpLookupResult, string>;
 
     constructor(connection: ServerConnection, toastNotifications: boolean, timeout = 15) {
         this.url = encodeURIComponent(connection.url);
@@ -92,6 +99,12 @@ export class TransmissionClient {
             // TODO handle errors
             // console.log("Invalid URL", connection.url);
         }
+        this.ipsBatcher = create<IpLookupResult, string>({
+            fetcher: async (ips: string[]) => {
+                return await this.lookupIps(ips);
+            },
+            resolver: keyResolver("ip"),
+        });
     }
 
     getHeader(headers: Record<string, string>, header: string) {
@@ -326,6 +339,20 @@ export class TransmissionClient {
         };
 
         return await this._sendRpc(request);
+    }
+
+    async lookupIps(ips: string[]) {
+        const url = "http://127.0.0.1:44321/iplookup";
+        const body = JSON.stringify(ips);
+
+        const response = await fetch(url, { method: "POST", body });
+
+        if (response.ok) {
+            return await response.json();
+        } else {
+            console.log(response);
+            throw new Error(`Server returned error: ${response.status} (${response.statusText})`);
+        }
     }
 }
 
