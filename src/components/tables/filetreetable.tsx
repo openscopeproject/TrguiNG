@@ -308,6 +308,32 @@ function FiletreeContextMenu(props: {
         );
     }, [mutation, props.fileTree, props.selected]);
 
+    const setWanted = useCallback((wanted: boolean) => {
+        const fileIds = Array.from(props.selected
+            .map((path) => props.fileTree.getChildFilesIndexes(path))
+            .reduce((set, curIds) => {
+                curIds.forEach((id) => set.add(id));
+                return set;
+            }, new Set<number>()));
+
+        mutation.mutate(
+            {
+                torrentIds: [props.fileTree.torrentId],
+                fields: {
+                    [wanted ? "files-wanted" : "files-unwanted"]: fileIds,
+                },
+            },
+            {
+                onSuccess: () => {
+                    notifications.show({
+                        message: "Files updated",
+                        color: "green",
+                    });
+                },
+            },
+        );
+    }, [mutation, props.fileTree, props.selected]);
+
     return (
         <ContextMenu contextMenuInfo={props.contextMenuInfo} setContextMenuInfo={props.setContextMenuInfo}>
             {TAURI && <>
@@ -336,6 +362,19 @@ function FiletreeContextMenu(props: {
                 icon={<Icon.CircleFill color="gold" size="1.1rem" />}
                 disabled={props.selected.length === 0}>
                 Low priority
+            </Menu.Item>
+            <Menu.Divider />
+            <Menu.Item
+                onClick={() => { setWanted(true); }}
+                icon={<Checkbox checked readOnly />}
+                disabled={props.selected.length === 0}>
+                Set wanted
+            </Menu.Item>
+            <Menu.Item
+                onClick={() => { setWanted(false); }}
+                icon={<Checkbox readOnly />}
+                disabled={props.selected.length === 0}>
+                Set unwanted
             </Menu.Item>
         </ContextMenu >
     );

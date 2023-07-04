@@ -30,7 +30,7 @@ import { useAddTorrent, useFileTree } from "queries";
 import { ConfigContext } from "config";
 const { TAURI, dialogOpen, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
-interface AddCommonProps {
+interface AddCommonProps extends React.PropsWithChildren {
     location: LocationData,
     labels: LabelsData,
     start: boolean,
@@ -50,6 +50,7 @@ function AddCommon(props: AddCommonProps) {
                 onChange={(e) => { props.setStart(e.currentTarget.checked); }}
                 my="xl"
                 styles={{ root: { flexGrow: 1 } }} />
+            {props.children}
             <SegmentedControl
                 color={PriorityColors.get(props.priority)}
                 value={String(props.priority)}
@@ -324,6 +325,11 @@ export function AddTorrent(props: AddCommonModalProps) {
 
     const onCheckboxChange = useUnwantedFiles(fileTree, false);
 
+    const setAllWanted = useCallback((wanted: boolean) => {
+        onCheckboxChange(fileTree.tree, wanted);
+        void refetch();
+    }, [fileTree, onCheckboxChange, refetch]);
+
     const addMutation = useAddTorrent();
 
     const onAdd = useCallback(() => {
@@ -402,7 +408,15 @@ export function AddTorrent(props: AddCommonModalProps) {
                                 <Text color="red" fw="bold" fz="lg">Torrent already exists</Text>
                             </Flex>
                         </Overlay>}
-                    <AddCommon {...common.props} />
+                    <AddCommon {...common.props}>
+                        {torrentData.files == null
+                            ? <></>
+                            : <>
+                                <Button variant="subtle" onClick={() => { setAllWanted(true); }}>All</Button>
+                                <Button variant="subtle" onClick={() => { setAllWanted(false); }}>None</Button>
+                            </>
+                        }
+                    </AddCommon>
                     {torrentData.files == null
                         ? <></>
                         : <Box w="100%" h="15rem">
