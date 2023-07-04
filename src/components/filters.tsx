@@ -89,6 +89,11 @@ const statusFilters: LabeledFilter[] = [
             Status.queuedToDownload].includes(t.status),
         icon: StatusIcons.Waiting,
     },
+    {
+        label: "Magnetizing",
+        filter: (t: Torrent) => t.status === Status.downloading && t.pieceCount === 0,
+        icon: StatusIcons.Magnetizing,
+    },
 ];
 
 const noLabelsFilter: LabeledFilter = {

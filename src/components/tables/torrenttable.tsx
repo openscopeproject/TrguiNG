@@ -29,7 +29,7 @@ import type { TableSelectReducer } from "./common";
 import { EditableNameField, TransguiTable } from "./common";
 import { Badge, Box, Button, Kbd, Menu, Portal, Text } from "@mantine/core";
 import { ConfigContext, ServerConfigContext } from "config";
-import { StatusIconMap, Error as StatusIconError } from "components/statusicons";
+import { StatusIconMap, Error as StatusIconError, Magnetizing, CompletedStopped } from "components/statusicons";
 import { useMutateTorrentPath, useTorrentAction } from "queries";
 import { notifications } from "@mantine/notifications";
 import type { ContextMenuInfo } from "components/contextmenu";
@@ -138,10 +138,20 @@ const AllFields: readonly TableField[] = [
     { name: "isPrivate", label: "Private", component: StringField },
     { name: "labels", label: "Labels", component: LabelsField },
     { name: "group", label: "Bandwidth group", component: StringField },
+    { name: "file-count", label: "File count", component: NumberField },
+    { name: "pieceCount", label: "Piece count", component: NumberField },
+    { name: "metadataPercentComplete", label: "Metadata", component: PercentBarField },
 ] as const;
 
 function NameField(props: TableFieldProps) {
     let StatusIcon = StatusIconMap[props.torrent.status];
+    if (props.torrent.status === Status.downloading && props.torrent.pieceCount === 0) {
+        StatusIcon = Magnetizing;
+    }
+    if (props.torrent.status === Status.stopped && props.torrent.haveValid === props.torrent.sizeWhenDone) {
+        StatusIcon = CompletedStopped;
+    }
+
     if ((props.torrent.error !== undefined && props.torrent.error > 0) ||
         props.torrent.cachedError !== "") {
         StatusIcon = StatusIconError;

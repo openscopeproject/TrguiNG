@@ -43,6 +43,7 @@ const AllFields: readonly TableField[] = [
     { name: "nextAnnounceTime", label: "Next update", component: NextUpdateField },
     { name: "seederCount", label: "Seeds", component: NumberField },
     { name: "leecherCount", label: "Peers", component: NumberField },
+    { name: "downloadCount", label: "Downloads", component: NumberField },
 ] as const;
 
 const Columns = AllFields.map((field): ColumnDef<TrackerStats> => {

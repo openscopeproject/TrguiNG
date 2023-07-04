@@ -25,7 +25,7 @@ import { ProgressBar } from "./progressbar";
 import { DateField, LabelsField, StatusField, TrackerField } from "./tables/torrenttable";
 import { TrackersTable } from "./tables/trackertable";
 import { PeersTable } from "./tables/peerstable";
-import type { SessionStatEntry } from "rpc/transmission";
+import { Status, type SessionStatEntry } from "rpc/transmission";
 import type { MantineTheme } from "@mantine/core";
 import { Anchor, Box, Flex, Container, Group, Table, Tabs, TextInput, LoadingOverlay } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
@@ -40,10 +40,21 @@ interface DetailsProps {
 }
 
 function DownloadBar(props: { torrent: Torrent }) {
-    // temporarily just a progress bar
-    const percent = props.torrent.status === 2 ? props.torrent.recheckProgress : props.torrent.percentDone;
+    let prefix = "";
+    let percent = props.torrent.percentDone as number;
+    if (props.torrent.status === Status.verifying) {
+        prefix = "Verified";
+        percent = props.torrent.recheckProgress;
+    } else if (props.torrent.status === Status.downloading && props.torrent.pieceCount === 0) {
+        prefix = "Downloading metadata";
+        percent = props.torrent.metadataPercentComplete;
+    } else if (props.torrent.status === Status.stopped) {
+        prefix = "Stopped";
+    } else {
+        prefix = "Downloaded";
+    }
+
     const now = Math.round(percent * 1000);
-    const prefix = props.torrent.status === 2 ? "Verified" : "Downloaded";
     const nowStr = `${prefix}: ${now / 10}%`;
     return (
         <Box w="100%" my="0.5rem">

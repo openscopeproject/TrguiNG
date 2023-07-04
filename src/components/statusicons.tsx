@@ -71,6 +71,16 @@ export function Tracker() {
     return <Icon.Wifi size="1rem" stroke={theme.colors.indigo[9]} fill={theme.colors.blue[4]} />;
 }
 
+export function Magnetizing() {
+    const theme = useMantineTheme();
+    return <Icon.MagnetFill size="1rem" fill={theme.colors.indigo[4]} />;
+}
+
+export function CompletedStopped() {
+    const theme = useMantineTheme();
+    return <Icon.CheckSquareFill size="1rem" fill={theme.colors.green[7]} />;
+}
+
 export const StatusIconMap: Record<number, React.FC> = {
     [Status.stopped]: Stopped,
     [Status.queuedToVerify]: Waiting,

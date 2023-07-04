@@ -68,6 +68,7 @@ export const TorrentMinimumFields = [
     "name", // string tr_torrent_view
     // following are needed by filters
     "status", // number (see below) tr_stat
+    "pieceCount", // number tr_torrent_view
     "downloadDir", // string tr_torrent
     "labels", // array of strings tr_torrent
     // following are needed to get torrent error status
@@ -116,7 +117,6 @@ export const TorrentFields = [
     "peersSendingToUs", // number tr_stat
     "percentComplete", // double tr_stat
     "percentDone", // double tr_stat
-    "pieceCount", // number tr_torrent_view
     "pieceSize", // number tr_torrent_view
     "queuePosition", // number tr_stat
     "recheckProgress", // double tr_stat
@@ -139,13 +139,13 @@ export const TorrentFields = [
 
 export type TorrentFieldsType = typeof TorrentFields[number];
 
+// These fields should not be in main table because they take up a lot of data
 export const TorrentAllFields = [
     ...TorrentFields,
     "comment", // string tr_torrent_view
     "creator", // string tr_torrent_view
     "files", // array (see below)", //n/a
     "fileStats", // array (see below)", //n/a
-    "magnetLink", // string", //n/a
     "peers", // array (see below)", //n/a
     "peersFrom", // object (see below)", //n/a
     "pieces", // string (see below) tr_torrent
