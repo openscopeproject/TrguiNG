@@ -112,6 +112,34 @@ interface Settings {
     },
 }
 
+const DefaultColumnVisibility: Partial<Record<TableName, VisibilityState>> = {
+    torrents: {
+        sizeWhenDone: false,
+        leftUntilDone: false,
+        downloadedEver: false,
+        uploadedEver: false,
+        eta: false,
+        tracker: false,
+        trackerStatus: false,
+        doneDate: false,
+        activityDate: false,
+        downloadDir: false,
+        id: false,
+        queuePosition: false,
+        isPrivate: false,
+        group: false,
+        "file-count": false,
+        pieceCount: false,
+        metadataPercentComplete: false,
+    },
+    peers: {
+        flagStr: false,
+        cachedFrom: false,
+        cachedConnection: false,
+        cachedProtocol: false,
+    },
+} as const;
+
 const DefaultSettings: Settings = {
     servers: [],
     openTabs: [],
@@ -132,7 +160,7 @@ const DefaultSettings: Settings = {
         theme: undefined,
         tables: Object.fromEntries(TableNames.map((table) => [table, {
             columns: [],
-            columnVisibility: {},
+            columnVisibility: DefaultColumnVisibility[table] ?? {},
             columnOrder: [],
             columnSizes: {},
             sortBy: [],
