@@ -71,6 +71,10 @@ jobs:
       - name: install npm packages
         run: npm ci
 
+      - run: |
+          git status
+          git describe --tags --dirty --always
+
       - uses: qu1ck/action-tauri-build@5c69c9fdbb4231a738b4a668a2caddf6af45eab8
         id: tauri_build
         with:

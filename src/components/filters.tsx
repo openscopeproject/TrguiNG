@@ -155,11 +155,13 @@ function DirFilterRow(props: DirFilterRowProps) {
         return path.startsWith(props.dir.path);
     }, [props.dir.path]);
 
-    const onExpand = useCallback(() => {
+    const onExpand = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
         props.dir.expanded = true;
         props.expandedReducer({ verb: "add", value: props.dir.path });
     }, [props]);
-    const onCollapse = useCallback(() => {
+    const onCollapse = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
         props.dir.expanded = false;
         props.expandedReducer({ verb: "remove", value: props.dir.path });
     }, [props]);
