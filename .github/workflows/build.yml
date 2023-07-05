@@ -37,6 +37,11 @@ jobs:
 
     runs-on: ${{ matrix.platform.os }}
     steps:
+      - name: Disable crlf
+        if: matrix.platform.os == 'windows-latest'
+        run: |
+          git config --global core.autocrlf input
+
       - uses: actions/checkout@v3
 
       # Download the previously uploaded artifacts
@@ -71,14 +76,16 @@ jobs:
       - name: install npm packages
         run: npm ci
 
-      - run: |
-          git status
-          git describe --tags --dirty --always
-
       - uses: qu1ck/action-tauri-build@5c69c9fdbb4231a738b4a668a2caddf6af45eab8
         id: tauri_build
         with:
           target: ${{ matrix.platform.rust_target }}
+
+      - name: Git status and version
+        run: |
+          git status
+          git describe --tags --dirty --always
+          git diff
 
       # The artifacts output can now be used to upload the artifacts
       - uses: actions/upload-artifact@v3

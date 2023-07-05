@@ -30,14 +30,15 @@ const tsConfig = JSON.parse(await readFile("./tsconfig.json"));
 const tauriConf = JSON.parse(await readFile("./src-tauri/tauri.conf.json"));
 
 const gitVersion = execaSync("git", ["describe", "--tags", "--dirty", "--always"]);
-const versionTemplate = `{
+const versionInfo = `{
     "gitVersion": "${gitVersion.stdout}",
     "backendVersion": "${tauriConf.package.version}",
     "buildDate": ${Date.now()}
 }`;
+console.log(versionInfo);
 
 await mkdir(path.join(__dirname, "src/build/"), { recursive: true });
-await writeFile(path.resolve(path.join(__dirname, "src/build/version.json")), versionTemplate);
+await writeFile(path.resolve(path.join(__dirname, "src/build/version.json")), versionInfo);
 
 export default (mode) => ({
     mode,
