@@ -248,9 +248,11 @@ export function LabelsField(props: TableFieldProps) {
 }
 
 export function StatusField(props: TableFieldProps) {
-    const status = StatusStrings[props.torrent.status];
+    let status: string = StatusStrings[props.torrent.status];
+    if (props.torrent.status === Status.downloading && props.torrent.pieceCount === 0) status = "Magnetizing";
+
     const sequential = (props.torrent.status === Status.downloading && props.torrent.sequentialDownload === true) ? " sequentially" : "";
-    return <div>{(status as string) + sequential}</div>;
+    return <div>{status + sequential}</div>;
 }
 
 export function DateField(props: TableFieldProps) {
