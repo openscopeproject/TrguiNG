@@ -83,6 +83,8 @@
     height: 100%;
     /* prevents from scrolling while dragging on touch devices */
     touch-action: none;
+    opacity: 0.3;
+    width: 2px;
 }
 
 .resizer.isResizing {
@@ -90,14 +92,7 @@
     opacity: 1;
 }
 
-@media (hover: hover) {
-    .resizer {
-        opacity: 0.3;
-        width: 2px;
-    }
-
-    *:hover>.resizer {
-        opacity: 1;
-        width: 0.3em;
-    }
+.th:hover>.resizer {
+    opacity: 1;
+    width: 0.3em;
 }
