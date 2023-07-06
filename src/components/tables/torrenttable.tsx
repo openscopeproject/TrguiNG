@@ -224,7 +224,7 @@ export function EtaField(props: TableFieldProps) {
     const seconds = props.torrent[props.fieldName];
     if (seconds >= 0) return <TimeField {...props} />;
     else if (seconds === -1) return <></>;
-    else return <div>Unknown</div>;
+    else return <div>∞</div>;
 }
 
 export function TrackerField(props: TableFieldProps) {
