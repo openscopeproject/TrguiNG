@@ -148,7 +148,9 @@ function NameField(props: TableFieldProps) {
     if (props.torrent.status === Status.downloading && props.torrent.pieceCount === 0) {
         StatusIcon = Magnetizing;
     }
-    if (props.torrent.status === Status.stopped && props.torrent.haveValid === props.torrent.sizeWhenDone) {
+    if (props.torrent.status === Status.stopped &&
+        props.torrent.sizeWhenDone > 0 &&
+        props.torrent.haveValid === props.torrent.sizeWhenDone) {
         StatusIcon = CompletedStopped;
     }
 
