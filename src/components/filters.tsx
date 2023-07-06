@@ -16,11 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import type { Torrent } from "../rpc/torrent";
 import { Status } from "../rpc/transmission";
 import * as Icon from "react-bootstrap-icons";
 import * as StatusIcons from "./statusicons";
+import type { FilterSectionName, SectionsVisibility } from "../config";
 import { ConfigContext, ServerConfigContext } from "../config";
 import { Divider, Flex } from "@mantine/core";
 import { eventHasModKey, useForceRender } from "trutil";
@@ -304,16 +305,17 @@ export function Filters(props: FiltersProps) {
         };
     }, [props.allLabels, props.allTrackers]);
 
-    const [sections, setSections] = useState(config.values.interface.filterSections);
+    const [sections, setSections] = useReducer(
+        (_: SectionsVisibility<FilterSectionName>, sections: SectionsVisibility<FilterSectionName>) => {
+            props.setCurrentFilters({ verb: "set", filter: { id: "", filter: DefaultFilter } });
+            return sections;
+        }, config.values.interface.filterSections);
     const [sectionsMap, setSectionsMap] = useState(getSectionsMap(sections));
-
-    const { setCurrentFilters } = props;
 
     useEffect(() => {
         config.values.interface.filterSections = sections;
         setSectionsMap(getSectionsMap(sections));
-        setCurrentFilters({ verb: "set", filter: { id: "", filter: DefaultFilter } });
-    }, [config, sections, setCurrentFilters]);
+    }, [config, sections]);
 
     const [info, setInfo, handler] = useContextMenu();
 

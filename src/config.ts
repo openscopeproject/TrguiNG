@@ -68,7 +68,7 @@ const Sashes = ["vertical", "horizontal"] as const;
 type SashName = typeof Sashes[number];
 
 const FilterSections = ["Status", "Directories", "Labels", "Trackers"] as const;
-type FilterSectionName = typeof FilterSections[number];
+export type FilterSectionName = typeof FilterSections[number];
 
 const StatusbarSections = [
     "Connection", "Download speed ", "Upload speed", "Free space", "Total", "Selected",
