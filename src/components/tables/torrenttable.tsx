@@ -113,7 +113,7 @@ const AllFields: readonly TableField[] = [
         accessorFn: (t) => t.peersGettingFromUs * 1e+6 + t.cachedPeersTotal,
     },
     { name: "eta", label: "ETA", component: EtaField },
-    { name: "uploadRatio", label: "Ratio", component: NumberField },
+    { name: "uploadRatio", label: "Ratio", component: PositiveNumberField },
     {
         name: "trackerStats",
         label: "Tracker",
@@ -138,8 +138,8 @@ const AllFields: readonly TableField[] = [
     { name: "isPrivate", label: "Private", component: StringField },
     { name: "labels", label: "Labels", component: LabelsField },
     { name: "group", label: "Bandwidth group", component: StringField },
-    { name: "file-count", label: "File count", component: NumberField },
-    { name: "pieceCount", label: "Piece count", component: NumberField },
+    { name: "file-count", label: "File count", component: PositiveNumberField },
+    { name: "pieceCount", label: "Piece count", component: PositiveNumberField },
     { name: "metadataPercentComplete", label: "Metadata", component: PercentBarField },
 ] as const;
 
@@ -191,10 +191,11 @@ function StringField(props: TableFieldProps) {
     );
 }
 
-function NumberField(props: TableFieldProps) {
+function PositiveNumberField(props: TableFieldProps) {
+    const num = props.torrent[props.fieldName];
     return (
         <div style={{ width: "100%", textAlign: "right" }}>
-            {props.torrent[props.fieldName]}
+            {num < 0 ? "" : num}
         </div>
     );
 }
@@ -272,9 +273,7 @@ export function DateDiffField(props: TableFieldProps) {
     return <div title={date} style={{ width: "100%", textAlign: "right" }}>
         {seconds < 30
             ? "now"
-            : date === ""
-                ? "never"
-                : `${secondsToHumanReadableStr(seconds)} ago`}
+            : date === "" ? "" : `${secondsToHumanReadableStr(seconds)} ago`}
     </div>;
 }
 
