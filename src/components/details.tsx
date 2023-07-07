@@ -177,7 +177,7 @@ const httpRe = /https?:\/\//;
 const urlRe = /(https?:\/\/[^\s]+)/;
 
 function Urlize(props: { text: string }) {
-    if (!httpRe.test(props.text)) return <>text</>;
+    if (!httpRe.test(props.text)) return <>{props.text}</>;
     const matches = props.text.split(urlRe).filter((match) => match.length > 0);
     return <>{matches.map((match, index) => {
         if (!httpRe.test(match)) return <span key={index}>{match}</span>;

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { ColorScheme, Styles, TextInputStylesNames } from "@mantine/core";
+import type { Styles, TextInputStylesNames } from "@mantine/core";
 import { Box, Button, Flex, Group, Slider, Text, TextInput, Textarea, useMantineColorScheme } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { dialog } from "@tauri-apps/api";
@@ -72,6 +72,7 @@ interface CreateCheckResult {
 
 export default function CreateTorrentForm() {
     const { toggleColorScheme } = useMantineColorScheme();
+    const [defaultTrackers, setDefaultTrackers] = useState<string[]>([]);
     const [pieces, setPieces] = useState({
         done: 0,
         total: 0,
@@ -97,7 +98,9 @@ export default function CreateTorrentForm() {
     useEffect(() => {
         void appWindow.once<PassEventData>("pass-from-window", ({ payload: data }) => {
             console.log("Got from window", data);
-            toggleColorScheme(data.payload as ColorScheme);
+            const { colorScheme, defaultTrackers } = JSON.parse(data.payload);
+            toggleColorScheme(colorScheme);
+            setDefaultTrackers(defaultTrackers);
         });
         void invoke("pass_to_window", { to: "main", payload: "ready" });
     }, [toggleColorScheme]);
@@ -192,6 +195,12 @@ export default function CreateTorrentForm() {
         }).catch(console.error);
     }, []);
 
+    const addDefaultTrackers = useCallback(() => {
+        let list = form.values.announceList;
+        list = [...list, ...defaultTrackers];
+        form.setFieldValue("announceList", list);
+    }, [defaultTrackers, form]);
+
     return (
         <Flex direction="column" h="100%" w="100%" p="lg" gap="lg">
             <Group align="flex-end">
@@ -221,9 +230,12 @@ export default function CreateTorrentForm() {
             <TextInput
                 label={"Comment"}
                 {...form.getInputProps("comment")} />
+            <Group align="flex-end">
+                <Box sx={{ flexGrow: 1 }}>Tracker list, one per line, empty line between tiers</Box>
+                <Button onClick={addDefaultTrackers}>Add default list</Button>
+            </Group>
             <Textarea
                 styles={textAreaStyles}
-                label="Announce list, one per line, empty line between tiers"
                 value={form.values.announceList.join("\n")}
                 onChange={(e) => { form.setFieldValue("announceList", e.target.value.split("\n")); }} />
             <Textarea

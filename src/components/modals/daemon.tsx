@@ -19,7 +19,7 @@
 import type { NumberInputProps } from "@mantine/core";
 import { Box, Button, Checkbox, Grid, Group, Loader, LoadingOverlay, NativeSelect, NumberInput, Tabs, Text, TextInput } from "@mantine/core";
 import type { ServerConfig } from "config";
-import { ServerConfigContext } from "config";
+import { ConfigContext, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import type { ModalState } from "./common";
 import { SaveCancelModal } from "./common";
@@ -30,8 +30,11 @@ import type { SessionInfo } from "rpc/client";
 import type { ExtendedCustomColors } from "types/mantine";
 import type { BandwidthGroup } from "rpc/torrent";
 import { notifications } from "@mantine/notifications";
+import type { InterfaceFormValues } from "./interfacepanel";
+import { InterfaceSettigsPanel } from "./interfacepanel";
+const { TAURI } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
-interface FormValues {
+interface FormValues extends InterfaceFormValues {
     intervals: ServerConfig["intervals"],
     session?: SessionInfo,
     bandwidthGroups?: BandwidthGroup[],
@@ -464,12 +467,14 @@ function QueuePanel({ form, session }: { form: UseFormReturnType<FormValues>, se
 export function DaemonSettingsModal(props: ModalState) {
     const { data: session, fetchStatus } = useSessionFull(props.opened);
     const mutation = useMutateSession();
+    const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
 
     const form = useForm<FormValues>({
         initialValues: {
             intervals: serverConfig.intervals,
             session,
+            interface: config.values.interface,
         },
     });
 
@@ -478,6 +483,7 @@ export function DaemonSettingsModal(props: ModalState) {
 
     const onSave = useCallback(() => {
         serverConfig.intervals = { ...form.values.intervals };
+        config.values.interface = { ...config.values.interface, ...form.values.interface };
         if (form.values.session !== undefined) {
             mutation.mutate(form.values.session, {
                 onSuccess: () => {
@@ -498,7 +504,7 @@ export function DaemonSettingsModal(props: ModalState) {
         } else {
             props.close();
         }
-    }, [form.values, mutation, props, serverConfig]);
+    }, [form.values, mutation, props, config, serverConfig]);
 
     return (
         <SaveCancelModal
@@ -519,6 +525,7 @@ export function DaemonSettingsModal(props: ModalState) {
                         <Tabs.Tab value="network" p="lg">Network</Tabs.Tab>
                         <Tabs.Tab value="bandwidth" p="lg">Bandwidth</Tabs.Tab>
                         <Tabs.Tab value="queue" p="lg">Queue</Tabs.Tab>
+                        {!TAURI && <Tabs.Tab value="interface" p="lg">Interface</Tabs.Tab>}
                     </Tabs.List>
                     {form.values.session !== undefined
                         ? <>
@@ -541,6 +548,10 @@ export function DaemonSettingsModal(props: ModalState) {
                             <Tabs.Panel value="queue" pt="md">
                                 <QueuePanel form={form} session={form.values.session} />
                             </Tabs.Panel>
+
+                            {!TAURI && <Tabs.Panel value="interface" pt="md">
+                                <InterfaceSettigsPanel form={form} />
+                            </Tabs.Panel>}
                         </>
                         : <></>}
                 </Tabs>

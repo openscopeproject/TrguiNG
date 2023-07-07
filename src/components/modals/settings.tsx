@@ -29,9 +29,11 @@ import * as Icon from "react-bootstrap-icons";
 import type { UseFormReturnType } from "@mantine/form";
 import { useForm } from "@mantine/form";
 import UserAgent from "ua-parser-js";
-const { invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
+import type { InterfaceFormValues } from "./interfacepanel";
+import { InterfaceSettigsPanel } from "./interfacepanel";
+const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
-interface FormValues {
+interface FormValues extends InterfaceFormValues {
     servers: ServerConfig[],
     app: {
         deleteAdded: boolean,
@@ -264,6 +266,7 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
         initialValues: {
             servers: config.getServers(),
             app: { ...config.values.app },
+            interface: { ...config.values.interface },
         },
         validate: {
             servers: {
@@ -312,6 +315,7 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
         if (form.isValid()) {
             config.setServers(form.values.servers);
             config.values.app = { ...config.values.app, ...form.values.app };
+            config.values.interface = { ...config.values.interface, ...form.values.interface };
             props.onSave(form.values.servers);
             props.close();
         }
@@ -331,7 +335,9 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
                     <Tabs.List>
                         <Tabs.Tab value="servers" p="lg">Servers</Tabs.Tab>
                         <Tabs.Tab value="integrations" p="lg">Integrations</Tabs.Tab>
+                        {TAURI && <Tabs.Tab value="interface" p="lg">Interface</Tabs.Tab>}
                     </Tabs.List>
+
                     <Tabs.Panel value="servers" pt="md" h="22rem">
                         <Flex h="100%" gap="0.5rem">
                             <ServerListPanel form={form} current={currentServerIndex} setCurrent={setCurrentServerIndex} />
@@ -340,9 +346,14 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
                                 : <ServerPanel form={form} current={currentServerIndex} />}
                         </Flex>
                     </Tabs.Panel>
+
                     <Tabs.Panel value="integrations" pt="md" h="22rem">
                         <IntegrationsPanel form={form} />
                     </Tabs.Panel>
+
+                    {TAURI && <Tabs.Panel value="interface" pt="md">
+                        <InterfaceSettigsPanel form={form} />
+                    </Tabs.Panel>}
                 </Tabs>
             </form>
         </SaveCancelModal>

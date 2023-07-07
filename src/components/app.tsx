@@ -73,17 +73,20 @@ interface PassEventData {
 }
 
 function CreateTorrentButton() {
+    const config = useContext(ConfigContext);
     const { colorScheme } = useMantineColorScheme();
 
     useEffect(() => {
         const unlisten = appWindow.listen<PassEventData>("pass-from-window", ({ payload: data }) => {
             if (data.payload === "ready") {
-                console.log("full send", data, colorScheme);
-                void invoke("pass_to_window", { to: data.from, payload: colorScheme });
+                void invoke("pass_to_window", {
+                    to: data.from,
+                    payload: JSON.stringify({ colorScheme, defaultTrackers: config.values.interface.defaultTrackers }),
+                });
             }
         });
         return () => { void unlisten.then((u) => { u(); }); };
-    }, [colorScheme]);
+    }, [colorScheme, config]);
 
     const onClick = useCallback(() => {
         void makeCreateTorrentView();

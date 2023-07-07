@@ -16,13 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useContext, useEffect } from "react";
 import type { ActionModalState } from "./common";
 import { SaveCancelModal } from "./common";
 import { useForm } from "@mantine/form";
 import { useMutateTorrent, useTorrentDetails } from "queries";
 import { notifications } from "@mantine/notifications";
-import { Checkbox, Grid, LoadingOverlay, NumberInput, Textarea } from "@mantine/core";
+import { Button, Checkbox, Grid, LoadingOverlay, NumberInput, Text, Textarea } from "@mantine/core";
+import { ConfigContext } from "config";
 
 interface FormValues {
     downloadLimited?: boolean,
@@ -40,6 +41,7 @@ interface FormValues {
 }
 
 export function EditTorrent(props: ActionModalState) {
+    const config = useContext(ConfigContext);
     const torrentId = props.serverData.current.current;
     const { data: torrent, isLoading } = useTorrentDetails(
         torrentId ?? -1, torrentId !== undefined && props.opened, false, true);
@@ -90,6 +92,13 @@ export function EditTorrent(props: ActionModalState) {
         props.close();
     }, [form.values, mutation, props, torrentId]);
 
+    const addDefaultTrackers = useCallback(() => {
+        let list = form.values.trackerList;
+        if (!list.endsWith("\n")) list += "\n";
+        list += config.values.interface.defaultTrackers.join("\n");
+        form.setFieldValue("trackerList", list);
+    }, [config, form]);
+
     return (
         <SaveCancelModal
             opened={props.opened}
@@ -105,17 +114,17 @@ export function EditTorrent(props: ActionModalState) {
                 <Grid.Col>
                     Torrent: {torrent?.name}
                 </Grid.Col>
-                <Grid.Col span={7}>
+                <Grid.Col span={8}>
                     <Checkbox my="sm"
                         label="Honor seession upload limit"
                         {...form.getInputProps("honorsSessionLimits", { type: "checkbox" })} />
                 </Grid.Col>
-                <Grid.Col span={5}>
+                <Grid.Col span={4}>
                     <Checkbox my="sm"
                         label="Sequential download"
                         {...form.getInputProps("sequentialDownload", { type: "checkbox" })} />
                 </Grid.Col>
-                <Grid.Col span={7}>
+                <Grid.Col span={8}>
                     <Checkbox
                         label="Maximum download speed"
                         {...form.getInputProps("downloadLimited", { type: "checkbox" })} />
@@ -129,7 +138,7 @@ export function EditTorrent(props: ActionModalState) {
                 <Grid.Col span={2}>
                     KB/s
                 </Grid.Col>
-                <Grid.Col span={7}>
+                <Grid.Col span={8}>
                     <Checkbox
                         label="Maximum upload speed"
                         {...form.getInputProps("uploadLimited", { type: "checkbox" })} />
@@ -140,10 +149,10 @@ export function EditTorrent(props: ActionModalState) {
                         {...form.getInputProps("uploadLimit")}
                         disabled={form.values.uploadLimited !== true} />
                 </Grid.Col>
-                <Grid.Col span={3}>
+                <Grid.Col span={2}>
                     KB/s
                 </Grid.Col>
-                <Grid.Col span={7}>
+                <Grid.Col span={8}>
                     Peer limit
                 </Grid.Col>
                 <Grid.Col span={2}>
@@ -151,8 +160,8 @@ export function EditTorrent(props: ActionModalState) {
                         min={0}
                         {...form.getInputProps("peerLimit")} />
                 </Grid.Col>
-                <Grid.Col span={3} />
-                <Grid.Col span={7}>
+                <Grid.Col span={2} />
+                <Grid.Col span={8}>
                     <Checkbox
                         label="Seed ratio"
                         checked={form.values.seedRatioMode < 2}
@@ -167,8 +176,8 @@ export function EditTorrent(props: ActionModalState) {
                         {...form.getInputProps("seedRatioLimit")}
                         disabled={form.values.seedRatioMode !== 1} />
                 </Grid.Col>
-                <Grid.Col span={3} />
-                <Grid.Col span={7}>
+                <Grid.Col span={2} />
+                <Grid.Col span={8}>
                     <Checkbox
                         label="Stop seeding when inactive for"
                         checked={form.values.seedIdleMode < 2}
@@ -181,12 +190,17 @@ export function EditTorrent(props: ActionModalState) {
                         {...form.getInputProps("seedIdleLimit")}
                         disabled={form.values.seedIdleMode !== 1} />
                 </Grid.Col>
-                <Grid.Col span={3}>
+                <Grid.Col span={2}>
                     minutes
+                </Grid.Col>
+                <Grid.Col span={8}>
+                    <Text>Tracker list, one per line, empty line between tiers</Text>
+                </Grid.Col>
+                <Grid.Col span={4}>
+                    <Button onClick={addDefaultTrackers}>Add default list</Button>
                 </Grid.Col>
                 <Grid.Col>
                     <Textarea minRows={6}
-                        label="Tracker list, one per line, empty line between tiers"
                         {...form.getInputProps("trackerList")} />
                 </Grid.Col>
             </Grid>
