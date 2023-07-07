@@ -102,7 +102,7 @@ export function useTorrentDetails(torrentId: number, enabled: boolean, lookupIps
 
     return useQuery({
         queryKey: TorrentKeys.details(serverConfig.name, torrentId),
-        refetchInterval: disableRefetch === true ? undefined : 1000 * serverConfig.intervals.details,
+        refetchInterval: disableRefetch === true ? false : 1000 * serverConfig.intervals.details,
         staleTime: 1000 * 5,
         enabled,
         queryFn: useCallback(async () => {

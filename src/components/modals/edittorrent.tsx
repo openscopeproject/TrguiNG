@@ -22,7 +22,7 @@ import { SaveCancelModal } from "./common";
 import { useForm } from "@mantine/form";
 import { useMutateTorrent, useTorrentDetails } from "queries";
 import { notifications } from "@mantine/notifications";
-import { Checkbox, Grid, NumberInput, Textarea } from "@mantine/core";
+import { Checkbox, Grid, LoadingOverlay, NumberInput, Textarea } from "@mantine/core";
 
 interface FormValues {
     downloadLimited?: boolean,
@@ -41,8 +41,8 @@ interface FormValues {
 
 export function EditTorrent(props: ActionModalState) {
     const torrentId = props.serverData.current.current;
-    const { data: torrent } = useTorrentDetails(
-        torrentId ?? -1, torrentId !== undefined && props.opened, true);
+    const { data: torrent, isLoading } = useTorrentDetails(
+        torrentId ?? -1, torrentId !== undefined && props.opened, false, true);
 
     const form = useForm<FormValues>({});
 
@@ -100,6 +100,7 @@ export function EditTorrent(props: ActionModalState) {
             title="Edit torrent properties"
             mih="25rem"
         >
+            <LoadingOverlay visible={isLoading} />
             <Grid align="center">
                 <Grid.Col>
                     Torrent: {torrent?.name}
