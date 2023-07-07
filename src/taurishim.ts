@@ -87,6 +87,7 @@ export async function makeCreateTorrentView() {
             height: 600,
             visible: true,
             center: true,
+            maximizable: false,
             title: "Create torrent",
         });
         await webview.once("tauri://error", (e) => {
