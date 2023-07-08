@@ -1,0 +1,5 @@
+# Cargo insists on rewritig this file with unix line endings
+# which results in dirty checkouts after build on windows
+# with default git settings. This will force git to keep
+# the line endings as is.
+Cargo.toml text eol=lf
