@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Button, Checkbox, Divider, Flex, Group, Overlay, SegmentedControl, Text, TextInput, useMantineTheme } from "@mantine/core";
+import { Box, Button, Checkbox, Divider, Flex, Group, Menu, Overlay, SegmentedControl, Text, TextInput, useMantineTheme } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ActionModalState, LabelsData, LocationData } from "./common";
 import { HkModal, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
@@ -27,7 +27,8 @@ import { CachedFileTree } from "cachedfiletree";
 import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable";
 import { notifications } from "@mantine/notifications";
 import { useAddTorrent, useFileTree } from "queries";
-import { ConfigContext } from "config";
+import { ConfigContext, ServerConfigContext } from "config";
+import type { ServerTabsRef } from "components/servertabs";
 const { TAURI, dialogOpen, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface AddCommonProps extends React.PropsWithChildren {
@@ -66,6 +67,7 @@ function AddCommon(props: AddCommonProps) {
 interface AddCommonModalProps extends ActionModalState {
     serverName: string,
     uri: string | File | undefined,
+    tabsRef: React.RefObject<ServerTabsRef>,
 }
 
 function useCommonProps(modalProps: AddCommonModalProps) {
@@ -107,6 +109,40 @@ function useCommonProps(modalProps: AddCommonModalProps) {
     };
 }
 
+function TabSwitchDropdown({ tabsRef }: { tabsRef: React.RefObject<ServerTabsRef> }) {
+    const serverConfig = useContext(ServerConfigContext);
+
+    const [value, setValue] = useState(serverConfig.name);
+
+    useEffect(() => {
+        setValue(serverConfig.name);
+    }, [serverConfig]);
+
+    const onChange = useCallback((value: string) => {
+        setValue(value);
+        const tabIndex = tabsRef.current?.getOpenTabs().findIndex((v) => v === value);
+        if (tabIndex !== undefined) tabsRef.current?.switchTab(tabIndex);
+    }, [tabsRef]);
+
+    return (
+        tabsRef.current == null
+            ? <></>
+            : <Menu shadow="md" width={200} position="bottom-start">
+                <Menu.Target>
+                    <Button variant="subtle" title="Switch server">
+                        {value}
+                    </Button>
+                </Menu.Target>
+
+                <Menu.Dropdown>
+                    {tabsRef.current.getOpenTabs().map((tab) =>
+                        <Menu.Item key={tab} onClick={() => { onChange(tab); }}>{tab}</Menu.Item>)
+                    }
+                </Menu.Dropdown>
+            </Menu>
+    );
+}
+
 export function AddMagnet(props: AddCommonModalProps) {
     const [magnet, setMagnet] = useState<string>("");
 
@@ -146,7 +182,12 @@ export function AddMagnet(props: AddCommonModalProps) {
     }, [mutation, magnet, common.location, common.labels, common.start, common.priority, close]);
 
     return (
-        <HkModal opened={props.opened} onClose={close} title="Add torrent by magnet link or URL" centered size="lg">
+        <HkModal opened={props.opened} onClose={close} centered size="lg"
+            styles={{ title: { flexGrow: 1 } }}
+            title={<Flex w="100%" align="center" justify="space-between">
+                <span>Add torrent by magnet link or URL</span>
+                {TAURI && <TabSwitchDropdown tabsRef={props.tabsRef} />}
+            </Flex>} >
             <Divider my="sm" />
             <TextInput
                 label="Link" w="100%"
@@ -276,7 +317,7 @@ export function AddTorrent(props: AddCommonModalProps) {
     }, [props.opened, props.uri, close]);
 
     useEffect(() => {
-        if (TAURI && props.opened) {
+        if (TAURI && props.opened && torrentData === undefined) {
             const readFile = async (path: string | null) => {
                 if (path === null) {
                     props.close();
@@ -311,7 +352,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                     props.close();
                 });
         }
-    }, [props]);
+    }, [props, torrentData]);
 
     const fileTree = useMemo(() => new CachedFileTree(torrentData?.hash ?? "", -1), [torrentData]);
 
@@ -396,7 +437,12 @@ export function AddTorrent(props: AddCommonModalProps) {
             style={{ position: "absolute", top: "-20rem", zIndex: -1 }} />}
         {torrentData === undefined
             ? <></>
-            : <HkModal opened={torrentData !== undefined} onClose={modalClose} title="Add torrent" centered size="lg">
+            : <HkModal opened={torrentData !== undefined} onClose={modalClose} centered size="lg"
+                styles={{ title: { flexGrow: 1 } }}
+                title={<Flex w="100%" align="center" justify="space-between">
+                    <span>Add torrent</span>
+                    {TAURI && <TabSwitchDropdown tabsRef={props.tabsRef} />}
+                </Flex>} >
                 <Divider my="sm" />
                 <Text>Name: {torrentData.name}</Text>
                 <div style={{ position: "relative" }}>
@@ -412,8 +458,8 @@ export function AddTorrent(props: AddCommonModalProps) {
                         {torrentData.files == null
                             ? <></>
                             : <>
-                                <Button variant="subtle" onClick={() => { setAllWanted(true); }}>All</Button>
-                                <Button variant="subtle" onClick={() => { setAllWanted(false); }}>None</Button>
+                                <Button variant="subtle" onClick={() => { setAllWanted(true); }} title="Mark all files wanted">All</Button>
+                                <Button variant="subtle" onClick={() => { setAllWanted(false); }} title="Mark all files unwanted">None</Button>
                             </>
                         }
                     </AddCommon>
@@ -433,6 +479,6 @@ export function AddTorrent(props: AddCommonModalProps) {
                     <Button onClick={onAdd} variant="filled" disabled={torrentExists}>Add</Button>
                     <Button onClick={modalClose} variant="light">Cancel</Button>
                 </Group>
-            </HkModal>}
+            </HkModal >}
     </>);
 }

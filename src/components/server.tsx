@@ -35,6 +35,7 @@ import { MemoizedServerModals } from "./modals/servermodals";
 import { useAppHotkeys, useHotkeysContext } from "hotkeys";
 import { SplitLayout } from "./splitlayout";
 import { useDisclosure } from "@mantine/hooks";
+import type { ServerTabsRef } from "./servertabs";
 
 function currentFiltersReducer(
     oldFilters: TorrentFilter[],
@@ -83,7 +84,12 @@ function useSelected(torrents: Torrent[] | undefined) {
     return { selectedTorrents, selectedReducer, selectAll };
 }
 
-export function Server({ hostname }: { hostname: string }) {
+interface ServerProps {
+    hostname: string,
+    tabsRef: React.RefObject<ServerTabsRef>,
+}
+
+export function Server({ hostname, tabsRef }: ServerProps) {
     useAppHotkeys();
 
     const [currentFilters, setCurrentFilters] = useReducer(currentFiltersReducer, [{ id: "", filter: DefaultFilter }]);
@@ -172,7 +178,7 @@ export function Server({ hostname }: { hostname: string }) {
 
     return (
         <Flex direction="column" w="100%" h="100%" sx={{ position: "relative" }}>
-            <MemoizedServerModals ref={modals} {...{ serverData, runUpdates }} serverName={serverConfig.name} />
+            <MemoizedServerModals ref={modals} {...{ serverData, runUpdates, tabsRef }} serverName={serverConfig.name} />
             {overlayVisible && <Overlay blur={10}>
                 <Flex align="center" justify="center" h="100%" direction="column" gap="xl">
                     {sessionIsLoading

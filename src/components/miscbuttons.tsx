@@ -23,6 +23,7 @@ import React from "react";
 import { VersionModal } from "components/modals/version";
 import { useDisclosure, useHotkeys } from "@mantine/hooks";
 import { modKeyString } from "trutil";
+import { useFontSize } from "fontsize";
 
 export function ColorSchemeToggle(props: { sz?: string, btn?: MantineNumberSize }) {
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
@@ -62,5 +63,25 @@ export function ShowVersion(props: { sz?: string, btn?: MantineNumberSize }) {
                 <Icon.InfoCircle size={props.sz} />
             </ActionIcon>
         </>
+    );
+}
+
+export function FontSizeToggle() {
+    const { toggle } = useFontSize();
+
+    useHotkeys([
+        ["mod + =", () => { toggle(); }],
+    ]);
+
+    return (
+        <ActionIcon
+            variant="default"
+            size="lg"
+            onClick={() => { toggle(); }}
+            title={`Toggle font size (${modKeyString()} + =)`}
+            my="auto"
+        >
+            <Icon.Fonts size="1.1rem" />
+        </ActionIcon>
     );
 }

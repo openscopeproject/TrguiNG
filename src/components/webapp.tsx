@@ -18,10 +18,11 @@
 
 import type { ServerConfig } from "config";
 import { ConfigContext, ServerConfigContext } from "config";
-import React, { useContext, useMemo } from "react";
+import React, { useContext, useMemo, useRef } from "react";
 import { ClientContext, TransmissionClient } from "rpc/client";
 import { Server } from "./server";
 import { App } from "./app";
+import type { ServerTabsRef } from "./servertabs";
 
 export default function WebApp() {
     const config = useContext(ConfigContext);
@@ -47,11 +48,13 @@ export default function WebApp() {
         return { serverConfig, client };
     }, [config]);
 
+    const tabsRef = useRef<ServerTabsRef>(null);
+
     return (
         <App>
             <ServerConfigContext.Provider value={serverConfig}>
                 <ClientContext.Provider value={client}>
-                    <Server hostname={client.hostname} />
+                    <Server hostname={client.hostname} tabsRef={tabsRef}/>
                 </ClientContext.Provider>
             </ServerConfigContext.Provider>
         </App>

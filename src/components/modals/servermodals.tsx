@@ -25,6 +25,7 @@ import { MoveModal } from "./move";
 import { AddMagnet, AddTorrent } from "./add";
 import { DaemonSettingsModal } from "./daemon";
 import { EditTorrent } from "./edittorrent";
+import type { ServerTabsRef } from "components/servertabs";
 const { TAURI, appWindow } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface ModalCallbacks {
@@ -41,6 +42,7 @@ interface ServerModalsProps {
     serverName: string,
     serverData: React.MutableRefObject<ServerTorrentData>,
     runUpdates: (run: boolean) => void,
+    tabsRef: React.RefObject<ServerTabsRef>,
 }
 
 function usePausingModalState(runUpdates: (run: boolean) => void): [boolean, () => void, () => void] {
@@ -183,11 +185,13 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
             serverName={props.serverName}
             serverData={props.serverData}
             uri={magnetLink}
+            tabsRef={props.tabsRef}
             opened={showAddMagnetModal} close={closeAddMagnetModalAndPop} />
         <AddTorrent
             serverName={props.serverName}
             serverData={props.serverData}
             uri={torrent}
+            tabsRef={props.tabsRef}
             opened={showAddTorrentModal} close={closeAddTorrentModalAndPop} />
         <DaemonSettingsModal
             opened={showDaemonSettingsModal} close={closeDaemonSettingsModal} />
