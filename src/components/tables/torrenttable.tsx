@@ -80,7 +80,7 @@ const AllFields: readonly TableField[] = [
         name: "name",
         label: "Name",
         component: NameField,
-        requiredFields: ["name", "error", "trackerStats"] as TorrentFieldsType[],
+        requiredFields: ["name", "error", "trackerStats", "leftUntilDone"] as TorrentFieldsType[],
     },
     { name: "totalSize", label: "Size", component: ByteSizeField },
     { name: "sizeWhenDone", label: "Size to download", component: ByteSizeField },
@@ -150,7 +150,7 @@ function NameField(props: TableFieldProps) {
     }
     if (props.torrent.status === Status.stopped &&
         props.torrent.sizeWhenDone > 0 &&
-        props.torrent.haveValid === props.torrent.sizeWhenDone) {
+        props.torrent.leftUntilDone === 0) {
         StatusIcon = CompletedStopped;
     }
 
