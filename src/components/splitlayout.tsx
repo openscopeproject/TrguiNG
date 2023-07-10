@@ -17,17 +17,21 @@
  */
 
 import { Box } from "@mantine/core";
+import type { SplitType } from "config";
 import { ConfigContext } from "config";
 import React, { useCallback, useContext } from "react";
 import Split from "react-split";
 
 interface SplitLayoutProps {
+    mainSplit: SplitType,
     left: React.ReactNode | undefined,
     right: React.ReactNode,
     bottom: React.ReactNode | undefined,
 }
 
-export function SplitLayout({ left, right, bottom }: SplitLayoutProps) {
+// The left is filters, right is torrents, bottom is details.
+// Depending on mainSplit it may actually be "left", "midle", "right".
+export function SplitLayout({ mainSplit, left, right, bottom }: SplitLayoutProps) {
     const config = useContext(ConfigContext);
 
     const onVerticalDragEnd = useCallback((sizes: [number, number]) => {
@@ -61,16 +65,16 @@ export function SplitLayout({ left, right, bottom }: SplitLayoutProps) {
             {bottom === undefined
                 ? top
                 : <Split
-                    direction="vertical"
+                    direction={mainSplit}
                     sizes={config.getSashSizes("vertical")}
                     snapOffset={0}
                     gutterSize={6}
-                    className="split-vertical"
+                    className={`split-${mainSplit}`}
                     onDragEnd={onVerticalDragEnd}
                 >
                     {top}
                     {bottom}
                 </Split>}
-        </ Box>
+        </Box>
     );
 }

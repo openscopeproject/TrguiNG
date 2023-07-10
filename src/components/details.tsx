@@ -27,12 +27,13 @@ import { TrackersTable } from "./tables/trackertable";
 import { PeersTable } from "./tables/peerstable";
 import { Status, type SessionStatEntry } from "rpc/transmission";
 import type { MantineTheme } from "@mantine/core";
-import { Anchor, Box, Flex, Container, Group, Table, Tabs, TextInput, LoadingOverlay } from "@mantine/core";
+import { Anchor, Box, Flex, Container, Group, Table, Tabs, TextInput, LoadingOverlay, Grid, useMantineTheme } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
 import type { FileDirEntry } from "cachedfiletree";
 import { CachedFileTree } from "cachedfiletree";
 import { useFileTree, useMutateTorrent, useSessionStats, useTorrentDetails } from "queries";
 import { ConfigContext } from "config";
+import { useResizeObserver } from "@mantine/hooks";
 
 interface DetailsProps {
     torrentId?: number,
@@ -60,6 +61,27 @@ function DownloadBar(props: { torrent: Torrent }) {
         <Box w="100%" my="0.5rem">
             <ProgressBar now={now} max={1000} label={nowStr} />
         </Box>
+    );
+}
+
+interface DetailItemProps extends React.PropsWithChildren {
+    name: string,
+}
+
+function DetailItem({ name, children }: DetailItemProps) {
+    const theme = useMantineTheme();
+
+    return (
+        <Grid.Col span={1} sx={{
+            borderBottom: "1px solid",
+            borderColor: theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[3],
+            padding: "1px 0.4em 0 0.4em",
+        }}>
+            <Flex>
+                <Box sx={{ flex: "0 0 10em" }}>{name}</Box>
+                {children}
+            </Flex>
+        </Grid.Col>
     );
 }
 
@@ -115,41 +137,32 @@ function TrackerUpdate(props: { torrent: Torrent }) {
 
 function TransferTable(props: { torrent: Torrent }) {
     const shareRatio = `${props.torrent.uploadRatio as number} (${secondsToHumanReadableStr(props.torrent.secondsSeeding)})`;
+
+    const [ref, rect] = useResizeObserver();
+
     return (
-        <Table mb="sm" sx={{ maxWidth: "100em" }}>
-            <tbody>
-                <tr>
-                    <td style={{ width: "10em" }}>Status:</td><td><StatusField {...props} fieldName="status" /></td>
-                    <td style={{ width: "10em" }}>Error:</td><td>{props.torrent.cachedError}</td>
-                    <td style={{ width: "10em" }}>Remaining:</td><td>{`${secondsToHumanReadableStr(props.torrent.eta)} (${bytesToHumanReadableStr(props.torrent.leftUntilDone)})`}</td>
-                </tr>
-                <tr>
-                    <td>Downloaded:</td><td>{bytesToHumanReadableStr(props.torrent.downloadedEver)}</td>
-                    <td>Uploaded:</td><td>{bytesToHumanReadableStr(props.torrent.uploadedEver)}</td>
-                    <td>Wasted:</td><td><Wasted {...props} /></td>
-                </tr>
-                <tr>
-                    <td>Download speed:</td><td><DownloadSpeed {...props} /></td>
-                    <td>Upload speed:</td><td>{`${bytesToHumanReadableStr(props.torrent.rateUpload)}/s`}</td>
-                    <td>Share ratio:</td><td>{shareRatio}</td>
-                </tr>
-                <tr>
-                    <td>Download limit:</td><td><SpeedLimit {...props} field="download" /></td>
-                    <td>Upload limit:</td><td><SpeedLimit {...props} field="upload" /></td>
-                    <td>Bandwidth group:</td><td>{props.torrent.group}</td>
-                </tr>
-                <tr>
-                    <td>Seeds:</td><td><Seeds {...props} /></td>
-                    <td>Peers:</td><td><Peers {...props} /></td>
-                    <td>Max peers:</td><td>{props.torrent.maxConnectedPeers}</td>
-                </tr>
-                <tr>
-                    <td>Tracker:</td><td><TrackerField {...props} fieldName="trackerStats" /></td>
-                    <td>Tracker update on:</td><td><TrackerUpdate {...props} /></td>
-                    <td>Last active:</td><td><DateField {...props} fieldName="activityDate" /></td>
-                </tr>
-            </tbody>
-        </Table>
+        <Container fluid>
+            <Grid ref={ref} my="sm" sx={{ maxWidth: "100em" }} columns={rect.width > 850 ? 3 : 1}>
+                <DetailItem name="Status:"><StatusField {...props} fieldName="status" /></DetailItem>
+                <DetailItem name="Error:">{props.torrent.cachedError}</DetailItem>
+                <DetailItem name="Remaining:">{`${secondsToHumanReadableStr(props.torrent.eta)} (${bytesToHumanReadableStr(props.torrent.leftUntilDone)})`}</DetailItem>
+                <DetailItem name="Downloaded:">{bytesToHumanReadableStr(props.torrent.downloadedEver)}</DetailItem>
+                <DetailItem name="Uploaded:">{bytesToHumanReadableStr(props.torrent.uploadedEver)}</DetailItem>
+                <DetailItem name="Wasted:"><Wasted {...props} /></DetailItem>
+                <DetailItem name="Download speed:"><DownloadSpeed {...props} /></DetailItem>
+                <DetailItem name="Upload speed:">{`${bytesToHumanReadableStr(props.torrent.rateUpload)}/s`}</DetailItem>
+                <DetailItem name="Share ratio:">{shareRatio}</DetailItem>
+                <DetailItem name="Download limit:"><SpeedLimit {...props} field="download" /></DetailItem>
+                <DetailItem name="Upload limit:"><SpeedLimit {...props} field="upload" /></DetailItem>
+                <DetailItem name="Bandwidth group:">{props.torrent.group}</DetailItem>
+                <DetailItem name="Seeds:"><Seeds {...props} /></DetailItem>
+                <DetailItem name="Peers:"><Peers {...props} /></DetailItem>
+                <DetailItem name="Max peers:">{props.torrent.maxConnectedPeers}</DetailItem>
+                <DetailItem name="Tracker:"><TrackerField {...props} fieldName="trackerStats" /></DetailItem>
+                <DetailItem name="Tracker update on:"><TrackerUpdate {...props} /></DetailItem>
+                <DetailItem name="Last active:"><DateField {...props} fieldName="activityDate" /></DetailItem>
+            </Grid>
+        </Container>
     );
 }
 
@@ -189,6 +202,7 @@ const readonlyInputStyles = (theme: MantineTheme) => ({
     root: {
         backgroundColor: (theme.colorScheme === "dark" ? theme.colors.dark[4] : theme.colors.gray[2]),
         height: "1.25rem",
+        flexGrow: 1,
     },
     input: {
         minHeight: "1.25rem",
@@ -199,14 +213,17 @@ const readonlyInputStyles = (theme: MantineTheme) => ({
 
 function TorrentDetails(props: { torrent: Torrent }) {
     const fullPath = ensurePathDelimiter(props.torrent.downloadDir) + (props.torrent.name as string);
+
+    const [ref, rect] = useResizeObserver();
+
     return (
-        <Table mb="sm" sx={{ maxWidth: "100em" }}>
-            <tbody>
-                <tr>
-                    <td style={{ width: "10em" }}>Full path:</td>
-                    <td><TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={fullPath} /></td>
-                    <td style={{ width: "10em" }}>Created:</td>
-                    <td>
+        <Container fluid>
+            <Grid ref={ref} my="sm" sx={{ maxWidth: "100em" }} columns={rect.width > 850 ? 2 : 1}>
+                <DetailItem name="Full path:">
+                    <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={fullPath} />
+                </DetailItem>
+                <DetailItem name="Created:">
+                    <div>
                         <span>
                             {props.torrent.dateCreated > 0
                                 ? timestampToDateString(props.torrent.dateCreated)
@@ -217,32 +234,22 @@ function TorrentDetails(props: { torrent: Torrent }) {
                                 ? ""
                                 : ` by ${props.torrent.creator as string}`}
                         </span>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Total size:</td><td><TotalSize {...props} /></td>
-                    <td>Pieces:</td><td><Pieces {...props} /></td>
-                </tr>
-                <tr>
-                    <td>Hash:</td>
-                    <td>
-                        <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.hashString} />
-                    </td>
-                    <td>Comment:</td><td><Urlize text={props.torrent.comment} /></td>
-                </tr>
-                <tr>
-                    <td>Added on:</td><td><DateField {...props} fieldName="addedDate" /></td>
-                    <td>Completed on:</td><td><DateField {...props} fieldName="doneDate" /></td>
-                </tr>
-                <tr>
-                    <td>Magnet link:</td>
-                    <td>
-                        <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.magnetLink} />
-                    </td>
-                    <td>Labels:</td><td><LabelsField {...props} fieldName="labels" /></td>
-                </tr>
-            </tbody>
-        </Table>
+                    </div>
+                </DetailItem>
+                <DetailItem name="Total size:"><TotalSize {...props} /></DetailItem>
+                <DetailItem name="Pieces:"><Pieces {...props} /></DetailItem>
+                <DetailItem name="Hash:">
+                    <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.hashString} />
+                </DetailItem>
+                <DetailItem name="Comment:"><Urlize text={props.torrent.comment} /></DetailItem>
+                <DetailItem name="Added on:"><DateField {...props} fieldName="addedDate" /></DetailItem>
+                <DetailItem name="Completed on:"><DateField {...props} fieldName="doneDate" /></DetailItem>
+                <DetailItem name="Magnet link:">
+                    <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.magnetLink} />
+                </DetailItem>
+                <DetailItem name="Labels:"><LabelsField {...props} fieldName="labels" /></DetailItem>
+            </Grid>
+        </Container>
     );
 }
 

@@ -66,6 +66,7 @@ interface ToolbarProps {
     altSpeedMode: boolean,
     toggleFiltersPanel: () => void,
     toggleDetailsPanel: () => void,
+    toggleMainSplit: () => void,
 }
 
 function useButtonHandlers(
@@ -196,6 +197,7 @@ function Toolbar(props: ToolbarProps) {
     }, [hk]);
 
     useHotkeys([
+        ["mod + P", props.toggleMainSplit],
         ["mod + O", props.toggleFiltersPanel],
         ["mod + I", props.toggleDetailsPanel],
     ]);
@@ -305,6 +307,10 @@ function Toolbar(props: ToolbarProps) {
                 </Menu.Target>
 
                 <Menu.Dropdown>
+                    <Menu.Item
+                        onClick={props.toggleMainSplit} rightSection={<Kbd>{`${modKeyString()} P`}</Kbd>}>
+                        Change layout
+                    </Menu.Item>
                     <Menu.Item
                         onClick={props.toggleFiltersPanel} rightSection={<Kbd>{`${modKeyString()} O`}</Kbd>}>
                         Toggle filters

@@ -66,6 +66,7 @@ export type TableName = typeof TableNames[number];
 
 const Sashes = ["vertical", "horizontal"] as const;
 type SashName = typeof Sashes[number];
+export type SplitType = SashName;
 
 const FilterSections = ["Status", "Directories", "Labels", "Trackers"] as const;
 export type FilterSectionName = typeof FilterSections[number];
@@ -108,6 +109,7 @@ interface Settings {
         statusBarSections: SectionsVisibility<StatusbarSectionName>,
         showFiltersPanel: boolean,
         showDetailsPanel: boolean,
+        mainSplit: SplitType,
         numLastSaveDirs: number,
         defaultTrackers: string[],
     },
@@ -200,6 +202,7 @@ const DefaultSettings: Settings = {
         })),
         showFiltersPanel: true,
         showDetailsPanel: true,
+        mainSplit: "vertical",
         numLastSaveDirs: 20,
         defaultTrackers: [...DefaultTrackerList],
     },

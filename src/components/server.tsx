@@ -19,6 +19,7 @@
 import "../css/custom.css";
 import { Box, Flex, Loader, Overlay, Title } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import type { SplitType } from "../config";
 import { ConfigContext, ServerConfigContext } from "../config";
 import type { Torrent } from "../rpc/torrent";
 import { useServerTorrentData } from "../rpc/torrent";
@@ -34,7 +35,7 @@ import type { ModalCallbacks } from "./modals/servermodals";
 import { MemoizedServerModals } from "./modals/servermodals";
 import { useAppHotkeys, useHotkeysContext } from "hotkeys";
 import { SplitLayout } from "./splitlayout";
-import { useDisclosure } from "@mantine/hooks";
+import { useDisclosure, useToggle } from "@mantine/hooks";
 import type { ServerTabsRef } from "./servertabs";
 
 function currentFiltersReducer(
@@ -170,11 +171,13 @@ export function Server({ hostname, tabsRef }: ServerProps) {
 
     const [showFiltersPanel, { toggle: toggleFiltersPanel }] = useDisclosure(config.values.interface.showFiltersPanel);
     const [showDetailsPanel, { toggle: toggleDetailsPanel }] = useDisclosure(config.values.interface.showDetailsPanel);
+    const [mainSplit, toggleMainSplit] = useToggle<SplitType>(["vertical", "horizontal"]);
 
     useEffect(() => {
         config.values.interface.showFiltersPanel = showFiltersPanel;
         config.values.interface.showDetailsPanel = showDetailsPanel;
-    }, [config, showFiltersPanel, showDetailsPanel]);
+        config.values.interface.mainSplit = mainSplit;
+    }, [config, showFiltersPanel, showDetailsPanel, mainSplit]);
 
     return (
         <Flex direction="column" w="100%" h="100%" sx={{ position: "relative" }}>
@@ -201,9 +204,11 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                     altSpeedMode={session?.["alt-speed-enabled"] ?? false}
                     toggleFiltersPanel={toggleFiltersPanel}
                     toggleDetailsPanel={toggleDetailsPanel}
+                    toggleMainSplit={toggleMainSplit}
                 />
             </Box>
-            <SplitLayout key={`split-${showFiltersPanel ? "filter" : "nofilter"}-${showDetailsPanel ? "details" : "nodetails"}`}
+            <SplitLayout key={`split-${showFiltersPanel ? "1" : "0"}-${showDetailsPanel ? "1" : "0"}-${mainSplit}`}
+                mainSplit={mainSplit}
                 left={showFiltersPanel
                     ? <div className="scrollable">
                         <Filters
