@@ -225,6 +225,10 @@ export function FileTreeTable(props: FileTreeTableProps) {
 
     const { selected, selectedReducer } = useSelected(props);
 
+    useEffect(() => {
+        selectedReducer({ verb: "set", ids: [] });
+    }, [props.fileTree.torrenthash, selectedReducer]);
+
     const onRowDoubleClick = useCallback((row: FileDirEntry) => {
         if (TAURI) {
             if (props.downloadDir === undefined || props.downloadDir === "") return;
