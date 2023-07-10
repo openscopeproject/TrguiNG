@@ -22,7 +22,7 @@ import type { Torrent, TrackerStats } from "rpc/torrent";
 import { getTrackerAnnounceState } from "rpc/torrent";
 import type { TrackerStatsFieldsType } from "rpc/transmission";
 import { secondsToHumanReadableStr } from "trutil";
-import { TransguiTable, useStandardSelect } from "./common";
+import { TrguiTable, useStandardSelect } from "./common";
 
 interface TableFieldProps {
     entry: TrackerStats,
@@ -80,7 +80,7 @@ export function TrackersTable(props: { torrent: Torrent }) {
 
     const [selected, selectedReducer] = useStandardSelect();
 
-    return <TransguiTable<TrackerStats> {...{
+    return <TrguiTable<TrackerStats> {...{
         tablename: "trackers",
         columns: Columns,
         data: props.torrent.trackerStats,

@@ -404,8 +404,13 @@ function HeaderCell<TData>({ header, resizerOffset }: { header: Header<TData, un
     );
 }
 
-export function TransguiTable<TData>(props: {
+export interface TrguiTableRef {
+    setExpanded: (state: boolean) => void,
+}
+
+export function TrguiTable<TData>(props: {
     tablename: TableName,
+    tableRef?: React.MutableRefObject<TrguiTableRef | undefined>,
     columns: Array<ColumnDef<TData, unknown>>,
     data: TData[],
     selected: string[],
@@ -419,6 +424,12 @@ export function TransguiTable<TData>(props: {
 }) {
     const [table, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columnSizing, sorting] =
         useTable(props.tablename, props.columns, props.data, props.selected, props.getRowId, props.getSubRows, props.onVisibilityChange);
+
+    if (props.tableRef !== undefined) {
+        props.tableRef.current = {
+            setExpanded: table.toggleAllRowsExpanded,
+        };
+    }
 
     const [lastIndex, onRowClick] = useSelectHandler(
         table, props.selectedReducer, props.getRowId, props.setCurrent);

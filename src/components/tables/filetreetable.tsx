@@ -25,7 +25,8 @@ import { PriorityColors, PriorityStrings } from "../../rpc/transmission";
 import { bytesToHumanReadableStr, pathMapFromServer } from "../../trutil";
 import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
-import { EditableNameField, TransguiTable } from "./common";
+import type { TrguiTableRef } from "./common";
+import { EditableNameField, TrguiTable } from "./common";
 import { Badge, Box, Checkbox, Loader, Menu, Text, useMantineTheme } from "@mantine/core";
 import { refreshFileTree, useMutateTorrent, useMutateTorrentPath } from "queries";
 import { notifications } from "@mantine/notifications";
@@ -241,6 +242,8 @@ export function FileTreeTable(props: FileTreeTableProps) {
 
     const [info, setInfo, handler] = useContextMenu();
 
+    const tableRef = useRef<TrguiTableRef>();
+
     return (
         <Box w="100%" h="100%" onContextMenu={handler}>
             {props.brief === true
@@ -250,9 +253,11 @@ export function FileTreeTable(props: FileTreeTableProps) {
                     setContextMenuInfo={setInfo}
                     fileTree={props.fileTree}
                     selected={selected}
-                    onRowDoubleClick={onRowDoubleClick} />}
-            <TransguiTable<FileDirEntry> {...{
+                    onRowDoubleClick={onRowDoubleClick}
+                    setExpanded={tableRef.current?.setExpanded} />}
+            <TrguiTable<FileDirEntry> {...{
                 tablename: props.brief === true ? "filetreebrief" : "filetree",
+                tableRef,
                 columns,
                 data: props.data,
                 selected,
@@ -271,6 +276,7 @@ function FiletreeContextMenu(props: {
     fileTree: CachedFileTree,
     selected: string[],
     onRowDoubleClick: (row: FileDirEntry) => void,
+    setExpanded?: (state: boolean) => void,
 }) {
     const { onRowDoubleClick } = props;
     const onOpen = useCallback(() => {
@@ -375,6 +381,17 @@ function FiletreeContextMenu(props: {
                 icon={<Checkbox readOnly />}
                 disabled={props.selected.length === 0}>
                 Set unwanted
+            </Menu.Item>
+            <Menu.Divider />
+            <Menu.Item
+                onClick={() => { props.setExpanded?.(true); }}
+                icon={<Icon.PlusSquare size="1.1rem" />}>
+                Expand all
+            </Menu.Item>
+            <Menu.Item
+                onClick={() => { props.setExpanded?.(false); }}
+                icon={<Icon.DashSquare size="1.1rem" />}>
+                Collapse all
             </Menu.Item>
         </ContextMenu >
     );

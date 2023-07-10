@@ -20,7 +20,7 @@ import type { AccessorFn, CellContext, ColumnDef } from "@tanstack/react-table";
 import React, { useMemo, useCallback } from "react";
 import type { Torrent, PeerStats } from "rpc/torrent";
 import { bytesToHumanReadableStr } from "trutil";
-import { TransguiTable, useStandardSelect } from "./common";
+import { TrguiTable, useStandardSelect } from "./common";
 import { ProgressBar } from "components/progressbar";
 import { Flex } from "@mantine/core";
 const { TAURI } = await import(/* webpackChunkName: "taurishim" */"taurishim");
@@ -106,7 +106,7 @@ export function PeersTable(props: { torrent: Torrent }) {
 
     const [selected, selectedReducer] = useStandardSelect();
 
-    return <TransguiTable<PeerStats> {...{
+    return <TrguiTable<PeerStats> {...{
         tablename: "peers",
         columns: Columns,
         data: props.torrent.peers,

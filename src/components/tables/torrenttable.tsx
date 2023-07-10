@@ -26,7 +26,7 @@ import { bytesToHumanReadableStr, modKeyString, pathMapFromServer, secondsToHuma
 import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
 import type { TableSelectReducer } from "./common";
-import { EditableNameField, TransguiTable } from "./common";
+import { EditableNameField, TrguiTable } from "./common";
 import { Badge, Box, Button, Kbd, Menu, Portal, Text } from "@mantine/core";
 import { ConfigContext, ServerConfigContext } from "config";
 import { StatusIconMap, Error as StatusIconError, Magnetizing, CompletedStopped } from "components/statusicons";
@@ -410,7 +410,7 @@ export function TorrentTable(props: {
                 selected={selected}
                 modals={props.modals}
                 onRowDoubleClick={onRowDoubleClick} />
-            <TransguiTable<Torrent> {...{
+            <TrguiTable<Torrent> {...{
                 tablename: "torrents",
                 columns: Columns,
                 data: props.torrents,
