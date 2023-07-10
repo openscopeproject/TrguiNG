@@ -171,7 +171,9 @@ export function Server({ hostname, tabsRef }: ServerProps) {
 
     const [showFiltersPanel, { toggle: toggleFiltersPanel }] = useDisclosure(config.values.interface.showFiltersPanel);
     const [showDetailsPanel, { toggle: toggleDetailsPanel }] = useDisclosure(config.values.interface.showDetailsPanel);
-    const [mainSplit, toggleMainSplit] = useToggle<SplitType>(["vertical", "horizontal"]);
+    const [mainSplit, toggleMainSplit] = useToggle<SplitType>([
+        config.values.interface.mainSplit,
+        config.values.interface.mainSplit === "vertical" ? "horizontal" : "vertical"]);
 
     useEffect(() => {
         config.values.interface.showFiltersPanel = showFiltersPanel;

@@ -76,6 +76,7 @@ function DetailItem({ name, children }: DetailItemProps) {
             borderBottom: "1px solid",
             borderColor: theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[3],
             padding: "1px 0.4em 0 0.4em",
+            lineHeight: 1.4,
         }}>
             <Flex>
                 <Box sx={{ flex: "0 0 10em" }}>{name}</Box>
@@ -391,7 +392,7 @@ function Details(props: DetailsProps) {
             <Tabs.List px="sm" pt="xs">
                 <Tabs.Tab value="general" disabled={torrent === undefined}>
                     <Group>
-                        <Icon.InfoCircleFill size="1.1rem" />
+                        <Icon.InfoCircle size="1.1rem" />
                         General
                     </Group>
                 </Tabs.Tab>
@@ -409,7 +410,7 @@ function Details(props: DetailsProps) {
                 </Tabs.Tab>
                 <Tabs.Tab value="peers" disabled={torrent === undefined}>
                     <Group>
-                        <Icon.PeopleFill size="1.1rem" />
+                        <Icon.People size="1.1rem" />
                         Peers
                     </Group>
                 </Tabs.Tab>
