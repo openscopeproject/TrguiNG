@@ -82,7 +82,7 @@ function CreateTorrentButton() {
 export function App(props: React.PropsWithChildren) {
     return (
         <QueryClientProvider client={queryClient}>
-            <Notifications limit={3} style={{ bottom: "2.5rem" }} />
+            <Notifications limit={5} style={{ bottom: "2.5rem" }} />
             {props.children}
             <ReactQueryDevtools toggleButtonProps={{ style: { marginBottom: "2rem" } }} />
         </QueryClientProvider>

@@ -72,8 +72,16 @@ export function SaveCancelModal({ onSave, onClose, children, saveLoading, ...oth
     );
 }
 
-function useTorrentsNameString(serverData: React.RefObject<ServerTorrentData>) {
-    return useMemo<string[]>(() => {
+export function limitTorrentNames(allNames: string[], limit: number = 5) {
+    const names: string[] = allNames.slice(0, limit);
+
+    if (allNames.length > limit) names.push(`... and ${allNames.length - limit} more`);
+
+    return names;
+}
+
+export function TorrentsNames({ serverData }: { serverData: React.RefObject<ServerTorrentData> }) {
+    const allNames = useMemo<string[]>(() => {
         if (serverData.current == null || serverData.current.selected.size === 0) {
             return ["No torrent selected"];
         }
@@ -83,16 +91,10 @@ function useTorrentsNameString(serverData: React.RefObject<ServerTorrentData>) {
 
         const allNames: string[] = [];
         selected.forEach((t) => allNames.push(t.name));
-        const names: string[] = allNames.slice(0, 5);
-
-        if (allNames.length > 5) names.push(`... and ${allNames.length - 5} more`);
-
-        return names;
+        return allNames;
     }, [serverData]);
-}
 
-export function TorrentsNames({ serverData }: { serverData: React.RefObject<ServerTorrentData> }) {
-    const names = useTorrentsNameString(serverData);
+    const names = limitTorrentNames(allNames);
 
     return <>
         {names.map((s, i) => <Text key={i} ml="xl" mb="md">{s}</Text>)}

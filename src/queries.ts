@@ -207,13 +207,24 @@ function useInvalidatingTorrentAction<ActionParams>(mutationFn: (params: ActionP
     });
 }
 
-export function useAddTorrent() {
+export interface TorrentAddQueryParams extends TorrentAddParams {
+    filePath?: string,
+}
+
+export function useAddTorrent(onSuccess: (response: any, vars: TorrentAddQueryParams) => void, onError: (e: Error) => void) {
+    const serverConfig = useContext(ServerConfigContext);
     const client = useTransmissionClient();
 
-    return useInvalidatingTorrentAction(
-        async (params: TorrentAddParams) => {
+    return useMutation({
+        mutationFn: async (params: TorrentAddQueryParams) => {
             return await client.torrentAdd(params);
-        });
+        },
+        onSuccess: (response: any, vars: TorrentAddQueryParams) => {
+            onSuccess(response, vars);
+            void queryClient.invalidateQueries(TorrentKeys.all(serverConfig.name));
+        },
+        onError,
+    });
 }
 
 export function useRemoveTorrents() {
