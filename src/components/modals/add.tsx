@@ -34,7 +34,7 @@ const { TAURI, dialogOpen, invoke } = await import(/* webpackChunkName: "taurish
 
 interface AddCommonProps extends React.PropsWithChildren {
     location: LocationData,
-    labels: LabelsData,
+    labelsData: LabelsData,
     start: boolean,
     setStart: (b: boolean) => void,
     priority: PriorityNumberType,
@@ -44,7 +44,7 @@ interface AddCommonProps extends React.PropsWithChildren {
 function AddCommon(props: AddCommonProps) {
     return <>
         <TorrentLocation {...props.location} inputLabel="Download directory" />
-        <TorrentLabels {...props.labels} inputLabel="Labels" />
+        <TorrentLabels {...props.labelsData} inputLabel="Labels" />
         <Group>
             <Checkbox
                 label="Start torrent"
@@ -74,7 +74,7 @@ interface AddCommonModalProps extends ActionModalState {
 function useCommonProps(modalProps: AddCommonModalProps) {
     const location = useTorrentLocation();
     const [labels, setLabels] = useState<string[]>([]);
-    const [labelData, setLabelData] = useState<LabelsData>({
+    const [labelsData, setLabelData] = useState<LabelsData>({
         labels,
         setLabels,
         allLabels: modalProps.serverData.current.allLabels,
@@ -83,23 +83,21 @@ function useCommonProps(modalProps: AddCommonModalProps) {
     const [priority, setPriority] = useState<PriorityNumberType>(0);
 
     useEffect(() => {
-        if (modalProps.opened) {
-            setLabelData({
-                labels,
-                setLabels,
-                allLabels: modalProps.serverData.current.allLabels,
-            });
-        }
+        setLabelData({
+            labels,
+            setLabels,
+            allLabels: modalProps.serverData.current.allLabels,
+        });
     }, [labels, modalProps.opened, modalProps.serverData]);
 
     const props = useMemo<AddCommonProps>(() => ({
         location,
-        labels: labelData,
+        labelsData,
         start,
         setStart,
         priority,
         setPriority,
-    }), [location, labelData, start, priority]);
+    }), [location, labelsData, start, priority]);
 
     return {
         location,

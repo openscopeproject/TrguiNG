@@ -181,7 +181,7 @@ export function TorrentLocation(props: LocationData) {
 export interface LabelsData {
     allLabels: string[],
     labels: string[],
-    setLabels: React.Dispatch<React.SetStateAction<string[]>>,
+    setLabels: React.Dispatch<string[]>,
     inputLabel?: string,
 }
 
@@ -212,9 +212,7 @@ function Label({
 }
 
 export function TorrentLabels(props: LabelsData) {
-    const [data, setData] = useState<string[]>([]);
-
-    useEffect(() => { setData(props.allLabels); }, [props.allLabels]);
+    const [data, setData] = useState<string[]>(props.allLabels);
 
     return (
         <MultiSelect
