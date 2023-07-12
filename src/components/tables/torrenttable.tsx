@@ -467,13 +467,18 @@ function TorrentContextMenu(props: {
 
     const [queueSubmenuOpened, setQueueSubmenuOpened] = useState(false);
     const queueRef = useRef<HTMLButtonElement>(null);
-    const [queueItemRect, setQueueItemRect] = useState<DOMRect>(() => new DOMRect(0, 0, 0, 0));
+    const [queueItemRect, setQueueItemRect] = useState<DOMRect>(() => new DOMRect(0, -100, 0, 0));
 
     const openQueueSubmenu = useCallback(() => {
         if (queueRef.current == null || props.selected.length === 0) return;
         setQueueItemRect(queueRef.current.getBoundingClientRect());
         setQueueSubmenuOpened(true);
     }, [props.selected]);
+
+    const closeQueueSubmenu = useCallback(() => {
+        setQueueSubmenuOpened(false);
+        setQueueItemRect(new DOMRect(0, -100, 0, 0));
+    }, []);
 
     const copyMagnetLinks = useCallback(() => {
         const selected = props.serverData.current.selected;
@@ -510,7 +515,7 @@ function TorrentContextMenu(props: {
         >
             <Portal>
                 <Box
-                    onMouseDown={() => { setQueueSubmenuOpened(false); }}
+                    onMouseDown={closeQueueSubmenu}
                     sx={{
                         position: "absolute",
                         left: 0,
@@ -563,7 +568,7 @@ function TorrentContextMenu(props: {
                 {TAURI && <>
                     <Menu.Item
                         onClick={onOpen}
-                        onMouseEnter={() => { setQueueSubmenuOpened(false); }}
+                        onMouseEnter={closeQueueSubmenu}
                         icon={<Icon.BoxArrowUpRight size="1.1rem" />}
                         disabled={props.selected.length !== 1}>
                         <Text weight="bold">Open</Text>
@@ -572,28 +577,28 @@ function TorrentContextMenu(props: {
                 </>}
                 <Menu.Item
                     onClick={() => { torrentAction("torrent-start-now", "Torrents started"); }}
-                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
+                    onMouseEnter={closeQueueSubmenu}
                     icon={<Icon.LightningFill size="1.1rem" />}
                     disabled={props.selected.length === 0}>
                     Force start
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => { torrentAction("torrent-verify", "Torrents verification started"); }}
-                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
+                    onMouseEnter={closeQueueSubmenu}
                     icon={<Icon.CheckAll size="1.1rem" />}
                     disabled={props.selected.length === 0}>
                     Verify
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => { torrentAction("torrent-reannounce", "Torrents are reannounced"); }}
-                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
+                    onMouseEnter={closeQueueSubmenu}
                     icon={<Icon.Wifi size="1.1rem" />}
                     disabled={props.selected.length === 0}>
                     Reannounce
                 </Menu.Item>
                 <Menu.Item
                     onClick={copyMagnetLinks}
-                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
+                    onMouseEnter={closeQueueSubmenu}
                     icon={<Icon.MagnetFill size="1.1rem" />}
                     disabled={props.selected.length === 0}
                     rightSection={<Kbd>{`${modKeyString()} C`}</Kbd>}>
@@ -608,7 +613,7 @@ function TorrentContextMenu(props: {
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => props.modals.current?.move()}
-                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
+                    onMouseEnter={closeQueueSubmenu}
                     icon={<Icon.FolderFill size="1.1rem" />}
                     disabled={props.selected.length === 0}
                     rightSection={<Kbd>F6</Kbd>}>
@@ -616,7 +621,7 @@ function TorrentContextMenu(props: {
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => props.modals.current?.setLabels()}
-                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
+                    onMouseEnter={closeQueueSubmenu}
                     icon={<Icon.TagsFill size="1.1rem" />}
                     disabled={props.selected.length === 0}
                     rightSection={<Kbd>F7</Kbd>}>
@@ -624,7 +629,7 @@ function TorrentContextMenu(props: {
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => props.modals.current?.remove()}
-                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
+                    onMouseEnter={closeQueueSubmenu}
                     icon={<Icon.XCircleFill color="red" size="1.1rem" />}
                     disabled={props.selected.length === 0}
                     rightSection={<Kbd>del</Kbd>}>
@@ -634,7 +639,7 @@ function TorrentContextMenu(props: {
                 <Menu.Item
                     onClick={() => props.modals.current?.editTorrent()}
                     icon={<Icon.GearFill size="1.1rem" />}
-                    onMouseEnter={() => { setQueueSubmenuOpened(false); }}
+                    onMouseEnter={closeQueueSubmenu}
                     disabled={props.selected.length !== 1}>
                     Properties...
                 </Menu.Item>

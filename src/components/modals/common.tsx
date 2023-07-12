@@ -210,7 +210,7 @@ function Label({
         </div>
     );
 }
-
+``
 export function TorrentLabels(props: LabelsData) {
     const [data, setData] = useState<string[]>(props.allLabels);
 
