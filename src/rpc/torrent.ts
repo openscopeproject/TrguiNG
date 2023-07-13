@@ -61,7 +61,7 @@ function getTorrentError(t: TorrentBase): string {
 }
 
 export function getTrackerAnnounceState(tracker: TrackerStats) {
-    if (tracker.announceState === 2 || tracker.announceState === 3) return "Working";
+    if (tracker.announceState === 3) return "Updating";
     if (tracker.hasAnnounced as boolean) {
         if (tracker.lastAnnounceSucceeded as boolean) return "Working";
         if (tracker.lastAnnounceResult === "Success") return "Working";
