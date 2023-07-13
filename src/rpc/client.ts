@@ -25,6 +25,7 @@ import type { BandwidthGroup, TorrentBase } from "./torrent";
 import React, { useContext } from "react";
 import type { Batcher } from "@yornaath/batshit";
 import { create, keyResolver } from "@yornaath/batshit";
+import { mergeTrackerLists } from "trutil";
 
 class ApiError extends Error { }
 
@@ -339,6 +340,39 @@ export class TransmissionClient {
         };
 
         return await this._sendRpc(request);
+    }
+
+    async addTrackers(id: number, trackers: string[]) {
+        const getRequest = {
+            method: "torrent-get",
+            arguments: {
+                fields: ["trackerList"],
+                ids: [id],
+            },
+        };
+
+        const response = await this._sendRpc(getRequest);
+        if (!isApiResponse(response)) {
+            throw new ApiError("torrent-get response is not torrents");
+        }
+
+        const torrents = response.arguments.torrents;
+
+        if (!Array.isArray(torrents) || torrents.length < 1) {
+            throw new ApiError("Torrent not found");
+        }
+
+        const currentTrackers = (torrents[0].trackerList as string)
+            .split("\n\n")
+            .map((tier) => tier.split("\n").filter((s) => s !== ""));
+
+        const newTrackers = trackers.join("\n").split("\n\n").map((tier) => tier.split("\n"));
+
+        const mergedTrackers = mergeTrackerLists(currentTrackers, newTrackers);
+
+        await this.setTorrents([id], {
+            trackerList: mergedTrackers.map((tier) => tier.join("\n")).join("\n\n"),
+        });
     }
 
     async lookupIps(ips: string[]) {

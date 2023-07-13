@@ -108,6 +108,7 @@ export interface LocationData {
     addPath: (dir: string) => void,
     browseHandler: () => void,
     inputLabel?: string,
+    disabled?: boolean,
 }
 
 export function useTorrentLocation(): LocationData {
@@ -148,13 +149,14 @@ export function TorrentLocation(props: LocationData) {
             <TextInput
                 value={props.path}
                 label={props.inputLabel}
+                disabled={props.disabled}
                 onChange={(e) => { props.setPath(e.currentTarget.value); }}
                 styles={{ root: { flexGrow: 1 } }}
                 rightSection={
                     <Menu position="left-start" withinPortal
                         middlewares={{ shift: true, flip: false }} offset={{ mainAxis: -20, crossAxis: 30 }}>
                         <Menu.Target>
-                            <ActionIcon py="md">
+                            <ActionIcon py="md" disabled={props.disabled}>
                                 <Icon.ClockHistory size="16" />
                             </ActionIcon>
                         </Menu.Target>
@@ -173,7 +175,7 @@ export function TorrentLocation(props: LocationData) {
                         </Menu.Dropdown>
                     </Menu>
                 } />
-            {TAURI && <Button onClick={props.browseHandler}>Browse</Button>}
+            {TAURI && <Button onClick={props.browseHandler} disabled={props.disabled}>Browse</Button>}
         </Group>
     );
 }
@@ -183,6 +185,7 @@ export interface LabelsData {
     labels: string[],
     setLabels: React.Dispatch<string[]>,
     inputLabel?: string,
+    disabled?: boolean,
 }
 
 function Label({
@@ -210,7 +213,7 @@ function Label({
         </div>
     );
 }
-``
+
 export function TorrentLabels(props: LabelsData) {
     const [data, setData] = useState<string[]>(props.allLabels);
 
@@ -223,6 +226,7 @@ export function TorrentLabels(props: LabelsData) {
             withinPortal
             searchable
             creatable
+            disabled={props.disabled}
             getCreateLabel={(query) => `+ Add ${query}`}
             onCreate={(query) => {
                 setData((current) => [...current, query]);

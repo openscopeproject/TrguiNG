@@ -135,3 +135,48 @@ export function eventHasModKey(event: React.MouseEvent<Element>) {
 export function modKeyString() {
     return navigator.platform.startsWith("Mac") ? "⌘" : "ctrl";
 }
+
+export function decodeMagnetLink(magnet: string) {
+    const params = magnet.substring(8).split("&").map((p) => {
+        const eqIndex = p.indexOf("=");
+        return [p.substring(0, eqIndex), p.substring(eqIndex + 1)];
+    });
+
+    let hash = params.find((p) => p[0] === "xt")?.[1] ?? "";
+    if (hash.startsWith("urn:btih:")) hash = hash.substring(9);
+    else hash = "";
+
+    const trackers = params
+        .filter((p) => p[0] === "tr" && p[1] !== "")
+        .map((p) => decodeURIComponent(p[1]));
+
+    return {
+        hash,
+        trackers,
+    };
+}
+
+export function mergeTrackerLists(currentTrackers: string[][], newTrackers: string[][]) {
+    const uniqueTrackers = new Set<string>();
+    currentTrackers.forEach((tier) => { tier.forEach((tracker) => uniqueTrackers.add(tracker)); });
+
+    const mergedTrackers = [...currentTrackers];
+
+    newTrackers.forEach((tier, i) => {
+        if (i >= mergedTrackers.length) {
+            const filteredTier = tier.filter((tracker) => !uniqueTrackers.has(tracker));
+            if (filteredTier.length > 0) {
+                mergedTrackers.push(filteredTier);
+                filteredTier.forEach((tracker) => uniqueTrackers.add(tracker));
+            }
+        } else {
+            tier.forEach((tracker) => {
+                if (!uniqueTrackers.has(tracker)) {
+                    mergedTrackers[i].push(tracker);
+                    uniqueTrackers.add(tracker);
+                }
+            });
+        }
+    });
+    return mergedTrackers;
+}

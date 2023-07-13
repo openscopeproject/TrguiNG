@@ -39,6 +39,7 @@ pub struct TorrentReadResult {
     length: i64,
     hash: String,
     files: Option<Vec<TorrentFileEntry>>,
+    trackers: Vec<String>,
 }
 
 #[tauri::command]
@@ -58,10 +59,23 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
         return Err(format!("Failed to read file {:?}", path));
     }
 
+
     match Torrent::read_from_bytes(&read_result.as_ref().unwrap()[..]) {
         Err(_) => Err(format!("Failed to parse torrent {:?}", path)),
         Ok(torrent) => {
             let b64 = b64engine.encode(read_result.unwrap());
+            let mut trackers = vec![];
+
+            if let Some(announce_list) = torrent.announce_list.as_ref() {
+                announce_list.iter().for_each(|urls| {
+                    if !trackers.is_empty() {
+                        trackers.push("".into());
+                    }
+                    urls.iter().for_each(|url| trackers.push(url.clone()));
+                })
+            } else if let Some(announce) = torrent.announce.as_ref() {
+                trackers.push(announce.clone());
+            }
 
             Ok(TorrentReadResult {
                 torrent_path: path,
@@ -77,6 +91,7 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
                         })
                         .collect()
                 }),
+                trackers,
             })
         }
     }

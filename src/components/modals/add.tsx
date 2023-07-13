@@ -27,9 +27,10 @@ import { CachedFileTree } from "cachedfiletree";
 import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable";
 import { notifications } from "@mantine/notifications";
 import type { TorrentAddQueryParams } from "queries";
-import { useAddTorrent, useFileTree } from "queries";
+import { useAddTorrent, useFileTree, useTorrentAddTrackers } from "queries";
 import { ConfigContext, ServerConfigContext } from "config";
 import type { ServerTabsRef } from "components/servertabs";
+import { decodeMagnetLink } from "trutil";
 const { TAURI, dialogOpen, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface AddCommonProps extends React.PropsWithChildren {
@@ -39,16 +40,18 @@ interface AddCommonProps extends React.PropsWithChildren {
     setStart: (b: boolean) => void,
     priority: PriorityNumberType,
     setPriority: (p: PriorityNumberType) => void,
+    disabled?: boolean,
 }
 
 function AddCommon(props: AddCommonProps) {
     return <>
-        <TorrentLocation {...props.location} inputLabel="Download directory" />
-        <TorrentLabels {...props.labelsData} inputLabel="Labels" />
+        <TorrentLocation {...props.location} inputLabel="Download directory" disabled={props.disabled} />
+        <TorrentLabels {...props.labelsData} inputLabel="Labels" disabled={props.disabled} />
         <Group>
             <Checkbox
                 label="Start torrent"
                 checked={props.start}
+                disabled={props.disabled}
                 onChange={(e) => { props.setStart(e.currentTarget.checked); }}
                 my="xl"
                 styles={{ root: { flexGrow: 1 } }} />
@@ -57,6 +60,7 @@ function AddCommon(props: AddCommonProps) {
                 color={PriorityColors.get(props.priority)}
                 value={String(props.priority)}
                 onChange={(value) => { props.setPriority(+value as PriorityNumberType); }}
+                disabled={props.disabled}
                 data={Array.from(PriorityStrings.entries()).map(([k, v]) => ({
                     value: String(k),
                     label: v,
@@ -152,9 +156,26 @@ export function AddMagnet(props: AddCommonModalProps) {
         }
     }, [props.uri, props.opened]);
 
+    const [magnetData, setMagnetData] = useState<{ hash: string, trackers: string[] }>();
+
+    useEffect(() => {
+        setMagnetData(decodeMagnetLink(magnet));
+    }, [magnet]);
+
+    const [existingTorrent, setExistingTorrent] = useState<Torrent>();
+
+    useEffect(() => {
+        if (magnetData !== undefined && magnetData.hash !== "") {
+            const torrent = props.serverData.current?.torrents.find((t) => t.hashString === magnetData.hash);
+            setExistingTorrent(torrent);
+        } else {
+            setExistingTorrent(undefined);
+        }
+    }, [props.serverData, props.serverName, magnetData]);
+
     const common = useCommonProps(props);
     const { close } = props;
-    const mutation = useAddTorrent(
+    const addMutation = useAddTorrent(
         useCallback((response: any) => {
             const duplicate = response.arguments["torrent-duplicate"];
             if (duplicate !== undefined) {
@@ -182,20 +203,35 @@ export function AddMagnet(props: AddCommonModalProps) {
             });
         }, []),
     );
+    const trackersMutation = useTorrentAddTrackers();
 
     const onAdd = useCallback(() => {
-        mutation.mutate(
-            {
-                url: magnet,
-                downloadDir: common.location.path,
-                labels: common.labels,
-                paused: !common.start,
-                priority: common.priority,
-            },
-        );
-        common.location.addPath(common.location.path);
+        if (existingTorrent === undefined) {
+            addMutation.mutate(
+                {
+                    url: magnet,
+                    downloadDir: common.location.path,
+                    labels: common.labels,
+                    paused: !common.start,
+                    priority: common.priority,
+                },
+            );
+            common.location.addPath(common.location.path);
+        } else {
+            trackersMutation.mutate(
+                { torrentId: existingTorrent.id, trackers: magnetData?.trackers ?? [] },
+                {
+                    onSuccess: () => {
+                        notifications.show({
+                            message: "Trackers updated",
+                            color: "green",
+                        });
+                    },
+                },
+            );
+        }
         close();
-    }, [mutation, magnet, common.location, common.labels, common.start, common.priority, close]);
+    }, [existingTorrent, close, addMutation, magnet, common.location, common.labels, common.start, common.priority, trackersMutation, magnetData]);
 
     return (
         <HkModal opened={props.opened} onClose={close} centered size="lg"
@@ -208,11 +244,17 @@ export function AddMagnet(props: AddCommonModalProps) {
             <TextInput
                 label="Link" w="100%"
                 value={magnet}
-                onChange={(e) => { setMagnet(e.currentTarget.value); }} />
-            <AddCommon {...common.props} />
+                onChange={(e) => { setMagnet(e.currentTarget.value); }}
+                error={existingTorrent === undefined
+                    ? undefined
+                    : "Torrent already exists"} />
+            <AddCommon {...common.props} disabled={existingTorrent !== undefined}/>
             <Divider my="sm" />
             <Group position="center" spacing="md">
-                <Button onClick={onAdd} variant="filled">Add</Button>
+                <Button onClick={onAdd} variant="filled"
+                    disabled={existingTorrent !== undefined && (magnetData?.trackers.length ?? 0) === 0}>
+                    {existingTorrent === undefined ? "Add" : "Add trackers"}
+                </Button>
                 <Button onClick={props.close} variant="light">Cancel</Button>
             </Group>
         </HkModal>
@@ -253,6 +295,7 @@ function useFilesInput(
                         name: files[i].name,
                         hash: "",
                         files: null,
+                        trackers: [],
                     })));
                 }).catch((e) => {
                     notifications.show({
@@ -283,6 +326,7 @@ interface TorrentFileData {
         name: string,
         length: number,
     }> | null,
+    trackers: string[],
 }
 
 export function AddTorrent(props: AddCommonModalProps) {
@@ -322,6 +366,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                         name: file.name,
                         hash: "",
                         files: null,
+                        trackers: [],
                     }]);
                 }).catch(() => {
                     notifications.show({
@@ -429,28 +474,48 @@ export function AddTorrent(props: AddCommonModalProps) {
             });
         }, []),
     );
+    const trackersMutation = useTorrentAddTrackers();
 
     const onAdd = useCallback(() => {
         if (torrentData === undefined) return;
 
-        void Promise.all(torrentData.map(async (td) => {
-            return await addMutation.mutateAsync(
+        if (existingTorrent === undefined) {
+            void Promise.all(torrentData.map(async (td) => {
+                return await addMutation.mutateAsync(
+                    {
+                        metainfo: td.metadata,
+                        downloadDir: common.location.path,
+                        labels: common.labels,
+                        paused: !common.start,
+                        priority: common.priority,
+                        unwanted: (td.files == null || torrentData.length > 1) ? undefined : fileTree.getUnwanted(),
+                        filePath: td.torrentPath,
+                    },
+                );
+            }));
+
+            common.location.addPath(common.location.path);
+        } else {
+            trackersMutation.mutate(
+                { torrentId: existingTorrent.id, trackers: torrentData[0].trackers },
                 {
-                    metainfo: td.metadata,
-                    downloadDir: common.location.path,
-                    labels: common.labels,
-                    paused: !common.start,
-                    priority: common.priority,
-                    unwanted: (td.files == null || torrentData.length > 1) ? undefined : fileTree.getUnwanted(),
-                    filePath: td.torrentPath,
+                    onSuccess: () => {
+                        notifications.show({
+                            message: "Trackers updated",
+                            color: "green",
+                        });
+                    },
+                    onSettled: () => {
+                        if (TAURI && config.values.app.deleteAdded && torrentData[0].torrentPath !== undefined) {
+                            void invoke("remove_file", { path: torrentData[0].torrentPath });
+                        }
+                    },
                 },
             );
-        }));
-
-        common.location.addPath(common.location.path);
+        }
         setTorrentData(undefined);
         close();
-    }, [addMutation, close, torrentData, common, fileTree]);
+    }, [torrentData, existingTorrent, close, common, addMutation, fileTree, trackersMutation, config]);
 
     const modalClose = useCallback(() => {
         setTorrentData(undefined);
@@ -513,7 +578,10 @@ export function AddTorrent(props: AddCommonModalProps) {
                 </div>
                 <Divider my="sm" />
                 <Group position="center" spacing="md">
-                    <Button onClick={onAdd} variant="filled" disabled={torrentExists}>Add</Button>
+                    <Button onClick={onAdd} variant="filled"
+                        disabled={torrentExists && torrentData[0].trackers.length === 0}>
+                        {!torrentExists ? "Add" : "Add trackers"}
+                    </Button>
                     <Button onClick={modalClose} variant="light">Cancel</Button>
                 </Group>
             </HkModal >}

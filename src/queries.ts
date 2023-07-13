@@ -254,6 +254,15 @@ export function useTorrentChangeDirectory() {
         });
 }
 
+export function useTorrentAddTrackers() {
+    const client = useTransmissionClient();
+
+    return useInvalidatingTorrentAction(
+        async ({ torrentId, trackers }: { torrentId: number, trackers: string[] }) => {
+            await client.addTrackers(torrentId, trackers);
+        });
+}
+
 export function useSession(enabled: boolean) {
     const serverConfig = useContext(ServerConfigContext);
     const client = useTransmissionClient();
