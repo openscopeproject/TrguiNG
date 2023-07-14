@@ -1,7 +1,7 @@
 {
   "package": {
     "productName": "TrguiNG",
-    "version": "0.6.0"
+    "version": "0.7.0"
   },
   "build": {
     "distDir": "../dist",
@@ -12,7 +12,12 @@
   "tauri": {
     "bundle": {
       "active": true,
-      "targets": ["app", "deb", "nsis", "msi"],
+      "targets": [
+        "app",
+        "deb",
+        "nsis",
+        "msi"
+      ],
       "identifier": "org.openscopeproject.trguing",
       "publisher": "OpenScopeProject",
       "icon": [
@@ -22,14 +27,18 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "resources": ["dbip.mmdb"],
+      "resources": [
+        "dbip.mmdb"
+      ],
       "externalBin": [],
       "copyright": "",
       "category": "Utility",
       "shortDescription": "Transmission torrent daemon remote GUI",
       "longDescription": "Remote control GUI for Transmission torrent daemon",
       "deb": {
-        "depends": ["libasound2"],
+        "depends": [
+          "libasound2"
+        ],
         "desktopTemplate": "app.desktop"
       },
       "macOS": {
