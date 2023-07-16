@@ -116,7 +116,7 @@ export function EditTorrent(props: ActionModalState) {
                 </Grid.Col>
                 <Grid.Col span={8}>
                     <Checkbox my="sm"
-                        label="Honor seession upload limit"
+                        label="Honor session upload limit"
                         {...form.getInputProps("honorsSessionLimits", { type: "checkbox" })} />
                 </Grid.Col>
                 <Grid.Col span={4}>
