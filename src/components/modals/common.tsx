@@ -25,7 +25,7 @@ import { ConfigContext, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { pathMapFromServer, pathMapToServer } from "trutil";
 import * as Icon from "react-bootstrap-icons";
-import type { ServerTorrentData } from "rpc/torrent";
+import { useServerTorrentData } from "rpc/torrent";
 import { useHotkeysContext } from "hotkeys";
 const { TAURI, dialogOpen } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -44,10 +44,6 @@ export function HkModal(props: ModalProps) {
     }, [props.opened, hk]);
 
     return <Modal {...props}>{props.children}</Modal>;
-}
-
-export interface ActionModalState extends ModalState {
-    serverData: React.MutableRefObject<ServerTorrentData>,
 }
 
 interface SaveCancelModalProps extends ModalProps {
@@ -80,14 +76,16 @@ export function limitTorrentNames(allNames: string[], limit: number = 5) {
     return names;
 }
 
-export function TorrentsNames({ serverData }: { serverData: React.RefObject<ServerTorrentData> }) {
+export function TorrentsNames() {
+    const serverData = useServerTorrentData();
+
     const allNames = useMemo<string[]>(() => {
-        if (serverData.current == null || serverData.current.selected.size === 0) {
+        if (serverData.current == null || serverData.selected.size === 0) {
             return ["No torrent selected"];
         }
 
-        const selected = serverData.current.torrents.filter(
-            (t) => serverData.current?.selected.has(t.id));
+        const selected = serverData.torrents.filter(
+            (t) => serverData.selected.has(t.id));
 
         const allNames: string[] = [];
         selected.forEach((t) => allNames.push(t.name));
@@ -181,7 +179,6 @@ export function TorrentLocation(props: LocationData) {
 }
 
 export interface LabelsData {
-    allLabels: string[],
     labels: string[],
     setLabels: React.Dispatch<string[]>,
     inputLabel?: string,
@@ -215,7 +212,8 @@ function Label({
 }
 
 export function TorrentLabels(props: LabelsData) {
-    const [data, setData] = useState<string[]>(props.allLabels);
+    const serverData = useServerTorrentData();
+    const [data, setData] = useState<string[]>(serverData.allLabels);
 
     return (
         <MultiSelect

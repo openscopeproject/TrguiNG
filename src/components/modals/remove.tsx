@@ -17,13 +17,15 @@
  */
 
 import { Button, Checkbox, Divider, Group, Text } from "@mantine/core";
-import type { ActionModalState } from "./common";
+import type { ModalState } from "./common";
 import { HkModal, TorrentsNames } from "./common";
 import React, { useCallback, useState } from "react";
 import { useRemoveTorrents } from "queries";
 import { notifications } from "@mantine/notifications";
+import { useServerTorrentData } from "rpc/torrent";
 
-export function RemoveModal(props: ActionModalState) {
+export function RemoveModal(props: ModalState) {
+    const serverData = useServerTorrentData();
     const [deleteData, setDeleteData] = useState<boolean>(false);
 
     const mutation = useRemoveTorrents();
@@ -31,7 +33,7 @@ export function RemoveModal(props: ActionModalState) {
     const onDelete = useCallback(() => {
         mutation.mutate(
             {
-                torrentIds: Array.from(props.serverData.current.selected),
+                torrentIds: Array.from(serverData.selected),
                 deleteData,
             },
             {
@@ -45,13 +47,13 @@ export function RemoveModal(props: ActionModalState) {
             },
         );
         props.close();
-    }, [mutation, props, deleteData]);
+    }, [mutation, serverData.selected, deleteData, props]);
 
     return (
         <HkModal opened={props.opened} onClose={props.close} title="Remove torrents" centered size="lg">
             <Divider my="sm" />
             <Text mb="md">Are you sure you want to remove following torrents?</Text>
-            <TorrentsNames serverData={props.serverData} />
+            <TorrentsNames />
             <Checkbox
                 label="Delete torrent data"
                 checked={deleteData}

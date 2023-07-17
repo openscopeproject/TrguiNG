@@ -18,7 +18,7 @@
 
 import type { BandwidthGroupFieldType, PeerStatsFieldsType, TorrentAllFieldsType, TrackerStatsFieldsType } from "./transmission";
 import { Status } from "./transmission";
-import { useRef, useEffect } from "react";
+import React, { useContext } from "react";
 import type { TransmissionClient } from "./client";
 
 export type TrackerStats = Partial<Record<TrackerStatsFieldsType, any>>;
@@ -119,25 +119,19 @@ export interface ServerTorrentData {
     selected: Set<number>,
     current: number | undefined,
     allLabels: string[],
+    rpcVersion: number,
 }
 
-export function useServerTorrentData(torrents: Torrent[], selectedTorrents: Set<number>, currentTorrent: number | undefined, allLabels: string[]) {
-    const serverData = useRef<ServerTorrentData>({
-        torrents: torrents ?? [],
-        selected: selectedTorrents,
-        current: currentTorrent,
-        allLabels,
-    });
+export const ServerTorrentDataContext = React.createContext<ServerTorrentData>({
+    torrents: [],
+    selected: new Set(),
+    current: undefined,
+    allLabels: [],
+    rpcVersion: 0,
+});
 
-    useEffect(() => {
-        serverData.current = {
-            torrents: torrents ?? [],
-            selected: selectedTorrents,
-            current: currentTorrent,
-            allLabels,
-        };
-    }, [torrents, selectedTorrents, currentTorrent, allLabels]);
-    return serverData;
+export function useServerTorrentData() {
+    return useContext(ServerTorrentDataContext);
 }
 
 type PeerStatsBase = Partial<Record<PeerStatsFieldsType, any>>;

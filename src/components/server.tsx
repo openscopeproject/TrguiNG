@@ -21,8 +21,7 @@ import { Box, Flex, Loader, Overlay, Title } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { SplitType } from "../config";
 import { ConfigContext, ServerConfigContext } from "../config";
-import type { Torrent } from "../rpc/torrent";
-import { useServerTorrentData } from "../rpc/torrent";
+import { ServerTorrentDataContext, type Torrent } from "../rpc/torrent";
 import { MemoizedDetails } from "./details";
 import type { TorrentFilter } from "./filters";
 import { DefaultFilter, Filters } from "./filters";
@@ -50,7 +49,7 @@ function currentFiltersReducer(
     return newFilters;
 }
 
-function useSelected(torrents: Torrent[] | undefined) {
+function useSelected() {
     const hk = useHotkeysContext();
     const selectAll = useRef(() => { });
 
@@ -67,6 +66,7 @@ function useSelected(torrents: Torrent[] | undefined) {
             for (const id of ids) result.add(id);
         } else if (action.verb === "filter") {
             result = new Set(Array.from(result).filter((t) => ids.includes(t)));
+            if (result.size === selected.size) result = selected;
         } else if (action.verb === "toggle") {
             for (const id of ids) {
                 if (!result.delete(id)) result.add(id);
@@ -132,7 +132,7 @@ export function Server({ hostname, tabsRef }: ServerProps) {
         return [Array.from(labels).sort(), Array.from(trackers).sort()];
     }, [torrents]);
 
-    const { selectedTorrents, selectedReducer, selectAll } = useSelected(torrents);
+    const { selectedTorrents, selectedReducer, selectAll } = useSelected();
 
     const [filteredTorrents, setFilteredTorrents] = useState<Torrent[]>([]);
     useEffect(() => {
@@ -164,7 +164,15 @@ export function Server({ hostname, tabsRef }: ServerProps) {
     const overlayVisible = sessionIsError || sessionIsLoading ||
         session?.["rpc-version"] === undefined || session["rpc-version"] < 15;
 
-    const serverData = useServerTorrentData(torrents ?? [], selectedTorrents, currentTorrent, allLabels);
+    const rpcVersion = session?.["rpc-version"] ?? 0;
+
+    const serverData = useMemo(() => ({
+        torrents: torrents ?? [],
+        selected: selectedTorrents,
+        current: currentTorrent,
+        allLabels,
+        rpcVersion,
+    }), [torrents, selectedTorrents, currentTorrent, allLabels, rpcVersion]);
 
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
@@ -181,9 +189,9 @@ export function Server({ hostname, tabsRef }: ServerProps) {
         config.values.interface.mainSplit = mainSplit;
     }, [config, showFiltersPanel, showDetailsPanel, mainSplit]);
 
-    return (
+    return <ServerTorrentDataContext.Provider value={serverData}>
         <Flex direction="column" w="100%" h="100%" sx={{ position: "relative" }}>
-            <MemoizedServerModals ref={modals} {...{ serverData, runUpdates, tabsRef }} serverName={serverConfig.name} />
+            <MemoizedServerModals ref={modals} {...{ runUpdates, tabsRef }} serverName={serverConfig.name} />
             {overlayVisible && <Overlay blur={10}>
                 <Flex align="center" justify="center" h="100%" direction="column" gap="xl">
                     {sessionIsLoading
@@ -202,7 +210,6 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                 <MemoizedToolbar
                     setSearchTerms={setSearchTerms}
                     modals={modals}
-                    serverData={serverData}
                     altSpeedMode={session?.["alt-speed-enabled"] ?? false}
                     toggleFiltersPanel={toggleFiltersPanel}
                     toggleDetailsPanel={toggleDetailsPanel}
@@ -223,7 +230,6 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                     : undefined}
                 right={
                     <TorrentTable
-                        serverData={serverData}
                         modals={modals}
                         torrents={filteredTorrents}
                         setCurrentTorrent={setCurrentTorrent}
@@ -244,6 +250,6 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                     hostname,
                 }} />
             </Box>
-        </Flex >
-    );
+        </Flex>
+    </ServerTorrentDataContext.Provider>;
 }

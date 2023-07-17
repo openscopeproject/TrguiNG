@@ -17,13 +17,14 @@
  */
 
 import React, { useCallback, useContext, useEffect } from "react";
-import type { ActionModalState } from "./common";
+import type { ModalState } from "./common";
 import { SaveCancelModal } from "./common";
 import { useForm } from "@mantine/form";
 import { useMutateTorrent, useTorrentDetails } from "queries";
 import { notifications } from "@mantine/notifications";
 import { Button, Checkbox, Grid, LoadingOverlay, NumberInput, Text, Textarea } from "@mantine/core";
 import { ConfigContext } from "config";
+import { useServerTorrentData } from "rpc/torrent";
 
 interface FormValues {
     downloadLimited?: boolean,
@@ -40,9 +41,11 @@ interface FormValues {
     sequentialDownload: boolean,
 }
 
-export function EditTorrent(props: ActionModalState) {
+export function EditTorrent(props: ModalState) {
     const config = useContext(ConfigContext);
-    const torrentId = props.serverData.current.current;
+    const serverData = useServerTorrentData();
+    const torrentId = serverData.current;
+
     const { data: torrent, isLoading } = useTorrentDetails(
         torrentId ?? -1, torrentId !== undefined && props.opened, false, true);
 

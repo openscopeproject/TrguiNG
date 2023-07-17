@@ -251,7 +251,7 @@ function flattenTree(root: Directory): Directory[] {
     return result;
 }
 
-export function Filters(props: FiltersProps) {
+export const Filters = React.memo(function Filters(props: FiltersProps) {
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
     const forceRender = useForceRender();
@@ -274,11 +274,9 @@ export function Filters(props: FiltersProps) {
         () => props.torrents.map((t) => t.downloadDir as string).sort(),
         [props.torrents]);
 
-    const [dirs, setDirs] = useState<Directory[]>([]);
-
-    useEffect(() => {
+    const dirs = useMemo<Directory[]>(() => {
         const tree = buildDirTree(paths, serverConfig.expandedDirFilters);
-        setDirs(flattenTree(tree));
+        return flattenTree(tree);
     }, [paths, serverConfig.expandedDirFilters]);
 
     const allFilters = useMemo<AllFilters>(() => {
@@ -350,4 +348,4 @@ export function Filters(props: FiltersProps) {
             </div>}
         </Flex>
     );
-}
+});

@@ -18,7 +18,6 @@
 
 import { useDisclosure } from "@mantine/hooks";
 import React, { memo, useCallback, useEffect, useImperativeHandle, useState } from "react";
-import type { ServerTorrentData } from "rpc/torrent";
 import { EditLabelsModal } from "./editlabels";
 import { RemoveModal } from "./remove";
 import { MoveModal } from "./move";
@@ -40,7 +39,6 @@ export interface ModalCallbacks {
 
 interface ServerModalsProps {
     serverName: string,
-    serverData: React.MutableRefObject<ServerTorrentData>,
     runUpdates: (run: boolean) => void,
     tabsRef: React.RefObject<ServerTabsRef>,
 }
@@ -173,30 +171,24 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
 
     return <>
         <EditLabelsModal
-            serverData={props.serverData}
             opened={showLabelsModal} close={closeLabelsModal} />
         <RemoveModal
-            serverData={props.serverData}
             opened={showRemoveModal} close={closeRemoveModal} />
         <MoveModal
-            serverData={props.serverData}
             opened={showMoveModal} close={closeMoveModal} />
         <AddMagnet
             serverName={props.serverName}
-            serverData={props.serverData}
             uri={magnetLink}
             tabsRef={props.tabsRef}
             opened={showAddMagnetModal} close={closeAddMagnetModalAndPop} />
         <AddTorrent
             serverName={props.serverName}
-            serverData={props.serverData}
             uri={torrent}
             tabsRef={props.tabsRef}
             opened={showAddTorrentModal} close={closeAddTorrentModalAndPop} />
         <DaemonSettingsModal
             opened={showDaemonSettingsModal} close={closeDaemonSettingsModal} />
         <EditTorrent
-            serverData={props.serverData}
             opened={showEditTorrentModal} close={closeEditTorrentModal} />
     </>;
 });

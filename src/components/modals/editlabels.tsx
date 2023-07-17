@@ -17,25 +17,27 @@
  */
 
 import { Text } from "@mantine/core";
-import type { ActionModalState } from "./common";
+import type { ModalState } from "./common";
 import { SaveCancelModal, TorrentLabels, TorrentsNames } from "./common";
 import React, { useCallback, useEffect, useState } from "react";
 import { useMutateTorrent } from "queries";
 import { notifications } from "@mantine/notifications";
+import { useServerTorrentData } from "rpc/torrent";
 
-export function EditLabelsModal(props: ActionModalState) {
+export function EditLabelsModal(props: ModalState) {
     const { opened, close } = props;
+    const serverData = useServerTorrentData();
     const [labels, setLabels] = useState<string[]>([]);
 
     const calculateInitialLabels = useCallback(() => {
-        const selected = props.serverData.current?.torrents.filter(
-            (t) => props.serverData.current?.selected.has(t.id)) ?? [];
+        const selected = serverData.torrents.filter(
+            (t) => serverData.selected.has(t.id)) ?? [];
         const labels: string[] = [];
         selected.forEach((t) => t.labels?.forEach((l: string) => {
             if (!labels.includes(l)) labels.push(l);
         }));
         return labels;
-    }, [props.serverData]);
+    }, [serverData]);
 
     useEffect(() => {
         if (opened) setLabels(calculateInitialLabels());
@@ -46,7 +48,7 @@ export function EditLabelsModal(props: ActionModalState) {
     const onSave = useCallback(() => {
         mutation.mutate(
             {
-                torrentIds: Array.from(props.serverData.current.selected),
+                torrentIds: Array.from(serverData.selected),
                 fields: { labels },
             },
             {
@@ -66,7 +68,7 @@ export function EditLabelsModal(props: ActionModalState) {
             },
         );
         close();
-    }, [mutation, props.serverData, labels, close]);
+    }, [mutation, serverData.selected, labels, close]);
 
     return (
         <SaveCancelModal
@@ -78,8 +80,8 @@ export function EditLabelsModal(props: ActionModalState) {
             title="Edit torrent labels"
         >
             <Text mb="md">Enter new labels for</Text>
-            <TorrentsNames serverData={props.serverData} />
-            <TorrentLabels allLabels={props.serverData.current.allLabels} labels={labels} setLabels={setLabels} />
+            <TorrentsNames/>
+            <TorrentLabels labels={labels} setLabels={setLabels} />
         </SaveCancelModal>
     );
 }

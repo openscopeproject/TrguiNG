@@ -18,7 +18,7 @@
 
 import "css/torrenttable.css";
 import React, { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import type { ServerTorrentData, Torrent } from "rpc/torrent";
+import { useServerTorrentData, type ServerTorrentData, type Torrent } from "rpc/torrent";
 import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
@@ -357,7 +357,6 @@ export function useInitialTorrentRequiredFields() {
 }
 
 export function TorrentTable(props: {
-    serverData: React.MutableRefObject<ServerTorrentData>,
     modals: React.RefObject<ModalCallbacks>,
     torrents: Torrent[],
     setCurrentTorrent: (id: string) => void,
@@ -406,7 +405,6 @@ export function TorrentTable(props: {
             <MemoizedTorrentContextMenu
                 contextMenuInfo={info}
                 setContextMenuInfo={setInfo}
-                serverData={props.serverData}
                 selected={selected}
                 modals={props.modals}
                 onRowDoubleClick={onRowDoubleClick} />
@@ -426,25 +424,26 @@ export function TorrentTable(props: {
     );
 }
 
-const findTorrent = (serverData: React.MutableRefObject<ServerTorrentData>) => {
-    const [id] = [...serverData.current.selected];
-    return serverData.current.torrents.find((t) => t.id === id);
-};
+function findTorrent(serverData: ServerTorrentData) {
+    const [id] = [...serverData.selected];
+    return serverData.torrents.find((t) => t.id === id);
+}
 
 function TorrentContextMenu(props: {
     contextMenuInfo: ContextMenuInfo,
     setContextMenuInfo: (i: ContextMenuInfo) => void,
-    serverData: React.MutableRefObject<ServerTorrentData>,
     selected: string[],
     modals: React.RefObject<ModalCallbacks>,
     onRowDoubleClick: (t: Torrent) => void,
 }) {
+    const serverData = useServerTorrentData();
+
     const { onRowDoubleClick } = props;
     const onOpen = useCallback(() => {
-        const torrent = findTorrent(props.serverData);
+        const torrent = findTorrent(serverData);
         if (torrent === undefined) return;
         onRowDoubleClick(torrent);
-    }, [onRowDoubleClick, props.serverData]);
+    }, [onRowDoubleClick, serverData]);
 
     const mutation = useTorrentAction();
 
@@ -452,7 +451,7 @@ function TorrentContextMenu(props: {
         mutation.mutate(
             {
                 method,
-                torrentIds: Array.from(props.serverData.current.selected),
+                torrentIds: Array.from(serverData.selected),
             },
             {
                 onSuccess: () => {
@@ -463,7 +462,7 @@ function TorrentContextMenu(props: {
                 },
             },
         );
-    }, [mutation, props.serverData]);
+    }, [mutation, serverData]);
 
     const [queueSubmenuOpened, setQueueSubmenuOpened] = useState(false);
     const queueRef = useRef<HTMLButtonElement>(null);
@@ -481,10 +480,10 @@ function TorrentContextMenu(props: {
     }, []);
 
     const copyMagnetLinks = useCallback(() => {
-        const selected = props.serverData.current.selected;
+        const selected = serverData.selected;
         if (selected.size === 0) return;
 
-        const links = props.serverData.current.torrents
+        const links = serverData.torrents
             .filter((t) => selected.has(t.id))
             .map((t) => t.magnetLink);
 
@@ -494,7 +493,7 @@ function TorrentContextMenu(props: {
             message: `Magnet ${selected.size > 1 ? "links" : "link"} copied to clipboard`,
             color: "green",
         });
-    }, [props.serverData]);
+    }, [serverData]);
 
     const hk = useHotkeysContext();
 

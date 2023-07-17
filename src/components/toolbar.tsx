@@ -25,13 +25,13 @@ import type { PriorityNumberType } from "rpc/transmission";
 import { BandwidthPriority } from "rpc/transmission";
 import { useTorrentAction, useMutateSession, useMutateTorrent } from "queries";
 import { notifications } from "@mantine/notifications";
-import type { ServerTorrentData } from "rpc/torrent";
 import type { TorrentActionMethodsType } from "rpc/client";
 import type { ModalCallbacks } from "./modals/servermodals";
 import type { HotkeyHandlers } from "hotkeys";
 import { useHotkeysContext } from "hotkeys";
 import { useHotkeys } from "@mantine/hooks";
 import { modKeyString } from "trutil";
+import { useServerTorrentData } from "rpc/torrent";
 
 interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {
     depressed?: boolean,
@@ -62,7 +62,6 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(function
 interface ToolbarProps {
     setSearchTerms: (terms: string[]) => void,
     modals: React.RefObject<ModalCallbacks>,
-    serverData: React.MutableRefObject<ServerTorrentData>,
     altSpeedMode: boolean,
     toggleFiltersPanel: () => void,
     toggleDetailsPanel: () => void,
@@ -74,20 +73,21 @@ function useButtonHandlers(
     altSpeedMode: boolean | undefined,
     setAltSpeedMode: React.Dispatch<boolean | undefined>,
 ) {
+    const serverData = useServerTorrentData();
     const actionMutation = useTorrentAction();
     const priorityMutation = useMutateTorrent();
 
     const handlers = useMemo(() => {
         const checkSelected = (action?: () => void) => {
             return () => {
-                if (props.serverData.current?.selected.size > 0) action?.();
+                if (serverData.selected.size > 0) action?.();
             };
         };
         const action = (method: TorrentActionMethodsType) => () => {
             actionMutation.mutate(
                 {
                     method,
-                    torrentIds: Array.from(props.serverData.current.selected),
+                    torrentIds: Array.from(serverData.selected),
                 },
                 {
                     onError: (e) => {
@@ -103,7 +103,7 @@ function useButtonHandlers(
         const priority = (bandwidthPriority: PriorityNumberType) => () => {
             priorityMutation.mutate(
                 {
-                    torrentIds: Array.from(props.serverData.current.selected),
+                    torrentIds: Array.from(serverData.selected),
                     fields: { bandwidthPriority },
                 },
                 {
@@ -137,7 +137,7 @@ function useButtonHandlers(
             setPriorityLow: checkSelected(priority(BandwidthPriority.low)),
             daemonSettings: () => { props.modals.current?.daemonSettings(); },
         };
-    }, [actionMutation, priorityMutation, props.modals, props.serverData]);
+    }, [actionMutation, priorityMutation, props.modals, serverData]);
 
     const sessionMutation = useMutateSession();
 

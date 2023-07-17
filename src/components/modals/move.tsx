@@ -18,12 +18,14 @@
 
 import { Button, Checkbox, Divider, Group, Text } from "@mantine/core";
 import React, { useCallback, useEffect, useState } from "react";
-import type { ActionModalState } from "./common";
+import type { ModalState } from "./common";
 import { HkModal, TorrentLocation, TorrentsNames, useTorrentLocation } from "./common";
 import { useTorrentChangeDirectory } from "queries";
 import { notifications } from "@mantine/notifications";
+import { useServerTorrentData } from "rpc/torrent";
 
-export function MoveModal(props: ActionModalState) {
+export function MoveModal(props: ModalState) {
+    const serverData = useServerTorrentData();
     const [moveData, setMoveData] = useState<boolean>(true);
 
     const location = useTorrentLocation();
@@ -34,7 +36,7 @@ export function MoveModal(props: ActionModalState) {
     const onMove = useCallback(() => {
         mutation.mutate(
             {
-                torrentIds: Array.from(props.serverData.current.selected),
+                torrentIds: Array.from(serverData.selected),
                 location: location.path,
                 move: moveData,
             },
@@ -50,13 +52,13 @@ export function MoveModal(props: ActionModalState) {
         );
 
         props.close();
-    }, [mutation, props, location.path, moveData]);
+    }, [mutation, serverData.selected, location.path, moveData, props]);
 
     const calculateInitialLocation = useCallback(() => {
-        const [id] = [...props.serverData.current.selected];
-        const torrent = props.serverData.current.torrents.find((t) => t.id === id);
+        const [id] = [...serverData.selected];
+        const torrent = serverData.torrents.find((t) => t.id === id);
         return torrent?.downloadDir ?? "";
-    }, [props.serverData]);
+    }, [serverData]);
 
     useEffect(() => {
         if (props.opened) setPath(calculateInitialLocation());
@@ -66,7 +68,7 @@ export function MoveModal(props: ActionModalState) {
         <HkModal opened={props.opened} onClose={props.close} title="Move torrents" centered size="lg">
             <Divider my="sm" />
             <Text mb="md">Enter new location for</Text>
-            <TorrentsNames serverData={props.serverData} />
+            <TorrentsNames />
             <TorrentLocation {...location} />
             <Checkbox
                 label="Move torrent data to new location"

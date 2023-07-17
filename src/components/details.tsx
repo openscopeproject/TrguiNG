@@ -371,6 +371,39 @@ function ServerStats() {
     );
 }
 
+const DetailsPanels = React.memo(function DetailsPanels({ torrent }: { torrent: Torrent | undefined }) {
+    return (<>
+        <Tabs.Panel value="general" h="100%">
+            {torrent !== undefined
+                ? <GeneralPane torrent={torrent} />
+                : <></>}
+        </Tabs.Panel>
+        <Tabs.Panel value="files" h="100%">
+            {torrent !== undefined
+                ? <FileTreePane torrent={torrent} />
+                : <></>}
+        </Tabs.Panel>
+        <Tabs.Panel value="pieces" h="100%">
+            {torrent !== undefined
+                ? <PiecesCanvas torrent={torrent} />
+                : <></>}
+        </Tabs.Panel>
+        <Tabs.Panel value="peers" h="100%">
+            {torrent !== undefined
+                ? <PeersTable torrent={torrent} />
+                : <></>}
+        </Tabs.Panel>
+        <Tabs.Panel value="trackers" h="100%">
+            {torrent !== undefined
+                ? <TrackersTable torrent={torrent} />
+                : <></>}
+        </Tabs.Panel>
+        <Tabs.Panel value="serverstats" h="100%">
+            <ServerStats />
+        </Tabs.Panel>
+    </>);
+});
+
 function Details(props: DetailsProps) {
     const config = useContext(ConfigContext);
     const peersTableVisibility = config.getTableColumnVisibility("peers");
@@ -388,7 +421,7 @@ function Details(props: DetailsProps) {
 
     return (
         <Tabs variant="outline" defaultValue="general" keepMounted={false}
-            h="100%" w="100%" style={{ display: "flex", flexDirection: "column" }}>
+            h="100%" w="100%" sx={{ display: "flex", flexDirection: "column" }}>
             <Tabs.List px="sm" pt="xs">
                 <Tabs.Tab value="general" disabled={torrent === undefined}>
                     <Group>
@@ -432,34 +465,7 @@ function Details(props: DetailsProps) {
                     visible={props.torrentId !== undefined && isLoading} transitionDuration={500}
                     loaderProps={{ size: "xl" }}
                     overlayOpacity={0.35} />
-                <Tabs.Panel value="general" h="100%">
-                    {torrent !== undefined
-                        ? <GeneralPane torrent={torrent} />
-                        : <></>}
-                </Tabs.Panel>
-                <Tabs.Panel value="files" h="100%">
-                    {torrent !== undefined
-                        ? <FileTreePane torrent={torrent} />
-                        : <></>}
-                </Tabs.Panel>
-                <Tabs.Panel value="pieces" h="100%">
-                    {torrent !== undefined
-                        ? <PiecesCanvas torrent={torrent} />
-                        : <></>}
-                </Tabs.Panel>
-                <Tabs.Panel value="peers" h="100%">
-                    {torrent !== undefined
-                        ? <PeersTable torrent={torrent} />
-                        : <></>}
-                </Tabs.Panel>
-                <Tabs.Panel value="trackers" h="100%">
-                    {torrent !== undefined
-                        ? <TrackersTable torrent={torrent} />
-                        : <></>}
-                </Tabs.Panel>
-                <Tabs.Panel value="serverstats" h="100%">
-                    <ServerStats />
-                </Tabs.Panel>
+                <DetailsPanels torrent={torrent} />
             </div>
         </Tabs>
     );

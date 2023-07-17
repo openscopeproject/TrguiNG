@@ -18,11 +18,11 @@
 
 import { Box, Button, Checkbox, Divider, Flex, Group, Menu, Overlay, SegmentedControl, Text, TextInput, useMantineTheme } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import type { ActionModalState, LabelsData, LocationData } from "./common";
+import type { ModalState, LocationData } from "./common";
 import { HkModal, TorrentLabels, TorrentLocation, limitTorrentNames, useTorrentLocation } from "./common";
 import type { PriorityNumberType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings } from "rpc/transmission";
-import type { Torrent } from "rpc/torrent";
+import { useServerTorrentData, type Torrent } from "rpc/torrent";
 import { CachedFileTree } from "cachedfiletree";
 import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable";
 import { notifications } from "@mantine/notifications";
@@ -35,7 +35,8 @@ const { TAURI, dialogOpen, invoke } = await import(/* webpackChunkName: "taurish
 
 interface AddCommonProps extends React.PropsWithChildren {
     location: LocationData,
-    labelsData: LabelsData,
+    labels: string[],
+    setLabels: React.Dispatch<string[]>,
     start: boolean,
     setStart: (b: boolean) => void,
     priority: PriorityNumberType,
@@ -46,7 +47,7 @@ interface AddCommonProps extends React.PropsWithChildren {
 function AddCommon(props: AddCommonProps) {
     return <>
         <TorrentLocation {...props.location} inputLabel="Download directory" disabled={props.disabled} />
-        <TorrentLabels {...props.labelsData} inputLabel="Labels" disabled={props.disabled} />
+        <TorrentLabels labels={props.labels} setLabels={props.setLabels} inputLabel="Labels" disabled={props.disabled} />
         <Group>
             <Checkbox
                 label="Start torrent"
@@ -69,47 +70,34 @@ function AddCommon(props: AddCommonProps) {
     </>;
 }
 
-interface AddCommonModalProps extends ActionModalState {
+interface AddCommonModalProps extends ModalState {
     serverName: string,
     uri: string | File | undefined,
     tabsRef: React.RefObject<ServerTabsRef>,
 }
 
-function useCommonProps(modalProps: AddCommonModalProps) {
+function useCommonProps() {
     const location = useTorrentLocation();
     const [labels, setLabels] = useState<string[]>([]);
-    const [labelsData, setLabelData] = useState<LabelsData>({
-        labels,
-        setLabels,
-        allLabels: modalProps.serverData.current.allLabels,
-    });
     const [start, setStart] = useState<boolean>(true);
     const [priority, setPriority] = useState<PriorityNumberType>(0);
 
-    useEffect(() => {
-        setLabelData({
-            labels,
-            setLabels,
-            allLabels: modalProps.serverData.current.allLabels,
-        });
-    }, [labels, modalProps.opened, modalProps.serverData]);
-
     const props = useMemo<AddCommonProps>(() => ({
         location,
-        labelsData,
+        labels,
+        setLabels,
         start,
         setStart,
         priority,
         setPriority,
-    }), [location, labelsData, start, priority]);
+    }), [location, labels, start, priority]);
 
-    return {
+    return useMemo(() => ({
         location,
-        labels,
         start,
         priority,
         props,
-    };
+    }), [location, priority, props, start]);
 }
 
 function TabSwitchDropdown({ tabsRef }: { tabsRef: React.RefObject<ServerTabsRef> }) {
@@ -147,6 +135,7 @@ function TabSwitchDropdown({ tabsRef }: { tabsRef: React.RefObject<ServerTabsRef
 }
 
 export function AddMagnet(props: AddCommonModalProps) {
+    const serverData = useServerTorrentData();
     const [magnet, setMagnet] = useState<string>("");
 
     useEffect(() => {
@@ -166,14 +155,14 @@ export function AddMagnet(props: AddCommonModalProps) {
 
     useEffect(() => {
         if (magnetData !== undefined && magnetData.hash !== "") {
-            const torrent = props.serverData.current?.torrents.find((t) => t.hashString === magnetData.hash);
+            const torrent = serverData.torrents.find((t) => t.hashString === magnetData.hash);
             setExistingTorrent(torrent);
         } else {
             setExistingTorrent(undefined);
         }
-    }, [props.serverData, props.serverName, magnetData]);
+    }, [serverData, props.serverName, magnetData]);
 
-    const common = useCommonProps(props);
+    const common = useCommonProps();
     const { close } = props;
     const addMutation = useAddTorrent(
         useCallback((response: any) => {
@@ -211,7 +200,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                 {
                     url: magnet,
                     downloadDir: common.location.path,
-                    labels: common.labels,
+                    labels: common.props.labels,
                     paused: !common.start,
                     priority: common.priority,
                 },
@@ -231,7 +220,7 @@ export function AddMagnet(props: AddCommonModalProps) {
             );
         }
         close();
-    }, [existingTorrent, close, addMutation, magnet, common.location, common.labels, common.start, common.priority, trackersMutation, magnetData]);
+    }, [existingTorrent, close, addMutation, magnet, common, trackersMutation, magnetData]);
 
     return (
         <HkModal opened={props.opened} onClose={close} centered size="lg"
@@ -248,7 +237,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                 error={existingTorrent === undefined
                     ? undefined
                     : "Torrent already exists"} />
-            <AddCommon {...common.props} disabled={existingTorrent !== undefined}/>
+            <AddCommon {...common.props} disabled={existingTorrent !== undefined} />
             <Divider my="sm" />
             <Group position="center" spacing="md">
                 <Button onClick={onAdd} variant="filled"
@@ -331,7 +320,8 @@ interface TorrentFileData {
 
 export function AddTorrent(props: AddCommonModalProps) {
     const config = useContext(ConfigContext);
-    const common = useCommonProps(props);
+    const serverData = useServerTorrentData();
+    const common = useCommonProps();
     const [torrentData, setTorrentData] = useState<TorrentFileData[]>();
 
     const filesInputRef = useRef<HTMLInputElement>(null);
@@ -344,10 +334,10 @@ export function AddTorrent(props: AddCommonModalProps) {
 
     useEffect(() => {
         if (torrentData !== undefined && torrentData.length === 1) {
-            const torrent = props.serverData.current?.torrents.find((t) => t.hashString === torrentData[0].hash);
+            const torrent = serverData.torrents.find((t) => t.hashString === torrentData[0].hash);
             setExistingTorrent(torrent);
         }
-    }, [props.serverData, props.serverName, torrentData]);
+    }, [serverData, props.serverName, torrentData]);
 
     useEffect(() => {
         if (!TAURI && props.opened) {
@@ -485,7 +475,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                     {
                         metainfo: td.metadata,
                         downloadDir: common.location.path,
-                        labels: common.labels,
+                        labels: common.props.labels,
                         paused: !common.start,
                         priority: common.priority,
                         unwanted: (td.files == null || torrentData.length > 1) ? undefined : fileTree.getUnwanted(),
