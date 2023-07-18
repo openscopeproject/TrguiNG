@@ -149,7 +149,8 @@ export class CachedFileTree {
             };
         });
 
-        if (this.files.length > 1) {
+        if (this.files.length > 1 ||
+            (this.files.length > 0 && this.files[0].fullpath.startsWith((torrent.name as string) + "/"))) {
             this.tree.fullpath = torrent.name;
         }
 
