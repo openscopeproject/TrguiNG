@@ -46,6 +46,15 @@ export function EditLabelsModal(props: ModalState) {
     const mutation = useMutateTorrent();
 
     const onSave = useCallback(() => {
+        if (serverData.rpcVersion < 16) {
+            notifications.show({
+                title: "Can not set labels",
+                message: "Labels feature requires transmission 3.0 or later",
+                color: "red",
+            });
+            close();
+            return;
+        }
         mutation.mutate(
             {
                 torrentIds: Array.from(serverData.selected),
@@ -68,7 +77,7 @@ export function EditLabelsModal(props: ModalState) {
             },
         );
         close();
-    }, [mutation, serverData.selected, labels, close]);
+    }, [serverData.rpcVersion, serverData.selected, mutation, labels, close]);
 
     return (
         <SaveCancelModal
@@ -79,9 +88,13 @@ export function EditLabelsModal(props: ModalState) {
             centered
             title="Edit torrent labels"
         >
-            <Text mb="md">Enter new labels for</Text>
-            <TorrentsNames/>
-            <TorrentLabels labels={labels} setLabels={setLabels} />
+            {serverData.rpcVersion < 16
+                ? <Text color="red" fz="lg">Labels feature requires transmission 3.0 or later</Text>
+                : <>
+                    <Text mb="md">Enter new labels for</Text>
+                    <TorrentsNames />
+                </>}
+            <TorrentLabels labels={labels} setLabels={setLabels} disabled={serverData.rpcVersion < 16} />
         </SaveCancelModal>
     );
 }

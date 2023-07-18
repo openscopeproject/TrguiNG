@@ -45,9 +45,12 @@ interface AddCommonProps extends React.PropsWithChildren {
 }
 
 function AddCommon(props: AddCommonProps) {
+    const serverData = useServerTorrentData();
+
     return <>
         <TorrentLocation {...props.location} inputLabel="Download directory" disabled={props.disabled} />
-        <TorrentLabels labels={props.labels} setLabels={props.setLabels} inputLabel="Labels" disabled={props.disabled} />
+        {serverData.rpcVersion >= 17 &&
+            <TorrentLabels labels={props.labels} setLabels={props.setLabels} inputLabel="Labels" disabled={props.disabled} />}
         <Group>
             <Checkbox
                 label="Start torrent"
