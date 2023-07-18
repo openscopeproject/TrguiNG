@@ -60,11 +60,12 @@ function usePausingModalState(runUpdates: (run: boolean) => void): [boolean, () 
 }
 
 const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(function ServerModals(props, ref) {
+    const [showAddMagnetModal, { open: openAddMagnetModal, close: closeAddMagnetModal }] = useDisclosure(false);
+    const [showAddTorrentModal, { open: openAddTorrentModal, close: closeAddTorrentModal }] = useDisclosure(false);
+
     const [showLabelsModal, openLabelsModal, closeLabelsModal] = usePausingModalState(props.runUpdates);
     const [showRemoveModal, openRemoveModal, closeRemoveModal] = usePausingModalState(props.runUpdates);
     const [showMoveModal, openMoveModal, closeMoveModal] = usePausingModalState(props.runUpdates);
-    const [showAddMagnetModal, openAddMagnetModal, closeAddMagnetModal] = usePausingModalState(props.runUpdates);
-    const [showAddTorrentModal, openAddTorrentModal, closeAddTorrentModal] = usePausingModalState(props.runUpdates);
     const [showDaemonSettingsModal, openDaemonSettingsModal, closeDaemonSettingsModal] = usePausingModalState(props.runUpdates);
     const [showEditTorrentModal, openEditTorrentModal, closeEditTorrentModal] = usePausingModalState(props.runUpdates);
 

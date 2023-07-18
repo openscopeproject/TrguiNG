@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Button, Checkbox, Divider, Flex, Group, Menu, Overlay, SegmentedControl, Text, TextInput, useMantineTheme } from "@mantine/core";
+import { Box, Button, Checkbox, Divider, Flex, Group, Menu, SegmentedControl, Text, TextInput } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ModalState, LocationData } from "./common";
 import { HkModal, TorrentLabels, TorrentLocation, limitTorrentNames, useTorrentLocation } from "./common";
@@ -522,8 +522,6 @@ export function AddTorrent(props: AddCommonModalProps) {
 
     const torrentExists = existingTorrent !== undefined;
 
-    const theme = useMantineTheme();
-
     return (<>
         {!TAURI && <input ref={filesInputRef} type="file" accept=".torrent" multiple
             style={{ position: "absolute", top: "-20rem", zIndex: -1 }} />}
@@ -536,24 +534,23 @@ export function AddTorrent(props: AddCommonModalProps) {
                     {TAURI && <TabSwitchDropdown tabsRef={props.tabsRef} />}
                 </Flex>} >
                 <Divider my="sm" />
-                {names.map((name, i) => <Text key={i}>{name}</Text>)}
+                {torrentExists
+                    ? <Text color="red" fw="bold" fz="lg">Torrent already exists</Text>
+                    : names.map((name, i) => <Text key={i}>{name}</Text>)}
                 <div style={{ position: "relative" }}>
-                    {torrentExists &&
-                        <Overlay
-                            opacity={0.6} blur={3}
-                            color={theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.white}>
-                            <Flex align="center" justify="center" h="100%">
-                                <Text color="red" fw="bold" fz="lg">Torrent already exists</Text>
-                            </Flex>
-                        </Overlay>}
-                    <AddCommon {...common.props}>
+                    <AddCommon {...common.props} disabled={torrentExists}>
                         {(torrentData.length > 1 || torrentData[0].files == null)
                             ? <></>
                             : <>
-                                <Button variant="subtle" onClick={() => { setAllWanted(true); }} title="Mark all files wanted">All</Button>
-                                <Button variant="subtle" onClick={() => { setAllWanted(false); }} title="Mark all files unwanted">None</Button>
-                            </>
-                        }
+                                <Button variant="subtle" disabled={torrentExists}
+                                    onClick={() => { setAllWanted(true); }} title="Mark all files wanted">
+                                    All
+                                </Button>
+                                <Button variant="subtle" disabled={torrentExists}
+                                    onClick={() => { setAllWanted(false); }} title="Mark all files unwanted">
+                                    None
+                                </Button>
+                            </>}
                     </AddCommon>
                     {(torrentData.length > 1 || torrentData[0].files == null)
                         ? <></>

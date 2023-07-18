@@ -178,13 +178,6 @@ export function TorrentLocation(props: LocationData) {
     );
 }
 
-export interface LabelsData {
-    labels: string[],
-    setLabels: React.Dispatch<string[]>,
-    inputLabel?: string,
-    disabled?: boolean,
-}
-
 function Label({
     label,
     onRemove,
@@ -211,7 +204,14 @@ function Label({
     );
 }
 
-export function TorrentLabels(props: LabelsData) {
+interface TorrentLabelsProps {
+    labels: string[],
+    setLabels: React.Dispatch<string[]>,
+    inputLabel?: string,
+    disabled?: boolean,
+}
+
+export function TorrentLabels(props: TorrentLabelsProps) {
     const serverData = useServerTorrentData();
     const [data, setData] = useState<string[]>(serverData.allLabels);
 
