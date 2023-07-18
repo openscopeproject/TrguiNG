@@ -45,7 +45,7 @@ function getTorrentError(t: TorrentBase): string {
         }
         if (err === "" || err === "Success") {
             noTrackerError = true;
-        } else {
+        } else if (trackerError === "") {
             // If the torrent error string is equal to some tracker error string,
             // then igonore the global error string
             if (err === torrentError) torrentError = "";
