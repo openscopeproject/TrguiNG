@@ -25,7 +25,10 @@
 
 .torrent-table-container .th {
     cursor: pointer;
-    user-select: none;
+}
+
+.torrent-table-container .td {
+    cursor: default;
 }
 
 .torrent-table-container .th div, .torrent-table-container .td div {
@@ -48,6 +51,8 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .torrent-table-rows {
@@ -57,7 +62,6 @@
 }
 
 .torrent-table {
-    user-select: none;
     position: absolute;
     left: 0;
     top: 0;

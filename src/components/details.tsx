@@ -209,6 +209,7 @@ const readonlyInputStyles = (theme: MantineTheme) => ({
         minHeight: "1.25rem",
         height: "1.25rem",
         lineHeight: "1rem",
+        cursor: "text",
     },
 });
 
