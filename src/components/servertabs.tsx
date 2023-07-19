@@ -56,13 +56,14 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
 
     useEffect(() => {
         const pollerConfigs = tabs.openTabs.filter((_, i) => i !== tabs.currentTab).map((t) => {
-            const serverConfig = config.getServer(t) as ServerConfig;
+            const serverConfig = config.getServer(t);
+            if (serverConfig === undefined) return undefined;
             return {
                 name: serverConfig.name,
                 connection: serverConfig.connection,
                 interval: serverConfig.intervals.torrentsMinimized,
             };
-        });
+        }).filter((c) => c !== undefined);
         void invoke("set_poller_config", { configs: pollerConfigs, toast: config.values.app.toastNotifications });
     }, [config, props.servers, config.values.app.toastNotifications, tabs]);
 
