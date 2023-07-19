@@ -55,7 +55,7 @@ function DownloadBar(props: { torrent: Torrent }) {
         prefix = "Downloaded";
     }
 
-    const now = Math.round(percent * 1000);
+    const now = Math.floor(percent * 1000);
     const nowStr = `${prefix}: ${now / 10}%`;
     return (
         <Box w="100%" my="0.5rem">
