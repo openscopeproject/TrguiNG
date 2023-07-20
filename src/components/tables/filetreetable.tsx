@@ -175,10 +175,12 @@ function useSelected(props: FileTreeTableProps) {
         return () => { hk.handlers.selectAll = () => { }; };
     }, [hk]);
 
-    const selectedReducer = useCallback((action: { verb: "add" | "set" | "toggle", ids: string[] }) => {
+    const selectedReducer = useCallback((action: { verb: "add" | "set" | "toggle", ids: string[], isReset?: boolean }) => {
         props.fileTree.selectAction(action);
         setSelected(props.fileTree.getSelected());
-        hk.handlers.selectAll = () => { selectAll.current?.(); };
+        if (action.isReset !== true) {
+            hk.handlers.selectAll = () => { selectAll.current?.(); };
+        }
     }, [props.fileTree, hk]);
 
     return { selected, selectedReducer };
@@ -226,7 +228,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
     const { selected, selectedReducer } = useSelected(props);
 
     useEffect(() => {
-        selectedReducer({ verb: "set", ids: [] });
+        selectedReducer({ verb: "set", ids: [], isReset: true });
     }, [props.fileTree.torrenthash, selectedReducer]);
 
     const onRowDoubleClick = useCallback((row: FileDirEntry) => {
