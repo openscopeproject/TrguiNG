@@ -31,6 +31,7 @@ use objc2::{
     sel, ClassType,
 };
 use once_cell::sync::OnceCell;
+use tauri::{Menu, MenuItem, Submenu, CustomMenuItem};
 
 type THandler = OnceCell<Mutex<Box<dyn FnMut(Vec<String>) + Send + 'static>>>;
 
@@ -169,4 +170,35 @@ pub fn listen_open_documents() {
 // Call this after app is initialised
 pub fn listen_reopen_app() {
     listen_apple_event(CORE_EVENT_CLASS, EVENT_REOPEN_APP);
+}
+
+pub fn make_menu(app_name: &str) -> Menu {
+    let mut menu = Menu::new();
+
+    menu = menu.add_submenu(Submenu::new(
+        app_name,
+        Menu::new()
+            .add_native_item(MenuItem::CloseWindow)
+            .add_item(CustomMenuItem::new("quit", "Quit").accelerator("Cmd+q")),
+    ));
+
+    let mut edit_menu = Menu::new();
+    edit_menu = edit_menu.add_native_item(MenuItem::Cut);
+    edit_menu = edit_menu.add_native_item(MenuItem::Copy);
+    edit_menu = edit_menu.add_native_item(MenuItem::Paste);
+    menu = menu.add_submenu(Submenu::new("Edit", edit_menu));
+
+    menu = menu.add_submenu(Submenu::new(
+        "View",
+        Menu::new().add_native_item(MenuItem::EnterFullScreen),
+    ));
+
+    let mut window_menu = Menu::new();
+    window_menu = window_menu.add_native_item(MenuItem::Minimize);
+    window_menu = window_menu.add_native_item(MenuItem::Zoom);
+    window_menu = window_menu.add_native_item(MenuItem::Separator);
+    window_menu = window_menu.add_native_item(MenuItem::CloseWindow);
+    menu = menu.add_submenu(Submenu::new("Window", window_menu));
+
+    menu
 }

@@ -92,7 +92,7 @@ pub fn toggle_main_window(app: AppHandle, window: Option<Window>) {
     }
 }
 
-fn exit(app: AppHandle) {
+pub fn exit(app: AppHandle) {
     async_runtime::spawn(async move {
         if let Some(window) = app.get_window("main") {
             close_main(window).await;

@@ -163,7 +163,7 @@ fn main() {
 
     let context = tauri::generate_context!();
 
-    let app = tauri::Builder::default()
+    let app_builder = tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             commands::read_file,
             commands::remove_file,
@@ -183,7 +183,21 @@ fn main() {
         .manage(CreationRequestsHandle::default())
         .system_tray(tray::create_tray())
         .on_system_tray_event(tray::on_tray_event)
-        .setup(setup)
+        .setup(setup);
+
+    #[cfg(target_os = "macos")]
+    let app_builder = app_builder
+        .menu(macos::make_menu(
+            context.config().package.product_name.as_ref().unwrap(),
+        ))
+        .on_menu_event(|event| match event.menu_item_id() {
+            "quit" => {
+                tray::exit(event.window().app_handle());
+            }
+            _ => {}
+        });
+
+    let app = app_builder
         .build(context)
         .expect("error while running tauri application");
 
