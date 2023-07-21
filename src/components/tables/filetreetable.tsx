@@ -92,7 +92,7 @@ function NameField(props: TableFieldProps) {
 
     return (
         <EditableNameField currentName={props.entry.name} onUpdate={props.treeName === "filetree" ? updatePath : undefined}>
-            <Box sx={{ width: `${props.entry.level * 2}rem`, flexShrink: 0 }} />
+            <Box sx={{ width: `${props.entry.level * 1.6}rem`, flexShrink: 0 }} />
             <Box w="1.4rem" mx="auto" sx={{ flexShrink: 0 }}>
                 {props.entry.wantedUpdating
                     ? <Loader size="1.2rem" color={theme.colorScheme === "dark" ? theme.colors.cyan[4] : theme.colors.cyan[9]} />
