@@ -16,23 +16,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { Row, ColumnDef, CellContext } from "@tanstack/react-table";
 import type { CachedFileTree, FileDirEntry } from "../../cachedfiletree";
 import { isDirEntry } from "../../cachedfiletree";
-import { ServerConfigContext } from "../../config";
+import { ConfigContext, ServerConfigContext } from "../../config";
 import { PriorityColors, PriorityStrings } from "../../rpc/transmission";
 import { bytesToHumanReadableStr, pathMapFromServer } from "../../trutil";
 import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
 import type { TrguiTableRef } from "./common";
 import { EditableNameField, TrguiTable } from "./common";
-import { Badge, Box, Checkbox, Loader, Menu, Text, useMantineTheme } from "@mantine/core";
+import { Badge, Box, Checkbox, Flex, Loader, Menu, Text, TextInput, useMantineTheme } from "@mantine/core";
 import { refreshFileTree, useMutateTorrent, useMutateTorrentPath } from "queries";
 import { notifications } from "@mantine/notifications";
 import type { ContextMenuInfo } from "components/contextmenu";
 import { ContextMenu, useContextMenu } from "components/contextmenu";
 import { useHotkeysContext } from "hotkeys";
+import debounce from "lodash-es/debounce";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 type FileDirEntryKey = keyof FileDirEntry;
@@ -186,7 +187,44 @@ function useSelected(props: FileTreeTableProps) {
     return { selected, selectedReducer };
 }
 
+function SearchBox({ setSearchTerms }: {
+    setSearchTerms: (terms: string[]) => void,
+}) {
+    const debouncedSetSearchTerms = useMemo(
+        () => debounce(setSearchTerms, 500, { trailing: true, leading: false }),
+        [setSearchTerms]);
+
+    const onSearchInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+        debouncedSetSearchTerms(
+            e.currentTarget.value
+                .split(" ")
+                .map((s) => s.trim().toLowerCase())
+                .filter((s) => s !== ""));
+    }, [debouncedSetSearchTerms]);
+
+    return (
+        <Box>
+            <TextInput
+                icon={<Icon.Search size="1rem" />}
+                placeholder="search files"
+                onInput={onSearchInput}
+                styles={{
+                    root: {
+                        height: "1.5rem",
+                    },
+                    input: {
+                        minHeight: "1.5rem",
+                        height: "1.5rem",
+                        lineHeight: "1rem",
+                    },
+                }}
+            />
+        </Box>
+    );
+}
+
 export function FileTreeTable(props: FileTreeTableProps) {
+    const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
     const onCheckboxChange = props.onCheckboxChange;
 
@@ -250,8 +288,52 @@ export function FileTreeTable(props: FileTreeTableProps) {
 
     const tableRef = useRef<TrguiTableRef>();
 
+    const [searchTerms, setSearchTerms] = useState<string[]>([]);
+
+    const data = useMemo(() => {
+        if (searchTerms.length === 0) return props.data;
+
+        const matches = (entry: FileDirEntry) => {
+            let matchesAll = true;
+            const path = entry.fullpath.toLowerCase().substring(entry.fullpath.indexOf("/") + 1);
+            searchTerms.forEach((term) => {
+                if (!path.includes(term)) matchesAll = false;
+            });
+            return matchesAll;
+        };
+        const filter = (entries: FileDirEntry[]) => {
+            const result: FileDirEntry[] = [];
+            entries.forEach((entry) => {
+                if (isDirEntry(entry)) {
+                    const copy = { ...entry };
+                    copy.subrows = filter(copy.subrows);
+                    if (matches(copy) || copy.subrows.length > 0) {
+                        result.push(copy);
+                    }
+                } else if (matches(entry)) {
+                    result.push(entry);
+                }
+            });
+            return result;
+        };
+
+        return filter(props.data);
+    }, [searchTerms, props.data]);
+
+    useEffect(() => {
+        if (searchTerms.length > 0) tableRef.current?.setExpanded(true);
+        else tableRef.current?.setExpanded(false);
+    }, [searchTerms]);
+
+    const [showFileSearchBox, toggleFileSearchBox] = useReducer((shown: boolean) => {
+        const show = !shown;
+        if (!show) setSearchTerms([]);
+        config.values.interface.showFilesSearchBox = show;
+        return show;
+    }, config.values.interface.showFilesSearchBox);
+
     return (
-        <Box w="100%" h="100%" onContextMenu={handler}>
+        <Flex w="100%" h="100%" onContextMenu={handler} direction="column">
             {props.brief === true
                 ? <></>
                 : <FiletreeContextMenu
@@ -260,19 +342,23 @@ export function FileTreeTable(props: FileTreeTableProps) {
                     fileTree={props.fileTree}
                     selected={selected}
                     onRowDoubleClick={onRowDoubleClick}
-                    setExpanded={tableRef.current?.setExpanded} />}
-            <TrguiTable<FileDirEntry> {...{
-                tablename: props.brief === true ? "filetreebrief" : "filetree",
-                tableRef,
-                columns,
-                data: props.data,
-                selected,
-                getRowId,
-                getSubRows,
-                selectedReducer,
-                onRowDoubleClick,
-            }} />
-        </Box>
+                    setExpanded={tableRef.current?.setExpanded}
+                    toggleFileSearchBox={toggleFileSearchBox} />}
+            {showFileSearchBox && <SearchBox setSearchTerms={setSearchTerms} />}
+            <div style={{ flexGrow: 1 }}>
+                <TrguiTable<FileDirEntry> {...{
+                    tablename: props.brief === true ? "filetreebrief" : "filetree",
+                    tableRef,
+                    columns,
+                    data,
+                    selected,
+                    getRowId,
+                    getSubRows,
+                    selectedReducer,
+                    onRowDoubleClick,
+                }} />
+            </div>
+        </Flex>
     );
 }
 
@@ -283,6 +369,7 @@ function FiletreeContextMenu(props: {
     selected: string[],
     onRowDoubleClick: (row: FileDirEntry) => void,
     setExpanded?: (state: boolean) => void,
+    toggleFileSearchBox: () => void,
 }) {
     const { onRowDoubleClick } = props;
     const onOpen = useCallback(() => {
@@ -398,6 +485,12 @@ function FiletreeContextMenu(props: {
                 onClick={() => { props.setExpanded?.(false); }}
                 icon={<Icon.DashSquare size="1.1rem" />}>
                 Collapse all
+            </Menu.Item>
+            <Menu.Divider />
+            <Menu.Item
+                onClick={props.toggleFileSearchBox}
+                icon={<Icon.Search size="1.1rem" />}>
+                Toggle search
             </Menu.Item>
         </ContextMenu >
     );
