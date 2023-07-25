@@ -28,7 +28,7 @@ Planned:
 
 * Better bandwidth groups support when API is ready (https://github.com/transmission/transmission/issues/5455)
 
-Currently transmission v2.80 or later is required, goal is to have v2.40 and up compatibility.
+Transmission v2.40 or later is required.
 
 ## Compiling
 

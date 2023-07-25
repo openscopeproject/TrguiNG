@@ -18,7 +18,7 @@
 
 import "css/torrenttable.css";
 import React, { memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { useServerTorrentData, type ServerTorrentData, type Torrent } from "rpc/torrent";
+import { useServerTorrentData, type ServerTorrentData, type Torrent, useServerRpcVersion } from "rpc/torrent";
 import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
@@ -174,8 +174,10 @@ function NameField(props: TableFieldProps) {
             });
     }, [mutation, props.torrent.id, props.torrent.name]);
 
+    const rpcVersion = useServerRpcVersion();
+
     return (
-        <EditableNameField currentName={currentName} onUpdate={updateTorrentName}>
+        <EditableNameField currentName={currentName} onUpdate={rpcVersion >= 15 ? updateTorrentName : undefined}>
             <Box pb="xs" sx={{ flexShrink: 0 }}>
                 <StatusIcon />
             </Box>

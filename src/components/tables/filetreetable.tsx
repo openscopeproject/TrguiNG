@@ -34,6 +34,7 @@ import type { ContextMenuInfo } from "components/contextmenu";
 import { ContextMenu, useContextMenu } from "components/contextmenu";
 import { useHotkeysContext } from "hotkeys";
 import debounce from "lodash-es/debounce";
+import { useServerRpcVersion } from "rpc/torrent";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 type FileDirEntryKey = keyof FileDirEntry;
@@ -91,8 +92,11 @@ function NameField(props: TableFieldProps) {
             });
     }, [mutation, fileTree, props.entry.fullpath, props.treeName]);
 
+    const rpcVersion = useServerRpcVersion();
+
     return (
-        <EditableNameField currentName={props.entry.name} onUpdate={props.treeName === "filetree" ? updatePath : undefined}>
+        <EditableNameField currentName={props.entry.name}
+            onUpdate={(props.treeName === "filetree" && rpcVersion >= 15) ? updatePath : undefined}>
             <Box sx={{ width: `${props.entry.level * 1.6}rem`, flexShrink: 0 }} />
             <Box w="1.4rem" mx="auto" sx={{ flexShrink: 0 }}>
                 {props.entry.wantedUpdating

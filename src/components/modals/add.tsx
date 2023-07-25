@@ -22,7 +22,8 @@ import type { ModalState, LocationData } from "./common";
 import { HkModal, TorrentLabels, TorrentLocation, limitTorrentNames, useTorrentLocation } from "./common";
 import type { PriorityNumberType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings } from "rpc/transmission";
-import { useServerTorrentData, type Torrent } from "rpc/torrent";
+import type { Torrent } from "rpc/torrent";
+import { useServerTorrentData, useServerRpcVersion } from "rpc/torrent";
 import { CachedFileTree } from "cachedfiletree";
 import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable";
 import { notifications } from "@mantine/notifications";
@@ -45,11 +46,11 @@ interface AddCommonProps extends React.PropsWithChildren {
 }
 
 function AddCommon(props: AddCommonProps) {
-    const serverData = useServerTorrentData();
+    const rpcVersion = useServerRpcVersion();
 
     return <>
         <TorrentLocation {...props.location} inputLabel="Download directory" disabled={props.disabled} />
-        {serverData.rpcVersion >= 17 &&
+        {rpcVersion >= 17 &&
             <TorrentLabels labels={props.labels} setLabels={props.setLabels} inputLabel="Labels" disabled={props.disabled} />}
         <Group>
             <Checkbox

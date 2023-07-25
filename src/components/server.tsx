@@ -21,7 +21,8 @@ import { Box, Flex, Loader, Overlay, Title } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { SplitType } from "../config";
 import { ConfigContext, ServerConfigContext } from "../config";
-import { ServerTorrentDataContext, type Torrent } from "../rpc/torrent";
+import type { ServerTorrentData, Torrent } from "../rpc/torrent";
+import { ServerRpcVersionContext, ServerTorrentDataContext } from "../rpc/torrent";
 import { MemoizedDetails } from "./details";
 import type { TorrentFilter } from "./filters";
 import { DefaultFilter, Filters } from "./filters";
@@ -83,6 +84,19 @@ function useSelected() {
     }, [hk]);
 
     return { selectedTorrents, selectedReducer, selectAll };
+}
+
+interface ServerContextProps extends React.PropsWithChildren {
+    data: ServerTorrentData,
+    rpc: number,
+}
+
+function ServerContext(props: ServerContextProps) {
+    return <ServerTorrentDataContext.Provider value={props.data}>
+        <ServerRpcVersionContext.Provider value={props.rpc}>
+            {props.children}
+        </ServerRpcVersionContext.Provider>
+    </ServerTorrentDataContext.Provider>;
 }
 
 interface ServerProps {
@@ -161,18 +175,16 @@ export function Server({ hostname, tabsRef }: ServerProps) {
 
     const modals = useRef<ModalCallbacks>(null);
 
-    const overlayVisible = sessionIsError || sessionIsLoading ||
-        session?.["rpc-version"] === undefined || session["rpc-version"] < 15;
-
     const rpcVersion = session?.["rpc-version"] ?? 0;
+
+    const overlayVisible = sessionIsError || sessionIsLoading || rpcVersion < 14;
 
     const serverData = useMemo(() => ({
         torrents: torrents ?? [],
         selected: selectedTorrents,
         current: currentTorrent,
         allLabels,
-        rpcVersion,
-    }), [torrents, selectedTorrents, currentTorrent, allLabels, rpcVersion]);
+    }), [torrents, selectedTorrents, currentTorrent, allLabels]);
 
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
@@ -189,7 +201,7 @@ export function Server({ hostname, tabsRef }: ServerProps) {
         config.values.interface.mainSplit = mainSplit;
     }, [config, showFiltersPanel, showDetailsPanel, mainSplit]);
 
-    return <ServerTorrentDataContext.Provider value={serverData}>
+    return <ServerContext data={serverData} rpc={rpcVersion}>
         <Flex direction="column" w="100%" h="100%" sx={{ position: "relative" }}>
             <MemoizedServerModals ref={modals} {...{ runUpdates, tabsRef }} serverName={serverConfig.name} />
             {overlayVisible && <Overlay blur={10}>
@@ -201,8 +213,8 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                                 <Title color="red" order={3}>{(sessionError as Error).message}</Title></>
                             : session?.["rpc-version"] === undefined
                                 ? <Title color="red" order={1}>Server does not appear to be transmission daemon</Title>
-                                : session["rpc-version"] < 15
-                                    ? <Title color="red" order={1}>Transmission version 2.80 or higher is required.</Title>
+                                : rpcVersion < 14
+                                    ? <Title color="red" order={1}>Transmission version 2.40 or higher is required.</Title>
                                     : <></>}
                 </Flex>
             </Overlay>}
@@ -251,5 +263,5 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                 }} />
             </Box>
         </Flex>
-    </ServerTorrentDataContext.Provider>;
+    </ServerContext>;
 }

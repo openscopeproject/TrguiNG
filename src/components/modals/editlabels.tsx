@@ -22,11 +22,12 @@ import { SaveCancelModal, TorrentLabels, TorrentsNames } from "./common";
 import React, { useCallback, useEffect, useState } from "react";
 import { useMutateTorrent } from "queries";
 import { notifications } from "@mantine/notifications";
-import { useServerTorrentData } from "rpc/torrent";
+import { useServerRpcVersion, useServerTorrentData } from "rpc/torrent";
 
 export function EditLabelsModal(props: ModalState) {
     const { opened, close } = props;
     const serverData = useServerTorrentData();
+    const rpcVersion = useServerRpcVersion();
     const [labels, setLabels] = useState<string[]>([]);
 
     const calculateInitialLabels = useCallback(() => {
@@ -46,7 +47,7 @@ export function EditLabelsModal(props: ModalState) {
     const mutation = useMutateTorrent();
 
     const onSave = useCallback(() => {
-        if (serverData.rpcVersion < 16) {
+        if (rpcVersion < 16) {
             notifications.show({
                 title: "Can not set labels",
                 message: "Labels feature requires transmission 3.0 or later",
@@ -77,7 +78,7 @@ export function EditLabelsModal(props: ModalState) {
             },
         );
         close();
-    }, [serverData.rpcVersion, serverData.selected, mutation, labels, close]);
+    }, [rpcVersion, serverData.selected, mutation, labels, close]);
 
     return (
         <SaveCancelModal
@@ -88,13 +89,13 @@ export function EditLabelsModal(props: ModalState) {
             centered
             title="Edit torrent labels"
         >
-            {serverData.rpcVersion < 16
+            {rpcVersion < 16
                 ? <Text color="red" fz="lg">Labels feature requires transmission 3.0 or later</Text>
                 : <>
                     <Text mb="md">Enter new labels for</Text>
                     <TorrentsNames />
                 </>}
-            <TorrentLabels labels={labels} setLabels={setLabels} disabled={serverData.rpcVersion < 16} />
+            <TorrentLabels labels={labels} setLabels={setLabels} disabled={rpcVersion < 16} />
         </SaveCancelModal>
     );
 }

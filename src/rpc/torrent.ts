@@ -124,7 +124,6 @@ export interface ServerTorrentData {
     selected: Set<number>,
     current: number | undefined,
     allLabels: string[],
-    rpcVersion: number,
 }
 
 export const ServerTorrentDataContext = React.createContext<ServerTorrentData>({
@@ -132,11 +131,16 @@ export const ServerTorrentDataContext = React.createContext<ServerTorrentData>({
     selected: new Set(),
     current: undefined,
     allLabels: [],
-    rpcVersion: 0,
 });
 
 export function useServerTorrentData() {
     return useContext(ServerTorrentDataContext);
+}
+
+export const ServerRpcVersionContext = React.createContext<number>(0);
+
+export function useServerRpcVersion() {
+    return useContext(ServerRpcVersionContext);
 }
 
 type PeerStatsBase = Partial<Record<PeerStatsFieldsType, any>>;

@@ -137,7 +137,8 @@ function TrackerUpdate(props: { torrent: Torrent }) {
 }
 
 function TransferTable(props: { torrent: Torrent }) {
-    const shareRatio = `${props.torrent.uploadRatio as number} (${secondsToHumanReadableStr(props.torrent.secondsSeeding)})`;
+    const seedingTime = secondsToHumanReadableStr(props.torrent.secondsSeeding);
+    const shareRatio = `${props.torrent.uploadRatio as number} ${seedingTime !== "" ? `(${seedingTime})` : ""}`;
 
     const [ref, rect] = useResizeObserver();
 
