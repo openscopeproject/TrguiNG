@@ -76,11 +76,16 @@ function getTrackerStatus(torrent: TorrentBase): string {
     return getTrackerAnnounceState(trackers[0]);
 }
 
+const portRe = /:\d+$/;
+const prefixRe = /^(tracker\d*|bt\d*)\.[^.]+\.[^.]+$/;
+
 function getTorrentMainTracker(t: TorrentBase): string {
     if (t.trackerStats.length === 0) return "<No trackers>";
-    const host = t.trackerStats[0].host as string;
-    const portMatch = /:\d+$/.exec(host);
-    if (portMatch != null) return host.substring(0, portMatch.index);
+    let host = t.trackerStats[0].host as string;
+    const portMatch = portRe.exec(host);
+    if (portMatch != null) host = host.substring(0, portMatch.index);
+    const prefixMatch = prefixRe.exec(host);
+    if (prefixMatch != null) host = host.substring(prefixMatch[1].length + 1);
     return host;
 }
 
