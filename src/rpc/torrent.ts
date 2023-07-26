@@ -77,7 +77,7 @@ function getTrackerStatus(torrent: TorrentBase): string {
 }
 
 const portRe = /:\d+$/;
-const prefixRe = /^(tracker\d*|bt\d*)\.[^.]+\.[^.]+$/;
+const prefixRe = /^((t|tr|tk|tracker|bt|open|opentracker)\d*)\.[^.]+\.[^.]+$/;
 
 function getTorrentMainTracker(t: TorrentBase): string {
     if (t.trackerStats.length === 0) return "<No trackers>";
