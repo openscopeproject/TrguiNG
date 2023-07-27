@@ -30,4 +30,10 @@ export default merge(common("production"), {
         }),
     ],
     devtool: "source-map",
+    resolve: {
+        alias: {
+            // Uncomment for profiling build
+            // "react-dom$": "react-dom/profiling",
+        },
+    },
 });

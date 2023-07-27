@@ -89,6 +89,7 @@
     touch-action: none;
     opacity: 0.3;
     width: 2px;
+    overflow: visible !important;
 }
 
 .resizer.isResizing {
@@ -99,4 +100,10 @@
 .th:hover>.resizer {
     opacity: 1;
     width: 0.3em;
+}
+
+.resizer-guide {
+    border-right: 1px grey dashed;
+    width: 100%;
+    height: 10000px;
 }

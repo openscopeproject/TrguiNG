@@ -399,7 +399,9 @@ function HeaderCell<TData>({ header, resizerOffset }: { header: Header<TData, un
                         ? `translateX(${resizerOffset ?? 0}px)`
                         : "",
                 },
-            }} />
+            }} >
+                {resizerOffset != null && <div className="resizer-guide" />}
+            </div>
         </div>
     );
 }
