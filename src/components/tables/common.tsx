@@ -101,6 +101,7 @@ function useTable<TData>(
         onColumnVisibilityChange: setColumnVisibility,
         onColumnOrderChange: setColumnOrder,
         enableColumnResizing: true,
+        columnResizeMode: "onChange",
         onColumnSizingChange: setColumnSizing,
         enableSorting: true,
         onSortingChange: setSorting,
@@ -394,11 +395,6 @@ function HeaderCell<TData>({ header, resizerOffset }: { header: Header<TData, un
                 onMouseDown: header.getResizeHandler(),
                 onTouchStart: header.getResizeHandler(),
                 className: `resizer ${header.column.getIsResizing() ? "isResizing" : ""}`,
-                style: {
-                    transform: header.column.getIsResizing()
-                        ? `translateX(${resizerOffset ?? 0}px)`
-                        : "",
-                },
             }} >
                 {resizerOffset != null && <div className="resizer-guide" />}
             </div>
