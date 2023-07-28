@@ -25,7 +25,7 @@ import type { Torrent } from "rpc/torrent";
 import { ColorSchemeToggle, ShowVersion } from "components/miscbuttons";
 import { ConfigContext } from "config";
 import { useContextMenu } from "./contextmenu";
-import { SectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
+import { MemoSectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
 
 const TAURI = Object.prototype.hasOwnProperty.call(window, "__TAURI__");
 
@@ -89,7 +89,7 @@ export function Statusbar({ session, filteredTorrents, selectedTorrents, hostnam
 
     return (
         <Flex className="statusbar" sx={{ flexWrap: "nowrap" }} onContextMenu={handler} gap="md">
-            <SectionsContextMenu
+            <MemoSectionsContextMenu
                 sections={sections} setSections={setSections}
                 contextMenuInfo={info} setContextMenuInfo={setInfo} />
             {sections[sectionsMap.Connection].visible &&

@@ -22,7 +22,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef,
 import type { SplitType } from "../config";
 import { ConfigContext, ServerConfigContext } from "../config";
 import type { ServerTorrentData, Torrent } from "../rpc/torrent";
-import { ServerRpcVersionContext, ServerTorrentDataContext } from "../rpc/torrent";
+import { ServerRpcVersionContext, ServerSelectedTorrentsContext, ServerTorrentDataContext } from "../rpc/torrent";
 import { MemoizedDetails } from "./details";
 import type { TorrentFilter } from "./filters";
 import { DefaultFilter, Filters } from "./filters";
@@ -88,14 +88,17 @@ function useSelected() {
 
 interface ServerContextProps extends React.PropsWithChildren {
     data: ServerTorrentData,
+    selected: Set<number>,
     rpc: number,
 }
 
 function ServerContext(props: ServerContextProps) {
     return <ServerTorrentDataContext.Provider value={props.data}>
-        <ServerRpcVersionContext.Provider value={props.rpc}>
-            {props.children}
-        </ServerRpcVersionContext.Provider>
+        <ServerSelectedTorrentsContext.Provider value={props.selected}>
+            <ServerRpcVersionContext.Provider value={props.rpc}>
+                {props.children}
+            </ServerRpcVersionContext.Provider>
+        </ServerSelectedTorrentsContext.Provider>
     </ServerTorrentDataContext.Provider>;
 }
 
@@ -136,16 +139,6 @@ export function Server({ hostname, tabsRef }: ServerProps) {
         (id: string) => { setCurrentTorrentInt(+id); },
         [setCurrentTorrentInt]);
 
-    const [allLabels, allTrackers] = useMemo(() => {
-        const labels = new Set<string>();
-        torrents?.forEach((t) => t.labels?.forEach((l: string) => labels.add(l)));
-
-        const trackers = new Set<string>();
-        torrents?.forEach((t) => trackers.add(t.cachedMainTracker));
-
-        return [Array.from(labels).sort(), Array.from(trackers).sort()];
-    }, [torrents]);
-
     const { selectedTorrents, selectedReducer, selectAll } = useSelected();
 
     const [filteredTorrents, setFilteredTorrents] = useState<Torrent[]>([]);
@@ -181,10 +174,8 @@ export function Server({ hostname, tabsRef }: ServerProps) {
 
     const serverData = useMemo(() => ({
         torrents: torrents ?? [],
-        selected: selectedTorrents,
         current: currentTorrent,
-        allLabels,
-    }), [torrents, selectedTorrents, currentTorrent, allLabels]);
+    }), [torrents, currentTorrent]);
 
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
@@ -201,7 +192,7 @@ export function Server({ hostname, tabsRef }: ServerProps) {
         config.values.interface.mainSplit = mainSplit;
     }, [config, showFiltersPanel, showDetailsPanel, mainSplit]);
 
-    return <ServerContext data={serverData} rpc={rpcVersion}>
+    return <ServerContext data={serverData} selected={selectedTorrents} rpc={rpcVersion}>
         <Flex direction="column" w="100%" h="100%" sx={{ position: "relative" }}>
             <MemoizedServerModals ref={modals} {...{ runUpdates, tabsRef }} serverName={serverConfig.name} />
             {overlayVisible && <Overlay blur={10}>
@@ -234,8 +225,6 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                     ? <div className="scrollable">
                         <Filters
                             torrents={torrents ?? []}
-                            allLabels={allLabels}
-                            allTrackers={allTrackers}
                             currentFilters={currentFilters}
                             setCurrentFilters={setCurrentFilters} />
                     </div>

@@ -25,7 +25,7 @@ import { ConfigContext, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { pathMapFromServer, pathMapToServer } from "trutil";
 import * as Icon from "react-bootstrap-icons";
-import { useServerTorrentData } from "rpc/torrent";
+import { useServerSelectedTorrents, useServerTorrentData } from "rpc/torrent";
 import { useHotkeysContext } from "hotkeys";
 const { TAURI, dialogOpen } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -78,19 +78,20 @@ export function limitTorrentNames(allNames: string[], limit: number = 5) {
 
 export function TorrentsNames() {
     const serverData = useServerTorrentData();
+    const serverSelected = useServerSelectedTorrents();
 
     const allNames = useMemo<string[]>(() => {
-        if (serverData.current == null || serverData.selected.size === 0) {
+        if (serverData.current == null || serverSelected.size === 0) {
             return ["No torrent selected"];
         }
 
         const selected = serverData.torrents.filter(
-            (t) => serverData.selected.has(t.id));
+            (t) => serverSelected.has(t.id));
 
         const allNames: string[] = [];
         selected.forEach((t) => allNames.push(t.name));
         return allNames;
-    }, [serverData]);
+    }, [serverData, serverSelected]);
 
     const names = limitTorrentNames(allNames);
 
@@ -213,7 +214,15 @@ interface TorrentLabelsProps {
 
 export function TorrentLabels(props: TorrentLabelsProps) {
     const serverData = useServerTorrentData();
-    const [data, setData] = useState<string[]>(serverData.allLabels);
+
+    const initialLabelset = useMemo(() => {
+        const labels = new Set<string>();
+        serverData.torrents.forEach((t) => t.labels?.forEach((l: string) => labels.add(l)));
+
+        return Array.from(labels).sort();
+    }, [serverData.torrents]);
+
+    const [data, setData] = useState<string[]>(initialLabelset);
 
     return (
         <MultiSelect

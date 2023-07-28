@@ -22,23 +22,24 @@ import { SaveCancelModal, TorrentLabels, TorrentsNames } from "./common";
 import React, { useCallback, useEffect, useState } from "react";
 import { useMutateTorrent } from "queries";
 import { notifications } from "@mantine/notifications";
-import { useServerRpcVersion, useServerTorrentData } from "rpc/torrent";
+import { useServerRpcVersion, useServerSelectedTorrents, useServerTorrentData } from "rpc/torrent";
 
 export function EditLabelsModal(props: ModalState) {
     const { opened, close } = props;
     const serverData = useServerTorrentData();
+    const serverSelected = useServerSelectedTorrents();
     const rpcVersion = useServerRpcVersion();
     const [labels, setLabels] = useState<string[]>([]);
 
     const calculateInitialLabels = useCallback(() => {
         const selected = serverData.torrents.filter(
-            (t) => serverData.selected.has(t.id)) ?? [];
+            (t) => serverSelected.has(t.id)) ?? [];
         const labels: string[] = [];
         selected.forEach((t) => t.labels?.forEach((l: string) => {
             if (!labels.includes(l)) labels.push(l);
         }));
         return labels;
-    }, [serverData]);
+    }, [serverData.torrents, serverSelected]);
 
     useEffect(() => {
         if (opened) setLabels(calculateInitialLabels());
@@ -58,7 +59,7 @@ export function EditLabelsModal(props: ModalState) {
         }
         mutation.mutate(
             {
-                torrentIds: Array.from(serverData.selected),
+                torrentIds: Array.from(serverSelected),
                 fields: { labels },
             },
             {
@@ -78,24 +79,25 @@ export function EditLabelsModal(props: ModalState) {
             },
         );
         close();
-    }, [rpcVersion, serverData.selected, mutation, labels, close]);
+    }, [rpcVersion, mutation, serverSelected, labels, close]);
 
-    return (
-        <SaveCancelModal
-            opened={props.opened}
-            size="lg"
-            onClose={props.close}
-            onSave={onSave}
-            centered
-            title="Edit torrent labels"
-        >
-            {rpcVersion < 16
-                ? <Text color="red" fz="lg">Labels feature requires transmission 3.0 or later</Text>
-                : <>
-                    <Text mb="md">Enter new labels for</Text>
-                    <TorrentsNames />
-                </>}
-            <TorrentLabels labels={labels} setLabels={setLabels} disabled={rpcVersion < 16} />
-        </SaveCancelModal>
-    );
+    return <>
+        {props.opened &&
+            <SaveCancelModal
+                opened={props.opened}
+                size="lg"
+                onClose={props.close}
+                onSave={onSave}
+                centered
+                title="Edit torrent labels"
+            >
+                {rpcVersion < 16
+                    ? <Text color="red" fz="lg">Labels feature requires transmission 3.0 or later</Text>
+                    : <>
+                        <Text mb="md">Enter new labels for</Text>
+                        <TorrentsNames />
+                    </>}
+                <TorrentLabels labels={labels} setLabels={setLabels} disabled={rpcVersion < 16} />
+            </SaveCancelModal>}
+    </>;
 }

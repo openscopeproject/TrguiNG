@@ -102,7 +102,7 @@ export function EditTorrent(props: ModalState) {
         form.setFieldValue("trackerList", list);
     }, [config, form]);
 
-    return (
+    return <>{props.opened &&
         <SaveCancelModal
             opened={props.opened}
             size="lg"
@@ -207,6 +207,6 @@ export function EditTorrent(props: ModalState) {
                         {...form.getInputProps("trackerList")} />
                 </Grid.Col>
             </Grid>
-        </SaveCancelModal>
-    );
+        </SaveCancelModal>}
+    </>;
 }

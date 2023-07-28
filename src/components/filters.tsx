@@ -26,32 +26,32 @@ import { ConfigContext, ServerConfigContext } from "../config";
 import { Divider, Flex } from "@mantine/core";
 import { eventHasModKey, useForceRender } from "trutil";
 import { useContextMenu } from "./contextmenu";
-import { SectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
+import { MemoSectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
 
 export interface TorrentFilter {
     id: string,
     filter: (t: Torrent) => boolean,
 }
 
-interface LabeledFilter {
-    label: string,
+interface NamedFilter {
+    name: string,
     filter: (t: Torrent) => boolean,
     icon: React.ComponentType,
 }
 
-const statusFilters: LabeledFilter[] = [
+const statusFilters: NamedFilter[] = [
     {
-        label: "All Torrents",
+        name: "All Torrents",
         filter: (t: Torrent) => true,
         icon: StatusIcons.All,
     },
     {
-        label: "Downloading",
+        name: "Downloading",
         filter: (t: Torrent) => t.status === Status.downloading,
         icon: StatusIcons.Downloading,
     },
     {
-        label: "Completed",
+        name: "Completed",
         filter: (t: Torrent) => {
             return t.status === Status.seeding ||
                 (t.sizeWhenDone > 0 && Math.max(t.sizeWhenDone - t.haveValid, 0) === 0);
@@ -59,31 +59,31 @@ const statusFilters: LabeledFilter[] = [
         icon: StatusIcons.Completed,
     },
     {
-        label: "Active",
+        name: "Active",
         filter: (t: Torrent) => {
             return t.rateDownload > 0 || t.rateUpload > 0;
         },
         icon: StatusIcons.Active,
     },
     {
-        label: "Inactive",
+        name: "Inactive",
         filter: (t: Torrent) => {
             return t.rateDownload === 0 && t.rateUpload === 0 && t.status !== Status.stopped;
         },
         icon: StatusIcons.Inactive,
     },
     {
-        label: "Stopped",
+        name: "Stopped",
         filter: (t: Torrent) => t.status === Status.stopped,
         icon: StatusIcons.Stopped,
     },
     {
-        label: "Error",
+        name: "Error",
         filter: (t: Torrent) => (t.error !== 0 || t.cachedError !== ""),
         icon: StatusIcons.Error,
     },
     {
-        label: "Waiting",
+        name: "Waiting",
         filter: (t: Torrent) => [
             Status.verifying,
             Status.queuedToVerify,
@@ -91,24 +91,21 @@ const statusFilters: LabeledFilter[] = [
         icon: StatusIcons.Waiting,
     },
     {
-        label: "Magnetizing",
+        name: "Magnetizing",
         filter: (t: Torrent) => t.status === Status.downloading && t.pieceCount === 0,
         icon: StatusIcons.Magnetizing,
     },
 ];
 
-const noLabelsFilter: LabeledFilter = {
-    label: "<No labels>",
+const noLabelsFilter: NamedFilter = {
+    name: "<No labels>",
     filter: (t: Torrent) => t.labels?.length === 0,
     icon: StatusIcons.Label,
 };
 
 export const DefaultFilter = statusFilters[0].filter;
 
-interface FiltersProps {
-    torrents: Torrent[],
-    allLabels: string[],
-    allTrackers: string[],
+interface WithCurrentFilters {
     currentFilters: TorrentFilter[],
     setCurrentFilters: React.Dispatch<{
         verb: "set" | "toggle",
@@ -116,19 +113,17 @@ interface FiltersProps {
     }>,
 }
 
-interface AllFilters {
-    statusFilters: LabeledFilter[],
-    labelFilters: LabeledFilter[],
-    trackerFilters: LabeledFilter[],
+interface FiltersProps extends WithCurrentFilters {
+    torrents: Torrent[],
 }
 
-function FilterRow(props: FiltersProps & { id: string, filter: LabeledFilter }) {
-    let count = 0;
+interface FilterRowProps extends WithCurrentFilters {
+    id: string,
+    filter: NamedFilter,
+    count: number,
+}
 
-    for (const torrent of props.torrents) {
-        if (props.filter.filter(torrent)) count++;
-    }
-
+const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
     return <Flex align="center" gap="sm" px="xs"
         className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
         onClick={(event) => {
@@ -138,10 +133,26 @@ function FilterRow(props: FiltersProps & { id: string, filter: LabeledFilter }) 
             });
         }}>
         <div style={{ flexShrink: 0 }}><props.filter.icon /></div>
-        <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.filter.label}</div>
-        <div style={{ flexShrink: 0 }}>{`(${count})`}</div>
+        <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.filter.name}</div>
+        <div style={{ flexShrink: 0 }}>{`(${props.count})`}</div>
     </Flex>;
-}
+});
+
+const LabelFilterRow = React.memo(function LabelFilterRow(props: Omit<FilterRowProps, "filter" | "id"> & { label: string }) {
+    return <FilterRow {...props} id={`label-${props.label}`} filter={{
+        name: props.label,
+        filter: (t: Torrent) => t.labels.includes(props.label),
+        icon: StatusIcons.Label,
+    }} />;
+});
+
+const TrackerFilterRow = React.memo(function TrackerFilterRow(props: Omit<FilterRowProps, "filter" | "id"> & { tracker: string }) {
+    return <FilterRow {...props} id={`tracker-${props.tracker}`} filter={{
+        name: props.tracker,
+        filter: (t: Torrent) => t.cachedMainTracker === props.tracker,
+        icon: StatusIcons.Tracker,
+    }} />;
+});
 
 interface DirFilterRowProps extends FiltersProps {
     id: string,
@@ -279,29 +290,22 @@ export const Filters = React.memo(function Filters(props: FiltersProps) {
         return flattenTree(tree);
     }, [paths, serverConfig.expandedDirFilters]);
 
-    const allFilters = useMemo<AllFilters>(() => {
-        const labelFilters: LabeledFilter[] = [noLabelsFilter];
-        props.allLabels.forEach((label) => {
-            labelFilters.push({
-                label,
-                filter: (t: Torrent) => t.labels.includes(label),
-                icon: StatusIcons.Label,
-            });
+    const [labels, trackers] = useMemo(() => {
+        const labels: Record<string, number> = {};
+        const trackers: Record<string, number> = {};
+
+        props.torrents.forEach((t) => t.labels?.forEach((l: string) => {
+            if (!(l in labels)) labels[l] = 0;
+            labels[l] = labels[l] + 1;
+        }));
+
+        props.torrents.forEach((t) => {
+            if (!(t.cachedMainTracker in trackers)) trackers[t.cachedMainTracker] = 0;
+            trackers[t.cachedMainTracker] = trackers[t.cachedMainTracker] + 1;
         });
-        const trackerFilters: LabeledFilter[] = [];
-        props.allTrackers.forEach((tracker) => {
-            trackerFilters.push({
-                label: tracker,
-                filter: (t: Torrent) => t.cachedMainTracker === tracker,
-                icon: StatusIcons.Tracker,
-            });
-        });
-        return {
-            statusFilters,
-            labelFilters,
-            trackerFilters,
-        };
-    }, [props.allLabels, props.allTrackers]);
+
+        return [labels, trackers];
+    }, [props.torrents]);
 
     const [sections, setSections] = useReducer(
         (_: SectionsVisibility<FilterSectionName>, sections: SectionsVisibility<FilterSectionName>) => {
@@ -319,14 +323,16 @@ export const Filters = React.memo(function Filters(props: FiltersProps) {
 
     return (
         <Flex direction="column" style={{ width: "100%", whiteSpace: "nowrap", cursor: "default", userSelect: "none" }} onContextMenu={handler}>
-            <SectionsContextMenu
+            <MemoSectionsContextMenu
                 sections={sections} setSections={setSections}
                 contextMenuInfo={info} setContextMenuInfo={setInfo} />
             {sections[sectionsMap.Status].visible && <div style={{ order: sectionsMap.Status }}>
                 <Divider mx="sm" label="Status" labelPosition="center" />
-                {allFilters.statusFilters.map((f) =>
-                    <FilterRow key={`status-${f.label}`} id={`status-${f.label}`}
-                        filter={f} {...props} />)}
+                {statusFilters.map((f) =>
+                    <FilterRow key={`status-${f.name}`}
+                        id={`status-${f.name}`} filter={f}
+                        count={props.torrents.filter(f.filter).length}
+                        currentFilters={props.currentFilters} setCurrentFilters={props.setCurrentFilters} />)}
             </div>}
             {sections[sectionsMap.Directories].visible && <div style={{ order: sectionsMap.Directories }}>
                 <Divider mx="sm" mt="md" label="Directories" labelPosition="center" />
@@ -336,15 +342,21 @@ export const Filters = React.memo(function Filters(props: FiltersProps) {
             </div>}
             {sections[sectionsMap.Labels].visible && <div style={{ order: sectionsMap.Labels }}>
                 <Divider mx="sm" mt="md" label="Labels" labelPosition="center" />
-                {allFilters.labelFilters.map((f) =>
-                    <FilterRow key={`labels-${f.label}`} id={`labels-${f.label}`}
-                        filter={f} {...props} />)}
+                <FilterRow
+                    id="nolabels" filter={noLabelsFilter}
+                    count={props.torrents.filter(noLabelsFilter.filter).length}
+                    currentFilters={props.currentFilters} setCurrentFilters={props.setCurrentFilters} />
+                {Object.keys(labels).sort().map((label) =>
+                    <LabelFilterRow key={`labels-${label}`} label={label}
+                        count={labels[label]}
+                        currentFilters={props.currentFilters} setCurrentFilters={props.setCurrentFilters} />)}
             </div>}
             {sections[sectionsMap.Trackers].visible && <div style={{ order: sectionsMap.Trackers }}>
                 <Divider mx="sm" mt="md" label="Trackers" labelPosition="center" />
-                {allFilters.trackerFilters.map((f) =>
-                    <FilterRow key={`trackers-${f.label}`} id={`trackers-${f.label}`}
-                        filter={f} {...props} />)}
+                {Object.keys(trackers).sort().map((tracker) =>
+                    <TrackerFilterRow key={`trackers-${tracker}`} tracker={tracker}
+                        count={trackers[tracker]}
+                        currentFilters={props.currentFilters} setCurrentFilters={props.setCurrentFilters} />)}
             </div>}
         </Flex>
     );

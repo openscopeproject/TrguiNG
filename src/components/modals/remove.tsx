@@ -22,10 +22,10 @@ import { HkModal, TorrentsNames } from "./common";
 import React, { useCallback, useState } from "react";
 import { useRemoveTorrents } from "queries";
 import { notifications } from "@mantine/notifications";
-import { useServerTorrentData } from "rpc/torrent";
+import { useServerSelectedTorrents } from "rpc/torrent";
 
 export function RemoveModal(props: ModalState) {
-    const serverData = useServerTorrentData();
+    const serverSelected = useServerSelectedTorrents();
     const [deleteData, setDeleteData] = useState<boolean>(false);
 
     const mutation = useRemoveTorrents();
@@ -33,7 +33,7 @@ export function RemoveModal(props: ModalState) {
     const onDelete = useCallback(() => {
         mutation.mutate(
             {
-                torrentIds: Array.from(serverData.selected),
+                torrentIds: Array.from(serverSelected),
                 deleteData,
             },
             {
@@ -47,7 +47,7 @@ export function RemoveModal(props: ModalState) {
             },
         );
         props.close();
-    }, [mutation, serverData.selected, deleteData, props]);
+    }, [mutation, serverSelected, deleteData, props]);
 
     return (
         <HkModal opened={props.opened} onClose={props.close} title="Remove torrents" centered size="lg">

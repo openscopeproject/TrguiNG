@@ -226,7 +226,7 @@ export function AddMagnet(props: AddCommonModalProps) {
         close();
     }, [existingTorrent, close, addMutation, magnet, common, trackersMutation, magnetData]);
 
-    return (
+    return <>{props.opened &&
         <HkModal opened={props.opened} onClose={close} centered size="lg"
             styles={{ title: { flexGrow: 1 } }}
             title={<Flex w="100%" align="center" justify="space-between">
@@ -250,8 +250,8 @@ export function AddMagnet(props: AddCommonModalProps) {
                 </Button>
                 <Button onClick={props.close} variant="light">Cancel</Button>
             </Group>
-        </HkModal>
-    );
+        </HkModal>}
+    </>;
 }
 
 async function readLocalTorrent(file: File): Promise<string> {

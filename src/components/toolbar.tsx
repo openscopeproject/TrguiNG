@@ -31,7 +31,7 @@ import type { HotkeyHandlers } from "hotkeys";
 import { useHotkeysContext } from "hotkeys";
 import { useHotkeys } from "@mantine/hooks";
 import { modKeyString } from "trutil";
-import { useServerTorrentData } from "rpc/torrent";
+import { useServerSelectedTorrents } from "rpc/torrent";
 
 interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {
     depressed?: boolean,
@@ -73,21 +73,21 @@ function useButtonHandlers(
     altSpeedMode: boolean | undefined,
     setAltSpeedMode: React.Dispatch<boolean | undefined>,
 ) {
-    const serverData = useServerTorrentData();
+    const serverSelected = useServerSelectedTorrents();
     const actionMutation = useTorrentAction();
     const priorityMutation = useMutateTorrent();
 
     const handlers = useMemo(() => {
         const checkSelected = (action?: () => void) => {
             return () => {
-                if (serverData.selected.size > 0) action?.();
+                if (serverSelected.size > 0) action?.();
             };
         };
         const action = (method: TorrentActionMethodsType) => () => {
             actionMutation.mutate(
                 {
                     method,
-                    torrentIds: Array.from(serverData.selected),
+                    torrentIds: Array.from(serverSelected),
                 },
                 {
                     onError: (e) => {
@@ -103,7 +103,7 @@ function useButtonHandlers(
         const priority = (bandwidthPriority: PriorityNumberType) => () => {
             priorityMutation.mutate(
                 {
-                    torrentIds: Array.from(serverData.selected),
+                    torrentIds: Array.from(serverSelected),
                     fields: { bandwidthPriority },
                 },
                 {
@@ -137,7 +137,7 @@ function useButtonHandlers(
             setPriorityLow: checkSelected(priority(BandwidthPriority.low)),
             daemonSettings: () => { props.modals.current?.daemonSettings(); },
         };
-    }, [actionMutation, priorityMutation, props.modals, serverData]);
+    }, [actionMutation, priorityMutation, props.modals, serverSelected]);
 
     const sessionMutation = useMutateSession();
 

@@ -121,16 +121,12 @@ export async function processTorrent(t: TorrentBase, lookupIps: boolean, client:
 
 export interface ServerTorrentData {
     torrents: Torrent[],
-    selected: Set<number>,
     current: number | undefined,
-    allLabels: string[],
 }
 
 export const ServerTorrentDataContext = React.createContext<ServerTorrentData>({
     torrents: [],
-    selected: new Set(),
     current: undefined,
-    allLabels: [],
 });
 
 export function useServerTorrentData() {
@@ -141,6 +137,12 @@ export const ServerRpcVersionContext = React.createContext<number>(0);
 
 export function useServerRpcVersion() {
     return useContext(ServerRpcVersionContext);
+}
+
+export const ServerSelectedTorrentsContext = React.createContext<Set<number>>(new Set());
+
+export function useServerSelectedTorrents() {
+    return useContext(ServerSelectedTorrentsContext);
 }
 
 type PeerStatsBase = Partial<Record<PeerStatsFieldsType, any>>;

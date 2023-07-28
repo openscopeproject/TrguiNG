@@ -31,7 +31,7 @@ export function getSectionsMap<S extends string>(sections: SectionsVisibility<S>
     return Object.fromEntries(sections.map((section, index) => [section.section, index])) as Record<S, number>;
 }
 
-export function SectionsContextMenu<S extends string>(props: {
+function SectionsContextMenu<S extends string>(props: {
     sections: SectionsVisibility<S>,
     setSections: React.Dispatch<SectionsVisibility<S>>,
     contextMenuInfo: ContextMenuInfo,
@@ -89,3 +89,5 @@ export function SectionsContextMenu<S extends string>(props: {
         </ContextMenu>
     );
 }
+
+export const MemoSectionsContextMenu = React.memo(SectionsContextMenu) as typeof SectionsContextMenu;
