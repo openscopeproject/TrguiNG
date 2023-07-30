@@ -37,7 +37,6 @@ import { DragDropContext, Draggable } from "react-beautiful-dnd";
 import { StrictModeDroppable } from "components/strictmodedroppable";
 import { eventHasModKey, reorderElements } from "trutil";
 import { useFontSize } from "fontsize";
-import { useServerSelectedTorrents } from "rpc/torrent";
 
 const defaultColumn = {
     minSize: 30,
@@ -49,6 +48,7 @@ function useTable<TData>(
     tablename: TableName,
     columns: Array<ColumnDef<TData, unknown> | AccessorKeyColumnDef<TData>>,
     data: TData[],
+    selected: string[],
     getRowId: (r: TData) => string,
     getSubRows?: (r: TData) => TData[],
     onVisibilityChange?: React.Dispatch<VisibilityState>,
@@ -62,7 +62,6 @@ function useTable<TData>(
         SortingState,
     ] {
     const config = useContext(ConfigContext);
-    const selected = useServerSelectedTorrents();
 
     const [columnVisibility, setColumnVisibility] =
         useState<VisibilityState>(config.getTableColumnVisibility(tablename));
@@ -88,7 +87,7 @@ function useTable<TData>(
         config.setTableSortBy(tablename, sorting);
     }, [config, sorting, tablename]);
     useEffect(() => {
-        setRowSelection(Object.fromEntries([...selected].map((id) => [String(id), true])));
+        setRowSelection(Object.fromEntries(selected.map((id) => [id, true])));
     }, [selected]);
 
     const table = useReactTable<TData>({
@@ -412,6 +411,7 @@ export function TrguiTable<TData>(props: {
     tableRef?: React.MutableRefObject<TrguiTableRef | undefined>,
     columns: Array<ColumnDef<TData, unknown>>,
     data: TData[],
+    selected: string[],
     getRowId: (r: TData) => string,
     getSubRows?: (r: TData) => TData[],
     selectedReducer: TableSelectReducer,
@@ -421,7 +421,7 @@ export function TrguiTable<TData>(props: {
     scrollToRow?: { id: string },
 }) {
     const [table, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columnSizing, sorting] =
-        useTable(props.tablename, props.columns, props.data, props.getRowId, props.getSubRows, props.onVisibilityChange);
+        useTable(props.tablename, props.columns, props.data, props.selected, props.getRowId, props.getSubRows, props.onVisibilityChange);
 
     if (props.tableRef !== undefined) {
         props.tableRef.current = {

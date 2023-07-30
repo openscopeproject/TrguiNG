@@ -399,6 +399,9 @@ export function TorrentTable(props: {
         }
     }, [props.modals, serverConfig]);
 
+    const serverSelected = useServerSelectedTorrents();
+    const selected = useMemo(() => Array.from(serverSelected).map(String), [serverSelected]);
+
     const [info, setInfo, handler] = useContextMenu();
 
     return (
@@ -413,6 +416,7 @@ export function TorrentTable(props: {
                 columns: Columns,
                 data: props.torrents,
                 getRowId,
+                selected,
                 selectedReducer: props.selectedReducer,
                 setCurrent: props.setCurrentTorrent,
                 onVisibilityChange,
