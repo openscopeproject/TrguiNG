@@ -54,33 +54,29 @@ export function useTorrentList(enabled: boolean, fields: TorrentFieldsType[]) {
     const serverConfig = useContext(ServerConfigContext);
     const client = useTransmissionClient();
 
-    const [refetchInterval, setRefetchInterval] = useState(1000 * serverConfig.intervals.torrents);
+    const [minimized, setMinimized] = useState(false);
 
     useEffect(() => {
         if (TAURI) {
-            const unlisten1 = appWindow.listen("window-hidden",
-                () => { setRefetchInterval(1000 * serverConfig.intervals.torrentsMinimized); });
-            const unlisten2 = appWindow.listen("window-shown",
-                () => { setRefetchInterval(1000 * serverConfig.intervals.torrents); });
+            const unlisten1 = appWindow.listen("window-hidden", () => { setMinimized(true); });
+            const unlisten2 = appWindow.listen("window-shown", () => { setMinimized(false); });
 
             return () => {
                 unlisten1.then((unlisten) => { unlisten(); }).catch(() => { });
                 unlisten2.then((unlisten) => { unlisten(); }).catch(() => { });
             };
         } else {
-            const listener = () => {
-                if (document.visibilityState === "hidden") {
-                    setRefetchInterval(1000 * serverConfig.intervals.torrentsMinimized);
-                } else {
-                    setRefetchInterval(1000 * serverConfig.intervals.torrents);
-                }
-            };
+            const listener = () => { setMinimized(document.visibilityState === "hidden"); };
 
             document.addEventListener("visibilitychange", listener);
 
             return () => { document.removeEventListener("visibilitychange", listener); };
         }
-    }, [serverConfig.intervals.torrents, serverConfig.intervals.torrentsMinimized]);
+    }, []);
+
+    const refetchInterval = 1000 * (minimized
+        ? serverConfig.intervals.torrentsMinimized
+        : serverConfig.intervals.torrents);
 
     return useQuery({
         queryKey: TorrentKeys.listAll(serverConfig.name, fields),
