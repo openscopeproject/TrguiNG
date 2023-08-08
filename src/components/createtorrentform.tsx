@@ -110,7 +110,7 @@ export default function CreateTorrentForm() {
     const onBrowseFile = useCallback(() => {
         dialog.open({
             title: "Select file",
-            defaultPath: form.values.path,
+            defaultPath: form.values.path === "" ? undefined : form.values.path,
             multiple: false,
         }).then((path) => {
             if (path === null) return;
@@ -123,7 +123,7 @@ export default function CreateTorrentForm() {
     const onBrowseDirectory = useCallback(() => {
         dialog.open({
             title: "Select directory",
-            defaultPath: form.values.path,
+            defaultPath: form.values.path === "" ? undefined : form.values.path,
             directory: true,
         }).then((path) => {
             if (path === null) return;
