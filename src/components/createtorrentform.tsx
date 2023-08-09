@@ -17,7 +17,7 @@
  */
 
 import type { Styles, TextInputStylesNames } from "@mantine/core";
-import { Box, Button, Flex, Group, Slider, Text, TextInput, Textarea, useMantineColorScheme } from "@mantine/core";
+import { Box, Button, Checkbox, Flex, Group, Slider, Text, TextInput, Textarea, useMantineColorScheme } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { dialog } from "@tauri-apps/api";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -31,6 +31,8 @@ interface FormValues {
     pieceLength: number,
     announceList: string[],
     comment: string,
+    source: string,
+    private: boolean,
     urlList: string[],
     version: string,
 }
@@ -89,6 +91,8 @@ export default function CreateTorrentForm() {
             name: "",
             pieceLength: 2 ** 18,
             comment: "",
+            source: "",
+            private: false,
             announceList: [],
             urlList: [],
             version: appVersion.gitVersion,
@@ -230,6 +234,12 @@ export default function CreateTorrentForm() {
             <TextInput
                 label={"Comment"}
                 {...form.getInputProps("comment")} />
+            <TextInput
+                label={"Source (leave empty unless required by a private tracker)"}
+                {...form.getInputProps("source")} />
+            <Checkbox
+                label="Private torrent"
+                {...form.getInputProps("private", { type: "checkbox" })} />
             <Group align="flex-end">
                 <Box sx={{ flexGrow: 1 }}>Tracker list, one per line, empty line between tiers</Box>
                 <Button onClick={addDefaultTrackers}>Add default list</Button>

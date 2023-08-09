@@ -83,8 +83,8 @@ export async function makeCreateTorrentView() {
     if (WebviewWindow !== undefined) {
         const webview = new WebviewWindow(`createtorrent-${Math.floor(Math.random() * 2 ** 30)}`, {
             url: "createtorrent.html",
-            width: 600,
-            height: 600,
+            width: 550,
+            height: 700,
             visible: true,
             center: true,
             maximizable: false,

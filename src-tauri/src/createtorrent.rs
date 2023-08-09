@@ -34,6 +34,8 @@ pub struct TorrentCreateInfo {
     path: String,
     piece_length: i64,
     comment: String,
+    source: String,
+    private: bool,
     announce_list: Vec<String>,
     url_list: Vec<String>,
     version: String,
@@ -84,7 +86,6 @@ impl CreationRequests {
 
         let mut builder = TorrentBuilder::new(info.path, info.piece_length)
             .set_name(info.name)
-            .add_extra_field("comment".into(), BencodeElem::String(info.comment.clone()))
             .set_announce(info.announce_list.get(0).cloned())
             .add_extra_field(
                 "created by".into(),
@@ -104,6 +105,15 @@ impl CreationRequests {
         }
         if !info.announce_list.is_empty() {
             builder = builder.set_announce_list(announce_list);
+        }
+        if !info.comment.is_empty() {
+            builder = builder.add_extra_field("comment".into(), BencodeElem::String(info.comment.clone()));
+        }
+        if !info.source.is_empty() {
+            builder = builder.add_extra_info_field("source".into(), BencodeElem::String(info.source.clone()));
+        }
+        if info.private {
+            builder = builder.set_privacy(true);
         }
 
         let build = builder.build_non_blocking()?;
