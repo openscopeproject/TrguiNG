@@ -180,3 +180,43 @@ export function mergeTrackerLists(currentTrackers: string[][], newTrackers: stri
     });
     return mergedTrackers;
 }
+
+const base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+const rotation = "HfxgnvteJy86p0ZPDdIYmc5r[kOj9EowACSWG7is%VNBXMhKFa2UlL31bzu4RQTq:";
+
+export function obfuscate(s: string) {
+    const b64 = b64EncodeUnicode("TrguiNG:" + s);
+    let result = "";
+    for (const c of b64) result += rotation[base64.indexOf(c)];
+    return result;
+}
+
+export function deobfuscate(s: string) {
+    let b64 = "";
+    for (const c of s) {
+        const i = rotation.indexOf(c);
+        if (i >= 0) b64 += base64[i];
+        else return s;
+    }
+    try {
+        const d = b64DecodeUnicode(b64);
+        if (!d.startsWith("TrguiNG:")) return s;
+        return d.substring(8);
+    } catch {
+        return s;
+    }
+}
+
+function b64EncodeUnicode(str: string) {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function (match, p1) {
+        return String.fromCharCode(parseInt(p1, 16));
+    }));
+}
+
+// Decoding base64 ⇢ UTF-8
+
+function b64DecodeUnicode(str: string) {
+    return decodeURIComponent(Array.prototype.map.call(atob(str), function (c: string) {
+        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(""));
+}

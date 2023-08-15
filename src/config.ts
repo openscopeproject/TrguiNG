@@ -21,6 +21,7 @@ import type {
     SortingState, ColumnSizingState, VisibilityState, ColumnOrderState,
 } from "@tanstack/react-table";
 import type { ColorScheme } from "@mantine/core";
+import { deobfuscate, obfuscate } from "trutil";
 const { readConfigText, writeConfigText } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface ServerConnection {
@@ -227,11 +228,17 @@ export class Config {
             (name) => this.values.servers.find((s) => s.name === name) !== undefined,
         );
 
+        this.values.servers = this.values.servers.map(
+            (s) => ({ ...s, connection: { ...s.connection, password: deobfuscate(s.connection.password) } }));
+
         return this;
     }
 
     async save() {
-        const configText = JSON.stringify(this.values, null, "    ");
+        const values = { ...this.values };
+        values.servers = values.servers.map(
+            (s) => ({ ...s, connection: { ...s.connection, password: obfuscate(s.connection.password) } }));
+        const configText = JSON.stringify(values, null, "    ");
         await writeConfigText(configText);
     }
 
