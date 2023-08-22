@@ -1,6 +1,10 @@
 # TrguiNG
 **Remote GUI for Transmission torrent daemon**
 
+![GitHub release](https://img.shields.io/github/v/release/OpenScopeProject/TrguiNG)
+![Downloads](https://img.shields.io/github/downloads/OpenScopeProject/TrguiNG/total)
+![Lint status](https://img.shields.io/github/actions/workflow/status/OpenScopeProject/TrguiNG/lint.yml?label=Lint&event=push)
+
 ![logo](https://i.imgur.com/QdgMWwW.png)
 
 `TrguiNG` is a rewrite of [transgui](https://github.com/transmission-remote-gui/transgui)
