@@ -24,6 +24,7 @@ import type { PriorityNumberType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings } from "rpc/transmission";
 import type { Torrent } from "rpc/torrent";
 import { useServerTorrentData, useServerRpcVersion } from "rpc/torrent";
+import type { FileDirEntry } from "cachedfiletree";
 import { CachedFileTree } from "cachedfiletree";
 import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable";
 import { notifications } from "@mantine/notifications";
@@ -31,7 +32,7 @@ import type { TorrentAddQueryParams } from "queries";
 import { useAddTorrent, useFileTree, useTorrentAddTrackers } from "queries";
 import { ConfigContext, ServerConfigContext } from "config";
 import type { ServerTabsRef } from "components/servertabs";
-import { decodeMagnetLink } from "trutil";
+import { bytesToHumanReadableStr, decodeMagnetLink } from "trutil";
 const { TAURI, dialogOpen, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface AddCommonProps extends React.PropsWithChildren {
@@ -421,16 +422,23 @@ export function AddTorrent(props: AddCommonModalProps) {
     }, [props, torrentData]);
 
     const fileTree = useMemo(() => new CachedFileTree(torrentData?.[0]?.hash ?? "", -1), [torrentData]);
+    const [wantedSize, setWantedSize] = useState(0);
 
     const { data, refetch } = useFileTree("filetreebrief", fileTree);
     useEffect(() => {
         if (torrentData !== undefined && torrentData.length === 1 && torrentData[0].files != null) {
             fileTree.parse(torrentData[0], true);
+            setWantedSize(fileTree.getWantedSize());
             void refetch();
         }
     }, [torrentData, fileTree, refetch]);
 
-    const onCheckboxChange = useUnwantedFiles(fileTree, false);
+    const unwantedHandler = useUnwantedFiles(fileTree, false);
+
+    const onCheckboxChange = useCallback((entry: FileDirEntry, state: boolean) => {
+        unwantedHandler(entry, state);
+        setWantedSize(fileTree.getWantedSize());
+    }, [fileTree, unwantedHandler]);
 
     const setAllWanted = useCallback((wanted: boolean) => {
         onCheckboxChange(fileTree.tree, wanted);
@@ -546,6 +554,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                         {(torrentData.length > 1 || torrentData[0].files == null)
                             ? <></>
                             : <>
+                                <Text>{bytesToHumanReadableStr(wantedSize)}</Text>
                                 <Button variant="subtle" disabled={torrentExists}
                                     onClick={() => { setAllWanted(true); }} title="Mark all files wanted">
                                     All

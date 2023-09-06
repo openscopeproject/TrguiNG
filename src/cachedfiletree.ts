@@ -311,6 +311,10 @@ export class CachedFileTree {
         return result;
     }
 
+    getWantedSize() {
+        return this.files.reduce((acc, f) => f.want ? acc + f.size : acc, 0);
+    }
+
     setSelection(dir: DirEntry, value: boolean) {
         dir.subdirs.forEach((d) => { this.setSelection(d, value); });
         dir.files.forEach((f) => { f.isSelected = value; });
