@@ -24,7 +24,8 @@ import { useMutateTorrent, useTorrentDetails } from "queries";
 import { notifications } from "@mantine/notifications";
 import { Button, Checkbox, Grid, LoadingOverlay, NumberInput, Text, Textarea } from "@mantine/core";
 import { ConfigContext } from "config";
-import { useServerTorrentData } from "rpc/torrent";
+import type { TrackerStats } from "rpc/torrent";
+import { useServerRpcVersion, useServerTorrentData } from "rpc/torrent";
 
 interface FormValues {
     downloadLimited?: boolean,
@@ -45,6 +46,7 @@ export function EditTorrent(props: ModalState) {
     const config = useContext(ConfigContext);
     const serverData = useServerTorrentData();
     const torrentId = serverData.current;
+    const rpcVersion = useServerRpcVersion();
 
     const { data: torrent, isLoading } = useTorrentDetails(
         torrentId ?? -1, torrentId !== undefined && props.opened, false, true);
@@ -64,22 +66,40 @@ export function EditTorrent(props: ModalState) {
             seedRatioLimit: torrent.seedRatioLimit,
             seedIdleMode: torrent.seedIdleMode,
             seedIdleLimit: torrent.seedIdleLimit,
-            trackerList: torrent.trackerList,
+            trackerList: rpcVersion >= 17
+                ? torrent.trackerList
+                : torrent.trackerStats.map((s: TrackerStats) => s.announce).join("\n"),
             honorsSessionLimits: torrent.honorsSessionLimits,
             sequentialDownload: torrent.sequentialDownload,
         });
-    }, [setValues, torrent]);
+    }, [rpcVersion, setValues, torrent]);
 
     const mutation = useMutateTorrent();
 
     const onSave = useCallback(() => {
-        if (torrentId === undefined) return;
+        if (torrentId === undefined || torrent === undefined) return;
+        let toAdd;
+        let toRemove;
+        if (rpcVersion < 17) {
+            const trackers = form.values.trackerList.split("\n").filter((s) => s !== "");
+            const currentTrackers = Object.fromEntries(
+                torrent.trackerStats.map((s: TrackerStats) => [s.announce, s.id]));
+
+            toAdd = trackers.filter((t) => !Object.hasOwn(currentTrackers, t));
+            toRemove = (torrent.trackerStats as TrackerStats[])
+                .filter((s: TrackerStats) => !trackers.includes(s.announce))
+                .map((s: TrackerStats) => s.id as number);
+            if (toAdd.length === 0) toAdd = undefined;
+            if (toRemove.length === 0) toRemove = undefined;
+        }
         mutation.mutate(
             {
                 torrentIds: [torrentId],
                 fields: {
                     ...form.values,
                     "peer-limit": form.values.peerLimit,
+                    trackerAdd: toAdd,
+                    trackerRemove: toRemove,
                 },
             },
             {
@@ -93,7 +113,7 @@ export function EditTorrent(props: ModalState) {
             },
         );
         props.close();
-    }, [form.values, mutation, props, torrentId]);
+    }, [form.values, mutation, torrent, props, rpcVersion, torrentId]);
 
     const addDefaultTrackers = useCallback(() => {
         let list = form.values.trackerList;

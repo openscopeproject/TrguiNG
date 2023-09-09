@@ -27,6 +27,8 @@ import type { Batcher } from "@yornaath/batshit";
 import { create, keyResolver } from "@yornaath/batshit";
 import { mergeTrackerLists } from "trutil";
 
+const RUST_BACKEND = "http://127.0.0.1:44321";
+
 class ApiError extends Error { }
 
 class ApiResponse {
@@ -120,7 +122,7 @@ export class TransmissionClient {
     async _sendRpc(data: Record<string, any>) {
         const url = this.url === ""
             ? "../rpc"
-            : `http://127.0.0.1:44321/${data.method === "torrent-get" ? "torrentget" : "post"}?url=${this.url}`;
+            : `${RUST_BACKEND}/${data.method === "torrent-get" ? "torrentget" : "post"}?url=${this.url}`;
         const body = JSON.stringify(data);
         let response = await fetch(
             url, { method: "POST", redirect: "manual", headers: this.headers, body });
@@ -376,7 +378,7 @@ export class TransmissionClient {
     }
 
     async lookupIps(ips: string[]) {
-        const url = "http://127.0.0.1:44321/iplookup";
+        const url = `${RUST_BACKEND}/iplookup`;
         const body = JSON.stringify(ips);
 
         const response = await fetch(url, { method: "POST", body });
