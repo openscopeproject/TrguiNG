@@ -81,11 +81,14 @@ export class TransmissionClient {
     sessionInfo: SessionInfo;
     ipsBatcher: Batcher<IpLookupResult, string>;
 
-    constructor(connection: ServerConnection, toastNotifications: boolean, timeout = 15) {
+    constructor(connection: ServerConnection, toastNotifications: boolean, toastNotificationSound: boolean, timeout = 15) {
         this.url = encodeURIComponent(connection.url);
         this.headers = {};
         if (toastNotifications) {
-            this.headers["X-Transguing-toast"] = "true";
+            this.headers["X-TrguiNG-toast"] = "true";
+        }
+        if (toastNotificationSound) {
+            this.headers["X-TrguiNG-sound"] = "true";
         }
         if (connection.username !== "" || connection.password !== "") {
             const auth = "Basic " + Buffer.from(connection.username + ":" + connection.password, "utf-8").toString("base64");
@@ -393,7 +396,7 @@ export class TransmissionClient {
 }
 
 export const ClientContext = React.createContext(
-    new TransmissionClient({ url: "", username: "", password: "" }, false));
+    new TransmissionClient({ url: "", username: "", password: "" }, false, false));
 
 export function useTransmissionClient() {
     return useContext(ClientContext);

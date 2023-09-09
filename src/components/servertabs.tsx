@@ -64,8 +64,14 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
                 interval: serverConfig.intervals.torrentsMinimized,
             };
         }).filter((c) => c !== undefined);
-        void invoke("set_poller_config", { configs: pollerConfigs, toast: config.values.app.toastNotifications });
-    }, [config, props.servers, config.values.app.toastNotifications, tabs]);
+        void invoke(
+            "set_poller_config",
+            {
+                configs: pollerConfigs,
+                toast: config.values.app.toastNotifications,
+                sound: config.values.app.toastNotificationSound,
+            });
+    }, [config, props.servers, config.values.app, tabs]);
 
     const { setCurrentServer } = props;
 
@@ -87,7 +93,7 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
 
     const openTab = useCallback((name: string) => {
         if (tabs.openTabs.includes(name)) return;
-        props.clientManager.open(name, config.values.app.toastNotifications);
+        props.clientManager.open(name, config.values.app.toastNotifications, config.values.app.toastNotificationSound);
         setCurrentServer(config.getServer(name));
         setTabs({ ...tabs, openTabs: [...tabs.openTabs, name], currentTab: tabs.openTabs.length });
     }, [tabs, props.clientManager, setCurrentServer, config]);
@@ -127,7 +133,7 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
         tabs.openTabs.forEach((serverName) => {
             props.clientManager.close(serverName);
             if (servers.find((s) => s.name === serverName) !== undefined) {
-                props.clientManager.open(serverName, config.values.app.toastNotifications);
+                props.clientManager.open(serverName, config.values.app.toastNotifications, config.values.app.toastNotificationSound);
                 newOpenTabs.push(serverName);
             }
         });

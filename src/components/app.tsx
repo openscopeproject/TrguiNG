@@ -93,7 +93,9 @@ export default function TauriApp() {
     const config = useContext(ConfigContext);
     const clientManager = useMemo(() => {
         const cm = new ClientManager(config);
-        config.getOpenTabs().forEach((tab) => { cm.open(tab, config.values.app.toastNotifications); });
+        config.getOpenTabs().forEach((tab) => {
+            cm.open(tab, config.values.app.toastNotifications, config.values.app.toastNotificationSound);
+        });
         return cm;
     }, [config]);
 

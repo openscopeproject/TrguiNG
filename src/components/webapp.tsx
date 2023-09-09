@@ -43,7 +43,7 @@ export default function WebApp() {
             config.values.servers.push(serverConfig);
         }
 
-        const client = new TransmissionClient(serverConfig.connection, false);
+        const client = new TransmissionClient(serverConfig.connection, false, false);
 
         return { serverConfig, client };
     }, [config]);

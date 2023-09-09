@@ -27,11 +27,11 @@ export class ClientManager {
         this.config = config;
     }
 
-    open(server: string, toastNotifications: boolean) {
+    open(server: string, toastNotifications: boolean, toastNotificationSound: boolean) {
         if (this.clients.has(server)) return;
 
         const serverConfig = this.config.getServer(server) as ServerConfig;
-        const client = new TransmissionClient(serverConfig.connection, toastNotifications);
+        const client = new TransmissionClient(serverConfig.connection, toastNotifications, toastNotificationSound);
 
         this.clients.set(server, client);
     }

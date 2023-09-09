@@ -87,7 +87,8 @@ async fn http_response(
     args_lock: Arc<Semaphore>,
     req: Request<Body>,
 ) -> hyper::Result<Response<Body>> {
-    let toast = req.headers().get("X-Transguing-Toast").is_some();
+    let toast = req.headers().get("X-TrguiNG-Toast").is_some();
+    let sound = req.headers().get("X-TrguiNG-Sound").is_some();
 
     match (req.method(), req.uri().path()) {
         (&Method::POST, "/args") => {
@@ -115,7 +116,7 @@ async fn http_response(
         (&Method::POST, "/torrentget") => match proxy_fetch(req).await {
             Ok(response) => {
                 if response.status().is_success() {
-                    process_response(&app, response, toast).await
+                    process_response(&app, response, toast, sound).await
                 } else {
                     Ok(response)
                 }

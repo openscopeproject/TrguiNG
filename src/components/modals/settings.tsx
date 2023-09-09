@@ -38,6 +38,7 @@ interface FormValues extends InterfaceFormValues {
     app: {
         deleteAdded: boolean,
         toastNotifications: boolean,
+        toastNotificationSound: boolean,
         onMinimize: WindowMinimizeOption,
         onClose: WindowCloseOption,
     },
@@ -211,19 +212,23 @@ function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
     }, []);
 
     return (
-        <Grid align="center">
+        <Grid align="center" gutter="md">
             <Grid.Col span={6}>Delete successfully added torrent files</Grid.Col>
             <Grid.Col span={2}>
                 <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
                     {...form.getInputProps("app.deleteAdded", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={4}></Grid.Col>
-            <Grid.Col span={6}>Show system notifications for completed torrents</Grid.Col>
+            <Grid.Col span={6}>Show notifications for completed torrents</Grid.Col>
             <Grid.Col span={2}>
                 <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
                     {...form.getInputProps("app.toastNotifications", { type: "checkbox" })} />
             </Grid.Col>
-            <Grid.Col span={4}></Grid.Col>
+            <Grid.Col span={2}>Play sound</Grid.Col>
+            <Grid.Col span={2}>
+                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                    {...form.getInputProps("app.toastNotificationSound", { type: "checkbox" })} />
+            </Grid.Col>
             {platform === "Windows" && <>
                 <Grid.Col span={6}>Launch on startup</Grid.Col>
                 <Grid.Col span={2}>

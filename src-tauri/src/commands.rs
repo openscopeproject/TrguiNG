@@ -117,9 +117,10 @@ pub async fn set_poller_config(
     poller_handle: State<'_, PollerHandle>,
     configs: Vec<PollerConfig>,
     toast: bool,
+    sound: bool,
 ) -> Result<(), ()> {
     let mut poller = poller_handle.0.lock().await;
-    poller.set_configs(configs, toast);
+    poller.set_configs(configs, toast, sound);
     Ok(())
 }
 
