@@ -61,6 +61,10 @@
     overflow: auto;
 }
 
+.torrent-table-rows:focus {
+    outline: 0;
+}
+
 .torrent-table {
     position: absolute;
     left: 0;

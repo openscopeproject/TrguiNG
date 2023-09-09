@@ -479,7 +479,7 @@ export function TrguiTable<TData>(props: {
                     }} />
                 ))}
             </Box>
-            <div ref={parentRef} className="torrent-table-rows" onScroll={onTableScroll}>
+            <div ref={parentRef} className="torrent-table-rows" onScroll={onTableScroll} tabIndex={-1}>
                 <div className="torrent-table"
                     style={{ height: `${virtualizer.getTotalSize()}px`, width: `${width}px` }}>
                     {virtualizer.getVirtualItems()
