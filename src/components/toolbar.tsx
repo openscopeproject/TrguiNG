@@ -17,7 +17,7 @@
  */
 
 import type { MantineTheme } from "@mantine/core";
-import { Button, Flex, Kbd, Menu, TextInput, useMantineTheme } from "@mantine/core";
+import { ActionIcon, Button, Flex, Kbd, Menu, TextInput, useMantineTheme } from "@mantine/core";
 import debounce from "lodash-es/debounce";
 import React, { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Icon from "react-bootstrap-icons";
@@ -184,10 +184,15 @@ function Toolbar(props: ToolbarProps) {
                 .filter((s) => s !== ""));
     }, [debouncedSetSearchTerms]);
 
+    const searchRef = useRef<HTMLInputElement>(null);
+
+    const onSearchClear = useCallback(() => {
+        if (searchRef.current != null) searchRef.current.value = "";
+        props.setSearchTerms([]);
+    }, [props]);
+
     const theme = useMantineTheme();
     const handlers = useButtonHandlers(props, altSpeedMode, setAltSpeedMode);
-
-    const searchRef = useRef<HTMLInputElement>(null);
 
     const hk = useHotkeysContext();
 
@@ -295,6 +300,9 @@ function Toolbar(props: ToolbarProps) {
             <TextInput mx="sm" ref={searchRef}
                 icon={<Icon.Search size="1rem" />}
                 placeholder={`search (${modKeyString()} + f)`}
+                rightSection={<ActionIcon onClick={onSearchClear} title="Clear">
+                    <Icon.XLg size="1rem" color={theme.colors.red[6]} />
+                </ActionIcon>}
                 onInput={onSearchInput}
                 styles={{ root: { flexGrow: 1 }, input: { height: "auto" } }}
             />

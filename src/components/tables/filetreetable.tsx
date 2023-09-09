@@ -27,7 +27,7 @@ import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
 import type { TrguiTableRef } from "./common";
 import { EditableNameField, TrguiTable } from "./common";
-import { Badge, Box, Checkbox, Flex, Loader, Menu, Text, TextInput, useMantineTheme } from "@mantine/core";
+import { ActionIcon, Badge, Box, Checkbox, Flex, Loader, Menu, Text, TextInput, useMantineTheme } from "@mantine/core";
 import { refreshFileTree, useMutateTorrent, useMutateTorrentPath } from "queries";
 import { notifications } from "@mantine/notifications";
 import type { ContextMenuInfo } from "components/contextmenu";
@@ -194,9 +194,18 @@ function useSelected(props: FileTreeTableProps) {
 function SearchBox({ setSearchTerms }: {
     setSearchTerms: (terms: string[]) => void,
 }) {
+    const theme = useMantineTheme();
+
     const debouncedSetSearchTerms = useMemo(
         () => debounce(setSearchTerms, 500, { trailing: true, leading: false }),
         [setSearchTerms]);
+
+    const searchRef = useRef<HTMLInputElement>(null);
+
+    const onSearchClear = useCallback(() => {
+        if (searchRef.current != null) searchRef.current.value = "";
+        setSearchTerms([]);
+    }, [setSearchTerms]);
 
     const onSearchInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
         debouncedSetSearchTerms(
@@ -208,8 +217,11 @@ function SearchBox({ setSearchTerms }: {
 
     return (
         <Box>
-            <TextInput
+            <TextInput ref={searchRef}
                 icon={<Icon.Search size="1rem" />}
+                rightSection={<ActionIcon onClick={onSearchClear} title="Clear">
+                    <Icon.XLg size="1rem" color={theme.colors.red[6]} />
+                </ActionIcon>}
                 placeholder="search files"
                 onInput={onSearchInput}
                 styles={{
