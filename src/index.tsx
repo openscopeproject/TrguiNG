@@ -37,7 +37,9 @@ async function onCloseRequested(app: Root, config: Config) {
         connection: serverConfig.connection,
         interval: serverConfig.intervals.torrentsMinimized,
     }));
-    await invoke("set_poller_config", { configs, toast: config.values.app.toastNotifications });
+    await invoke("set_poller_config", {
+        configs, toast: config.values.app.toastNotifications, sound: config.values.app.toastNotificationSound,
+    });
     void appWindow.emit("frontend-done");
 }
 
