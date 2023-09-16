@@ -35,6 +35,7 @@ import { ContextMenu, useContextMenu } from "components/contextmenu";
 import { useHotkeysContext } from "hotkeys";
 import debounce from "lodash-es/debounce";
 import { useServerRpcVersion } from "rpc/torrent";
+import { FileIcon } from "components/fileicon";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 type FileDirEntryKey = keyof FileDirEntry;
@@ -117,7 +118,7 @@ function NameField(props: TableFieldProps) {
                     ? props.row.getIsExpanded()
                         ? <Icon.DashSquare size="1.1rem" onClick={onToggleExpand} style={{ cursor: "pointer" }} />
                         : <Icon.PlusSquare size="1.1rem" onClick={onToggleExpand} style={{ cursor: "pointer" }} />
-                    : <Icon.FileEarmark size="1.1rem" />
+                    : <FileIcon name={props.entry.name} selected={props.row.getIsSelected()} />
                 }
             </Box>
         </EditableNameField>

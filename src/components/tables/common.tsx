@@ -227,6 +227,7 @@ function InnerRow<TData>(props: {
     columnSizing: ColumnSizingState,
     columnVisibility: VisibilityState,
     columnOrder: ColumnOrderState,
+    selected: boolean,
 }) {
     return <>
         {props.row.getVisibleCells().map(cell => {
@@ -245,7 +246,8 @@ const MemoizedInnerRow = memo(InnerRow, (prev, next) => {
         prev.expanded === next.expanded &&
         prev.columnSizing === next.columnSizing &&
         prev.columnVisibility === next.columnVisibility &&
-        prev.columnOrder === next.columnOrder
+        prev.columnOrder === next.columnOrder &&
+        prev.selected === next.selected
     );
 }) as typeof InnerRow;
 
