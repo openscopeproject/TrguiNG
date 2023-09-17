@@ -106,6 +106,9 @@ pub async fn remove_file(path: String) {
 
 #[tauri::command]
 pub async fn shell_open(path: String) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    let path = path.replace('/', "\\");
+
     if let Err(e) = opener::open(path) {
         return Err(e.to_string());
     }

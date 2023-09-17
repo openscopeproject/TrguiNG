@@ -289,7 +289,11 @@ export function FileTreeTable(props: FileTreeTableProps) {
     const onRowDoubleClick = useCallback((row: FileDirEntry) => {
         if (TAURI) {
             if (props.downloadDir === undefined || props.downloadDir === "") return;
-            let path = `${props.downloadDir}/${row.fullpath}`;
+            let path = props.downloadDir;
+            if (!path.endsWith("/") && !path.endsWith("\\")) {
+                path = path + "/";
+            }
+            path = path + row.fullpath + (isDirEntry(row) ? "/" : "");
             path = pathMapFromServer(path, serverConfig);
             invoke("shell_open", { path }).catch((e) => {
                 notifications.show({
