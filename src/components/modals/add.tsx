@@ -200,6 +200,8 @@ export function AddMagnet(props: AddCommonModalProps) {
     const trackersMutation = useTorrentAddTrackers();
 
     const onAdd = useCallback(() => {
+        if (magnet === "") return;
+
         if (existingTorrent === undefined) {
             addMutation.mutate(
                 {
@@ -224,11 +226,20 @@ export function AddMagnet(props: AddCommonModalProps) {
                 },
             );
         }
+        setMagnet("");
         close();
     }, [existingTorrent, close, addMutation, magnet, common, trackersMutation, magnetData]);
 
-    return <>{props.opened &&
-        <HkModal opened={props.opened} onClose={close} centered size="lg"
+    const config = useContext(ConfigContext);
+    const shouldOpen = !config.values.interface.skipAddDialog || typeof props.uri !== "string";
+    useEffect(() => {
+        if (props.opened && !shouldOpen) {
+            onAdd();
+        }
+    }, [onAdd, props.opened, shouldOpen]);
+
+    return <>{props.opened && shouldOpen &&
+        <HkModal opened={true} onClose={close} centered size="lg"
             styles={{ title: { flexGrow: 1 } }}
             title={<Flex w="100%" align="center" justify="space-between">
                 <span>Add torrent by magnet link or URL</span>
@@ -267,6 +278,96 @@ async function readLocalTorrent(file: File): Promise<string> {
         };
         reader.readAsDataURL(file);
     });
+}
+
+function useTauriReadFile(
+    props: AddCommonModalProps,
+    torrentData: TorrentFileData[] | undefined,
+    setTorrentData: React.Dispatch<React.SetStateAction<TorrentFileData[] | undefined>>,
+) {
+    useEffect(() => {
+        if (TAURI && props.opened && torrentData === undefined) {
+            const readFile = async (path: string | string[] | null) => {
+                if (path == null) {
+                    return undefined;
+                }
+                if (Array.isArray(path)) {
+                    return await Promise.all(path.map(
+                        async (p) => await invoke<TorrentFileData>("read_file", { path: p })));
+                }
+                return [await invoke<TorrentFileData>("read_file", { path })];
+            };
+
+            let uri = props.uri;
+            if (typeof uri === "string" && uri.startsWith("file://")) {
+                uri = decodeURIComponent(uri.substring(7));
+            }
+
+            const pathPromise = typeof uri === "string"
+                ? Promise.resolve(uri)
+                : dialogOpen({
+                    title: "Select torrent file",
+                    filters: [{
+                        name: "Torrent",
+                        extensions: ["torrent"],
+                    }],
+                    multiple: true,
+                });
+
+            pathPromise.then(readFile)
+                .then((torrentData) => {
+                    setTorrentData(torrentData);
+                    if (torrentData === undefined) {
+                        props.close();
+                    }
+                }).catch((e) => {
+                    notifications.show({
+                        title: "Error reading torrent",
+                        message: String(e),
+                        color: "red",
+                    });
+                    props.close();
+                });
+        }
+    }, [props, setTorrentData, torrentData]);
+}
+
+function useWebappReadFile(
+    props: AddCommonModalProps,
+    filesInputRef: React.RefObject<HTMLInputElement>,
+    close: () => void,
+    setTorrentData: React.Dispatch<React.SetStateAction<TorrentFileData[] | undefined>>,
+) {
+    useEffect(() => {
+        if (!TAURI && props.opened) {
+            if (props.uri === undefined) {
+                if (filesInputRef.current != null) {
+                    filesInputRef.current.value = "";
+                    filesInputRef.current.click();
+                }
+                close();
+            } else {
+                const file = props.uri as File;
+                readLocalTorrent(file).then((b64) => {
+                    setTorrentData([{
+                        torrentPath: "",
+                        metadata: b64,
+                        name: file.name,
+                        hash: "",
+                        files: null,
+                        trackers: [],
+                    }]);
+                }).catch(() => {
+                    notifications.show({
+                        title: "Error reading file",
+                        message: file.name,
+                        color: "red",
+                    });
+                    close();
+                });
+            }
+        }
+    }, [props.opened, props.uri, close, filesInputRef, setTorrentData]);
 }
 
 function useFilesInput(
@@ -329,97 +430,20 @@ export function AddTorrent(props: AddCommonModalProps) {
     const common = useCommonProps();
     const [torrentData, setTorrentData] = useState<TorrentFileData[]>();
 
-    const filesInputRef = useRef<HTMLInputElement>(null);
+    const existingTorrent = useMemo(() => {
+        if (torrentData !== undefined && torrentData.length === 1) {
+            return serverData.torrents.find((t) => t.hashString === torrentData[0].hash);
+        }
+        return undefined;
+    }, [serverData.torrents, torrentData]);
 
     const { close } = props;
 
+    const filesInputRef = useRef<HTMLInputElement>(null);
+
     useFilesInput(filesInputRef, close, setTorrentData);
-
-    const [existingTorrent, setExistingTorrent] = useState<Torrent>();
-
-    useEffect(() => {
-        if (torrentData !== undefined && torrentData.length === 1) {
-            const torrent = serverData.torrents.find((t) => t.hashString === torrentData[0].hash);
-            setExistingTorrent(torrent);
-        }
-    }, [serverData, props.serverName, torrentData]);
-
-    useEffect(() => {
-        if (!TAURI && props.opened) {
-            if (props.uri === undefined) {
-                if (filesInputRef.current != null) {
-                    filesInputRef.current.value = "";
-                    filesInputRef.current.click();
-                }
-                close();
-            } else {
-                const file = props.uri as File;
-                readLocalTorrent(file).then((b64) => {
-                    setTorrentData([{
-                        torrentPath: "",
-                        metadata: b64,
-                        name: file.name,
-                        hash: "",
-                        files: null,
-                        trackers: [],
-                    }]);
-                }).catch(() => {
-                    notifications.show({
-                        title: "Error reading file",
-                        message: file.name,
-                        color: "red",
-                    });
-                    close();
-                });
-            }
-        }
-    }, [props.opened, props.uri, close]);
-
-    useEffect(() => {
-        if (TAURI && props.opened && torrentData === undefined) {
-            const readFile = async (path: string | string[] | null) => {
-                if (path == null) {
-                    return undefined;
-                }
-                if (Array.isArray(path)) {
-                    return await Promise.all(path.map(
-                        async (p) => await invoke<TorrentFileData>("read_file", { path: p })));
-                }
-                return [await invoke<TorrentFileData>("read_file", { path })];
-            };
-
-            let uri = props.uri;
-            if (typeof uri === "string" && uri.startsWith("file://")) {
-                uri = decodeURIComponent(uri.substring(7));
-            }
-
-            const pathPromise = typeof uri === "string"
-                ? Promise.resolve(uri)
-                : dialogOpen({
-                    title: "Select torrent file",
-                    filters: [{
-                        name: "Torrent",
-                        extensions: ["torrent"],
-                    }],
-                    multiple: true,
-                });
-
-            pathPromise.then(readFile)
-                .then((torrentData) => {
-                    setTorrentData(torrentData);
-                    if (torrentData === undefined) {
-                        props.close();
-                    }
-                }).catch((e) => {
-                    notifications.show({
-                        title: "Error reading torrent",
-                        message: String(e),
-                        color: "red",
-                    });
-                    props.close();
-                });
-        }
-    }, [props, torrentData]);
+    useWebappReadFile(props, filesInputRef, close, setTorrentData);
+    useTauriReadFile(props, torrentData, setTorrentData);
 
     const fileTree = useMemo(() => new CachedFileTree(torrentData?.[0]?.hash ?? "", -1), [torrentData]);
     const [wantedSize, setWantedSize] = useState(0);
@@ -519,6 +543,13 @@ export function AddTorrent(props: AddCommonModalProps) {
         close();
     }, [torrentData, existingTorrent, close, common, addMutation, fileTree, trackersMutation, config]);
 
+    const shouldOpen = !config.values.interface.skipAddDialog && torrentData !== undefined;
+    useEffect(() => {
+        if (torrentData !== undefined && !shouldOpen) {
+            onAdd();
+        }
+    }, [onAdd, torrentData, shouldOpen]);
+
     const modalClose = useCallback(() => {
         setTorrentData(undefined);
         close();
@@ -537,9 +568,8 @@ export function AddTorrent(props: AddCommonModalProps) {
     return (<>
         {!TAURI && <input ref={filesInputRef} type="file" accept=".torrent" multiple
             style={{ position: "absolute", top: "-20rem", zIndex: -1 }} />}
-        {torrentData === undefined
-            ? <></>
-            : <HkModal opened={torrentData !== undefined} onClose={modalClose} centered size="lg"
+        {shouldOpen &&
+            <HkModal opened={true} onClose={modalClose} centered size="lg"
                 styles={{ title: { flexGrow: 1 } }}
                 title={<Flex w="100%" align="center" justify="space-between">
                     <span>Add torrent</span>
