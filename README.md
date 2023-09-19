@@ -41,7 +41,7 @@ Prerequisites:
 - [rust 1.69](https://www.rust-lang.org/) or later
 - Geoip lookup database in mmdb format, put it in `src-tauri`
    ```
-   wget -nv -O- "https://download.db-ip.com/free/dbip-country-lite-2023-07.mmdb.gz" | zcat > src-tauri/dbip.mmdb
+   wget -nv -O- "https://download.db-ip.com/free/dbip-country-lite-2023-09.mmdb.gz" | zcat > src-tauri/dbip.mmdb
    ```
    You can get latest db from [db-ip.com](https://db-ip.com/db/download/ip-to-country-lite).
 
