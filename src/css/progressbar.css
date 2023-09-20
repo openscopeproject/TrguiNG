@@ -33,6 +33,23 @@
     transition: clip-path 0.5s ease;
 }
 
+.progressbar.green>:first-child {
+    background: #36B24D;
+}
+
+.progressbar.green.dark>:first-child {
+    background: #1d8931;
+}
+
+.progressbar.red>:first-child {
+    background: #FA5352;
+}
+
+.progressbar.red.dark>:first-child {
+    background: #C92B2A;
+}
+
+
 .progressbar.animate>:first-child {
     background-image: linear-gradient(45deg, rgba(255, 255, 255, .15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%, transparent 75%, transparent);
     background-size: 1rem 1rem;

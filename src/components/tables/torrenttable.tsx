@@ -299,13 +299,25 @@ function ByteRateField(props: TableFieldProps) {
 }
 
 function PercentBarField(props: TableFieldProps) {
-    const now = props.torrent[props.fieldName] * 100;
+    let now: number = props.torrent[props.fieldName] * 100;
+    let label: string = '';
     const active = props.torrent.rateDownload > 0 || props.torrent.rateUpload > 0;
+    let status: string = StatusStrings[props.torrent.status];
+    if ((props.torrent.error !== undefined && props.torrent.error > 0) ||
+        props.torrent.cachedError !== "") {
+        status = "Error";
+    } else if (props.torrent.status === Status.downloading && props.torrent.pieceCount === 0) {
+        status = "Magnetizing";
+        now = 100;
+        label = "🧲";
+    }
 
     return <ProgressBar
         now={now}
         className="white-outline"
-        animate={active} />;
+        label={label}
+        animate={active}
+        status={status} />;
 }
 
 const Columns = AllFields.map((f): ColumnDef<Torrent> => {

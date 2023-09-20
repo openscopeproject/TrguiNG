@@ -136,7 +136,7 @@ function ByteSizeField(props: TableFieldProps) {
 function PercentBarField(props: TableFieldProps) {
     const now = props.entry.percent ?? 0;
 
-    return <ProgressBar now={now} className="white-outline" />;
+    return <ProgressBar now={now} status="Downloading" className="white-outline" />;
 }
 
 function PriorityField(props: TableFieldProps) {

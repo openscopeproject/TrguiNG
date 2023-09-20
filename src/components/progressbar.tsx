@@ -17,21 +17,38 @@
  */
 
 import "../css/progressbar.css";
-import React from "react";
+import React, { useContext } from "react";
+import { ConfigContext } from "../config";
 
 interface ProgressBarProps {
     now: number,
     max?: number,
     label?: string,
     animate?: boolean,
+    status?: string,
     className?: string,
 }
 
 export function ProgressBar(props: ProgressBarProps) {
     const max = props.max ?? 100;
     const percent = Math.floor(1000 * props.now / max) / 10;
-    const label = props.label ?? `${percent}%`;
-    const className = `progressbar ${props.animate === true ? "animate" : ""} ${props.className ?? ""}`;
+    const label = props.label || `${percent}%`;
+    const animate = (props.animate && props.status !== "Waiting") || props.status == "Magnetizing" || props.status == "Verifying";
+    let color = "blue";
+    let dark = false;
+
+    const config = useContext(ConfigContext);
+    const colorize = config.values.interface.colorfulProgressBars;
+    if (colorize) {
+        dark = props.status == "Stopped" || props.status == "Waiting" || props.status == "Error";
+        if (props.status == "Magnetizing" || props.status == "Error") {
+            color = "red";
+        } else if (props.status == "Seeding" || (percent == 100 && props.status !== "Waiting" && props.status !== "Verifying")) {
+            color = "green";
+        }
+    }
+
+    const className = `progressbar ${animate === true ? "animate" : ""} ${dark === true ? "dark" : ""} ${color} ${props.className ?? ""}`;
     return (
         <div className={className}>
             <div>{label}</div>

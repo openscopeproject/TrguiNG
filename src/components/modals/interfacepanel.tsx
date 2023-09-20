@@ -17,7 +17,7 @@
  */
 
 import React from "react";
-import { Checkbox, Grid, NumberInput, Textarea } from "@mantine/core";
+import { Checkbox, Grid, NumberInput, Switch, Textarea } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 
 export interface InterfaceFormValues {
@@ -28,12 +28,19 @@ export interface InterfaceFormValues {
     },
 }
 
+const bigSwitchStyles = { track: { flexGrow: 1 } };
+
 export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { form: UseFormReturnType<V> }) {
     return (
         <Grid>
             <Grid.Col>
                 <Checkbox label="Skip add torrent dialog"
                     {...props.form.getInputProps("interface.skipAddDialog", { type: "checkbox" })} />
+            </Grid.Col>
+            <Grid.Col span={8}>Colorful progress bars</Grid.Col>
+            <Grid.Col span={2}>
+                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                    {...props.form.getInputProps("interface.colorfulProgressBars", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={8}>Max number of saved download directories</Grid.Col>
             <Grid.Col span={2}>

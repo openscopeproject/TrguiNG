@@ -261,7 +261,8 @@ export default function CreateTorrentForm() {
                         now={pieces.done}
                         max={Math.max(pieces.total, 1)}
                         label={`Hashing, done ${pieces.done} of ${pieces.total}`}
-                        animate />}
+                        animate
+                        status='Verifying' />}
                 {state.state === "done" &&
                     <Text>{`Torrent infohash: ${state.hash}`}</Text>}
             </Box>

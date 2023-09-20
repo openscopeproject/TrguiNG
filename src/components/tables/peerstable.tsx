@@ -80,7 +80,8 @@ function PercentField(props: TableFieldProps) {
     return <ProgressBar
         now={now}
         className="white-outline"
-        animate={active} />;
+        animate={active}
+        status="Downloading" />;
 }
 
 const Columns = AllFields.map((field): ColumnDef<PeerStats> => {
