@@ -19,6 +19,7 @@
 import type { AccessorFn, CellContext, ColumnDef } from "@tanstack/react-table";
 import React, { useMemo, useCallback } from "react";
 import type { Torrent, PeerStats } from "rpc/torrent";
+import { Status } from "../../rpc/transmission";
 import { bytesToHumanReadableStr } from "trutil";
 import { TrguiTable, useStandardSelect } from "./common";
 import { ProgressBar } from "components/progressbar";
@@ -80,7 +81,8 @@ function PercentField(props: TableFieldProps) {
     return <ProgressBar
         now={now}
         className="white-outline"
-        animate={active} />;
+        animate={active}
+        status={Status.downloading} />;
 }
 
 const Columns = AllFields.map((field): ColumnDef<PeerStats> => {

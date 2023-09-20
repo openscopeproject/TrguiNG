@@ -43,12 +43,14 @@ interface DetailsProps {
 function DownloadBar(props: { torrent: Torrent }) {
     let prefix = "";
     let percent = props.torrent.percentDone as number;
+    let status = props.torrent.status;
     if (props.torrent.status === Status.verifying) {
         prefix = "Verified";
         percent = props.torrent.recheckProgress;
     } else if (props.torrent.status === Status.downloading && props.torrent.pieceCount === 0) {
         prefix = "Downloading metadata";
         percent = props.torrent.metadataPercentComplete;
+        status = Status.magnetizing;
     } else if (props.torrent.status === Status.stopped) {
         prefix = "Stopped";
     } else {
@@ -57,9 +59,10 @@ function DownloadBar(props: { torrent: Torrent }) {
 
     const now = Math.floor(percent * 1000);
     const nowStr = `${prefix}: ${now / 10}%`;
+    const active = props.torrent.rateDownload > 0 || props.torrent.rateUpload > 0;
     return (
         <Box w="100%" my="0.5rem">
-            <ProgressBar now={now} max={1000} label={nowStr} />
+            <ProgressBar now={now} max={1000} label={nowStr} animate={active} status={status} />
         </Box>
     );
 }

@@ -17,21 +17,46 @@
  */
 
 import "../css/progressbar.css";
-import React from "react";
+import React, { useContext } from "react";
+import { ConfigContext } from "../config";
+import { Status } from "../rpc/transmission";
 
 interface ProgressBarProps {
     now: number,
     max?: number,
     label?: string,
     animate?: boolean,
+    status?: number,
     className?: string,
 }
 
 export function ProgressBar(props: ProgressBarProps) {
     const max = props.max ?? 100;
     const percent = Math.floor(1000 * props.now / max) / 10;
-    const label = props.label ?? `${percent}%`;
-    const className = `progressbar ${props.animate === true ? "animate" : ""} ${props.className ?? ""}`;
+    const label = props.label || `${percent}%`;
+    const animate = (props.animate && props.status !== Status.queuedToVerify &&
+        props.status !== Status.queuedToDownload && props.status !== Status.queuedToSeed) ||
+        props.status == Status.magnetizing || props.status == Status.verifying;
+    let color = "blue";
+
+    const config = useContext(ConfigContext);
+    const colorize = config.values.interface.colorfulProgressBars;
+    if (colorize) {
+        if (props.status == Status.error) {
+            color = "dark-red";
+        } else if (props.status == Status.magnetizing) {
+            color = "red";
+        } else if (props.status == Status.stopped) {
+            color = "dark-green";
+        } else if (props.status == Status.seeding || props.status == Status.downloading && percent == 100) {
+            color = "green";
+        } else if (props.status == Status.queuedToVerify || props.status == Status.queuedToDownload ||
+            props.status == Status.queuedToSeed) {
+            color = "dark-blue";
+        } // Waiting and Downloading @ <=99% will default to plain blue
+    }
+
+    const className = `progressbar ${animate === true ? "animate" : ""} ${color} ${props.className ?? ""}`;
     return (
         <div className={className}>
             <div>{label}</div>

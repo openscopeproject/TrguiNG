@@ -29,6 +29,8 @@ export const Status = {
     downloading: 4,
     queuedToSeed: 5,
     seeding: 6,
+    magnetizing: -1,
+    error: -2,
 } as const;
 
 export const StatusStrings = [
@@ -39,6 +41,8 @@ export const StatusStrings = [
     "Downloading",
     "Waiting",
     "Seeding",
+    "Magnetizing",
+    "Error",
 ] as const;
 
 const PriorityNumbers = [-1, 0, 1] as const;
