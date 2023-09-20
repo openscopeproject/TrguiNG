@@ -19,13 +19,14 @@
 import "../css/progressbar.css";
 import React, { useContext } from "react";
 import { ConfigContext } from "../config";
+import { Status } from "../rpc/transmission";
 
 interface ProgressBarProps {
     now: number,
     max?: number,
     label?: string,
     animate?: boolean,
-    status?: string,
+    status?: number,
     className?: string,
 }
 
@@ -33,22 +34,29 @@ export function ProgressBar(props: ProgressBarProps) {
     const max = props.max ?? 100;
     const percent = Math.floor(1000 * props.now / max) / 10;
     const label = props.label || `${percent}%`;
-    const animate = (props.animate && props.status !== "Waiting") || props.status == "Magnetizing" || props.status == "Verifying";
+    const animate = (props.animate && props.status !== Status.queuedToVerify &&
+        props.status !== Status.queuedToDownload && props.status !== Status.queuedToSeed) ||
+        props.status == Status.magnetizing || props.status == Status.verifying;
     let color = "blue";
-    let dark = false;
 
     const config = useContext(ConfigContext);
     const colorize = config.values.interface.colorfulProgressBars;
     if (colorize) {
-        dark = props.status == "Stopped" || props.status == "Waiting" || props.status == "Error";
-        if (props.status == "Magnetizing" || props.status == "Error") {
+        if (props.status == Status.error) {
+            color = "dark-red";
+        } else if (props.status == Status.magnetizing) {
             color = "red";
-        } else if (props.status == "Seeding" || (percent == 100 && props.status !== "Waiting" && props.status !== "Verifying")) {
+        } else if (props.status == Status.stopped) {
+            color = "dark-green";
+        } else if (props.status == Status.seeding || props.status == Status.downloading && percent == 100) {
             color = "green";
-        }
+        } else if (props.status == Status.queuedToVerify || props.status == Status.queuedToDownload ||
+            props.status == Status.queuedToSeed) {
+            color = "dark-blue";
+        } // Waiting and Downloading @ <=99% will default to plain blue
     }
 
-    const className = `progressbar ${animate === true ? "animate" : ""} ${dark === true ? "dark" : ""} ${color} ${props.className ?? ""}`;
+    const className = `progressbar ${animate === true ? "animate" : ""} ${color} ${props.className ?? ""}`;
     return (
         <div className={className}>
             <div>{label}</div>

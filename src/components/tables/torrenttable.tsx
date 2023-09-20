@@ -301,16 +301,15 @@ function ByteRateField(props: TableFieldProps) {
 function PercentBarField(props: TableFieldProps) {
     let now: number = props.torrent[props.fieldName] * 100;
     let label: string = '';
-    const active = props.torrent.rateDownload > 0 || props.torrent.rateUpload > 0;
-    let status: string = StatusStrings[props.torrent.status];
-    if ((props.torrent.error !== undefined && props.torrent.error > 0) ||
-        props.torrent.cachedError !== "") {
-        status = "Error";
+    let status: number = props.torrent.status;
+    if ((props.torrent.error !== undefined && props.torrent.error > 0) || props.torrent.cachedError !== "") {
+        status = Status.error;
     } else if (props.torrent.status === Status.downloading && props.torrent.pieceCount === 0) {
-        status = "Magnetizing";
         now = 100;
         label = "🧲";
+        status = Status.magnetizing;
     }
+    const active = props.torrent.rateDownload > 0 || props.torrent.rateUpload > 0;
 
     return <ProgressBar
         now={now}

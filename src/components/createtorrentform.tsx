@@ -21,6 +21,7 @@ import { Box, Button, Checkbox, Flex, Group, Slider, Text, TextInput, Textarea, 
 import { useForm } from "@mantine/form";
 import { dialog } from "@tauri-apps/api";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Status } from "rpc/transmission";
 import { appVersion } from "./modals/version";
 import { ProgressBar } from "./progressbar";
 const { appWindow, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
@@ -262,7 +263,7 @@ export default function CreateTorrentForm() {
                         max={Math.max(pieces.total, 1)}
                         label={`Hashing, done ${pieces.done} of ${pieces.total}`}
                         animate
-                        status='Verifying' />}
+                        status={Status.verifying} />}
                 {state.state === "done" &&
                     <Text>{`Torrent infohash: ${state.hash}`}</Text>}
             </Box>

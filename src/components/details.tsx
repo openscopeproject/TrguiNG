@@ -25,7 +25,7 @@ import { ProgressBar } from "./progressbar";
 import { DateField, LabelsField, StatusField, TrackerField } from "./tables/torrenttable";
 import { TrackersTable } from "./tables/trackertable";
 import { PeersTable } from "./tables/peerstable";
-import { Status, StatusStrings, type SessionStatEntry } from "rpc/transmission";
+import { Status, type SessionStatEntry } from "rpc/transmission";
 import type { MantineTheme } from "@mantine/core";
 import { Anchor, Box, Flex, Container, Group, Table, Tabs, TextInput, LoadingOverlay, Grid, useMantineTheme } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
@@ -43,14 +43,14 @@ interface DetailsProps {
 function DownloadBar(props: { torrent: Torrent }) {
     let prefix = "";
     let percent = props.torrent.percentDone as number;
-    let status: string = StatusStrings[props.torrent.status];
+    let status = props.torrent.status;
     if (props.torrent.status === Status.verifying) {
         prefix = "Verified";
         percent = props.torrent.recheckProgress;
     } else if (props.torrent.status === Status.downloading && props.torrent.pieceCount === 0) {
         prefix = "Downloading metadata";
         percent = props.torrent.metadataPercentComplete;
-        status = "Magnetizing";
+        status = Status.magnetizing;
     } else if (props.torrent.status === Status.stopped) {
         prefix = "Stopped";
     } else {
