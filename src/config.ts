@@ -125,6 +125,7 @@ const DefaultColumnVisibility: Partial<Record<TableName, VisibilityState>> = {
         leftUntilDone: false,
         downloadedEver: false,
         uploadedEver: false,
+        simpleRatio: false,
         eta: false,
         tracker: false,
         trackerStatus: false,

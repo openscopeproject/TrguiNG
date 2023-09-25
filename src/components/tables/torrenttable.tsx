@@ -90,6 +90,14 @@ const AllFields: readonly TableField[] = [
     { name: "downloadedEver", label: "Downloaded", component: ByteSizeField },
     { name: "uploadedEver", label: "Uploaded", component: ByteSizeField },
     {
+        name: "uploadedEver",
+        label: "U/D",
+        component: UploadRatioField,
+        accessorFn: (t) => t.uploadedEver / t.downloadedEver,
+        columnId: "simpleRatio",
+        requiredFields: ["uploadedEver", "downloadedEver"] as TorrentFieldsType[],
+    },
+    {
         name: "percentDone",
         label: "Done",
         component: PercentBarField,
@@ -199,6 +207,16 @@ function PositiveNumberField(props: TableFieldProps) {
     return (
         <div style={{ width: "100%", textAlign: "right" }}>
             {num < 0 ? "" : num}
+        </div>
+    );
+}
+
+function UploadRatioField(props: TableFieldProps) {
+    return (
+        <div style={{ width: "100%", textAlign: "right" }}>
+            {props.torrent.downloadedEver === 0
+                ? "∞"
+                : (props.torrent.uploadedEver / props.torrent.downloadedEver).toFixed(2)}
         </div>
     );
 }
