@@ -22,7 +22,7 @@ import type { CachedFileTree, FileDirEntry } from "../../cachedfiletree";
 import { isDirEntry } from "../../cachedfiletree";
 import { ConfigContext, ServerConfigContext } from "../../config";
 import { PriorityColors, PriorityStrings } from "../../rpc/transmission";
-import { bytesToHumanReadableStr, pathMapFromServer } from "../../trutil";
+import { bytesToHumanReadableStr, fileSystemSafeName, pathMapFromServer } from "../../trutil";
 import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
 import type { TrguiTableRef } from "./common";
@@ -80,6 +80,7 @@ function NameField(props: TableFieldProps) {
 
     const updatePath = useCallback((name: string, onStart: () => void, onEnd: () => void) => {
         onStart();
+        name = fileSystemSafeName(name);
 
         mutation.mutate(
             { torrentId: fileTree.torrentId, path: props.entry.fullpath, name },

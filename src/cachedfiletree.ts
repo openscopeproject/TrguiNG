@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { fileSystemSafeName } from "trutil";
 import type { Torrent, TorrentBase } from "./rpc/torrent";
 import type { PriorityNumberType } from "rpc/transmission";
 
@@ -149,9 +150,11 @@ export class CachedFileTree {
             };
         });
 
+        const safeName = fileSystemSafeName(torrent.name);
+
         if (this.files.length > 1 ||
-            (this.files.length > 0 && this.files[0].fullpath.startsWith((torrent.name as string) + "/"))) {
-            this.tree.fullpath = torrent.name;
+            (this.files.length > 0 && this.files[0].fullpath.startsWith(safeName + "/"))) {
+            this.tree.fullpath = safeName;
         }
 
         const filePathIndex: Array<[string, number]> = this.files

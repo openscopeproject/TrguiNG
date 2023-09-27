@@ -218,3 +218,12 @@ function b64DecodeUnicode(str: string) {
         return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
     }).join(""));
 }
+
+// This regex has some chars that are only invalid on windows but not linux/mac
+// But we have to be safe and use them all to ensure that multi client
+// environments where clients are on different OSes are interoperable.
+const badChars = /[<>:"\\/|?*]/g;
+
+export function fileSystemSafeName(name: string) {
+    return name.replace(badChars, "_");
+}

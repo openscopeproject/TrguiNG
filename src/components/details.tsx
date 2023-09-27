@@ -18,7 +18,7 @@
 
 import React, { memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Torrent, TrackerStats } from "../rpc/torrent";
-import { bytesToHumanReadableStr, ensurePathDelimiter, secondsToHumanReadableStr, timestampToDateString } from "../trutil";
+import { bytesToHumanReadableStr, ensurePathDelimiter, fileSystemSafeName, secondsToHumanReadableStr, timestampToDateString } from "../trutil";
 import { FileTreeTable, useUnwantedFiles } from "./tables/filetreetable";
 import { PiecesCanvas } from "./piecescanvas";
 import { ProgressBar } from "./progressbar";
@@ -215,7 +215,7 @@ const readonlyInputStyles = (theme: MantineTheme) => ({
 });
 
 function TorrentDetails(props: { torrent: Torrent }) {
-    const fullPath = ensurePathDelimiter(props.torrent.downloadDir) + (props.torrent.name as string);
+    const fullPath = ensurePathDelimiter(props.torrent.downloadDir) + fileSystemSafeName(props.torrent.name);
 
     const [ref, rect] = useResizeObserver();
 

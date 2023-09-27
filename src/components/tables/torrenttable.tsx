@@ -23,7 +23,7 @@ import { useServerTorrentData, useServerRpcVersion, useServerSelectedTorrents } 
 import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
-import { bytesToHumanReadableStr, modKeyString, pathMapFromServer, secondsToHumanReadableStr, timestampToDateString } from "trutil";
+import { bytesToHumanReadableStr, fileSystemSafeName, modKeyString, pathMapFromServer, secondsToHumanReadableStr, timestampToDateString } from "trutil";
 import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
 import type { TableSelectReducer } from "./common";
@@ -174,13 +174,18 @@ function NameField(props: TableFieldProps) {
 
     const updateTorrentName = useCallback((name: string, onStart: () => void, onEnd: () => void) => {
         onStart();
-
-        mutation.mutate(
-            { torrentId: props.torrent.id, path: props.torrent.name, name },
-            {
-                onSettled: onEnd,
-                onError: () => { notifications.show({ color: "red", message: "Failed to rename torrent" }); },
-            });
+        const path = fileSystemSafeName(props.torrent.name);
+        name = fileSystemSafeName(name);
+        if (name === path) {
+            onEnd();
+        } else {
+            mutation.mutate(
+                { torrentId: props.torrent.id, path, name },
+                {
+                    onSettled: onEnd,
+                    onError: () => { notifications.show({ color: "red", message: "Failed to rename torrent" }); },
+                });
+        }
     }, [mutation, props.torrent.id, props.torrent.name]);
 
     const rpcVersion = useServerRpcVersion();
@@ -403,7 +408,7 @@ export function TorrentTable(props: {
             if (!path.endsWith("/") && !path.endsWith("\\")) {
                 path = path + "/";
             }
-            path = path + (torrent.name as string);
+            path = path + fileSystemSafeName(torrent.name);
             path = pathMapFromServer(path, serverConfig);
             invoke("shell_open", { path }).catch((e) => {
                 notifications.show({
