@@ -59,7 +59,6 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
         return Err(format!("Failed to read file {:?}", path));
     }
 
-
     match Torrent::read_from_bytes(&read_result.as_ref().unwrap()[..]) {
         Err(_) => Err(format!("Failed to parse torrent {:?}", path)),
         Ok(torrent) => {
@@ -105,12 +104,14 @@ pub async fn remove_file(path: String) {
 }
 
 #[tauri::command]
-pub async fn shell_open(path: String) -> Result<(), String> {
+pub async fn shell_open(path: String, reveal: bool) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     let path = path.replace('/', "\\");
 
-    if let Err(e) = opener::open(path) {
-        return Err(e.to_string());
+    if reveal {
+        opener::reveal(path).map_err(|e| e.to_string())?
+    } else {
+        opener::open(path).map_err(|e| e.to_string())?
     }
     Ok(())
 }

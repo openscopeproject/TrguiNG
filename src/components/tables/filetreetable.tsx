@@ -287,7 +287,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
         selectedReducer({ verb: "set", ids: [], isReset: true });
     }, [props.fileTree.torrenthash, selectedReducer]);
 
-    const onRowDoubleClick = useCallback((row: FileDirEntry) => {
+    const onRowDoubleClick = useCallback((row: FileDirEntry, reveal: boolean = false) => {
         if (TAURI) {
             if (props.downloadDir === undefined || props.downloadDir === "") return;
             let path = props.downloadDir;
@@ -296,7 +296,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
             }
             path = path + row.fullpath + (isDirEntry(row) ? "/" : "");
             path = pathMapFromServer(path, serverConfig);
-            invoke("shell_open", { path }).catch((e) => {
+            invoke("shell_open", { path, reveal }).catch((e) => {
                 notifications.show({
                     title: "Error opening path",
                     message: path,
@@ -389,16 +389,16 @@ function FiletreeContextMenu(props: {
     setContextMenuInfo: (i: ContextMenuInfo) => void,
     fileTree: CachedFileTree,
     selected: string[],
-    onRowDoubleClick: (row: FileDirEntry) => void,
+    onRowDoubleClick: (row: FileDirEntry, reveal: boolean) => void,
     setExpanded?: (state: boolean) => void,
     toggleFileSearchBox: () => void,
 }) {
     const { onRowDoubleClick } = props;
-    const onOpen = useCallback(() => {
+    const onOpen = useCallback((reveal: boolean) => {
         const [path] = [...props.selected];
         const entry = props.fileTree.findEntry(path);
         if (entry === undefined) return;
-        onRowDoubleClick(entry);
+        onRowDoubleClick(entry, reveal);
     }, [onRowDoubleClick, props.fileTree, props.selected]);
 
     const mutation = useMutateTorrent();
@@ -459,10 +459,16 @@ function FiletreeContextMenu(props: {
         <ContextMenu contextMenuInfo={props.contextMenuInfo} setContextMenuInfo={props.setContextMenuInfo}>
             {TAURI && <>
                 <Menu.Item
-                    onClick={onOpen}
+                    onClick={() => { onOpen(false); }}
                     icon={<Icon.BoxArrowUpRight size="1.1rem" />}
                     disabled={props.selected.length !== 1}>
                     <Text weight="bold">Open</Text>
+                </Menu.Item>
+                <Menu.Item
+                    onClick={() => { onOpen(true); }}
+                    icon={<Icon.Folder2Open size="1.1rem" />}
+                    disabled={props.selected.length !== 1}>
+                    <Text>Open folder</Text>
                 </Menu.Item>
                 <Menu.Divider />
             </>}

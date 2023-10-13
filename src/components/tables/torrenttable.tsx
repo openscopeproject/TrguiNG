@@ -401,7 +401,7 @@ export function TorrentTable(props: {
         [onColumnVisibilityChange],
     );
 
-    const onRowDoubleClick = useCallback((torrent: Torrent) => {
+    const onRowDoubleClick = useCallback((torrent: Torrent, reveal: boolean = false) => {
         if (TAURI) {
             if (torrent.downloadDir === undefined || torrent.downloadDir === "") return;
             let path = torrent.downloadDir as string;
@@ -410,7 +410,7 @@ export function TorrentTable(props: {
             }
             path = path + fileSystemSafeName(torrent.name);
             path = pathMapFromServer(path, serverConfig);
-            invoke("shell_open", { path }).catch((e) => {
+            invoke("shell_open", { path, reveal }).catch((e) => {
                 notifications.show({
                     title: "Error opening path",
                     message: path,
@@ -454,17 +454,17 @@ function TorrentContextMenu(props: {
     contextMenuInfo: ContextMenuInfo,
     setContextMenuInfo: (i: ContextMenuInfo) => void,
     modals: React.RefObject<ModalCallbacks>,
-    onRowDoubleClick: (t: Torrent) => void,
+    onRowDoubleClick: (t: Torrent, reveal: boolean) => void,
 }) {
     const serverData = useServerTorrentData();
     const serverSelected = useServerSelectedTorrents();
 
     const { onRowDoubleClick } = props;
-    const onOpen = useCallback(() => {
+    const onOpen = useCallback((reveal: boolean) => {
         const [id] = [...serverSelected];
         const torrent = serverData.torrents.find((t) => t.id === id);
         if (torrent === undefined) return;
-        onRowDoubleClick(torrent);
+        onRowDoubleClick(torrent, reveal);
     }, [onRowDoubleClick, serverData.torrents, serverSelected]);
 
     const mutation = useTorrentAction();
@@ -587,11 +587,18 @@ function TorrentContextMenu(props: {
             <Box miw="14rem">
                 {TAURI && <>
                     <Menu.Item
-                        onClick={onOpen}
+                        onClick={() => { onOpen(false); }}
                         onMouseEnter={closeQueueSubmenu}
                         icon={<Icon.BoxArrowUpRight size="1.1rem" />}
                         disabled={serverSelected.size !== 1}>
                         <Text weight="bold">Open</Text>
+                    </Menu.Item>
+                    <Menu.Item
+                        onClick={() => { onOpen(true); }}
+                        onMouseEnter={closeQueueSubmenu}
+                        icon={<Icon.Folder2Open size="1.1rem" />}
+                        disabled={serverSelected.size !== 1}>
+                        <Text>Open folder</Text>
                     </Menu.Item>
                     <Menu.Divider />
                 </>}
