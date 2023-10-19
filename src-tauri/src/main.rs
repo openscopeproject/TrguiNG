@@ -146,11 +146,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 
         let app_clone = app.clone();
         app.listen_global("window-hidden", move |_| {
-            app_clone
-                .tray_handle()
-                .get_item("showhide")
-                .set_title("Show")
-                .ok();
+            tray::set_tray_showhide_text(&app_clone, "Hide");
         })
     });
 
@@ -202,9 +198,10 @@ fn main() {
         .expect("error while running tauri application");
 
     #[allow(clippy::single_match)]
-    app.run(|_app_handle, event| match event {
+    app.run(|app_handle, event| match event {
         tauri::RunEvent::ExitRequested { api, .. } => {
             api.prevent_exit();
+            tray::set_tray_showhide_text(app_handle, "Show");
         }
         _ => {}
     });

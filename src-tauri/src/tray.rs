@@ -25,14 +25,21 @@ use tokio::sync::oneshot;
 use crate::ListenerHandle;
 
 pub fn create_tray() -> SystemTray {
-    let hide = CustomMenuItem::new("showhide".to_string(), "Hide");
-    let quit = CustomMenuItem::new("quit".to_string(), "Quit");
+    let hide = CustomMenuItem::new("showhide", "Hide");
+    let quit = CustomMenuItem::new("quit", "Quit");
     let tray_menu = SystemTrayMenu::new()
         .add_item(hide)
         .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(quit);
 
     SystemTray::new().with_menu(tray_menu)
+}
+
+pub fn set_tray_showhide_text(app: &AppHandle, text: &str) {
+    app.tray_handle()
+        .get_item("showhide")
+        .set_title(text)
+        .ok();
 }
 
 pub fn on_tray_event(app: &AppHandle, event: SystemTrayEvent) {
@@ -63,16 +70,10 @@ pub fn toggle_main_window(app: AppHandle, window: Option<Window>) {
                 window.unminimize().ok();
                 window.set_focus().ok();
                 window.emit("window-shown", "").ok();
-                app.tray_handle()
-                    .get_item("showhide")
-                    .set_title("Hide")
-                    .ok();
+                set_tray_showhide_text(&app, "Hide");
                 return;
             }
-            app.tray_handle()
-                .get_item("showhide")
-                .set_title("Show")
-                .ok();
+            set_tray_showhide_text(&app, "Show");
             async_runtime::spawn(async move {
                 close_main(window).await;
             });
@@ -82,10 +83,7 @@ pub fn toggle_main_window(app: AppHandle, window: Option<Window>) {
                 WindowBuilder::new(&app, "main", tauri::WindowUrl::App("index.html".into()))
                     .build()
                     .unwrap();
-            app.tray_handle()
-                .get_item("showhide")
-                .set_title("Hide")
-                .ok();
+            set_tray_showhide_text(&app, "Hide");
             window.set_title("Transmission GUI").ok();
             window.set_focus().ok();
         }
