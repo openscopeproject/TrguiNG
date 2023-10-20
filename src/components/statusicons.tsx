@@ -48,7 +48,7 @@ export function Inactive() {
 
 export function Stopped() {
     const theme = useMantineTheme();
-    return <Icon.PauseBtnFill size="1rem" fill={theme.colors.yellow[5]} />;
+    return <Icon.PauseBtnFill size="1rem" fill={theme.colors.yellow[6]} />;
 }
 
 export function Error() {
@@ -78,7 +78,7 @@ export function Magnetizing() {
 
 export function CompletedStopped() {
     const theme = useMantineTheme();
-    return <Icon.CheckSquareFill size="1rem" fill={theme.colors.green[7]} />;
+    return <Icon.CheckSquareFill size="1rem" fill={theme.colors.green[9]} />;
 }
 
 export const StatusIconMap: Record<number, React.FC> = {
