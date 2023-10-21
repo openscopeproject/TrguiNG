@@ -110,6 +110,7 @@ export async function processTorrent(t: TorrentBase, lookupIps: boolean, client:
 
     return {
         ...t,
+        downloadDir: (t.downloadDir as string).replaceAll("\\", "/"),
         cachedError: getTorrentError(t),
         cachedTrackerStatus: getTrackerStatus(t),
         cachedMainTracker: getTorrentMainTracker(t),

@@ -228,10 +228,10 @@ function buildDirTree(paths: string[], expanded: string[]): Directory {
     paths.forEach((path) => {
         const parts = path.split("/");
         let dir = root;
-        let currentPath = "/";
+        let currentPath = "";
         for (const part of parts) {
-            if (part === "") continue;
             currentPath = currentPath + part + "/";
+            if (part === "") continue;
             if (!dir.subdirs.has(part)) {
                 dir.subdirs.set(part, {
                     name: part,
