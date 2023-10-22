@@ -84,8 +84,8 @@ export function FileIcon({ name, selected }: { name: string, selected: boolean }
     const theme = useMantineTheme();
 
     const ext = name.substring(name.lastIndexOf(".") + 1).toLowerCase();
-    const FileIcon = Object.hasOwn(extensions, ext) ? extensions[ext].icon : Icon.FileEarmark;
-    const color = Object.hasOwn(extensions, ext) ? extensions[ext].color : "gray";
+    const FileIcon = Object.prototype.hasOwnProperty.call(extensions, ext) ? extensions[ext].icon : Icon.FileEarmark;
+    const color = Object.prototype.hasOwnProperty.call(extensions, ext) ? extensions[ext].color : "gray";
     const shade = (theme.colorScheme === "dark" || selected) ? 3 : 9;
 
     return <FileIcon size="1.1rem" color={theme.colors[color][shade]} />;
