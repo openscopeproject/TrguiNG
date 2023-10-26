@@ -16,16 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useContext, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import type { ModalState } from "./common";
-import { SaveCancelModal } from "./common";
+import { SaveCancelModal, TorrentsNames } from "./common";
 import { useForm } from "@mantine/form";
 import { useMutateTorrent, useTorrentDetails } from "queries";
 import { notifications } from "@mantine/notifications";
-import { Button, Checkbox, Grid, LoadingOverlay, NumberInput, Text, Textarea } from "@mantine/core";
-import { ConfigContext } from "config";
-import type { TrackerStats } from "rpc/torrent";
-import { useServerRpcVersion, useServerTorrentData } from "rpc/torrent";
+import { Checkbox, Grid, LoadingOverlay, NumberInput } from "@mantine/core";
+import { useServerSelectedTorrents, useServerTorrentData } from "rpc/torrent";
 
 interface FormValues {
     downloadLimited?: boolean,
@@ -37,16 +35,20 @@ interface FormValues {
     seedRatioLimit: number,
     seedIdleMode: number,
     seedIdleLimit: number,
-    trackerList: string,
     honorsSessionLimits: boolean,
     sequentialDownload: boolean,
 }
 
 export function EditTorrent(props: ModalState) {
-    const config = useContext(ConfigContext);
     const serverData = useServerTorrentData();
-    const torrentId = serverData.current;
-    const rpcVersion = useServerRpcVersion();
+    const selected = useServerSelectedTorrents();
+
+    const torrentId = useMemo(() => {
+        if (serverData.current === undefined || !selected.has(serverData.current)) {
+            return [...selected][0];
+        }
+        return serverData.current;
+    }, [selected, serverData]);
 
     const { data: torrent, isLoading } = useTorrentDetails(
         torrentId ?? -1, torrentId !== undefined && props.opened, false, true);
@@ -66,40 +68,22 @@ export function EditTorrent(props: ModalState) {
             seedRatioLimit: torrent.seedRatioLimit,
             seedIdleMode: torrent.seedIdleMode,
             seedIdleLimit: torrent.seedIdleLimit,
-            trackerList: rpcVersion >= 17
-                ? torrent.trackerList
-                : torrent.trackerStats.map((s: TrackerStats) => s.announce).join("\n"),
             honorsSessionLimits: torrent.honorsSessionLimits,
             sequentialDownload: torrent.sequentialDownload,
         });
-    }, [rpcVersion, setValues, torrent]);
+    }, [setValues, torrent]);
 
     const mutation = useMutateTorrent();
 
     const onSave = useCallback(() => {
         if (torrentId === undefined || torrent === undefined) return;
-        let toAdd;
-        let toRemove;
-        if (rpcVersion < 17) {
-            const trackers = form.values.trackerList.split("\n").filter((s) => s !== "");
-            const currentTrackers = Object.fromEntries(
-                torrent.trackerStats.map((s: TrackerStats) => [s.announce, s.id]));
 
-            toAdd = trackers.filter((t) => !Object.hasOwn(currentTrackers, t));
-            toRemove = (torrent.trackerStats as TrackerStats[])
-                .filter((s: TrackerStats) => !trackers.includes(s.announce))
-                .map((s: TrackerStats) => s.id as number);
-            if (toAdd.length === 0) toAdd = undefined;
-            if (toRemove.length === 0) toRemove = undefined;
-        }
         mutation.mutate(
             {
-                torrentIds: [torrentId],
+                torrentIds: [...selected],
                 fields: {
                     ...form.values,
                     "peer-limit": form.values.peerLimit,
-                    trackerAdd: toAdd,
-                    trackerRemove: toRemove,
                 },
             },
             {
@@ -113,14 +97,7 @@ export function EditTorrent(props: ModalState) {
             },
         );
         props.close();
-    }, [form.values, mutation, torrent, props, rpcVersion, torrentId]);
-
-    const addDefaultTrackers = useCallback(() => {
-        let list = form.values.trackerList;
-        if (!list.endsWith("\n")) list += "\n";
-        list += config.values.interface.defaultTrackers.join("\n");
-        form.setFieldValue("trackerList", list);
-    }, [config, form]);
+    }, [torrentId, torrent, mutation, selected, form.values, props]);
 
     return <>{props.opened &&
         <SaveCancelModal
@@ -135,7 +112,7 @@ export function EditTorrent(props: ModalState) {
             <LoadingOverlay visible={isLoading} />
             <Grid align="center">
                 <Grid.Col>
-                    Torrent: {torrent?.name}
+                    <TorrentsNames />
                 </Grid.Col>
                 <Grid.Col span={8}>
                     <Checkbox my="sm"
@@ -215,16 +192,6 @@ export function EditTorrent(props: ModalState) {
                 </Grid.Col>
                 <Grid.Col span={2}>
                     minutes
-                </Grid.Col>
-                <Grid.Col span={8}>
-                    <Text>Tracker list, one per line, empty line between tiers</Text>
-                </Grid.Col>
-                <Grid.Col span={4}>
-                    <Button onClick={addDefaultTrackers}>Add default list</Button>
-                </Grid.Col>
-                <Grid.Col>
-                    <Textarea minRows={6}
-                        {...form.getInputProps("trackerList")} />
                 </Grid.Col>
             </Grid>
         </SaveCancelModal>}

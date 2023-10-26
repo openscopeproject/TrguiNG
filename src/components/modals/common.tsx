@@ -68,12 +68,21 @@ export function SaveCancelModal({ onSave, onClose, children, saveLoading, ...oth
     );
 }
 
-export function limitTorrentNames(allNames: string[], limit: number = 5) {
-    const names: string[] = allNames.slice(0, limit);
+export function LimitedNamesList({ names, limit }: { names: string[], limit?: number }) {
+    limit = limit ?? 5;
+    const t = names.slice(0, limit);
 
-    if (allNames.length > limit) names.push(`... and ${allNames.length - limit} more`);
-
-    return names;
+    return <>
+        {t.map((s, i) => <Text key={i} mx="md" my="xs" px="sm" sx={{
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            boxShadow: "inset 0 0 0 9999px rgba(133, 133, 133, 0.1)",
+        }}>
+            {s}
+        </Text>)}
+        {names.length > limit && <Text mx="xl" mb="md">{`... and ${names.length - limit} more`}</Text>}
+    </>;
 }
 
 export function TorrentsNames() {
@@ -84,20 +93,11 @@ export function TorrentsNames() {
         if (serverData.current == null || serverSelected.size === 0) {
             return ["No torrent selected"];
         }
-
-        const selected = serverData.torrents.filter(
-            (t) => serverSelected.has(t.id));
-
-        const allNames: string[] = [];
-        selected.forEach((t) => allNames.push(t.name));
-        return allNames;
+        return serverData.torrents.filter(
+            (t) => serverSelected.has(t.id)).map((t) => t.name);
     }, [serverData, serverSelected]);
 
-    const names = limitTorrentNames(allNames);
-
-    return <>
-        {names.map((s, i) => <Text key={i} ml="xl" mb="md">{s}</Text>)}
-    </>;
+    return <LimitedNamesList names={allNames} />;
 }
 
 export interface LocationData {

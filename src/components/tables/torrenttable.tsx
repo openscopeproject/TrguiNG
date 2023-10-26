@@ -458,6 +458,7 @@ function TorrentContextMenu(props: {
 }) {
     const serverData = useServerTorrentData();
     const serverSelected = useServerSelectedTorrents();
+    const rpcVersion = useServerRpcVersion();
 
     const { onRowDoubleClick } = props;
     const onOpen = useCallback((reveal: boolean) => {
@@ -664,10 +665,17 @@ function TorrentContextMenu(props: {
                 </Menu.Item>
                 <Menu.Divider />
                 <Menu.Item
+                    onClick={() => props.modals.current?.editTrackers()}
+                    icon={<Icon.Wifi size="1.1rem" />}
+                    onMouseEnter={closeQueueSubmenu}
+                    disabled={serverSelected.size === 0 || (serverSelected.size > 1 && rpcVersion < 17)}>
+                    Trackers...
+                </Menu.Item>
+                <Menu.Item
                     onClick={() => props.modals.current?.editTorrent()}
                     icon={<Icon.GearFill size="1.1rem" />}
                     onMouseEnter={closeQueueSubmenu}
-                    disabled={serverSelected.size !== 1}>
+                    disabled={serverSelected.size === 0}>
                     Properties...
                 </Menu.Item>
             </Box>

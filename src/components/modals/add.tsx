@@ -19,7 +19,7 @@
 import { Box, Button, Checkbox, Divider, Flex, Group, Menu, SegmentedControl, Text, TextInput } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ModalState, LocationData } from "./common";
-import { HkModal, TorrentLabels, TorrentLocation, limitTorrentNames, useTorrentLocation } from "./common";
+import { HkModal, LimitedNamesList, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
 import type { PriorityNumberType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings } from "rpc/transmission";
 import type { Torrent } from "rpc/torrent";
@@ -558,9 +558,7 @@ export function AddTorrent(props: AddCommonModalProps) {
     const names = useMemo(() => {
         if (torrentData === undefined) return [];
 
-        const names = torrentData.map((td) => td.name);
-
-        return limitTorrentNames(names, 1);
+        return torrentData.map((td) => td.name);
     }, [torrentData]);
 
     const torrentExists = existingTorrent !== undefined;
@@ -578,7 +576,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 <Divider my="sm" />
                 {torrentExists
                     ? <Text color="red" fw="bold" fz="lg">Torrent already exists</Text>
-                    : names.map((name, i) => <Text key={i}>{name}</Text>)}
+                    : <LimitedNamesList names={names} limit={1} />}
                 <div style={{ position: "relative" }}>
                     <AddCommon {...common.props} disabled={torrentExists}>
                         {(torrentData.length > 1 || torrentData[0].files == null)
