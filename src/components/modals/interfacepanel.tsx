@@ -16,9 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from "react";
-import { Checkbox, Grid, NumberInput, Textarea } from "@mantine/core";
+import React, { useCallback } from "react";
+import { Checkbox, Grid, NumberInput, Textarea, useMantineTheme } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
+import type { ColorSetting } from "components/colorswatch";
+import ColorChooser from "components/colorswatch";
+import { useGlobalStyleOverrides } from "themehooks";
 
 export interface InterfaceFormValues {
     interface: {
@@ -29,8 +32,40 @@ export interface InterfaceFormValues {
 }
 
 export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { form: UseFormReturnType<V> }) {
+    const theme = useMantineTheme();
+    const { color, backgroundColor, setStyle } = useGlobalStyleOverrides();
+
+    const setTextColor = useCallback((color: ColorSetting | undefined) => {
+        setStyle({ color, backgroundColor });
+    }, [backgroundColor, setStyle]);
+
+    const setBgColor = useCallback((backgroundColor: ColorSetting | undefined) => {
+        setStyle({ color, backgroundColor });
+    }, [color, setStyle]);
+
+    const defaultColor = theme.colorScheme === "dark"
+        ? { color: "dark", shade: 0 }
+        : { color: "dark", shade: 9 };
+
+    const defaultBg = theme.colorScheme === "dark"
+        ? { color: "dark", shade: 7 }
+        : { color: "gray", shade: 0 };
+
     return (
         <Grid>
+            <Grid.Col span={2}>
+                Text
+            </Grid.Col>
+            <Grid.Col span={1}>
+                <ColorChooser value={color ?? defaultColor} onChange={setTextColor} />
+            </Grid.Col>
+            <Grid.Col span={2}>
+                Bakground
+            </Grid.Col>
+            <Grid.Col span={1}>
+                <ColorChooser value={backgroundColor ?? defaultBg} onChange={setBgColor} />
+            </Grid.Col>
+            <Grid.Col span={6} />
             <Grid.Col>
                 <Checkbox label="Skip add torrent dialog"
                     {...props.form.getInputProps("interface.skipAddDialog", { type: "checkbox" })} />

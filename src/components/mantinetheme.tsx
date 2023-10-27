@@ -20,7 +20,7 @@ import { ColorSchemeProvider, Global, MantineProvider } from "@mantine/core";
 import type { ColorScheme, MantineThemeOverride } from "@mantine/core";
 import { useColorScheme } from "@mantine/hooks";
 import { ConfigContext } from "config";
-import { FontsizeContextProvider, useFontSize } from "fontsize";
+import { FontsizeContextProvider, GlobalStyleOverridesContextProvider, useFontSize, useGlobalStyleOverrides } from "themehooks";
 import React, { useCallback, useContext, useState } from "react";
 
 const Theme: (colorScheme: ColorScheme) => MantineThemeOverride = (colorScheme) => ({
@@ -67,7 +67,7 @@ const Theme: (colorScheme: ColorScheme) => MantineThemeOverride = (colorScheme) 
         },
     },
     colors: {
-        secondaryColorName: ["#dcfdff", "#b2f4fd", "#85ebf9", "#58e3f6", "#36d9f3", "#25c0d9", "#1696aa", "#066b7a", "#00404a", "#00171b"],
+        turquoise: ["#dcfdff", "#b2f4fd", "#85ebf9", "#58e3f6", "#36d9f3", "#25c0d9", "#1696aa", "#066b7a", "#00404a", "#00171b"],
     },
     spacing: {
         xs: "0.3rem",
@@ -80,11 +80,20 @@ const Theme: (colorScheme: ColorScheme) => MantineThemeOverride = (colorScheme) 
 
 function GlobalStyles() {
     const fontSize = useFontSize();
+    const styleOverrides = useGlobalStyleOverrides();
 
     return (
         <Global styles={(theme) => ({
             html: {
                 fontSize: `${fontSize.value}em`,
+            },
+            body: {
+                color: styleOverrides.color === undefined
+                    ? undefined
+                    : theme.colors[styleOverrides.color.color][styleOverrides.color.shade],
+                backgroundColor: styleOverrides.backgroundColor === undefined
+                    ? undefined
+                    : theme.colors[styleOverrides.backgroundColor.color][styleOverrides.backgroundColor.shade],
             },
             "::-webkit-scrollbar": {
                 width: "0.75em",
@@ -134,10 +143,12 @@ export default function CustomMantineProvider({ children }: { children: React.Re
     return (
         <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
             <FontsizeContextProvider>
-                <MantineProvider withGlobalStyles withNormalizeCSS theme={Theme(colorScheme)}>
-                    <GlobalStyles />
-                    {children}
-                </MantineProvider>
+                <GlobalStyleOverridesContextProvider>
+                    <MantineProvider withGlobalStyles withNormalizeCSS theme={Theme(colorScheme)}>
+                        <GlobalStyles />
+                        {children}
+                    </MantineProvider>
+                </GlobalStyleOverridesContextProvider>
             </FontsizeContextProvider>
         </ColorSchemeProvider>
     );

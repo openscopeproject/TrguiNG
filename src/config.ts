@@ -22,6 +22,7 @@ import type {
 } from "@tanstack/react-table";
 import type { ColorScheme } from "@mantine/core";
 import { deobfuscate, obfuscate } from "trutil";
+import type { ColorSetting } from "components/colorswatch";
 const { readConfigText, writeConfigText } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface ServerConnection {
@@ -116,6 +117,10 @@ interface Settings {
         skipAddDialog: boolean,
         numLastSaveDirs: number,
         defaultTrackers: string[],
+        styleOverrides: {
+            color?: ColorSetting,
+            backgroundColor?: ColorSetting,
+        },
     },
 }
 
@@ -213,6 +218,7 @@ const DefaultSettings: Settings = {
         skipAddDialog: false,
         numLastSaveDirs: 20,
         defaultTrackers: [...DefaultTrackerList],
+        styleOverrides: {},
     },
 };
 

@@ -36,7 +36,7 @@ import type { DropResult } from "react-beautiful-dnd";
 import { DragDropContext, Draggable } from "react-beautiful-dnd";
 import { StrictModeDroppable } from "components/strictmodedroppable";
 import { eventHasModKey, reorderElements } from "trutil";
-import { useFontSize } from "fontsize";
+import { useFontSize } from "themehooks";
 
 const defaultColumn = {
     minSize: 30,

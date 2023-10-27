@@ -23,7 +23,7 @@ import React from "react";
 import { VersionModal } from "components/modals/version";
 import { useDisclosure, useHotkeys } from "@mantine/hooks";
 import { modKeyString } from "trutil";
-import { useFontSize } from "fontsize";
+import { useFontSize } from "themehooks";
 
 export function ColorSchemeToggle(props: { sz?: string, btn?: MantineNumberSize }) {
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();

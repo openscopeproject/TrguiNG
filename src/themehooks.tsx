@@ -17,8 +17,9 @@
  */
 
 import { useToggle } from "@mantine/hooks";
+import type { ColorSetting } from "components/colorswatch";
 import { ConfigContext } from "config";
-import React, { useContext, useEffect, useMemo } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 
 interface FontsizeContextValue {
     value: number,
@@ -66,4 +67,31 @@ export function FontsizeContextProvider(props: React.PropsWithChildren) {
 
 export function useFontSize() {
     return useContext(FontsizeContext);
+}
+
+interface GlobalStyleOverrides {
+    color?: ColorSetting,
+    backgroundColor?: ColorSetting,
+    setStyle: React.Dispatch<Omit<GlobalStyleOverrides, "setStyle">>,
+}
+
+const GlobalStyleOverridesContext = React.createContext<GlobalStyleOverrides>({ setStyle: () => { } });
+
+export function GlobalStyleOverridesContextProvider(props: React.PropsWithChildren) {
+    const config = useContext(ConfigContext);
+    const [style, setStyle] = useState(config.values.interface.styleOverrides);
+
+    useEffect(() => {
+        config.values.interface.styleOverrides = style;
+    }, [config, style]);
+
+    return (
+        <GlobalStyleOverridesContext.Provider value={{ ...style, setStyle }}>
+            {props.children}
+        </GlobalStyleOverridesContext.Provider>
+    );
+}
+
+export function useGlobalStyleOverrides() {
+    return useContext(GlobalStyleOverridesContext);
 }
