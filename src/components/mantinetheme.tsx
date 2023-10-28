@@ -20,14 +20,14 @@ import { ColorSchemeProvider, Global, MantineProvider } from "@mantine/core";
 import type { ColorScheme, MantineThemeOverride } from "@mantine/core";
 import { useColorScheme } from "@mantine/hooks";
 import { ConfigContext } from "config";
-import { FontsizeContextProvider, GlobalStyleOverridesContextProvider, useFontSize, useGlobalStyleOverrides } from "themehooks";
-import React, { useCallback, useContext, useState } from "react";
+import { FontsizeContextProvider, GlobalStyleOverridesContext, useFontSize, useGlobalStyleOverrides } from "themehooks";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-const Theme: (colorScheme: ColorScheme) => MantineThemeOverride = (colorScheme) => ({
+const Theme: (colorScheme: ColorScheme, font?: string) => MantineThemeOverride = (colorScheme, font) => ({
     colorScheme,
-    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif",
+    fontFamily: font ?? "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif",
     headings: {
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif",
+        fontFamily: font ?? "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif",
     },
     components: {
         Table: {
@@ -140,15 +140,26 @@ export default function CustomMantineProvider({ children }: { children: React.Re
         setColorScheme(value);
     }, [config, colorScheme]);
 
+    const [style, setStyle] = useState(config.values.interface.styleOverrides);
+
+    useEffect(() => {
+        config.values.interface.styleOverrides = style;
+        console.log("Style written to config", style);
+    }, [config, style]);
+
+    const theme = useMemo(() => {
+        return Theme(colorScheme, style.font);
+    }, [colorScheme, style.font]);
+
     return (
         <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
             <FontsizeContextProvider>
-                <GlobalStyleOverridesContextProvider>
-                    <MantineProvider withGlobalStyles withNormalizeCSS theme={Theme(colorScheme)}>
+                <GlobalStyleOverridesContext.Provider value={{ ...style, setStyle }}>
+                    <MantineProvider withGlobalStyles withNormalizeCSS theme={theme}>
                         <GlobalStyles />
                         {children}
                     </MantineProvider>
-                </GlobalStyleOverridesContextProvider>
+                </GlobalStyleOverridesContext.Provider>
             </FontsizeContextProvider>
         </ColorSchemeProvider>
     );

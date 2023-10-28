@@ -120,6 +120,7 @@ interface Settings {
         styleOverrides: {
             color?: ColorSetting,
             backgroundColor?: ColorSetting,
+            font?: string,
         },
     },
 }

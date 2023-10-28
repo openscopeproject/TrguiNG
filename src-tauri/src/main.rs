@@ -171,6 +171,7 @@ fn main() {
             commands::cancel_create_torrent,
             commands::save_create_torrent,
             commands::pass_to_window,
+            commands::list_system_fonts,
         ])
         .manage(ListenerHandle(Arc::new(RwLock::new(ipc))))
         .manage(TorrentCacheHandle::default())

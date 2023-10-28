@@ -16,15 +16,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback } from "react";
-import { Checkbox, Grid, NumberInput, Textarea, useMantineTheme } from "@mantine/core";
+import React, { useCallback, useEffect, useState } from "react";
+import { Checkbox, Grid, NativeSelect, NumberInput, Textarea, useMantineTheme } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import type { ColorSetting } from "components/colorswatch";
 import ColorChooser from "components/colorswatch";
 import { useGlobalStyleOverrides } from "themehooks";
+const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface InterfaceFormValues {
     interface: {
+        styleOverrides: {
+            color?: ColorSetting,
+            backgroundColor?: ColorSetting,
+            font?: string,
+        },
         skipAddDialog: boolean,
         numLastSaveDirs: number,
         defaultTrackers: string[],
@@ -33,15 +39,39 @@ export interface InterfaceFormValues {
 
 export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { form: UseFormReturnType<V> }) {
     const theme = useMantineTheme();
-    const { color, backgroundColor, setStyle } = useGlobalStyleOverrides();
+    const { color, backgroundColor, font, setStyle } = useGlobalStyleOverrides();
+    const [systemFonts, setSystemFonts] = useState<string[]>(["Default"]);
+
+    useEffect(() => {
+        if (TAURI) {
+            invoke<string[]>("list_system_fonts").then((fonts) => {
+                fonts.sort();
+                setSystemFonts(["Default"].concat(fonts));
+            }).catch(console.error);
+        } else {
+            setSystemFonts(["Default", "Arial", "Verdana", "Tahoma", "Roboto"]);
+        }
+    }, []);
+
+    const { setFieldValue } = props.form as unknown as UseFormReturnType<InterfaceFormValues>;
 
     const setTextColor = useCallback((color: ColorSetting | undefined) => {
-        setStyle({ color, backgroundColor });
-    }, [backgroundColor, setStyle]);
+        const style = { color, backgroundColor, font };
+        setStyle(style);
+        setFieldValue("interface.styleOverrides", style);
+    }, [backgroundColor, font, setFieldValue, setStyle]);
 
     const setBgColor = useCallback((backgroundColor: ColorSetting | undefined) => {
-        setStyle({ color, backgroundColor });
-    }, [color, setStyle]);
+        const style = { color, backgroundColor, font };
+        setStyle(style);
+        setFieldValue("interface.styleOverrides", style);
+    }, [color, font, setFieldValue, setStyle]);
+
+    const setFont = useCallback((font: string) => {
+        const style = { color, backgroundColor, font: font === "Default" ? undefined : font };
+        setStyle(style);
+        setFieldValue("interface.styleOverrides", style);
+    }, [backgroundColor, color, setFieldValue, setStyle]);
 
     const defaultColor = theme.colorScheme === "dark"
         ? { color: "dark", shade: 0 }
@@ -52,20 +82,25 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
         : { color: "gray", shade: 0 };
 
     return (
-        <Grid>
+        <Grid align="center">
             <Grid.Col span={2}>
-                Text
+                Font
+            </Grid.Col>
+            <Grid.Col span={4}>
+                <NativeSelect data={systemFonts} value={font} onChange={(e) => { setFont(e.currentTarget.value); }} />
+            </Grid.Col>
+            <Grid.Col span={2}>
+                Text color
             </Grid.Col>
             <Grid.Col span={1}>
                 <ColorChooser value={color ?? defaultColor} onChange={setTextColor} />
             </Grid.Col>
             <Grid.Col span={2}>
-                Bakground
+                Background
             </Grid.Col>
             <Grid.Col span={1}>
                 <ColorChooser value={backgroundColor ?? defaultBg} onChange={setBgColor} />
             </Grid.Col>
-            <Grid.Col span={6} />
             <Grid.Col>
                 <Checkbox label="Skip add torrent dialog"
                     {...props.form.getInputProps("interface.skipAddDialog", { type: "checkbox" })} />
