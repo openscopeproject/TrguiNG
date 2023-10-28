@@ -126,7 +126,7 @@ export function useTorrentLocation(): LocationData {
         console.log("Mapped location: ", mappedLocation);
         dialogOpen({
             title: "Select directory",
-            defaultPath: mappedLocation,
+            defaultPath: mappedLocation === "" ? undefined : mappedLocation,
             directory: true,
         }).then((directory) => {
             if (directory === null) return;
