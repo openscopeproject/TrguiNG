@@ -1,6 +1,6 @@
 [package]
 name = "trguing"
-version = "0.9.0"
+version = "0.10.0"
 description = "Remote control GUI for Transmission torrent daemon"
 authors = ["qu1ck"]
 license = "GNU-AGPL-3.0"
