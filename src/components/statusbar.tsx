@@ -64,7 +64,7 @@ export function Statusbar({ session, filteredTorrents, selectedTorrents, hostnam
     ], [filteredTorrents]);
 
     useEffect(() => {
-        document.title = `TrguiNG ↓${downRate}/s ↑${upRate}/s`;
+        document.title = `↓${downRate}/s ↑${upRate}/s - TrguiNG`;
     }, [downRate, upRate]);
 
     const [sizeSelected, sizeDone, sizeLeft] = useMemo(() => {
