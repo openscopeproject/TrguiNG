@@ -205,7 +205,9 @@ export class CachedFileTree {
 
         this.recalcTree(this.tree);
 
-        this.initialized = true;
+        if (torrent.files.length > 0) {
+            this.initialized = true;
+        }
     }
 
     update(torrent: Torrent) {
