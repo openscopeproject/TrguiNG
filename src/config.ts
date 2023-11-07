@@ -22,7 +22,7 @@ import type {
 } from "@tanstack/react-table";
 import type { ColorScheme } from "@mantine/core";
 import { deobfuscate, obfuscate } from "trutil";
-import type { ColorSetting } from "components/colorswatch";
+import type { ColorSetting } from "components/colorchooser";
 const { readConfigText, writeConfigText } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface ServerConnection {

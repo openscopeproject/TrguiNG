@@ -38,7 +38,7 @@ export default function ColorChooser(props: ColorChooserProps) {
     const swatchOutline = theme.colorScheme === "dark" ? theme.colors.gray[7] : theme.colors.dark[6];
 
     return (
-        <Popover width="25rem" position="bottom" withArrow withinPortal shadow="md" opened={opened} onChange={setOpened} >
+        <Popover width="20rem" position="right-start" withArrow withinPortal shadow="md" opened={opened} onChange={setOpened} >
             <Popover.Target>
                 <ActionIcon onClick={() => { setOpened((o) => !o); }}>
                     <ColorSwatch
@@ -55,7 +55,7 @@ export default function ColorChooser(props: ColorChooserProps) {
                 </ActionIcon>
                 <Grid columns={10}>
                     {Object.keys(theme.colors).map((color) => shades.map((shade) => (
-                        <Grid.Col key={`${color}:${shade}`} span={1}>
+                        <Grid.Col key={`${color}:${shade}`} span={1} p="0.1rem">
                             <ActionIcon onClick={() => {
                                 props.onChange({ color, shade });
                                 setOpened(false);

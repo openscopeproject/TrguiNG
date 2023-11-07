@@ -19,8 +19,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Checkbox, Grid, NativeSelect, NumberInput, Textarea, useMantineTheme } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
-import type { ColorSetting } from "components/colorswatch";
-import ColorChooser from "components/colorswatch";
+import type { ColorSetting } from "components/colorchooser";
+import ColorChooser from "components/colorchooser";
 import { useGlobalStyleOverrides } from "themehooks";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 

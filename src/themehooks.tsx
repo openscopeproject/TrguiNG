@@ -17,7 +17,7 @@
  */
 
 import { useToggle } from "@mantine/hooks";
-import type { ColorSetting } from "components/colorswatch";
+import type { ColorSetting } from "components/colorchooser";
 import { ConfigContext } from "config";
 import React, { useContext, useEffect, useMemo } from "react";
 
