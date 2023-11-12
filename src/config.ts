@@ -20,9 +20,8 @@ import React from "react";
 import type {
     SortingState, ColumnSizingState, VisibilityState, ColumnOrderState,
 } from "@tanstack/react-table";
-import type { ColorScheme } from "@mantine/core";
+import type { ColorScheme, DefaultMantineColor } from "@mantine/core";
 import { deobfuscate, obfuscate } from "trutil";
-import type { ColorSetting } from "components/colorchooser";
 const { readConfigText, writeConfigText } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface ServerConnection {
@@ -88,6 +87,24 @@ export const WindowCloseOptions = ["hide", "close", "quit"] as const;
 export type WindowMinimizeOption = typeof WindowMinimizeOptions[number];
 export type WindowCloseOption = typeof WindowCloseOptions[number];
 
+export interface ColorSetting {
+    color: DefaultMantineColor,
+    shade: number,
+}
+
+export interface StyleOverrideColors {
+    color?: ColorSetting,
+    backgroundColor?: ColorSetting,
+}
+
+export interface StyleOverrides {
+    dark: StyleOverrideColors,
+    light: StyleOverrideColors,
+    font?: string,
+    color?: ColorSetting, // deprecated
+    backgroundColor?: ColorSetting, // deprecated
+}
+
 interface Settings {
     servers: ServerConfig[],
     openTabs: string[],
@@ -117,11 +134,7 @@ interface Settings {
         skipAddDialog: boolean,
         numLastSaveDirs: number,
         defaultTrackers: string[],
-        styleOverrides: {
-            color?: ColorSetting,
-            backgroundColor?: ColorSetting,
-            font?: string,
-        },
+        styleOverrides: StyleOverrides,
     },
 }
 
@@ -219,7 +232,10 @@ const DefaultSettings: Settings = {
         skipAddDialog: false,
         numLastSaveDirs: 20,
         defaultTrackers: [...DefaultTrackerList],
-        styleOverrides: {},
+        styleOverrides: {
+            dark: {},
+            light: {},
+        },
     },
 };
 
@@ -231,6 +247,15 @@ export class Config {
         try {
             const text = await readConfigText();
             merge(this.values, JSON.parse(text));
+            const overrides = this.values.interface.styleOverrides;
+            if (overrides.color !== undefined) {
+                overrides[this.values.interface.theme ?? "light"].color = overrides.color;
+                overrides.color = undefined;
+            }
+            if (overrides.backgroundColor !== undefined) {
+                overrides[this.values.interface.theme ?? "light"].backgroundColor = overrides.backgroundColor;
+                overrides.backgroundColor = undefined;
+            }
         } catch (e) {
             console.log(e);
         }

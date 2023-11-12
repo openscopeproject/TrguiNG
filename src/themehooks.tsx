@@ -17,7 +17,7 @@
  */
 
 import { useToggle } from "@mantine/hooks";
-import type { ColorSetting } from "components/colorchooser";
+import type { StyleOverrides } from "config";
 import { ConfigContext } from "config";
 import React, { useContext, useEffect, useMemo } from "react";
 
@@ -70,13 +70,13 @@ export function useFontSize() {
 }
 
 interface GlobalStyleOverrides {
-    color?: ColorSetting,
-    backgroundColor?: ColorSetting,
-    font?: string,
-    setStyle: React.Dispatch<Omit<GlobalStyleOverrides, "setStyle">>,
+    style: StyleOverrides,
+    setStyle: React.Dispatch<StyleOverrides>,
 }
 
-export const GlobalStyleOverridesContext = React.createContext<GlobalStyleOverrides>({ setStyle: () => { } });
+export const GlobalStyleOverridesContext = React.createContext<GlobalStyleOverrides>(
+    { style: { dark: {}, light: {} }, setStyle: () => { } },
+);
 
 export function useGlobalStyleOverrides() {
     return useContext(GlobalStyleOverridesContext);

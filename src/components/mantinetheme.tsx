@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ColorSchemeProvider, Global, MantineProvider } from "@mantine/core";
+import { ColorSchemeProvider, Global, MantineProvider, useMantineTheme } from "@mantine/core";
 import type { ColorScheme, MantineThemeOverride } from "@mantine/core";
 import { useColorScheme } from "@mantine/hooks";
 import { ConfigContext } from "config";
@@ -79,8 +79,10 @@ const Theme: (colorScheme: ColorScheme, font?: string) => MantineThemeOverride =
 });
 
 function GlobalStyles() {
+    const theme = useMantineTheme();
     const fontSize = useFontSize();
-    const styleOverrides = useGlobalStyleOverrides();
+    const { style } = useGlobalStyleOverrides();
+    const overrides = style[theme.colorScheme];
 
     return (
         <Global styles={(theme) => ({
@@ -88,12 +90,12 @@ function GlobalStyles() {
                 fontSize: `${fontSize.value}em`,
             },
             body: {
-                color: styleOverrides.color === undefined
+                color: overrides.color === undefined
                     ? undefined
-                    : theme.colors[styleOverrides.color.color][styleOverrides.color.shade],
-                backgroundColor: styleOverrides.backgroundColor === undefined
+                    : theme.colors[overrides.color.color][overrides.color.shade],
+                backgroundColor: overrides.backgroundColor === undefined
                     ? undefined
-                    : theme.colors[styleOverrides.backgroundColor.color][styleOverrides.backgroundColor.shade],
+                    : theme.colors[overrides.backgroundColor.color][overrides.backgroundColor.shade],
             },
             "::-webkit-scrollbar": {
                 width: "0.75em",
@@ -144,7 +146,6 @@ export default function CustomMantineProvider({ children }: { children: React.Re
 
     useEffect(() => {
         config.values.interface.styleOverrides = style;
-        console.log("Style written to config", style);
     }, [config, style]);
 
     const theme = useMemo(() => {
@@ -154,7 +155,7 @@ export default function CustomMantineProvider({ children }: { children: React.Re
     return (
         <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
             <FontsizeContextProvider>
-                <GlobalStyleOverridesContext.Provider value={{ ...style, setStyle }}>
+                <GlobalStyleOverridesContext.Provider value={{ style, setStyle }}>
                     <MantineProvider withGlobalStyles withNormalizeCSS theme={theme}>
                         <GlobalStyles />
                         {children}

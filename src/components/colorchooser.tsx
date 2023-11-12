@@ -16,14 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { DefaultMantineColor } from "@mantine/core";
 import { ActionIcon, ColorSwatch, Grid, Popover, useMantineTheme } from "@mantine/core";
+import type { ColorSetting } from "config";
 import React, { useState } from "react";
-
-export interface ColorSetting {
-    color: DefaultMantineColor,
-    shade: number,
-}
 
 interface ColorChooserProps {
     value: ColorSetting,

@@ -19,18 +19,15 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Checkbox, Grid, NativeSelect, NumberInput, Textarea, useMantineTheme } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
-import type { ColorSetting } from "components/colorchooser";
 import ColorChooser from "components/colorchooser";
 import { useGlobalStyleOverrides } from "themehooks";
+import type { ColorSetting, StyleOverrides } from "config";
+import { ColorSchemeToggle } from "components/miscbuttons";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface InterfaceFormValues {
     interface: {
-        styleOverrides: {
-            color?: ColorSetting,
-            backgroundColor?: ColorSetting,
-            font?: string,
-        },
+        styleOverrides: StyleOverrides,
         skipAddDialog: boolean,
         numLastSaveDirs: number,
         defaultTrackers: string[],
@@ -39,7 +36,7 @@ export interface InterfaceFormValues {
 
 export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { form: UseFormReturnType<V> }) {
     const theme = useMantineTheme();
-    const { color, backgroundColor, font, setStyle } = useGlobalStyleOverrides();
+    const { style, setStyle } = useGlobalStyleOverrides();
     const [systemFonts, setSystemFonts] = useState<string[]>(["Default"]);
 
     useEffect(() => {
@@ -56,22 +53,28 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
     const { setFieldValue } = props.form as unknown as UseFormReturnType<InterfaceFormValues>;
 
     const setTextColor = useCallback((color: ColorSetting | undefined) => {
-        const style = { color, backgroundColor, font };
-        setStyle(style);
-        setFieldValue("interface.styleOverrides", style);
-    }, [backgroundColor, font, setFieldValue, setStyle]);
+        const newStyle = { dark: { ...style.dark }, light: { ...style.light }, font: style.font };
+        newStyle[theme.colorScheme].color = color;
+        setStyle(newStyle);
+        setFieldValue("interface.styleOverrides", newStyle);
+    }, [style, theme.colorScheme, setStyle, setFieldValue]);
 
     const setBgColor = useCallback((backgroundColor: ColorSetting | undefined) => {
-        const style = { color, backgroundColor, font };
-        setStyle(style);
-        setFieldValue("interface.styleOverrides", style);
-    }, [color, font, setFieldValue, setStyle]);
+        const newStyle = { dark: { ...style.dark }, light: { ...style.light }, font: style.font };
+        newStyle[theme.colorScheme].backgroundColor = backgroundColor;
+        setStyle(newStyle);
+        setFieldValue("interface.styleOverrides", newStyle);
+    }, [style, theme.colorScheme, setStyle, setFieldValue]);
 
     const setFont = useCallback((font: string) => {
-        const style = { color, backgroundColor, font: font === "Default" ? undefined : font };
-        setStyle(style);
-        setFieldValue("interface.styleOverrides", style);
-    }, [backgroundColor, color, setFieldValue, setStyle]);
+        const newStyle = {
+            dark: { ...style.dark },
+            light: { ...style.light },
+            font: font === "Default" ? undefined : font,
+        };
+        setStyle(newStyle);
+        setFieldValue("interface.styleOverrides", newStyle);
+    }, [style, setStyle, setFieldValue]);
 
     const defaultColor = theme.colorScheme === "dark"
         ? { color: "dark", shade: 0 }
@@ -83,23 +86,26 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
 
     return (
         <Grid align="center">
-            <Grid.Col span={2}>
+            <Grid.Col span={1}>
+                <ColorSchemeToggle />
+            </Grid.Col>
+            <Grid.Col span={1}>
                 Font
             </Grid.Col>
             <Grid.Col span={4}>
-                <NativeSelect data={systemFonts} value={font} onChange={(e) => { setFont(e.currentTarget.value); }} />
+                <NativeSelect data={systemFonts} value={style.font} onChange={(e) => { setFont(e.currentTarget.value); }} />
             </Grid.Col>
             <Grid.Col span={2}>
                 Text color
             </Grid.Col>
             <Grid.Col span={1}>
-                <ColorChooser value={color ?? defaultColor} onChange={setTextColor} />
+                <ColorChooser value={style[theme.colorScheme].color ?? defaultColor} onChange={setTextColor} />
             </Grid.Col>
             <Grid.Col span={2}>
                 Background
             </Grid.Col>
             <Grid.Col span={1}>
-                <ColorChooser value={backgroundColor ?? defaultBg} onChange={setBgColor} />
+                <ColorChooser value={style[theme.colorScheme].backgroundColor ?? defaultBg} onChange={setBgColor} />
             </Grid.Col>
             <Grid.Col>
                 <Checkbox label="Skip add torrent dialog"
