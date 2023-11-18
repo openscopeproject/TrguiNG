@@ -606,7 +606,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 </div>
                 <Divider my="sm" />
                 <Group position="center" spacing="md">
-                    <Button onClick={onAdd} variant="filled"
+                    <Button onClick={onAdd} variant="filled" data-autofocus
                         disabled={torrentExists && torrentData[0].trackers.length === 0}>
                         {!torrentExists ? "Add" : "Add trackers"}
                     </Button>

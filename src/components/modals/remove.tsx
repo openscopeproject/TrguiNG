@@ -61,7 +61,9 @@ export function RemoveModal(props: ModalState) {
                 my="xl" />
             <Divider my="sm" />
             <Group position="center" spacing="md">
-                <Button onClick={onDelete} variant="filled" color="red">{deleteData ? "Delete" : "Remove"}</Button>
+                <Button onClick={onDelete} variant="filled" color="red" data-autofocus>
+                    {deleteData ? "Delete" : "Remove"}
+                </Button>
                 <Button onClick={props.close} variant="light">Cancel</Button>
             </Group>
         </HkModal>

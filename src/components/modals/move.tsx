@@ -71,7 +71,7 @@ export function MoveModal(props: ModalState) {
                 <Divider my="sm" />
                 <Text mb="md">Enter new location for</Text>
                 <TorrentsNames />
-                <TorrentLocation {...location} />
+                <TorrentLocation {...location} focusPath/>
                 <Checkbox
                     label="Move torrent data to new location"
                     checked={moveData}

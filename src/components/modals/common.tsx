@@ -59,7 +59,7 @@ export function SaveCancelModal({ onSave, onClose, children, saveLoading, ...oth
             {children}
             <Divider my="sm" />
             <Group position="center" spacing="md">
-                <Button onClick={onSave} variant="filled">
+                <Button onClick={onSave} variant="filled" data-autofocus>
                     {saveLoading === true ? <Loader size="1rem" /> : "Save"}
                 </Button>
                 <Button onClick={onClose} variant="light">Cancel</Button>
@@ -108,6 +108,7 @@ export interface LocationData {
     browseHandler: () => void,
     inputLabel?: string,
     disabled?: boolean,
+    focusPath?: boolean,
 }
 
 export function useTorrentLocation(): LocationData {
@@ -151,6 +152,7 @@ export function TorrentLocation(props: LocationData) {
                 disabled={props.disabled}
                 onChange={(e) => { props.setPath(e.currentTarget.value); }}
                 styles={{ root: { flexGrow: 1 } }}
+                data-autofocus={props.focusPath}
                 rightSection={
                     <Menu position="left-start" withinPortal
                         middlewares={{ shift: true, flip: false }} offset={{ mainAxis: -20, crossAxis: 30 }}>
