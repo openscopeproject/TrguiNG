@@ -568,7 +568,20 @@ export function EditableNameField(props: EditableNameFieldProps) {
                     {props.currentName}
                 </Box>}
             {isHover && !isRenaming && props.onUpdate !== undefined
-                ? <ActionIcon sx={{ flexShrink: 0 }} onClick={renameHandler}>
+                ? <ActionIcon onClick={renameHandler} title="Rename"
+                    sx={(theme) => ({
+                        flexShrink: 0,
+                        ".selected &": { color: theme.colors.gray[2] },
+                        "@media (hover: hover)": {
+                            "&:hover": {
+                                color: theme.colorScheme === "dark"
+                                    ? theme.white
+                                    : theme.colors.dark[8],
+                                backgroundColor: "rgba(127, 127, 127, 0.15)",
+                            },
+                            ".selected &:hover": { color: theme.white },
+                        },
+                    })} >
                     <Icon.InputCursorText size="1rem" />
                 </ActionIcon>
                 : <></>}
