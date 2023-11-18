@@ -283,6 +283,7 @@ function TableRow<TData>(props: {
                 props.onRowClick(e, props.index, props.lastIndex);
             }}
             onDoubleClick={onRowDoubleClick}
+            tabIndex={-1}
         >
             <MemoizedInnerRow {...props} />
         </div>
@@ -523,8 +524,8 @@ export function EditableNameField(props: EditableNameFieldProps) {
     const [isHover, setHover] = useState(false);
     const [isRenaming, setRenaming] = useState(false);
 
-    const renameHandler = useCallback((e: React.MouseEvent) => {
-        e.stopPropagation();
+    const renameHandler = useCallback((e?: React.MouseEvent) => {
+        e?.stopPropagation();
         setRenaming(true);
         setNewName(props.currentName);
     }, [props.currentName]);
@@ -547,8 +548,25 @@ export function EditableNameField(props: EditableNameFieldProps) {
         }
     }, [isRenaming]);
 
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (ref.current != null) {
+            const row = ref.current.parentNode?.parentNode as HTMLDivElement;
+            row.onfocus = () => { ref.current?.focus(); };
+            return () => { row.onfocus = null; };
+        }
+    }, []);
+
+    const onF2 = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === "F2" && !isRenaming) {
+            renameHandler();
+        }
+    }, [isRenaming, renameHandler]);
+
     return (
-        <Box onMouseEnter={() => { setHover(true); }} onMouseLeave={() => { setHover(false); }}
+        <Box ref={ref} onKeyDown={onF2} tabIndex={-1}
+            onMouseEnter={() => { setHover(true); }} onMouseLeave={() => { setHover(false); }}
             sx={{ display: "flex", alignItems: "center", width: "100%", height: "100%" }}>
             {props.children}
             {isRenaming
@@ -568,7 +586,7 @@ export function EditableNameField(props: EditableNameFieldProps) {
                     {props.currentName}
                 </Box>}
             {isHover && !isRenaming && props.onUpdate !== undefined
-                ? <ActionIcon onClick={renameHandler} title="Rename"
+                ? <ActionIcon onClick={renameHandler} title="Rename (F2)"
                     sx={(theme) => ({
                         flexShrink: 0,
                         ".selected &": { color: theme.colors.gray[2] },
