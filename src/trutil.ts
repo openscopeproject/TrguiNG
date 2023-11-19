@@ -125,7 +125,7 @@ export function pathMapToServer(path: string, config: ServerConfig) {
     return mappedPath;
 }
 
-export function eventHasModKey(event: React.MouseEvent<Element>) {
+export function eventHasModKey(event: React.MouseEvent<Element> | React.KeyboardEvent<Element>) {
     return (navigator.platform.startsWith("Mac") && event.metaKey) ||
         (!navigator.platform.startsWith("Mac") && event.ctrlKey);
 }

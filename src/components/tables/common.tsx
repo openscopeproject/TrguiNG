@@ -125,18 +125,23 @@ function useTable<TData>(
     return [table, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columnSizing, sorting];
 }
 
+interface HIDEvent {
+    modKey: boolean,
+    shiftKey: boolean,
+    isRmb: boolean,
+}
+
 function useSelectHandler<TData>(
     table: Table<TData>,
     selectedReducer: TableSelectReducer,
     getRowId: (row: TData) => string,
     setCurrent?: (id: string) => void,
-): [number, (event: React.MouseEvent<Element>, index: number, lastIndex: number) => void] {
+): [number, (event: HIDEvent, index: number, lastIndex: number) => void] {
     const [lastIndex, setLastIndex] = useState(-1);
 
-    const onRowClick = useCallback((event: React.MouseEvent<Element>, index: number, lastIndex: number) => {
+    const onRowClick = useCallback((event: HIDEvent, index: number, lastIndex: number) => {
         const rows = table.getRowModel().rows;
-        event.preventDefault();
-        const modKey = eventHasModKey(event);
+        if (index < 0 || index >= rows.length) return;
 
         function genIds() {
             const minIndex = Math.min(index, lastIndex);
@@ -148,15 +153,15 @@ function useSelectHandler<TData>(
             return ids;
         }
 
-        if (event.shiftKey && modKey && lastIndex !== -1) {
+        if (event.shiftKey && event.modKey && lastIndex !== -1) {
             const ids = genIds();
             selectedReducer({ verb: "add", ids });
         } else if (event.shiftKey && lastIndex !== -1) {
             const ids = genIds();
             selectedReducer({ verb: "set", ids });
-        } else if (modKey) {
+        } else if (event.modKey) {
             selectedReducer({ verb: "toggle", ids: [getRowId(rows[index].original)] });
-        } else if (event.button !== 2 || !rows[index].getIsSelected()) {
+        } else if (!event.isRmb || !rows[index].getIsSelected()) {
             selectedReducer({ verb: "set", ids: [getRowId(rows[index].original)] });
         }
 
@@ -258,7 +263,7 @@ function TableRow<TData>(props: {
     index: number,
     start: number,
     lastIndex: number,
-    onRowClick: (e: React.MouseEvent<Element>, i: number, li: number) => void,
+    onRowClick: (e: HIDEvent, i: number, li: number) => void,
     onRowDoubleClick?: (row: TData) => void,
     height: number,
     columnSizing: ColumnSizingState,
@@ -272,17 +277,55 @@ function TableRow<TData>(props: {
         }
     }, [propsDblClick, row.original]);
 
+    const { onRowClick, index, lastIndex } = props;
+
+    const onMouseEvent = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        onRowClick({
+            modKey: eventHasModKey(e),
+            shiftKey: e.shiftKey,
+            isRmb: e.button === 2,
+        }, index, lastIndex);
+    }, [index, lastIndex, onRowClick]);
+
+    const ref = useRef<HTMLDivElement>(null);
+
+    const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+        let newIndex = index;
+        if (e.key === "ArrowDown") {
+            newIndex += 1;
+        } else if (e.key === "ArrowUp") {
+            newIndex -= 1;
+        } else if (e.key !== "ContextMenu") {
+            return;
+        }
+        e.preventDefault();
+        if (ref.current != null) {
+            if (e.key === "ArrowDown" && ref.current.nextElementSibling != null) {
+                const element = ref.current.nextElementSibling as HTMLElement;
+                element.scrollIntoView({ behavior: "instant", block: "nearest" });
+                element.focus();
+            }
+            if (e.key === "ArrowUp" && ref.current.previousElementSibling != null) {
+                const element = ref.current.previousElementSibling as HTMLElement;
+                element.scrollIntoView({ behavior: "instant", block: "nearest" });
+                element.focus();
+            }
+        }
+        onRowClick({
+            modKey: eventHasModKey(e),
+            shiftKey: e.shiftKey,
+            isRmb: e.key === "ContextMenu",
+        }, newIndex, lastIndex);
+    }, [index, lastIndex, onRowClick]);
+
     return (
-        <div
+        <div ref={ref}
             className={`tr${props.selected ? " selected" : ""}`}
             style={{ height: `${props.height}px`, transform: `translateY(${props.start}px)` }}
-            onClick={(e) => {
-                props.onRowClick(e, props.index, props.lastIndex);
-            }}
-            onContextMenu={(e) => {
-                props.onRowClick(e, props.index, props.lastIndex);
-            }}
+            onClick={onMouseEvent}
+            onContextMenu={onMouseEvent}
             onDoubleClick={onRowDoubleClick}
+            onKeyDown={onKeyDown}
             tabIndex={-1}
         >
             <MemoizedInnerRow {...props} />
@@ -530,7 +573,9 @@ export function EditableNameField(props: EditableNameFieldProps) {
         setNewName(props.currentName);
     }, [props.currentName]);
 
-    const onEnter = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    const ref = useRef<HTMLDivElement>(null);
+
+    const onTextKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "Enter") {
             props.onUpdate?.(
                 newName,
@@ -538,6 +583,10 @@ export function EditableNameField(props: EditableNameFieldProps) {
                     if (textRef.current != null) textRef.current.readOnly = true;
                 },
                 () => { setRenaming(false); });
+        }
+        if (event.key === "Escape") {
+            setRenaming(false);
+            ref.current?.focus();
         }
     }, [newName, props]);
 
@@ -547,8 +596,6 @@ export function EditableNameField(props: EditableNameFieldProps) {
             textRef.current.select();
         }
     }, [isRenaming]);
-
-    const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (ref.current != null) {
@@ -580,7 +627,7 @@ export function EditableNameField(props: EditableNameFieldProps) {
                     }}
                     onChange={(e) => { setNewName(e.target.value); }}
                     onBlur={() => { setRenaming(false); }}
-                    onKeyDown={onEnter}
+                    onKeyDown={onTextKeyDown}
                     onClick={(e) => { e.stopPropagation(); }} />
                 : <Box pl="xs" sx={{ flexGrow: 1, textOverflow: "ellipsis", overflow: "hidden" }}>
                     {props.currentName}
