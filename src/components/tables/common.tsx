@@ -232,7 +232,6 @@ function InnerRow<TData>(props: {
     columnSizing: ColumnSizingState,
     columnVisibility: VisibilityState,
     columnOrder: ColumnOrderState,
-    selected: boolean,
 }) {
     return <>
         {props.row.getVisibleCells().map(cell => {
@@ -251,10 +250,15 @@ const MemoizedInnerRow = memo(InnerRow, (prev, next) => {
         prev.expanded === next.expanded &&
         prev.columnSizing === next.columnSizing &&
         prev.columnVisibility === next.columnVisibility &&
-        prev.columnOrder === next.columnOrder &&
-        prev.selected === next.selected
+        prev.columnOrder === next.columnOrder
     );
 }) as typeof InnerRow;
+
+const RowSelectedContext = React.createContext<boolean>(false);
+
+export function useRowSelected() {
+    return useContext(RowSelectedContext);
+}
 
 function TableRow<TData>(props: {
     row: Row<TData>,
@@ -328,7 +332,9 @@ function TableRow<TData>(props: {
             onKeyDown={onKeyDown}
             tabIndex={-1}
         >
-            <MemoizedInnerRow {...props} />
+            <RowSelectedContext.Provider value={props.selected}>
+                <MemoizedInnerRow {...props} />
+            </RowSelectedContext.Provider>
         </div>
     );
 }
@@ -600,7 +606,9 @@ export function EditableNameField(props: EditableNameFieldProps) {
     useEffect(() => {
         if (ref.current != null) {
             const row = ref.current.parentNode?.parentNode as HTMLDivElement;
-            row.onfocus = () => { ref.current?.focus(); };
+            row.onfocus = () => {
+                ref.current?.focus();
+            };
             return () => { row.onfocus = null; };
         }
     }, []);

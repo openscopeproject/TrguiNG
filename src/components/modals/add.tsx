@@ -24,7 +24,6 @@ import type { PriorityNumberType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings } from "rpc/transmission";
 import type { Torrent } from "rpc/torrent";
 import { useServerTorrentData, useServerRpcVersion } from "rpc/torrent";
-import type { FileDirEntry } from "cachedfiletree";
 import { CachedFileTree } from "cachedfiletree";
 import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable";
 import { notifications } from "@mantine/notifications";
@@ -459,13 +458,13 @@ export function AddTorrent(props: AddCommonModalProps) {
 
     const unwantedHandler = useUnwantedFiles(fileTree, false);
 
-    const onCheckboxChange = useCallback((entry: FileDirEntry, state: boolean) => {
-        unwantedHandler(entry, state);
+    const onCheckboxChange = useCallback((entryPath: string, state: boolean) => {
+        unwantedHandler(entryPath, state);
         setWantedSize(fileTree.getWantedSize());
     }, [fileTree, unwantedHandler]);
 
     const setAllWanted = useCallback((wanted: boolean) => {
-        onCheckboxChange(fileTree.tree, wanted);
+        onCheckboxChange(fileTree.tree.fullpath, wanted);
         void refetch();
     }, [fileTree, onCheckboxChange, refetch]);
 

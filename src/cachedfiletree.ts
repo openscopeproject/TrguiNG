@@ -43,10 +43,13 @@ export interface DirEntry extends Entry {
     priority?: PriorityNumberType,
     subdirs: Map<string, DirEntry>,
     files: Map<string, FileEntry>,
-    subrows: FileDirEntry[],
 }
 
 export type FileDirEntry = FileEntry | DirEntry;
+
+export interface FileDirEntryView extends Omit<FileDirEntry, "subdirs" | "files" | "isSelected" | "parent" | "index"> {
+    subrows: FileDirEntryView[],
+}
 
 export function isDirEntry(entry: FileDirEntry): entry is DirEntry {
     return "files" in entry;
@@ -78,7 +81,6 @@ export class CachedFileTree {
             percent: 0,
             subdirs: new Map(),
             files: new Map(),
-            subrows: [],
             isSelected: false,
             wantedUpdating: false,
         };
@@ -187,7 +189,6 @@ export class CachedFileTree {
                         percent: 0,
                         subdirs: new Map(),
                         files: new Map(),
-                        subrows: [],
                         parent: node,
                         isSelected: false,
                         wantedUpdating: false,
@@ -368,18 +369,30 @@ export class CachedFileTree {
         return result;
     }
 
-    getView(): FileDirEntry[] {
-        const treeCopy = { ...this.tree };
-
-        const recurse = (dir: DirEntry) => {
-            dir.subdirs.forEach(recurse);
-            dir.subrows = [
-                ...Array.from(dir.subdirs.values()).map((d) => ({ ...d, parent: undefined })),
-                ...Array.from(dir.files.values()).map((f) => ({ ...f, parent: undefined }))];
+    getView(): FileDirEntryView[] {
+        const toView: (e: FileDirEntry) => FileDirEntryView = (e) => {
+            const subrows: FileDirEntryView[] = [];
+            if (isDirEntry(e)) {
+                subrows.push(...Array.from(e.subdirs.values()).map(toView));
+                subrows.push(...Array.from(e.files.values()).map(toView));
+            }
+            return {
+                name: e.name,
+                level: e.level,
+                fullpath: e.fullpath,
+                size: e.size,
+                done: e.done,
+                percent: e.percent,
+                wantedUpdating: e.wantedUpdating,
+                want: e.want,
+                priority: e.priority,
+                subrows,
+            };
         };
 
-        recurse(treeCopy);
+        const result = Array.from(this.tree.subdirs.values()).map(toView);
+        result.push(...Array.from(this.tree.files.values()).map(toView));
 
-        return treeCopy.subrows;
+        return result;
     }
 }

@@ -29,7 +29,6 @@ import { Status, type SessionStatEntry } from "rpc/transmission";
 import type { MantineTheme } from "@mantine/core";
 import { Anchor, Box, Flex, Container, Group, Table, Tabs, TextInput, LoadingOverlay, Grid, useMantineTheme } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
-import type { FileDirEntry } from "cachedfiletree";
 import { CachedFileTree } from "cachedfiletree";
 import { useFileTree, useMutateTorrent, useSessionStats, useTorrentDetails } from "queries";
 import { ConfigContext } from "config";
@@ -309,11 +308,11 @@ function FileTreePane(props: { torrent: Torrent }) {
     const mutation = useMutateTorrent();
 
     const onCheckboxChange = useUnwantedFiles(fileTree, true);
-    const updateUnwanted = useCallback((entry: FileDirEntry, state: boolean) => {
-        onCheckboxChange(entry, state);
+    const updateUnwanted = useCallback((entryPath: string, state: boolean) => {
+        onCheckboxChange(entryPath, state);
         mutation.mutate({
             torrentIds: [props.torrent.id],
-            fields: { [state ? "files-wanted" : "files-unwanted"]: fileTree.getChildFilesIndexes(entry.fullpath) },
+            fields: { [state ? "files-wanted" : "files-unwanted"]: fileTree.getChildFilesIndexes(entryPath) },
         });
     }, [fileTree, mutation, onCheckboxChange, props.torrent.id]);
 
