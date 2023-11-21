@@ -74,8 +74,8 @@ function useButtonHandlers(
     setAltSpeedMode: React.Dispatch<boolean | undefined>,
 ) {
     const serverSelected = useServerSelectedTorrents();
-    const actionMutation = useTorrentAction();
-    const priorityMutation = useMutateTorrent();
+    const actionMutate = useTorrentAction();
+    const { mutate: mutateTorrent } = useMutateTorrent();
 
     const handlers = useMemo(() => {
         const checkSelected = (action?: () => void) => {
@@ -84,7 +84,7 @@ function useButtonHandlers(
             };
         };
         const action = (method: TorrentActionMethodsType) => () => {
-            actionMutation.mutate(
+            actionMutate(
                 {
                     method,
                     torrentIds: Array.from(serverSelected),
@@ -101,7 +101,7 @@ function useButtonHandlers(
             );
         };
         const priority = (bandwidthPriority: PriorityNumberType) => () => {
-            priorityMutation.mutate(
+            mutateTorrent(
                 {
                     torrentIds: Array.from(serverSelected),
                     fields: { bandwidthPriority },
@@ -137,7 +137,7 @@ function useButtonHandlers(
             setPriorityLow: checkSelected(priority(BandwidthPriority.low)),
             daemonSettings: () => { props.modals.current?.daemonSettings(); },
         };
-    }, [actionMutation, priorityMutation, props.modals, serverSelected]);
+    }, [actionMutate, mutateTorrent, props.modals, serverSelected]);
 
     const sessionMutation = useMutateSession();
 

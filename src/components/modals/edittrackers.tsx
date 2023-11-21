@@ -59,7 +59,7 @@ export function EditTrackers(props: ModalState) {
         });
     }, [rpcVersion, setValues, torrent]);
 
-    const mutation = useMutateTorrent();
+    const { mutate } = useMutateTorrent();
 
     const onSave = useCallback(() => {
         if (torrentId === undefined || torrent === undefined) return;
@@ -77,7 +77,7 @@ export function EditTrackers(props: ModalState) {
             if (toAdd.length === 0) toAdd = undefined;
             if (toRemove.length === 0) toRemove = undefined;
         }
-        mutation.mutate(
+        mutate(
             {
                 torrentIds: [...selected],
                 fields: {
@@ -97,7 +97,7 @@ export function EditTrackers(props: ModalState) {
             },
         );
         props.close();
-    }, [torrentId, torrent, rpcVersion, mutation, selected, form.values, props]);
+    }, [torrentId, torrent, rpcVersion, mutate, selected, form.values, props]);
 
     const addDefaultTrackers = useCallback(() => {
         let list = form.values.trackerList;

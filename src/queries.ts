@@ -200,7 +200,7 @@ function useInvalidatingTorrentAction<ActionParams>(mutationFn: (params: ActionP
         onSuccess: () => {
             void queryClient.invalidateQueries(TorrentKeys.all(serverConfig.name));
         },
-    });
+    }).mutate;
 }
 
 export interface TorrentAddQueryParams extends TorrentAddParams {

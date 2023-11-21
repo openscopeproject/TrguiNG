@@ -28,10 +28,10 @@ export function RemoveModal(props: ModalState) {
     const serverSelected = useServerSelectedTorrents();
     const [deleteData, setDeleteData] = useState<boolean>(false);
 
-    const mutation = useRemoveTorrents();
+    const remove = useRemoveTorrents();
 
     const onDelete = useCallback(() => {
-        mutation.mutate(
+        remove(
             {
                 torrentIds: Array.from(serverSelected),
                 deleteData,
@@ -47,7 +47,7 @@ export function RemoveModal(props: ModalState) {
             },
         );
         props.close();
-    }, [mutation, serverSelected, deleteData, props]);
+    }, [remove, serverSelected, deleteData, props]);
 
     return (
         <HkModal opened={props.opened} onClose={props.close} title="Remove torrents" centered size="lg">

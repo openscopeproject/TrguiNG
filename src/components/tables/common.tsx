@@ -564,6 +564,7 @@ export function TrguiTable<TData>(props: {
 interface EditableNameFieldProps extends React.PropsWithChildren {
     currentName: string,
     onUpdate?: (newName: string, onStart: () => void, onEnd: () => void) => void,
+    onArrowLeftRight?: (key: string) => void,
 }
 
 export function EditableNameField(props: EditableNameFieldProps) {
@@ -613,14 +614,18 @@ export function EditableNameField(props: EditableNameFieldProps) {
         }
     }, []);
 
-    const onF2 = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    const { onArrowLeftRight } = props;
+
+    const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
         if (event.key === "F2" && !isRenaming) {
             renameHandler();
+        } else if (onArrowLeftRight !== undefined && ["ArrowLeft", "ArrowRight"].includes(event.key)) {
+            onArrowLeftRight(event.key);
         }
-    }, [isRenaming, renameHandler]);
+    }, [isRenaming, onArrowLeftRight, renameHandler]);
 
     return (
-        <Box ref={ref} onKeyDown={onF2} tabIndex={-1}
+        <Box ref={ref} onKeyDown={onKeyDown} tabIndex={-1}
             onMouseEnter={() => { setHover(true); }} onMouseLeave={() => { setHover(false); }}
             sx={{ display: "flex", alignItems: "center", width: "100%", height: "100%" }}>
             {props.children}

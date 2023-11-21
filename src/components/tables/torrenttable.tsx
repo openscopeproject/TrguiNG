@@ -468,10 +468,10 @@ function TorrentContextMenu(props: {
         onRowDoubleClick(torrent, reveal);
     }, [onRowDoubleClick, serverData.torrents, serverSelected]);
 
-    const mutation = useTorrentAction();
+    const mutate = useTorrentAction();
 
     const torrentAction = useCallback((method: TorrentActionMethodsType, successMessage: string) => {
-        mutation.mutate(
+        mutate(
             {
                 method,
                 torrentIds: Array.from(serverSelected),
@@ -485,7 +485,7 @@ function TorrentContextMenu(props: {
                 },
             },
         );
-    }, [mutation, serverSelected]);
+    }, [mutate, serverSelected]);
 
     const [queueSubmenuOpened, setQueueSubmenuOpened] = useState(false);
     const queueRef = useRef<HTMLButtonElement>(null);

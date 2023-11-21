@@ -45,7 +45,7 @@ export function EditLabelsModal(props: ModalState) {
         if (opened) setLabels(calculateInitialLabels());
     }, [calculateInitialLabels, opened]);
 
-    const mutation = useMutateTorrent();
+    const { mutate } = useMutateTorrent();
 
     const onSave = useCallback(() => {
         if (rpcVersion < 16) {
@@ -57,7 +57,7 @@ export function EditLabelsModal(props: ModalState) {
             close();
             return;
         }
-        mutation.mutate(
+        mutate(
             {
                 torrentIds: Array.from(serverSelected),
                 fields: { labels },
@@ -79,7 +79,7 @@ export function EditLabelsModal(props: ModalState) {
             },
         );
         close();
-    }, [rpcVersion, mutation, serverSelected, labels, close]);
+    }, [rpcVersion, mutate, serverSelected, labels, close]);
 
     return <>
         {props.opened &&

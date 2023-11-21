@@ -32,10 +32,10 @@ export function MoveModal(props: ModalState) {
     const location = useTorrentLocation();
     const { setPath } = location;
 
-    const mutation = useTorrentChangeDirectory();
+    const changeDirectory = useTorrentChangeDirectory();
 
     const onMove = useCallback(() => {
-        mutation.mutate(
+        changeDirectory(
             {
                 torrentIds: Array.from(serverSelected),
                 location: location.path,
@@ -53,7 +53,7 @@ export function MoveModal(props: ModalState) {
         );
 
         props.close();
-    }, [mutation, serverSelected, location.path, moveData, props]);
+    }, [changeDirectory, serverSelected, location.path, moveData, props]);
 
     const calculateInitialLocation = useCallback(() => {
         const [id] = [...serverSelected];

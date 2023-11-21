@@ -96,8 +96,14 @@ function NameField(props: TableFieldProps) {
 
     const rpcVersion = useServerRpcVersion();
 
+    const onArrowLeftRight = useCallback((key: string) => {
+        if (props.row.subRows.length === 0) return;
+        if (key === "ArrowLeft" && props.row.getIsExpanded()) props.row.toggleExpanded();
+        if (key === "ArrowRight" && !props.row.getIsExpanded()) props.row.toggleExpanded();
+    }, [props.row]);
+
     return (
-        <EditableNameField currentName={props.entry.name}
+        <EditableNameField currentName={props.entry.name} onArrowLeftRight={onArrowLeftRight}
             onUpdate={(props.treeName === "filetree" && rpcVersion >= 15) ? updatePath : undefined}>
             <Box sx={{ width: `${props.entry.level * 1.6}rem`, flexShrink: 0 }} />
             <Box w="1.4rem" mx="auto" sx={{ flexShrink: 0 }}>
@@ -282,9 +288,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
         }), [props.brief, props.fileTree, nameSortFunc, onCheckboxChange]);
 
     const getRowId = useCallback((row: FileDirEntryView) => row.fullpath, []);
-    const getSubRows = useCallback((row: FileDirEntryView) => {
-        return row.subrows;
-    }, []);
+    const getSubRows = useCallback((row: FileDirEntryView) => row.subrows, []);
 
     const { selected, selectedReducer } = useSelected(props);
 
@@ -412,7 +416,7 @@ function FiletreeContextMenu(props: {
         onEntryOpen(rowPath, reveal);
     }, [onEntryOpen, props.fileTree, props.selected]);
 
-    const mutation = useMutateTorrent();
+    const { mutate } = useMutateTorrent();
 
     const setPriority = useCallback((priority: "priority-high" | "priority-normal" | "priority-low") => {
         const fileIds = Array.from(props.selected
@@ -422,7 +426,7 @@ function FiletreeContextMenu(props: {
                 return set;
             }, new Set<number>()));
 
-        mutation.mutate(
+        mutate(
             {
                 torrentIds: [props.fileTree.torrentId],
                 fields: {
@@ -438,7 +442,7 @@ function FiletreeContextMenu(props: {
                 },
             },
         );
-    }, [mutation, props.fileTree, props.selected]);
+    }, [mutate, props.fileTree, props.selected]);
 
     const setWanted = useCallback((wanted: boolean) => {
         const fileIds = Array.from(props.selected
@@ -448,7 +452,7 @@ function FiletreeContextMenu(props: {
                 return set;
             }, new Set<number>()));
 
-        mutation.mutate(
+        mutate(
             {
                 torrentIds: [props.fileTree.torrentId],
                 fields: {
@@ -464,7 +468,7 @@ function FiletreeContextMenu(props: {
                 },
             },
         );
-    }, [mutation, props.fileTree, props.selected]);
+    }, [mutate, props.fileTree, props.selected]);
 
     return (
         <ContextMenu contextMenuInfo={props.contextMenuInfo} setContextMenuInfo={props.setContextMenuInfo}>

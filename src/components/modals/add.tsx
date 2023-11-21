@@ -196,7 +196,7 @@ export function AddMagnet(props: AddCommonModalProps) {
             });
         }, []),
     );
-    const trackersMutation = useTorrentAddTrackers();
+    const mutateAddTrackers = useTorrentAddTrackers();
 
     const onAdd = useCallback(() => {
         if (magnet === "") return;
@@ -213,7 +213,7 @@ export function AddMagnet(props: AddCommonModalProps) {
             );
             common.location.addPath(common.location.path);
         } else {
-            trackersMutation.mutate(
+            mutateAddTrackers(
                 { torrentId: existingTorrent.id, trackers: magnetData?.trackers ?? [] },
                 {
                     onSuccess: () => {
@@ -227,7 +227,7 @@ export function AddMagnet(props: AddCommonModalProps) {
         }
         setMagnet("");
         close();
-    }, [existingTorrent, close, addMutation, magnet, common, trackersMutation, magnetData]);
+    }, [existingTorrent, close, addMutation, magnet, common, mutateAddTrackers, magnetData]);
 
     const config = useContext(ConfigContext);
     const shouldOpen = !config.values.interface.skipAddDialog || typeof props.uri !== "string";
@@ -499,7 +499,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             });
         }, []),
     );
-    const trackersMutation = useTorrentAddTrackers();
+    const mutateAddTrackers = useTorrentAddTrackers();
 
     const onAdd = useCallback(() => {
         if (torrentData === undefined) return;
@@ -521,7 +521,7 @@ export function AddTorrent(props: AddCommonModalProps) {
 
             common.location.addPath(common.location.path);
         } else {
-            trackersMutation.mutate(
+            mutateAddTrackers(
                 { torrentId: existingTorrent.id, trackers: torrentData[0].trackers },
                 {
                     onSuccess: () => {
@@ -540,7 +540,7 @@ export function AddTorrent(props: AddCommonModalProps) {
         }
         setTorrentData(undefined);
         close();
-    }, [torrentData, existingTorrent, close, common, addMutation, fileTree, trackersMutation, config]);
+    }, [torrentData, existingTorrent, close, common, addMutation, fileTree, mutateAddTrackers, config]);
 
     const shouldOpen = !config.values.interface.skipAddDialog && torrentData !== undefined;
     useEffect(() => {

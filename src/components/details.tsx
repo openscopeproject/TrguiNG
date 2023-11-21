@@ -305,16 +305,16 @@ function FileTreePane(props: { torrent: Torrent }) {
         void refetch();
     }, [props.torrent, fileTree, refetch]);
 
-    const mutation = useMutateTorrent();
+    const { mutate } = useMutateTorrent();
 
     const onCheckboxChange = useUnwantedFiles(fileTree, true);
     const updateUnwanted = useCallback((entryPath: string, state: boolean) => {
         onCheckboxChange(entryPath, state);
-        mutation.mutate({
+        mutate({
             torrentIds: [props.torrent.id],
             fields: { [state ? "files-wanted" : "files-unwanted"]: fileTree.getChildFilesIndexes(entryPath) },
         });
-    }, [fileTree, mutation, onCheckboxChange, props.torrent.id]);
+    }, [fileTree, mutate, onCheckboxChange, props.torrent.id]);
 
     return (
         <FileTreeTable

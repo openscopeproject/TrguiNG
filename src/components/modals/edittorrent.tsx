@@ -73,12 +73,12 @@ export function EditTorrent(props: ModalState) {
         });
     }, [setValues, torrent]);
 
-    const mutation = useMutateTorrent();
+    const { mutate } = useMutateTorrent();
 
     const onSave = useCallback(() => {
         if (torrentId === undefined || torrent === undefined) return;
 
-        mutation.mutate(
+        mutate(
             {
                 torrentIds: [...selected],
                 fields: {
@@ -97,7 +97,7 @@ export function EditTorrent(props: ModalState) {
             },
         );
         props.close();
-    }, [torrentId, torrent, mutation, selected, form.values, props]);
+    }, [torrentId, torrent, mutate, selected, form.values, props]);
 
     return <>{props.opened &&
         <SaveCancelModal
