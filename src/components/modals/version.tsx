@@ -62,7 +62,7 @@ export function VersionModal({ opened, close }: ModalState) {
             </Text>
             <Divider px="sm" my="xl" />
             <Flex gap="md" align="center">
-                <img src={AppLogo} />
+                <AppLogo style={{ flexShrink: 0 }} />
                 <Grid>
                     <Grid.Col span={4}>Version</Grid.Col>
                     <Grid.Col span={8}>{appVersion.gitVersion}</Grid.Col>
@@ -80,8 +80,8 @@ export function VersionModal({ opened, close }: ModalState) {
                 powered by
             </Text>
             <Flex justify="center">
-                <Anchor href="https://react.dev/" target="_blank" rel="noreferrer"><img src={ReactLogo} /></Anchor>
-                <Anchor href="https://tauri.app/" target="_blank" rel="noreferrer"><img src={TauriLogo} /></Anchor>
+                <Anchor href="https://react.dev/" target="_blank" rel="noreferrer"><ReactLogo /></Anchor>
+                <Anchor href="https://tauri.app/" target="_blank" rel="noreferrer"><TauriLogo /></Anchor>
             </Flex>
         </HkModal>
     );

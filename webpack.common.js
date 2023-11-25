@@ -94,8 +94,9 @@ export default (mode) => ({
                 exclude: /node_modules/,
             },
             {
-                test: /\.svg$/,
-                type: "asset/inline",
+                test: /\.svg$/i,
+                issuer: /\.[jt]sx?$/,
+                use: ["@svgr/webpack"],
             },
         ],
         parser: {

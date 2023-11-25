@@ -20,6 +20,8 @@ import { useMantineTheme } from "@mantine/core";
 import React from "react";
 import * as Icon from "react-bootstrap-icons";
 import { Status } from "rpc/transmission";
+import ActiveIcon from "svg/icons/active.svg";
+import PausedIcon from "svg/icons/paused.svg";
 
 export function All() {
     const theme = useMantineTheme();
@@ -38,7 +40,7 @@ export function Completed() {
 
 export function Active() {
     const theme = useMantineTheme();
-    return <Icon.Activity size="1rem" fill={theme.colors.red[6]} />;
+    return <ActiveIcon width="1rem" height="1rem" fill={theme.colors.red[6]} />;
 }
 
 export function Inactive() {
@@ -48,12 +50,12 @@ export function Inactive() {
 
 export function Stopped() {
     const theme = useMantineTheme();
-    return <Icon.PauseBtnFill size="1rem" fill={theme.colors.yellow[6]} />;
+    return <PausedIcon width="1rem" height="1rem" fill={theme.colors.yellow[6]} />;
 }
 
 export function Error() {
     const theme = useMantineTheme();
-    return <Icon.XSquareFill size="1rem" fill={theme.colors.red[9]} />;
+    return <Icon.XSquareFill size="1rem" fill={theme.colors.red[6]} />;
 }
 
 export function Waiting() {

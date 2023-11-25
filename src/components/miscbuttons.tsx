@@ -19,6 +19,7 @@
 import type { MantineNumberSize } from "@mantine/core";
 import { ActionIcon, useMantineColorScheme } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
+import FontSizeIcon from "svg/icons/fontsize.svg";
 import React from "react";
 import { VersionModal } from "components/modals/version";
 import { useDisclosure, useHotkeys } from "@mantine/hooks";
@@ -81,7 +82,7 @@ export function FontSizeToggle() {
             title={`Toggle font size (${modKeyString()} + =)`}
             my="auto"
         >
-            <Icon.Fonts size="1.1rem" />
+            <FontSizeIcon width="1.1rem" height="1.1rem" fill="currentColor" />
         </ActionIcon>
     );
 }

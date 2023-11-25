@@ -21,6 +21,7 @@ import { ActionIcon, Button, Flex, Kbd, Menu, TextInput, useMantineTheme } from 
 import debounce from "lodash-es/debounce";
 import React, { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Icon from "react-bootstrap-icons";
+import PriorityIcon from "svg/icons/priority.svg";
 import type { PriorityNumberType } from "rpc/transmission";
 import { BandwidthPriority } from "rpc/transmission";
 import { useTorrentAction, useMutateSession, useMutateTorrent } from "queries";
@@ -268,7 +269,8 @@ function Toolbar(props: ToolbarProps) {
                 <Menu shadow="md" width="10rem" withinPortal middlewares={{ shift: true, flip: false }}>
                     <Menu.Target>
                         <ToolbarButton title="Set priority">
-                            <Icon.ExclamationCircleFill size="1.5rem" color={theme.colors.yellow[4]} />
+                            <PriorityIcon width="1.5rem" height="1.5rem"
+                                fill={theme.colors.yellow[theme.colorScheme === "dark" ? 4 : 6]} />
                         </ToolbarButton>
                     </Menu.Target>
 

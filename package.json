@@ -15,6 +15,7 @@
     "react-devtools": "npx react-devtools"
   },
   "devDependencies": {
+    "@svgr/webpack": "^8.1.0",
     "@tauri-apps/cli": "^1.4.0",
     "@types/lodash-es": "^4.17.8",
     "@types/luxon": "^3.3.1",

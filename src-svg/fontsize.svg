@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="24"
+   height="24"
+   viewBox="0 0 6.3499999 6.35"
+   version="1.1"
+   id="svg5"
+   sodipodi:docname="fontsize.svg"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="px"
+     showgrid="true"
+     inkscape:zoom="50.583333"
+     inkscape:cx="11.990115"
+     inkscape:cy="12.889621"
+     inkscape:window-width="2560"
+     inkscape:window-height="1417"
+     inkscape:window-x="1432"
+     inkscape:window-y="904"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     showguides="true">
+    <inkscape:grid
+       type="xygrid"
+       id="grid13290" />
+    <sodipodi:guide
+       position="0,6.3499999"
+       orientation="0,-1"
+       id="guide14381"
+       inkscape:locked="false" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:5.82083px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="2.6458333"
+       y="5.2916665"
+       id="text19194"><tspan
+         sodipodi:role="line"
+         id="tspan19192"
+         style="font-size:5.82083px;stroke-width:0.264583"
+         x="2.6458333"
+         y="5.2916665">A</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.23333px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="0.26458332"
+       y="5.2916665"
+       id="text19248"><tspan
+         sodipodi:role="line"
+         id="tspan19246"
+         style="font-size:4.23333px;stroke-width:0.264583"
+         x="0.26458332"
+         y="5.2916665">A</tspan></text>
+  </g>
+</svg>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="24"
+   height="24"
+   viewBox="0 0 6.3499999 6.35"
+   version="1.1"
+   id="svg5"
+   sodipodi:docname="active.svg"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="50.583333"
+     inkscape:cx="11.367381"
+     inkscape:cy="12"
+     inkscape:window-width="2560"
+     inkscape:window-height="1417"
+     inkscape:window-x="1432"
+     inkscape:window-y="904"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="color:#000000;fill:#000000;stroke-width:1.10133;stroke-linecap:round;stroke-linejoin:round;-inkscape-stroke:none"
+       d="m 0.90344159,0.26458333 c -0.35026666,0 -0.63885826,0.2885916 -0.63885826,0.63885826 V 5.4421313 c 0,0.3502667 0.28859164,0.6388583 0.63885826,0.6388582 H 5.4421313 c 0.3502667,0 0.6388583,-0.2885915 0.6388582,-0.6388582 V 0.90344159 c 0,-0.35026662 -0.2885915,-0.63885826 -0.6388582,-0.63885826 z m 0,0.43666068 H 5.4421313 c 0.1156791,0 0.2000466,0.0865185 0.2000465,0.20219758 V 2.9426254 L 4.2009825,2.9533806 A 0.21856729,0.21856729 0 0 0 3.998785,3.0975001 L 3.6072961,4.173019 2.7597872,1.3530084 a 0.21856729,0.21856729 0 0 0 -0.4194524,0 L 1.8735595,2.9426254 H 0.70124401 V 0.90344159 c 0,-0.115679 0.0865186,-0.20219758 0.20219758,-0.20219758 z M 2.5532876,2.1833091 3.377135,4.9280332 a 0.21856729,0.21856729 0 0 0 0.4151504,0.012906 l 0.5635718,-1.5508979 1.2863206,-0.0086 v 2.0606942 c 0,0.1156791 -0.084367,0.2000466 -0.2000465,0.2000465 H 0.90344159 c -0.11567911,0 -0.20219758,-0.084367 -0.20219758,-0.2000465 V 3.3814371 H 2.0370385 A 0.21856729,0.21856729 0 0 0 2.2478402,3.2244114 Z"
+       id="path2471" />
+  </g>
+</svg>
