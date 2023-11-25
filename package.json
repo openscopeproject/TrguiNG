@@ -8,6 +8,7 @@
   "scripts": {
     "tauri-dev": "tauri dev",
     "build": "tauri build",
+    "build-bin": "tauri build -b none",
     "webpack-serve": "webpack serve --config webpack.dev.js",
     "webpack-dev": "webpack --config webpack.dev.js",
     "webpack-prod": "webpack --config webpack.prod.js",
