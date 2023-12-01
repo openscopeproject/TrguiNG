@@ -337,6 +337,14 @@ function Stats(props: { stats: SessionStatEntry }) {
                 <td>{bytesToHumanReadableStr(props.stats.uploadedBytes)}</td>
             </tr>
             <tr>
+                <td>Ratio</td>
+                <td>
+                    {props.stats.downloadedBytes === 0
+                        ? "∞"
+                        : (props.stats.uploadedBytes / props.stats.downloadedBytes).toFixed(2)}
+                </td>
+            </tr>
+            <tr>
                 <td>Files added</td>
                 <td>{props.stats.filesAdded}</td>
             </tr>
