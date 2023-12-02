@@ -322,7 +322,14 @@ export const Filters = React.memo(function Filters(props: FiltersProps) {
     const [info, setInfo, handler] = useContextMenu();
 
     return (
-        <Flex direction="column" style={{ width: "100%", whiteSpace: "nowrap", cursor: "default", userSelect: "none" }} onContextMenu={handler}>
+        <Flex direction="column" onContextMenu={handler}
+            sx={{
+                width: "100%",
+                minHeight: "100%",
+                whiteSpace: "nowrap",
+                cursor: "default",
+                userSelect: "none",
+            }}>
             <MemoSectionsContextMenu
                 sections={sections} setSections={setSections}
                 contextMenuInfo={info} setContextMenuInfo={setInfo} />
