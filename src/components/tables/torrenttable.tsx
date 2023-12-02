@@ -28,7 +28,7 @@ import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
 import type { TableSelectReducer } from "./common";
 import { EditableNameField, TrguiTable } from "./common";
-import { Badge, Box, Button, Kbd, Menu, Portal, Text } from "@mantine/core";
+import { Badge, Box, Button, Kbd, Menu, Portal, Text, useMantineTheme } from "@mantine/core";
 import { ConfigContext, ServerConfigContext } from "config";
 import { StatusIconMap, Error as StatusIconError, Magnetizing, CompletedStopped } from "components/statusicons";
 import { useMutateTorrentPath, useTorrentAction } from "queries";
@@ -524,6 +524,8 @@ function TorrentContextMenu(props: {
         return () => { hk.handlers.copyToClipboard = () => { }; };
     }, [copyMagnetLinks, hk]);
 
+    const theme = useMantineTheme();
+
     return (<>
         <Menu
             openDelay={100}
@@ -611,6 +613,22 @@ function TorrentContextMenu(props: {
                     Force start
                 </Menu.Item>
                 <Menu.Item
+                    onClick={() => { torrentAction("torrent-start", "Torrents started"); }}
+                    onMouseEnter={closeQueueSubmenu}
+                    icon={<Icon.PlayCircleFill size="1.1rem" />}
+                    rightSection={<Kbd>F3</Kbd>}
+                    disabled={serverSelected.size === 0}>
+                    Start
+                </Menu.Item>
+                <Menu.Item
+                    onClick={() => { torrentAction("torrent-stop", "Torrents stopped"); }}
+                    onMouseEnter={closeQueueSubmenu}
+                    icon={<Icon.PauseCircleFill size="1.1rem" />}
+                    rightSection={<Kbd>F4</Kbd>}
+                    disabled={serverSelected.size === 0}>
+                    Pause
+                </Menu.Item>
+                <Menu.Item
                     onClick={() => { torrentAction("torrent-verify", "Torrents verification started"); }}
                     onMouseEnter={closeQueueSubmenu}
                     icon={<Icon.CheckAll size="1.1rem" />}
@@ -658,7 +676,7 @@ function TorrentContextMenu(props: {
                 <Menu.Item
                     onClick={() => props.modals.current?.remove()}
                     onMouseEnter={closeQueueSubmenu}
-                    icon={<Icon.XCircleFill color="red" size="1.1rem" />}
+                    icon={<Icon.XCircleFill size="1.1rem" color={theme.colors.red[6]} />}
                     disabled={serverSelected.size === 0}
                     rightSection={<Kbd>del</Kbd>}>
                     Remove...
