@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { Torrent } from "../rpc/torrent";
 import { Status } from "../rpc/transmission";
 import * as Icon from "react-bootstrap-icons";
 import * as StatusIcons from "./statusicons";
-import type { FilterSectionName, SectionsVisibility } from "../config";
+import type { FilterSectionName, SectionsVisibility, StatusFilterName } from "../config";
 import { ConfigContext, ServerConfigContext } from "../config";
-import { Divider, Flex } from "@mantine/core";
+import { Box, Button, Divider, Flex, Menu, Portal } from "@mantine/core";
 import { eventHasModKey, useForceRender } from "trutil";
 import { useContextMenu } from "./contextmenu";
 import { MemoSectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
@@ -39,11 +39,17 @@ interface NamedFilter {
     icon: React.ComponentType,
 }
 
-const statusFilters: NamedFilter[] = [
+interface StatusFilter extends NamedFilter {
+    required?: boolean,
+    name: StatusFilterName,
+}
+
+const statusFilters: StatusFilter[] = [
     {
         name: "All Torrents",
         filter: (t: Torrent) => true,
         icon: StatusIcons.All,
+        required: true,
     },
     {
         name: "Downloading",
@@ -71,6 +77,11 @@ const statusFilters: NamedFilter[] = [
             return t.rateDownload === 0 && t.rateUpload === 0 && t.status !== Status.stopped;
         },
         icon: StatusIcons.Inactive,
+    },
+    {
+        name: "Running",
+        filter: (t: Torrent) => t.status !== Status.stopped,
+        icon: StatusIcons.Running,
     },
     {
         name: "Stopped",
@@ -262,7 +273,7 @@ function flattenTree(root: Directory): Directory[] {
     return result;
 }
 
-export const Filters = React.memo(function Filters(props: FiltersProps) {
+export const Filters = React.memo(function Filters({ torrents, currentFilters, setCurrentFilters }: FiltersProps) {
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
     const forceRender = useForceRender();
@@ -282,8 +293,8 @@ export const Filters = React.memo(function Filters(props: FiltersProps) {
         }, [forceRender, serverConfig]);
 
     const paths = useMemo(
-        () => props.torrents.map((t) => t.downloadDir as string).sort(),
-        [props.torrents]);
+        () => torrents.map((t) => t.downloadDir as string).sort(),
+        [torrents]);
 
     const dirs = useMemo<Directory[]>(() => {
         const tree = buildDirTree(paths, serverConfig.expandedDirFilters);
@@ -294,34 +305,117 @@ export const Filters = React.memo(function Filters(props: FiltersProps) {
         const labels: Record<string, number> = {};
         const trackers: Record<string, number> = {};
 
-        props.torrents.forEach((t) => t.labels?.forEach((l: string) => {
+        torrents.forEach((t) => t.labels?.forEach((l: string) => {
             if (!(l in labels)) labels[l] = 0;
             labels[l] = labels[l] + 1;
         }));
 
-        props.torrents.forEach((t) => {
+        torrents.forEach((t) => {
             if (!(t.cachedMainTracker in trackers)) trackers[t.cachedMainTracker] = 0;
             trackers[t.cachedMainTracker] = trackers[t.cachedMainTracker] + 1;
         });
 
         return [labels, trackers];
-    }, [props.torrents]);
+    }, [torrents]);
 
     const [sections, setSections] = useReducer(
         (_: SectionsVisibility<FilterSectionName>, sections: SectionsVisibility<FilterSectionName>) => {
-            props.setCurrentFilters({ verb: "set", filter: { id: "", filter: DefaultFilter } });
+            setCurrentFilters({ verb: "set", filter: { id: "", filter: DefaultFilter } });
             return sections;
         }, config.values.interface.filterSections);
     const [sectionsMap, setSectionsMap] = useState(getSectionsMap(sections));
+    const [statusFiltersVisibility, setStatusFiltersVisibility] = useState(config.values.interface.statusFiltersVisibility);
 
     useEffect(() => {
         config.values.interface.filterSections = sections;
+        config.values.interface.statusFiltersVisibility = statusFiltersVisibility;
         setSectionsMap(getSectionsMap(sections));
-    }, [config, sections]);
+    }, [config, sections, statusFiltersVisibility]);
 
     const [info, setInfo, handler] = useContextMenu();
 
-    return (
+    const statusFiltersItemRef = useRef<HTMLButtonElement>(null);
+    const contextMenuContainerRef = useRef<HTMLDivElement | null>(null) as React.MutableRefObject<HTMLDivElement>;
+    const [statusFiltersSubmenuOpened, setStatusFiltersSubmenuOpened] = useState(false);
+    const [statusFiltersItemRect, setStatusFiltersItemRect] = useState<DOMRect>(() => new DOMRect(0, -1000, 0, 0));
+
+    const openStatusFiltersSubmenu = useCallback(() => {
+        if (contextMenuContainerRef.current == null || statusFiltersItemRef.current == null) return;
+        const dropdownRect = contextMenuContainerRef.current.querySelector(".mantine-Menu-dropdown")?.getBoundingClientRect();
+        if (dropdownRect == null) return;
+        const itemRect = statusFiltersItemRef.current.getBoundingClientRect();
+        setStatusFiltersItemRect(new DOMRect(dropdownRect.x, itemRect.y, dropdownRect.width, itemRect.height));
+        setStatusFiltersSubmenuOpened(true);
+    }, []);
+
+    const closeStatusFiltersSubmenu = useCallback(() => {
+        setStatusFiltersSubmenuOpened(false);
+        setStatusFiltersItemRect(new DOMRect(0, -1000, 0, 0));
+    }, []);
+
+    const onStatusFiltersSubmenuItemClick = useCallback((index: number) => {
+        const filterName = statusFilters[index].name;
+        const filterId = `status-${filterName}`;
+        const newStatusFiltersVisibility = { ...statusFiltersVisibility };
+        newStatusFiltersVisibility[filterName] = !statusFiltersVisibility[filterName];
+        setStatusFiltersVisibility(newStatusFiltersVisibility);
+        const selectedFilter = currentFilters.find(f => f.id === filterId);
+        if (selectedFilter != null) {
+            setCurrentFilters({ verb: "toggle", filter: selectedFilter });
+        }
+    }, [statusFiltersVisibility, currentFilters, setCurrentFilters]);
+
+    return (<>
+        <Menu
+            openDelay={100}
+            closeDelay={400}
+            opened={statusFiltersSubmenuOpened}
+            onChange={setStatusFiltersSubmenuOpened}
+            middlewares={{ shift: true, flip: true }}
+            position="right-start"
+            zIndex={301}
+            offset={0}
+            closeOnItemClick={false}
+        >
+            <Portal>
+                <Box
+                    onMouseDown={closeStatusFiltersSubmenu}
+                    sx={{
+                        position: "absolute",
+                        left: 0,
+                        top: 0,
+                        height: "100vh",
+                        width: "100vw",
+                        zIndex: statusFiltersSubmenuOpened ? 100 : -1,
+                    }} />
+                <Menu.Target>
+                    <Button unstyled
+                        sx={{
+                            position: "absolute",
+                            border: 0,
+                            padding: 0,
+                            background: "transparent",
+                        }}
+                        style={{
+                            left: statusFiltersItemRect.x,
+                            top: statusFiltersItemRect.y,
+                            width: statusFiltersItemRect.width,
+                            height: statusFiltersItemRect.height,
+                        }} />
+                </Menu.Target>
+                <Menu.Dropdown miw="10rem">
+                    {statusFilters.map((f, index) =>
+                        f.required !== true &&
+                            <Menu.Item
+                                key={f.name}
+                                onClick={ () => { onStatusFiltersSubmenuItemClick(index); }}
+                                icon={statusFiltersVisibility[f.name] ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                            >
+                                {f.name}
+                            </Menu.Item>)}
+                </Menu.Dropdown>
+            </Portal>
+        </Menu>
         <Flex direction="column" onContextMenu={handler}
             sx={{
                 width: "100%",
@@ -332,39 +426,54 @@ export const Filters = React.memo(function Filters(props: FiltersProps) {
             }}>
             <MemoSectionsContextMenu
                 sections={sections} setSections={setSections}
-                contextMenuInfo={info} setContextMenuInfo={setInfo} />
+                contextMenuInfo={info} setContextMenuInfo={setInfo}
+                contextMenuContainerRef={contextMenuContainerRef}
+                onSectionItemMouseEnter={closeStatusFiltersSubmenu}
+                closeOnClickOutside={!statusFiltersSubmenuOpened}
+            >
+                <Menu.Divider/>
+                <Menu.Item
+                    ref={statusFiltersItemRef}
+                    icon={<Box miw="1rem" />}
+                    rightSection={<Icon.ChevronRight size="12" style={{ marginRight: "-0.4rem" }} />}
+                    onMouseEnter={openStatusFiltersSubmenu}
+                    onMouseDown={(e) => { e.stopPropagation(); }}
+                >
+                    Status filters
+                </Menu.Item>
+            </MemoSectionsContextMenu>
             {sections[sectionsMap.Status].visible && <div style={{ order: sectionsMap.Status }}>
                 <Divider mx="sm" label="Status" labelPosition="center" />
                 {statusFilters.map((f) =>
-                    <FilterRow key={`status-${f.name}`}
+                    (f.required === true || statusFiltersVisibility[f.name]) && <FilterRow key={`status-${f.name}`}
                         id={`status-${f.name}`} filter={f}
-                        count={props.torrents.filter(f.filter).length}
-                        currentFilters={props.currentFilters} setCurrentFilters={props.setCurrentFilters} />)}
+                        count={torrents.filter(f.filter).length}
+                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} />)}
             </div>}
             {sections[sectionsMap.Directories].visible && <div style={{ order: sectionsMap.Directories }}>
                 <Divider mx="sm" mt="md" label="Directories" labelPosition="center" />
                 {dirs.map((d) =>
                     <DirFilterRow key={`dir-${d.path}`} id={`dir-${d.path}`}
-                        dir={d} expandedReducer={expandedReducer} {...props} />)}
+                        dir={d} expandedReducer={expandedReducer} {...{ torrents, currentFilters, setCurrentFilters }} />)}
             </div>}
             {sections[sectionsMap.Labels].visible && <div style={{ order: sectionsMap.Labels }}>
                 <Divider mx="sm" mt="md" label="Labels" labelPosition="center" />
                 <FilterRow
                     id="nolabels" filter={noLabelsFilter}
-                    count={props.torrents.filter(noLabelsFilter.filter).length}
-                    currentFilters={props.currentFilters} setCurrentFilters={props.setCurrentFilters} />
+                    count={torrents.filter(noLabelsFilter.filter).length}
+                    currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} />
                 {Object.keys(labels).sort().map((label) =>
                     <LabelFilterRow key={`labels-${label}`} label={label}
                         count={labels[label]}
-                        currentFilters={props.currentFilters} setCurrentFilters={props.setCurrentFilters} />)}
+                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} />)}
             </div>}
             {sections[sectionsMap.Trackers].visible && <div style={{ order: sectionsMap.Trackers }}>
                 <Divider mx="sm" mt="md" label="Trackers" labelPosition="center" />
                 {Object.keys(trackers).sort().map((tracker) =>
                     <TrackerFilterRow key={`trackers-${tracker}`} tracker={tracker}
                         count={trackers[tracker]}
-                        currentFilters={props.currentFilters} setCurrentFilters={props.setCurrentFilters} />)}
+                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} />)}
             </div>}
         </Flex>
-    );
+    </>);
 });

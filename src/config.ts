@@ -72,6 +72,12 @@ export type SplitType = SashName;
 const FilterSections = ["Status", "Directories", "Labels", "Trackers"] as const;
 export type FilterSectionName = typeof FilterSections[number];
 
+const StatusFilters = [
+    "All Torrents", "Downloading", "Completed", "Active", "Inactive", "Running", "Stopped", "Error", "Waiting", "Magnetizing",
+] as const;
+export type StatusFilterName = typeof StatusFilters[number];
+type StatusFiltersVisibility = Record<StatusFilterName, boolean>;
+
 const StatusbarSections = [
     "Connection", "Download speed ", "Upload speed", "Free space", "Total", "Selected",
 ] as const;
@@ -126,6 +132,7 @@ interface Settings {
         tables: Record<TableName, TableSettings>,
         sashSizes: Record<SashName, [number, number]>,
         filterSections: SectionsVisibility<FilterSectionName>,
+        statusFiltersVisibility: StatusFiltersVisibility,
         statusBarSections: SectionsVisibility<StatusbarSectionName>,
         showFiltersPanel: boolean,
         showDetailsPanel: boolean,
@@ -221,6 +228,12 @@ const DefaultSettings: Settings = {
             section,
             visible: true,
         })),
+        statusFiltersVisibility: Object.fromEntries(
+            StatusFilters.map((filterName) => [
+                filterName,
+                !["Running", "Magnetizing"].includes(filterName),
+            ]),
+        ) as Record<StatusFilterName, boolean>,
         statusBarSections: StatusbarSections.map((section) => ({
             section,
             visible: true,

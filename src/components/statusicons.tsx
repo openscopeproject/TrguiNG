@@ -48,6 +48,11 @@ export function Inactive() {
     return <Icon.Snow size="1rem" fill={theme.colors.cyan[4]} />;
 }
 
+export function Running() {
+    const theme = useMantineTheme();
+    return <Icon.CaretRightSquareFill size="1rem" fill={theme.colors.lime[7]} />;
+}
+
 export function Stopped() {
     const theme = useMantineTheme();
     return <PausedIcon width="1rem" height="1rem" fill={theme.colors.yellow[6]} />;
