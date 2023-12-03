@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { MenuProps } from "@mantine/core";
+import type { MenuProps, PortalProps } from "@mantine/core";
 import { Button, Menu, Portal, ScrollArea } from "@mantine/core";
 import React, { useCallback, useEffect, useState } from "react";
 
@@ -38,12 +38,21 @@ export function useContextMenu(): [ContextMenuInfo, React.Dispatch<ContextMenuIn
     return [info, setInfo, contextMenuHandler];
 }
 
-interface ContextMenuProps extends MenuProps {
+export interface ContextMenuProps extends MenuProps {
     contextMenuInfo: ContextMenuInfo,
+    containerRef?: PortalProps["innerRef"],
+    closeOnClickOutside?: boolean,
     setContextMenuInfo: (i: ContextMenuInfo) => void,
 }
 
-export function ContextMenu({ contextMenuInfo, setContextMenuInfo, children, ...other }: ContextMenuProps) {
+export function ContextMenu({
+    contextMenuInfo,
+    containerRef,
+    closeOnClickOutside = true,
+    setContextMenuInfo,
+    children,
+    ...other
+}: ContextMenuProps) {
     const onClose = useCallback(
         () => { setContextMenuInfo({ ...contextMenuInfo, opened: false }); },
         [contextMenuInfo, setContextMenuInfo]);
@@ -59,8 +68,9 @@ export function ContextMenu({ contextMenuInfo, setContextMenuInfo, children, ...
             offset={0}
             middlewares={{ shift: true, flip: true }}
             position="right-start"
+            closeOnClickOutside={closeOnClickOutside}
         >
-            <Portal>
+            <Portal innerRef={containerRef}>
                 <Menu.Target>
                     <Button unstyled
                         sx={{

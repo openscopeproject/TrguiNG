@@ -18,7 +18,7 @@
 
 import type { SectionsVisibility } from "config";
 import React, { useCallback } from "react";
-import type { ContextMenuInfo } from "./contextmenu";
+import type { ContextMenuInfo, ContextMenuProps } from "./contextmenu";
 import { ContextMenu } from "./contextmenu";
 import type { DropResult } from "react-beautiful-dnd";
 import { DragDropContext, Draggable } from "react-beautiful-dnd";
@@ -31,12 +31,15 @@ export function getSectionsMap<S extends string>(sections: SectionsVisibility<S>
     return Object.fromEntries(sections.map((section, index) => [section.section, index])) as Record<S, number>;
 }
 
-function SectionsContextMenu<S extends string>(props: {
+function SectionsContextMenu<S extends string>(props: React.PropsWithChildren<{
     sections: SectionsVisibility<S>,
     setSections: React.Dispatch<SectionsVisibility<S>>,
     contextMenuInfo: ContextMenuInfo,
     setContextMenuInfo: (i: ContextMenuInfo) => void,
-}) {
+    contextMenuContainerRef?: ContextMenuProps["containerRef"],
+    onSectionItemMouseEnter?: React.MouseEventHandler<HTMLDivElement>,
+    closeOnClickOutside?: boolean,
+}>) {
     const { setSections } = props;
 
     const onSectionMenuItemClick = useCallback((index: number) => {
@@ -57,6 +60,8 @@ function SectionsContextMenu<S extends string>(props: {
             contextMenuInfo={props.contextMenuInfo}
             setContextMenuInfo={props.setContextMenuInfo}
             closeOnItemClick={false}
+            containerRef={props.contextMenuContainerRef}
+            closeOnClickOutside={props.closeOnClickOutside}
         >
             <DragDropContext onDragEnd={onDragEnd}>
                 <StrictModeDroppable droppableId="filterscontextmenu">
@@ -66,7 +71,12 @@ function SectionsContextMenu<S extends string>(props: {
                                 return (
                                     <Draggable draggableId={section.section} index={index} key={section.section}>
                                         {(provided) => (
-                                            <Group ref={provided.innerRef} {...provided.draggableProps} noWrap>
+                                            <Group
+                                                ref={provided.innerRef}
+                                                onMouseEnter={props.onSectionItemMouseEnter}
+                                                {...provided.draggableProps}
+                                                noWrap
+                                            >
                                                 <Menu.Item
                                                     icon={section.visible ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
                                                     onClick={() => { onSectionMenuItemClick(index); }}
@@ -86,6 +96,7 @@ function SectionsContextMenu<S extends string>(props: {
                     )}
                 </StrictModeDroppable>
             </DragDropContext>
+            {props.children}
         </ContextMenu>
     );
 }
