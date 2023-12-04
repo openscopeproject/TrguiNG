@@ -21,8 +21,10 @@ import React, { useEffect, useMemo, useRef } from "react";
 import { useResizeDetector } from "react-resize-detector";
 import type { Torrent } from "../rpc/torrent";
 
+const toDevicePixels = (cssPixels: number) => cssPixels * window.devicePixelRatio;
+
 export function PiecesCanvas(props: { torrent: Torrent }) {
-    const { width, height, ref } = useResizeDetector({
+    const { width: cssWidth, height: cssHeight, ref } = useResizeDetector({
         refreshMode: "throttle",
         refreshRate: 1000,
     });
@@ -56,12 +58,15 @@ export function PiecesCanvas(props: { torrent: Torrent }) {
     }, [props.torrent]);
 
     const [pieceSize, rows, cols] = useMemo(() => {
-        if (width === undefined || height === undefined) return [5, 1, 1];
+        if (cssWidth === undefined || cssHeight === undefined) return [5, 1, 1];
+
+        const deviceWidth = toDevicePixels(cssWidth);
+        const deviceHeight = toDevicePixels(cssHeight);
 
         const check = (size: number) => {
-            const cols = Math.floor(width / size);
+            const cols = Math.floor(deviceWidth / size);
             const rows = Math.ceil(props.torrent.pieceCount / cols);
-            if (rows * size < height) return [rows, cols];
+            if (rows * size < deviceHeight) return [rows, cols];
             else return [-1, -1];
         };
 
@@ -77,7 +82,7 @@ export function PiecesCanvas(props: { torrent: Torrent }) {
             mid = (right + left) * 0.5;
         }
         return [left, ...check(left)];
-    }, [props.torrent.pieceCount, width, height]);
+    }, [props.torrent.pieceCount, cssWidth, cssHeight]);
 
     const pieces = useMemo(() => {
         const bstr = window.atob(props.torrent.pieces);
@@ -95,7 +100,7 @@ export function PiecesCanvas(props: { torrent: Torrent }) {
         const remainder = rows * cols - props.torrent.pieceCount;
 
         ctx.beginPath();
-        ctx.lineWidth = pieceSize > 5 ? 1 : 0.5;
+        ctx.lineWidth = toDevicePixels(pieceSize > toDevicePixels(5) ? 1 : 0.5);
         ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
         for (let i = 0; i < rows; i++) {
             ctx.moveTo(0, i * pieceSize);
@@ -112,7 +117,7 @@ export function PiecesCanvas(props: { torrent: Torrent }) {
             ctx.lineTo(i * pieceSize, (rows - 1) * pieceSize);
         }
         ctx.stroke();
-    }, [gridRef, rows, cols, width, height, props.torrent.pieceCount, pieceSize]);
+    }, [gridRef, rows, cols, cssWidth, cssHeight, props.torrent.pieceCount, pieceSize]);
 
     useEffect(() => {
         const canvas = piecesRef.current as HTMLCanvasElement;
@@ -136,15 +141,15 @@ export function PiecesCanvas(props: { torrent: Torrent }) {
         }
     }, [piecesRef, rows, cols, pieceSize, pieces, wantedPieces, props.torrent.pieceCount]);
 
-    const dw = Math.floor(window.devicePixelRatio * (width ?? 1));
-    const dh = Math.floor(window.devicePixelRatio * (height ?? 1));
+    const canvasWidth = Math.floor(toDevicePixels(cssWidth ?? 1));
+    const canvasHeight = Math.floor(toDevicePixels(cssHeight ?? 1));
     const style: CSSProperties = {
-        width: width ?? 1, height: height ?? 1, position: "absolute", top: 0, left: 0,
+        width: cssWidth ?? 1, height: cssHeight ?? 1, position: "absolute", top: 0, left: 0,
     };
     return (
         <div ref={ref} style={{ width: "100%", height: "100%", position: "relative", overflow: "hidden" }}>
-            <canvas ref={piecesRef} width={dw} height={dh} style={style} />
-            <canvas ref={gridRef} width={dw} height={dh} style={style} />
+            <canvas ref={piecesRef} width={canvasWidth} height={canvasHeight} style={style} />
+            <canvas ref={gridRef} width={canvasWidth} height={canvasHeight} style={style} />
         </div>
     );
 }
