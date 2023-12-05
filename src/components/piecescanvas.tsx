@@ -60,28 +60,31 @@ export function PiecesCanvas(props: { torrent: Torrent }) {
     const [pieceSize, rows, cols] = useMemo(() => {
         if (cssWidth === undefined || cssHeight === undefined) return [5, 1, 1];
 
-        const deviceWidth = toDevicePixels(cssWidth);
-        const deviceHeight = toDevicePixels(cssHeight);
+        const canvasWidth = Math.floor(toDevicePixels(cssWidth));
+        const canvasHeight = Math.floor(toDevicePixels(cssHeight));
+        const pieceCount = props.torrent.pieceCount;
+        const maxPieceSize = toDevicePixels(20);
+        const minColumns = Math.ceil(canvasWidth / maxPieceSize);
 
-        const check = (size: number) => {
-            const cols = Math.floor(deviceWidth / size);
-            const rows = Math.ceil(props.torrent.pieceCount / cols);
-            if (rows * size < deviceHeight) return [rows, cols];
-            else return [-1, -1];
-        };
+        if (pieceCount < minColumns && canvasHeight >= maxPieceSize) return [maxPieceSize, 1, pieceCount];
 
-        let right = 20;
-        let left = 0.0;
-        let mid = 10;
-        let rows = 1;
+        /**
+         * The following code is based on https://math.stackexchange.com/a/2570649
+         */
 
-        while (right - left > 0.05) {
-            [rows] = check(mid);
-            if (rows < 0) right = mid;
-            else left = mid;
-            mid = (right + left) * 0.5;
+        const ratio = canvasWidth / canvasHeight;
+        let cols = Math.max(
+            Math.ceil(Math.sqrt(pieceCount * ratio)),
+            minColumns,
+        );
+        let rows = Math.ceil(pieceCount / cols);
+
+        while (cols < rows * ratio) {
+            cols++;
+            rows = Math.ceil(pieceCount / cols);
         }
-        return [left, ...check(left)];
+
+        return [canvasWidth / cols, rows, cols];
     }, [props.torrent.pieceCount, cssWidth, cssHeight]);
 
     const pieces = useMemo(() => {
@@ -139,7 +142,7 @@ export function PiecesCanvas(props: { torrent: Torrent }) {
             }
             if (index >= props.torrent.pieceCount) break;
         }
-    }, [piecesRef, rows, cols, pieceSize, pieces, wantedPieces, props.torrent.pieceCount]);
+    }, [piecesRef, rows, cols, cssWidth, cssHeight, pieceSize, pieces, wantedPieces, props.torrent.pieceCount]);
 
     const canvasWidth = Math.floor(toDevicePixels(cssWidth ?? 1));
     const canvasHeight = Math.floor(toDevicePixels(cssHeight ?? 1));
