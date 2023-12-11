@@ -23,7 +23,7 @@ import { useForm } from "@mantine/form";
 import { useMutateTorrent, useTorrentDetails } from "queries";
 import { notifications } from "@mantine/notifications";
 import { Checkbox, Grid, LoadingOverlay, NumberInput } from "@mantine/core";
-import { useServerSelectedTorrents, useServerTorrentData } from "rpc/torrent";
+import { useServerRpcVersion, useServerSelectedTorrents, useServerTorrentData } from "rpc/torrent";
 
 interface FormValues {
     downloadLimited?: boolean,
@@ -40,6 +40,7 @@ interface FormValues {
 }
 
 export function EditTorrent(props: ModalState) {
+    const rpcVersion = useServerRpcVersion();
     const serverData = useServerTorrentData();
     const selected = useServerSelectedTorrents();
 
@@ -120,9 +121,10 @@ export function EditTorrent(props: ModalState) {
                         {...form.getInputProps("honorsSessionLimits", { type: "checkbox" })} />
                 </Grid.Col>
                 <Grid.Col span={4}>
-                    <Checkbox my="sm"
-                        label="Sequential download"
-                        {...form.getInputProps("sequentialDownload", { type: "checkbox" })} />
+                    {rpcVersion >= 18 &&
+                        <Checkbox my="sm"
+                            label="Sequential download"
+                            {...form.getInputProps("sequentialDownload", { type: "checkbox" })} />}
                 </Grid.Col>
                 <Grid.Col span={8}>
                     <Checkbox
