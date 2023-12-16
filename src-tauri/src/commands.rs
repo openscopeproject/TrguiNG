@@ -22,7 +22,7 @@ use tauri::{Manager, State};
 use crate::{
     createtorrent::{CreateCheckResult, CreationRequestsHandle, TorrentCreateInfo},
     poller::PollerConfig,
-    PollerHandle,
+    tray, PollerHandle,
 };
 
 #[derive(serde::Serialize)]
@@ -244,4 +244,13 @@ pub async fn pass_to_window(
 #[tauri::command]
 pub async fn list_system_fonts() -> Vec<String> {
     system_fonts::query_all()
+}
+
+#[tauri::command]
+pub async fn create_tray(app_handle: tauri::AppHandle) {
+    if app_handle.tray_handle_by_id(tray::TRAY_ID).is_none() {
+        tray::create_tray(app_handle.clone())
+            .build(&app_handle)
+            .ok();
+    }
 }

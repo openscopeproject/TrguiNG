@@ -107,6 +107,9 @@ async function run(config: Config) {
 
     if (TAURI) {
         setupTauriEvents(config, app);
+        if (config.values.app.showTrayIcon) {
+            void invoke("create_tray");
+        }
     } else {
         setupWebEvents(config);
     }

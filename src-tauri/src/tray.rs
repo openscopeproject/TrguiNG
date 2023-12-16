@@ -24,7 +24,9 @@ use tokio::sync::oneshot;
 
 use crate::ListenerHandle;
 
-pub fn create_tray() -> SystemTray {
+pub const TRAY_ID: &str = "tray";
+
+pub fn create_tray(app: AppHandle) -> SystemTray {
     let hide = CustomMenuItem::new("showhide", "Hide");
     let quit = CustomMenuItem::new("quit", "Quit");
     let tray_menu = SystemTrayMenu::new()
@@ -32,17 +34,19 @@ pub fn create_tray() -> SystemTray {
         .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(quit);
 
-    SystemTray::new().with_menu(tray_menu)
+    SystemTray::new()
+        .with_id(TRAY_ID)
+        .with_menu(tray_menu)
+        .on_event(move |event| on_tray_event(&app, event))
 }
 
 pub fn set_tray_showhide_text(app: &AppHandle, text: &str) {
-    app.tray_handle()
-        .get_item("showhide")
-        .set_title(text)
-        .ok();
+    if let Some(tray) = app.tray_handle_by_id(TRAY_ID) {
+        tray.get_item("showhide").set_title(text).ok();
+    }
 }
 
-pub fn on_tray_event(app: &AppHandle, event: SystemTrayEvent) {
+fn on_tray_event(app: &AppHandle, event: SystemTrayEvent) {
     let main_window = app.get_window("main");
     match event {
         SystemTrayEvent::LeftClick { .. } => {

@@ -39,6 +39,7 @@ interface FormValues extends InterfaceFormValues {
         deleteAdded: boolean,
         toastNotifications: boolean,
         toastNotificationSound: boolean,
+        showTrayIcon: boolean,
         onMinimize: WindowMinimizeOption,
         onClose: WindowCloseOption,
     },
@@ -240,14 +241,29 @@ function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                 <Grid.Col span={3}><Button onClick={associateTorrent}>.torrent files</Button></Grid.Col>
                 <Grid.Col span={3}><Button onClick={associateMagnet}>magnet links</Button></Grid.Col>
             </>}
+            <Grid.Col span={6}>Show tray icon</Grid.Col>
+            <Grid.Col span={2}>
+                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                    checked={form.values.app.showTrayIcon}
+                    onChange={(e) => {
+                        form.setFieldValue("app.showTrayIcon", e.currentTarget.checked);
+                        if (!e.currentTarget.checked) {
+                            form.setFieldValue("app.onMinimize", "minimize");
+                            form.setFieldValue("app.onClose", "quit");
+                        }
+                    }} />
+            </Grid.Col>
+            <Grid.Col span={4}>(takes effect after restart)</Grid.Col>
             <Grid.Col span={6}>When minimized</Grid.Col>
             <Grid.Col span={6}>
                 <SegmentedControl data={WindowMinimizeOptions as unknown as string[]}
+                    disabled={!form.values.app.showTrayIcon}
                     {...form.getInputProps("app.onMinimize")} />
             </Grid.Col>
             <Grid.Col span={6}>When closed</Grid.Col>
             <Grid.Col span={6}>
                 <SegmentedControl data={WindowCloseOptions as unknown as string[]}
+                    disabled={!form.values.app.showTrayIcon}
                     {...form.getInputProps("app.onClose")} />
             </Grid.Col>
             <Grid.Col>
@@ -343,7 +359,7 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
                         {TAURI && <Tabs.Tab value="interface" p="lg">Interface</Tabs.Tab>}
                     </Tabs.List>
 
-                    <Tabs.Panel value="servers" pt="md" h="22rem">
+                    <Tabs.Panel value="servers" pt="md" mih="24rem">
                         <Flex h="100%" gap="0.5rem">
                             <ServerListPanel form={form} current={currentServerIndex} setCurrent={setCurrentServerIndex} />
                             {currentServerIndex === -1
@@ -352,11 +368,11 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
                         </Flex>
                     </Tabs.Panel>
 
-                    <Tabs.Panel value="integrations" pt="md" h="22rem">
+                    <Tabs.Panel value="integrations" pt="md" mih="24rem">
                         <IntegrationsPanel form={form} />
                     </Tabs.Panel>
 
-                    {TAURI && <Tabs.Panel value="interface" pt="md">
+                    {TAURI && <Tabs.Panel value="interface" pt="md" mih="24rem">
                         <InterfaceSettigsPanel form={form} />
                     </Tabs.Panel>}
                 </Tabs>

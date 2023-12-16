@@ -146,7 +146,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 
         let app_clone = app.clone();
         app.listen_global("window-hidden", move |_| {
-            tray::set_tray_showhide_text(&app_clone, "Hide");
+            tray::set_tray_showhide_text(&app_clone, "Show");
         })
     });
 
@@ -172,14 +172,13 @@ fn main() {
             commands::save_create_torrent,
             commands::pass_to_window,
             commands::list_system_fonts,
+            commands::create_tray,
         ])
         .manage(ListenerHandle(Arc::new(RwLock::new(ipc))))
         .manage(TorrentCacheHandle::default())
         .manage(PollerHandle::default())
         .manage(MmdbReaderHandle::default())
         .manage(CreationRequestsHandle::default())
-        .system_tray(tray::create_tray())
-        .on_system_tray_event(tray::on_tray_event)
         .setup(setup);
 
     #[cfg(target_os = "macos")]
