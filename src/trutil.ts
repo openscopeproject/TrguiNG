@@ -227,3 +227,7 @@ const badChars = /[<>:"\\/|?*]/g;
 export function fileSystemSafeName(name: string) {
     return name.replace(badChars, "_");
 }
+
+export function * chainedIterables<T>(...iterables: Array<Iterable<T>>) {
+    for (const iterable of iterables) yield * iterable;
+}

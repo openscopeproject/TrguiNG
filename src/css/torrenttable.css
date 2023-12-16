@@ -84,6 +84,16 @@
     box-shadow: inset 0 0 0 9999px rgba(133, 133, 133, 0.1);
 }
 
+.torrent-table .tr.descendant-selected {
+    background-color: rgb(50, 80, 170);
+    color: white;
+    box-shadow: inset 0 0 0 9999px rgba(133, 133, 133, 0.7);
+}
+
+.torrent-table .tr.descendant-selected:nth-child(odd) {
+    box-shadow: inset 0 0 0 9999px rgba(133, 133, 133, 0.8);
+}
+
 .resizer {
     display: block;
     background: rgba(124, 124, 124, 0.4);

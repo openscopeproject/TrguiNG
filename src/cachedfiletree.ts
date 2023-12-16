@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { fileSystemSafeName } from "trutil";
+import { fileSystemSafeName, chainedIterables } from "trutil";
 import type { Torrent, TorrentBase } from "./rpc/torrent";
 import type { PriorityNumberType } from "rpc/transmission";
 
@@ -327,7 +327,31 @@ export class CachedFileTree {
         dir.isSelected = value;
     }
 
+    deselectAllAncestors(entry: Entry) {
+        let parent = entry.parent;
+        while (parent != null) {
+            parent.isSelected = false;
+            parent = parent.parent;
+        }
+    }
+
+    updateAncestorSelectionStates(ancestor: DirEntry) {
+        let dirEntry: DirEntry | undefined = ancestor;
+        while (dirEntry != null && dirEntry !== this.tree) {
+            dirEntry.isSelected = true;
+            for (const child of chainedIterables<Entry>(dirEntry.subdirs.values(), dirEntry.files.values())) {
+                if (!child.isSelected) {
+                    dirEntry.isSelected = false;
+                    this.deselectAllAncestors(dirEntry);
+                    return;
+                }
+            }
+            dirEntry = dirEntry.parent;
+        }
+    }
+
     selectAction({ verb, ids }: { verb: "add" | "set" | "toggle", ids: string[] }) {
+        const affectedParents = new Set<DirEntry>();
         if (verb === "set") {
             this.setSelection(this.tree, false);
         }
@@ -337,6 +361,7 @@ export class CachedFileTree {
                 console.log("What the horse?", id);
                 return;
             }
+            if (entry.parent != null) affectedParents.add(entry.parent);
             if (verb !== "toggle" || !entry.isSelected) {
                 if (isDirEntry(entry)) {
                     this.setSelection(entry, true);
@@ -351,6 +376,7 @@ export class CachedFileTree {
                 }
             }
         });
+        affectedParents.forEach(parent => { this.updateAncestorSelectionStates(parent); });
     }
 
     getSelected(): string[] {

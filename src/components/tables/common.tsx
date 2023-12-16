@@ -60,6 +60,7 @@ function useTable<TData>(
         (o: ColumnOrderState) => void,
         ColumnSizingState,
         SortingState,
+        Set<string>,
     ] {
     const config = useContext(ConfigContext);
 
@@ -72,6 +73,8 @@ function useTable<TData>(
     const [sorting, setSorting] =
         useState<SortingState>(config.getTableSortBy(tablename));
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+    const [rowsWithSelectedDescendants, setRowsWithSelectedDescendants] =
+        useState<Set<string>>(new Set());
 
     useEffect(() => {
         config.setTableColumnVisibility(tablename, columnVisibility);
@@ -122,7 +125,34 @@ function useTable<TData>(
         if (columnOrder.length === 0) setColumnOrder(table.getAllLeafColumns().map((c) => c.id));
     }, [columnOrder, table]);
 
-    return [table, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columnSizing, sorting];
+    useEffect(() => {
+        if (!table.getCanSomeRowsExpand()) return;
+
+        const newRowsWithSelectedDescendants = new Set<string>();
+
+        const recurse = (row: Row<TData>): boolean => {
+            if (rowSelection[row.id]) return true;
+
+            let hasSelectedDescendant = false;
+            row.subRows.forEach(subrow => {
+                if (recurse(subrow)) {
+                    hasSelectedDescendant = true;
+                }
+            });
+
+            if (hasSelectedDescendant) {
+                newRowsWithSelectedDescendants.add(row.id);
+                return true;
+            }
+
+            return false;
+        };
+        table.getCoreRowModel().rows.forEach(recurse);
+
+        setRowsWithSelectedDescendants(newRowsWithSelectedDescendants);
+    }, [table, rowSelection]);
+
+    return [table, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columnSizing, sorting, rowsWithSelectedDescendants];
 }
 
 interface HIDEvent {
@@ -263,6 +293,7 @@ export function useRowSelected() {
 function TableRow<TData>(props: {
     row: Row<TData>,
     selected: boolean,
+    descendantSelected: boolean,
     expanded: boolean,
     index: number,
     start: number,
@@ -324,7 +355,7 @@ function TableRow<TData>(props: {
 
     return (
         <div ref={ref}
-            className={`tr${props.selected ? " selected" : ""}`}
+            className={`tr${props.selected ? " selected" : props.descendantSelected ? " descendant-selected" : ""}`}
             style={{ height: `${props.height}px`, transform: `translateY(${props.start}px)` }}
             onClick={onMouseEvent}
             onContextMenu={onMouseEvent}
@@ -472,7 +503,7 @@ export function TrguiTable<TData>(props: {
     onVisibilityChange?: React.Dispatch<VisibilityState>,
     scrollToRow?: { id: string },
 }) {
-    const [table, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columnSizing, sorting] =
+    const [table, columnVisibility, setColumnVisibility, columnOrder, setColumnOrder, columnSizing, sorting, rowsWithSelectedDescendants] =
         useTable(props.tablename, props.columns, props.data, props.selected, props.getRowId, props.getSubRows, props.onVisibilityChange);
 
     if (props.tableRef !== undefined) {
@@ -543,6 +574,7 @@ export function TrguiTable<TData>(props: {
                             return <MemoizedTableRow<TData> key={props.getRowId(row.original)} {...{
                                 row,
                                 selected: row.getIsSelected(),
+                                descendantSelected: rowsWithSelectedDescendants.has(row.id),
                                 expanded: row.getIsExpanded(),
                                 index: virtualRow.index,
                                 lastIndex,
