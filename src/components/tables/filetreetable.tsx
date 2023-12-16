@@ -164,6 +164,11 @@ interface FileTreeTableProps {
     brief?: boolean,
 }
 
+function entryMatchesSearchTerms(entry: FileDirEntryView, searchTerms: string[]) {
+    const path = entry.fullpath.toLowerCase().substring(entry.fullpath.indexOf("/") + 1);
+    return searchTerms.every(term => path.includes(term));
+}
+
 export function useUnwantedFiles(ft: CachedFileTree, setUpdating: boolean): EntryWantedChangeHandler {
     const changeHandler = useCallback((entryPath: string, state: boolean) => {
         ft.setWanted(entryPath, state, setUpdating);
@@ -172,7 +177,7 @@ export function useUnwantedFiles(ft: CachedFileTree, setUpdating: boolean): Entr
     return changeHandler;
 }
 
-function useSelected(props: FileTreeTableProps) {
+function useSelected(data: FileDirEntryView[], fileTree: CachedFileTree, searchTerms: string[]) {
     const [selected, setSelected] = useReducer((prev: string[], next: string[]) => {
         if (prev.length === next.length) {
             for (let i = 0; i < prev.length; i++) {
@@ -183,26 +188,49 @@ function useSelected(props: FileTreeTableProps) {
         return next;
     }, []);
 
+    const deriveNewSelection = useRef((_: boolean) => [] as string[]);
+    deriveNewSelection.current = useCallback((selectAll: boolean) => {
+        const result: string[] = [];
+        const recurse = (entry: FileDirEntryView) => {
+            if (
+                (selectAll || fileTree.findEntry(entry.fullpath)?.isSelected === true) &&
+                (entry.subrows.length === 0 || entryMatchesSearchTerms(entry, searchTerms))
+            ) {
+                result.push(entry.fullpath);
+                return;
+            }
+            entry.subrows.forEach(recurse);
+        };
+        data.forEach(recurse);
+        return result;
+    }, [data, fileTree, searchTerms]);
+
+    useEffect(() => {
+        if (searchTerms.length === 0) return;
+
+        fileTree.selectAction({ verb: "set", ids: deriveNewSelection.current(false) });
+        setSelected(fileTree.getSelected());
+    }, [fileTree, searchTerms]);
+
     const selectAll = useRef(() => { });
     const hk = useHotkeysContext();
 
     selectAll.current = useCallback(() => {
-        const ids = props.data.map((entry) => entry.fullpath);
-        props.fileTree.selectAction({ verb: "set", ids });
-        setSelected(props.fileTree.getSelected());
-    }, [props.data, props.fileTree]);
+        fileTree.selectAction({ verb: "set", ids: deriveNewSelection.current(true) });
+        setSelected(fileTree.getSelected());
+    }, [fileTree]);
 
     useEffect(() => {
         return () => { hk.handlers.selectAll = () => { }; };
     }, [hk]);
 
     const selectedReducer = useCallback((action: { verb: "add" | "set" | "toggle", ids: string[], isReset?: boolean }) => {
-        props.fileTree.selectAction(action);
-        setSelected(props.fileTree.getSelected());
+        fileTree.selectAction(action);
+        setSelected(fileTree.getSelected());
         if (action.isReset !== true) {
             hk.handlers.selectAll = () => { selectAll.current?.(); };
         }
-    }, [props.fileTree, hk]);
+    }, [fileTree, hk]);
 
     return { selected, selectedReducer };
 }
@@ -290,12 +318,6 @@ export function FileTreeTable(props: FileTreeTableProps) {
     const getRowId = useCallback((row: FileDirEntryView) => row.fullpath, []);
     const getSubRows = useCallback((row: FileDirEntryView) => row.subrows, []);
 
-    const { selected, selectedReducer } = useSelected(props);
-
-    useEffect(() => {
-        selectedReducer({ verb: "set", ids: [], isReset: true });
-    }, [props.fileTree.torrenthash, selectedReducer]);
-
     const onEntryOpen = useCallback((rowPath: string, reveal: boolean = false) => {
         if (TAURI) {
             if (props.downloadDir === undefined || props.downloadDir === "") return;
@@ -329,24 +351,16 @@ export function FileTreeTable(props: FileTreeTableProps) {
     const data = useMemo(() => {
         if (searchTerms.length === 0) return props.data;
 
-        const matches = (entry: FileDirEntryView) => {
-            let matchesAll = true;
-            const path = entry.fullpath.toLowerCase().substring(entry.fullpath.indexOf("/") + 1);
-            searchTerms.forEach((term) => {
-                if (!path.includes(term)) matchesAll = false;
-            });
-            return matchesAll;
-        };
         const filter = (entries: FileDirEntryView[]) => {
             const result: FileDirEntryView[] = [];
             entries.forEach((entry) => {
                 if (entry.subrows.length > 0) {
                     const copy = { ...entry };
                     copy.subrows = filter(copy.subrows);
-                    if (matches(copy) || copy.subrows.length > 0) {
+                    if (copy.subrows.length > 0 || entryMatchesSearchTerms(copy, searchTerms)) {
                         result.push(copy);
                     }
-                } else if (matches(entry)) {
+                } else if (entryMatchesSearchTerms(entry, searchTerms)) {
                     result.push(entry);
                 }
             });
@@ -360,6 +374,12 @@ export function FileTreeTable(props: FileTreeTableProps) {
         if (searchTerms.length > 0) tableRef.current?.setExpanded(true);
         else tableRef.current?.setExpanded(false);
     }, [searchTerms]);
+
+    const { selected, selectedReducer } = useSelected(data, props.fileTree, searchTerms);
+
+    useEffect(() => {
+        selectedReducer({ verb: "set", ids: [], isReset: true });
+    }, [props.fileTree.torrenthash, selectedReducer]);
 
     const [showFileSearchBox, toggleFileSearchBox] = useReducer((shown: boolean) => {
         const show = !shown;
