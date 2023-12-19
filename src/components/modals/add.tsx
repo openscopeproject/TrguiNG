@@ -355,6 +355,7 @@ function useWebappReadFile(
                         hash: "",
                         files: null,
                         trackers: [],
+                        length: 0,
                     }]);
                 }).catch(() => {
                     notifications.show({
@@ -390,6 +391,7 @@ function useFilesInput(
                         hash: "",
                         files: null,
                         trackers: [],
+                        length: 0,
                     })));
                 }).catch((e) => {
                     notifications.show({
@@ -421,6 +423,7 @@ interface TorrentFileData {
         length: number,
     }> | null,
     trackers: string[],
+    length: number,
 }
 
 export function AddTorrent(props: AddCommonModalProps) {
@@ -449,10 +452,15 @@ export function AddTorrent(props: AddCommonModalProps) {
 
     const { data, refetch } = useFileTree("filetreebrief", fileTree);
     useEffect(() => {
-        if (torrentData !== undefined && torrentData.length === 1 && torrentData[0].files != null) {
+        if (torrentData === undefined) return;
+
+        if (torrentData.length === 1 && torrentData[0].files != null) {
             fileTree.parse(torrentData[0], true);
             setWantedSize(fileTree.getWantedSize());
             void refetch();
+        } else {
+            const totalSize = torrentData.reduce((total, { length }) => total + length, 0);
+            setWantedSize(totalSize);
         }
     }, [torrentData, fileTree, refetch]);
 
@@ -578,10 +586,11 @@ export function AddTorrent(props: AddCommonModalProps) {
                     : <LimitedNamesList names={names} limit={1} />}
                 <div style={{ position: "relative" }}>
                     <AddCommon {...common.props} disabled={torrentExists}>
+                        {(wantedSize > 0 || torrentData[0].files != null) &&
+                            <Text>{bytesToHumanReadableStr(wantedSize)}</Text>}
                         {(torrentData.length > 1 || torrentData[0].files == null)
                             ? <></>
                             : <>
-                                <Text>{bytesToHumanReadableStr(wantedSize)}</Text>
                                 <Button variant="subtle" disabled={torrentExists}
                                     onClick={() => { setAllWanted(true); }} title="Mark all files wanted">
                                     All
