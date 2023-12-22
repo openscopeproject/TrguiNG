@@ -375,10 +375,12 @@ export function FileTreeTable(props: FileTreeTableProps) {
         else tableRef.current?.setExpanded(false);
     }, [searchTerms]);
 
+    const [current, setCurrent] = useState("");
     const { selected, selectedReducer } = useSelected(data, props.fileTree, searchTerms);
 
     useEffect(() => {
         selectedReducer({ verb: "set", ids: [], isReset: true });
+        setCurrent("");
     }, [props.fileTree.torrenthash, selectedReducer]);
 
     const [showFileSearchBox, toggleFileSearchBox] = useReducer((shown: boolean) => {
@@ -397,6 +399,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
                     setContextMenuInfo={setInfo}
                     fileTree={props.fileTree}
                     selected={selected}
+                    currentRow={current}
                     onEntryOpen={onEntryOpen}
                     setExpanded={tableRef.current?.setExpanded}
                     toggleFileSearchBox={toggleFileSearchBox} />}
@@ -411,6 +414,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
                     getRowId,
                     getSubRows,
                     selectedReducer,
+                    setCurrent,
                     onRowDoubleClick,
                 }} />
             </div>
@@ -423,18 +427,18 @@ function FiletreeContextMenu(props: {
     setContextMenuInfo: (i: ContextMenuInfo) => void,
     fileTree: CachedFileTree,
     selected: string[],
+    currentRow: string,
     onEntryOpen: (rowPath: string, reveal: boolean) => void,
     setExpanded?: (state: boolean) => void,
     toggleFileSearchBox: () => void,
 }) {
     const { onEntryOpen } = props;
     const onOpen = useCallback((reveal: boolean) => {
-        const [path] = props.selected;
-        const entry = props.fileTree.findEntry(path);
+        const entry = props.fileTree.findEntry(props.currentRow);
         if (entry === undefined) return;
         const rowPath = entry.fullpath + (isDirEntry(entry) ? "/" : "");
         onEntryOpen(rowPath, reveal);
-    }, [onEntryOpen, props.fileTree, props.selected]);
+    }, [onEntryOpen, props.fileTree, props.currentRow]);
 
     const { mutate } = useMutateTorrent();
 
@@ -496,13 +500,13 @@ function FiletreeContextMenu(props: {
                 <Menu.Item
                     onClick={() => { onOpen(false); }}
                     icon={<Icon.BoxArrowUpRight size="1.1rem" />}
-                    disabled={props.selected.length !== 1}>
+                    disabled={props.currentRow === ""}>
                     <Text weight="bold">Open</Text>
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => { onOpen(true); }}
                     icon={<Icon.Folder2Open size="1.1rem" />}
-                    disabled={props.selected.length !== 1}>
+                    disabled={props.currentRow === ""}>
                     <Text>Open folder</Text>
                 </Menu.Item>
                 <Menu.Divider />

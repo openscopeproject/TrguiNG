@@ -462,11 +462,10 @@ function TorrentContextMenu(props: {
 
     const { onRowDoubleClick } = props;
     const onOpen = useCallback((reveal: boolean) => {
-        const [id] = [...serverSelected];
-        const torrent = serverData.torrents.find((t) => t.id === id);
+        const torrent = serverData.torrents.find((t) => t.id === serverData.current);
         if (torrent === undefined) return;
         onRowDoubleClick(torrent, reveal);
-    }, [onRowDoubleClick, serverData.torrents, serverSelected]);
+    }, [onRowDoubleClick, serverData]);
 
     const mutate = useTorrentAction();
 
@@ -593,14 +592,14 @@ function TorrentContextMenu(props: {
                         onClick={() => { onOpen(false); }}
                         onMouseEnter={closeQueueSubmenu}
                         icon={<Icon.BoxArrowUpRight size="1.1rem" />}
-                        disabled={serverSelected.size !== 1}>
+                        disabled={serverData.current === undefined}>
                         <Text weight="bold">Open</Text>
                     </Menu.Item>
                     <Menu.Item
                         onClick={() => { onOpen(true); }}
                         onMouseEnter={closeQueueSubmenu}
                         icon={<Icon.Folder2Open size="1.1rem" />}
-                        disabled={serverSelected.size !== 1}>
+                        disabled={serverData.current === undefined}>
                         <Text>Open folder</Text>
                     </Menu.Item>
                     <Menu.Divider />
