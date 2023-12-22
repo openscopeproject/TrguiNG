@@ -345,6 +345,19 @@ export function useBandwidthGroups(enabled: boolean) {
     });
 }
 
+export function useFreeSpace(enabled: boolean, path: string) {
+    const serverConfig = useContext(ServerConfigContext);
+    const client = useTransmissionClient();
+
+    return useQuery({
+        queryKey: [serverConfig.name, "free-space", path],
+        refetchInterval: 5000,
+        staleTime: 1000,
+        enabled,
+        queryFn: useCallback(async () => await client.getFreeSpace(path), [client, path]),
+    });
+}
+
 export function useFileTree(name: string, fileTree: CachedFileTree) {
     const initialData = useMemo(() => fileTree.getView(), [fileTree]);
     return useQuery({

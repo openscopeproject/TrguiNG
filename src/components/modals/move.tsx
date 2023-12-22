@@ -29,8 +29,8 @@ export function MoveModal(props: ModalState) {
     const serverSelected = useServerSelectedTorrents();
     const [moveData, setMoveData] = useState<boolean>(true);
 
-    const location = useTorrentLocation();
-    const { setPath } = location;
+    const location = useTorrentLocation({ freeSpaceQueryEnabled: props.opened });
+    const { immediateSetPath } = location;
 
     const changeDirectory = useTorrentChangeDirectory();
 
@@ -62,12 +62,12 @@ export function MoveModal(props: ModalState) {
     }, [serverData.torrents, serverSelected]);
 
     useEffect(() => {
-        if (props.opened) setPath(calculateInitialLocation());
-    }, [props.opened, setPath, calculateInitialLocation]);
+        if (props.opened) immediateSetPath(calculateInitialLocation());
+    }, [props.opened, immediateSetPath, calculateInitialLocation]);
 
     return <>
         {props.opened &&
-            <HkModal opened={props.opened} onClose={props.close} title="Move torrents" centered size="lg">
+            <HkModal opened onClose={props.close} title="Move torrents" centered size="lg">
                 <Divider my="sm" />
                 <Text mb="md">Enter new location for</Text>
                 <TorrentsNames />

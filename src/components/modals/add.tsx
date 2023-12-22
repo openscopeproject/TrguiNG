@@ -18,7 +18,7 @@
 
 import { Box, Button, Checkbox, Divider, Flex, Group, Menu, SegmentedControl, Text, TextInput } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import type { ModalState, LocationData } from "./common";
+import type { ModalState, LocationData, UseTorrentLocationOptions } from "./common";
 import { HkModal, LimitedNamesList, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
 import type { PriorityNumberType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings } from "rpc/transmission";
@@ -80,8 +80,8 @@ interface AddCommonModalProps extends ModalState {
     tabsRef: React.RefObject<ServerTabsRef>,
 }
 
-function useCommonProps() {
-    const location = useTorrentLocation();
+function useCommonProps({ freeSpaceQueryEnabled, spaceNeeded }: UseTorrentLocationOptions) {
+    const location = useTorrentLocation({ freeSpaceQueryEnabled, spaceNeeded });
     const [labels, setLabels] = useState<string[]>([]);
     const [start, setStart] = useState<boolean>(true);
     const [priority, setPriority] = useState<PriorityNumberType>(0);
@@ -166,7 +166,10 @@ export function AddMagnet(props: AddCommonModalProps) {
         }
     }, [serverData, props.serverName, magnetData]);
 
-    const common = useCommonProps();
+    const config = useContext(ConfigContext);
+    const shouldOpen = !config.values.interface.skipAddDialog || typeof props.uri !== "string";
+    const renderModal = props.opened && shouldOpen;
+    const common = useCommonProps({ freeSpaceQueryEnabled: renderModal });
     const { close } = props;
     const addMutation = useAddTorrent(
         useCallback((response: any) => {
@@ -229,15 +232,13 @@ export function AddMagnet(props: AddCommonModalProps) {
         close();
     }, [existingTorrent, close, addMutation, magnet, common, mutateAddTrackers, magnetData]);
 
-    const config = useContext(ConfigContext);
-    const shouldOpen = !config.values.interface.skipAddDialog || typeof props.uri !== "string";
     useEffect(() => {
         if (props.opened && !shouldOpen) {
             onAdd();
         }
     }, [onAdd, props.opened, shouldOpen]);
 
-    return <>{props.opened && shouldOpen &&
+    return <>{renderModal &&
         <HkModal opened={true} onClose={close} centered size="lg"
             styles={{ title: { flexGrow: 1 } }}
             title={<Flex w="100%" align="center" justify="space-between">
@@ -429,7 +430,6 @@ interface TorrentFileData {
 export function AddTorrent(props: AddCommonModalProps) {
     const config = useContext(ConfigContext);
     const serverData = useServerTorrentData();
-    const common = useCommonProps();
     const [torrentData, setTorrentData] = useState<TorrentFileData[]>();
 
     const existingTorrent = useMemo(() => {
@@ -449,6 +449,9 @@ export function AddTorrent(props: AddCommonModalProps) {
 
     const fileTree = useMemo(() => new CachedFileTree(torrentData?.[0]?.hash ?? "", -1), [torrentData]);
     const [wantedSize, setWantedSize] = useState(0);
+
+    const shouldOpen = !config.values.interface.skipAddDialog && torrentData !== undefined;
+    const common = useCommonProps({ freeSpaceQueryEnabled: shouldOpen, spaceNeeded: wantedSize });
 
     const { data, refetch } = useFileTree("filetreebrief", fileTree);
     useEffect(() => {
@@ -550,7 +553,6 @@ export function AddTorrent(props: AddCommonModalProps) {
         close();
     }, [torrentData, existingTorrent, close, common, addMutation, fileTree, mutateAddTrackers, config]);
 
-    const shouldOpen = !config.values.interface.skipAddDialog && torrentData !== undefined;
     useEffect(() => {
         if (torrentData !== undefined && !shouldOpen) {
             onAdd();
