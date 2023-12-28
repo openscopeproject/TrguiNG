@@ -33,6 +33,8 @@ import { CachedFileTree } from "cachedfiletree";
 import { useFileTree, useMutateTorrent, useSessionStats, useTorrentDetails } from "queries";
 import { ConfigContext } from "config";
 import { useResizeObserver } from "@mantine/hooks";
+import { MemoSectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
+import { useContextMenu } from "./contextmenu";
 
 interface DetailsProps {
     torrentId?: number,
@@ -382,32 +384,32 @@ function ServerStats() {
 
 const DetailsPanels = React.memo(function DetailsPanels({ torrent }: { torrent: Torrent | undefined }) {
     return (<>
-        <Tabs.Panel value="general" h="100%">
+        <Tabs.Panel value="General" h="100%">
             {torrent !== undefined
                 ? <GeneralPane torrent={torrent} />
                 : <></>}
         </Tabs.Panel>
-        <Tabs.Panel value="files" h="100%">
+        <Tabs.Panel value="Files" h="100%">
             {torrent !== undefined
                 ? <FileTreePane torrent={torrent} />
                 : <></>}
         </Tabs.Panel>
-        <Tabs.Panel value="pieces" h="100%">
+        <Tabs.Panel value="Pieces" h="100%">
             {torrent !== undefined
                 ? <PiecesCanvas torrent={torrent} />
                 : <></>}
         </Tabs.Panel>
-        <Tabs.Panel value="peers" h="100%">
+        <Tabs.Panel value="Peers" h="100%">
             {torrent !== undefined
                 ? <PeersTable torrent={torrent} />
                 : <></>}
         </Tabs.Panel>
-        <Tabs.Panel value="trackers" h="100%">
+        <Tabs.Panel value="Trackers" h="100%">
             {torrent !== undefined
                 ? <TrackersTable torrent={torrent} />
                 : <></>}
         </Tabs.Panel>
-        <Tabs.Panel value="serverstats" h="100%">
+        <Tabs.Panel value="Server statistics" h="100%">
             <ServerStats />
         </Tabs.Panel>
     </>);
@@ -428,46 +430,71 @@ function Details(props: DetailsProps) {
         else if (fetchedTorrent !== undefined) setTorrent(fetchedTorrent);
     }, [fetchedTorrent, props.torrentId]);
 
+    const [tabs, setTabs] = useState(config.values.interface.detailsTabs);
+    const [tabsMap, setTabsMap] = useState(getSectionsMap(tabs));
+
+    useEffect(() => {
+        config.values.interface.detailsTabs = tabs;
+        setTabsMap(getSectionsMap(tabs));
+    }, [config, tabs]);
+
+    const defaultTab = useMemo(() => {
+        return tabs.find((tab) => tab.visible)?.section ?? "";
+    }, [tabs]);
+
+    const [info, setInfo, handler] = useContextMenu();
+
     return (
-        <Tabs variant="outline" defaultValue="general" keepMounted={false}
+        <Tabs variant="outline" defaultValue={defaultTab} keepMounted={false}
             h="100%" w="100%" sx={{ display: "flex", flexDirection: "column" }}>
-            <Tabs.List px="sm" pt="xs">
-                <Tabs.Tab value="general" disabled={torrent === undefined}>
-                    <Group>
-                        <Icon.InfoCircle size="1.1rem" />
-                        General
-                    </Group>
-                </Tabs.Tab>
-                <Tabs.Tab value="files" disabled={torrent === undefined}>
-                    <Group>
-                        <Icon.Files size="1.1rem" />
-                        {`Files${torrent !== undefined ? ` (${torrent.files.length as number})` : ""}`}
-                    </Group>
-                </Tabs.Tab>
-                <Tabs.Tab value="pieces" disabled={torrent === undefined}>
-                    <Group>
-                        <Icon.Grid3x2 size="1.1rem" />
-                        {`Pieces${torrent !== undefined ? ` (${torrent.pieceCount as number})` : ""}`}
-                    </Group>
-                </Tabs.Tab>
-                <Tabs.Tab value="peers" disabled={torrent === undefined}>
-                    <Group>
-                        <Icon.People size="1.1rem" />
-                        Peers
-                    </Group>
-                </Tabs.Tab>
-                <Tabs.Tab value="trackers" disabled={torrent === undefined}>
-                    <Group>
-                        <Icon.Wifi size="1.1rem" />
-                        Trackers
-                    </Group>
-                </Tabs.Tab>
-                <Tabs.Tab value="serverstats" ml="auto">
-                    <Group>
-                        <Icon.ArrowDownUp size="1.1rem" />
-                        Server statistics
-                    </Group>
-                </Tabs.Tab>
+            <Tabs.List px="sm" pt="xs" onContextMenu={handler}>
+                <MemoSectionsContextMenu
+                    sections={tabs} setSections={setTabs}
+                    contextMenuInfo={info} setContextMenuInfo={setInfo} />
+                {tabs[tabsMap.General].visible &&
+                    <Tabs.Tab value="General" disabled={torrent === undefined} style={{ order: tabsMap.General }}>
+                        <Group>
+                            <Icon.InfoCircle size="1.1rem" />
+                            General
+                        </Group>
+                    </Tabs.Tab>}
+                {tabs[tabsMap.Files].visible &&
+                    <Tabs.Tab value="Files" disabled={torrent === undefined} style={{ order: tabsMap.Files }}>
+                        <Group>
+                            <Icon.Files size="1.1rem" />
+                            {`Files${torrent !== undefined ? ` (${torrent.files.length as number})` : ""}`}
+                        </Group>
+                    </Tabs.Tab>}
+                {tabs[tabsMap.Pieces].visible &&
+                    <Tabs.Tab value="Pieces" disabled={torrent === undefined} style={{ order: tabsMap.Pieces }}>
+                        <Group>
+                            <Icon.Grid3x2 size="1.1rem" />
+                            {`Pieces${torrent !== undefined ? ` (${torrent.pieceCount as number})` : ""}`}
+                        </Group>
+                    </Tabs.Tab>}
+                {tabs[tabsMap.Peers].visible &&
+                    <Tabs.Tab value="Peers" disabled={torrent === undefined} style={{ order: tabsMap.Peers }}>
+                        <Group>
+                            <Icon.People size="1.1rem" />
+                            Peers
+                        </Group>
+                    </Tabs.Tab>}
+                {tabs[tabsMap.Trackers].visible &&
+                    <Tabs.Tab value="Trackers" disabled={torrent === undefined} style={{ order: tabsMap.Trackers }}>
+                        <Group>
+                            <Icon.Wifi size="1.1rem" />
+                            Trackers
+                        </Group>
+                    </Tabs.Tab>}
+                {tabs[tabsMap["<spacer>"]].visible &&
+                    <Box style={{ flexGrow: 1, order: tabsMap["<spacer>"] }} />}
+                {tabs[tabsMap["Server statistics"]].visible &&
+                    <Tabs.Tab value="Server statistics" style={{ order: tabsMap["Server statistics"] }}>
+                        <Group>
+                            <Icon.ArrowDownUp size="1.1rem" />
+                            Server statistics
+                        </Group>
+                    </Tabs.Tab>}
             </Tabs.List>
             <div style={{ flexGrow: 1, position: "relative" }}>
                 <LoadingOverlay

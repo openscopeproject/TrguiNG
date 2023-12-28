@@ -83,6 +83,11 @@ const StatusbarSections = [
 ] as const;
 type StatusbarSectionName = typeof StatusbarSections[number];
 
+const DetailsSections = [
+    "General", "Files", "Pieces", "Peers", "Trackers", "<spacer>", "Server statistics",
+] as const;
+type DetailsSectionsName = typeof DetailsSections[number];
+
 export type SectionsVisibility<S extends string> = Array<{
     section: S,
     visible: boolean,
@@ -137,6 +142,7 @@ interface Settings {
         statusBarSections: SectionsVisibility<StatusbarSectionName>,
         showFiltersPanel: boolean,
         showDetailsPanel: boolean,
+        detailsTabs: SectionsVisibility<DetailsSectionsName>,
         showFilesSearchBox: boolean,
         mainSplit: SplitType,
         skipAddDialog: boolean,
@@ -242,6 +248,10 @@ const DefaultSettings: Settings = {
         })),
         showFiltersPanel: true,
         showDetailsPanel: true,
+        detailsTabs: DetailsSections.map((section) => ({
+            section,
+            visible: true,
+        })),
         showFilesSearchBox: false,
         mainSplit: "vertical",
         skipAddDialog: false,
