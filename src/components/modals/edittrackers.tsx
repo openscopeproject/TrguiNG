@@ -63,10 +63,17 @@ export function EditTrackers(props: ModalState) {
 
     const onSave = useCallback(() => {
         if (torrentId === undefined || torrent === undefined) return;
+        const dedupedTrackers: string[] = [];
+        for (const tracker of form.values.trackerList.split("\n")) {
+            if (tracker !== "" && dedupedTrackers.includes(tracker)) continue;
+            if (tracker === "" && dedupedTrackers.length === 0) continue;
+            if (tracker === "" && dedupedTrackers[dedupedTrackers.length - 1] === "") continue;
+            dedupedTrackers.push(tracker);
+        }
         let toAdd;
         let toRemove;
         if (rpcVersion < 17) {
-            const trackers = form.values.trackerList.split("\n").filter((s) => s !== "");
+            const trackers = dedupedTrackers.filter((s) => s !== "");
             const currentTrackers = Object.fromEntries(
                 torrent.trackerStats.map((s: TrackerStats) => [s.announce, s.id]));
 
@@ -81,7 +88,7 @@ export function EditTrackers(props: ModalState) {
             {
                 torrentIds: [...selected],
                 fields: {
-                    ...form.values,
+                    trackerList: dedupedTrackers.join("\n"),
                     trackerAdd: toAdd,
                     trackerRemove: toRemove,
                 },
