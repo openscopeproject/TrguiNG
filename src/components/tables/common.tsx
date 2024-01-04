@@ -673,7 +673,8 @@ export function EditableNameField(props: EditableNameFieldProps) {
                     onChange={(e) => { setNewName(e.target.value); }}
                     onBlur={() => { setRenaming(false); }}
                     onKeyDown={onTextKeyDown}
-                    onClick={(e) => { e.stopPropagation(); }} />
+                    onClick={(e) => { e.stopPropagation(); }}
+                    onDoubleClick={(e) => { e.stopPropagation(); }} />
                 : <Box pl="xs" sx={{ flexGrow: 1, textOverflow: "ellipsis", overflow: "hidden" }}>
                     {props.currentName}
                 </Box>}
