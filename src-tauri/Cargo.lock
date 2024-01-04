@@ -2153,8 +2153,7 @@ dependencies = [
 [[package]]
 name = "lava_torrent"
 version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81730ad85660dd85c8196a684cb51cee60c69c8f99c82d6ecb6df5bc79c4859d"
+source = "git+https://github.com/openscopeproject/lava_torrent?branch=patches#e8e34200117de725a74fcdf0306d88cbdb19ac0b"
 dependencies = [
  "conv",
  "itertools",
