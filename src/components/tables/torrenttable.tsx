@@ -219,10 +219,10 @@ function PositiveNumberField(props: TableFieldProps) {
 function UploadRatioField(props: TableFieldProps) {
     return (
         <div style={{ width: "100%", textAlign: "right" }}>
-            {props.torrent.downloadedEver === 0
-                ? "∞"
-                : props.torrent.uploadedEver === 0
-                    ? "-"
+            {props.torrent.uploadedEver === 0
+                ? "-"
+                : props.torrent.downloadedEver === 0
+                    ? "∞"
                     : (props.torrent.uploadedEver / props.torrent.downloadedEver).toFixed(2)}
         </div>
     );
