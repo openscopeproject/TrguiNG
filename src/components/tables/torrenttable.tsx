@@ -221,7 +221,9 @@ function UploadRatioField(props: TableFieldProps) {
         <div style={{ width: "100%", textAlign: "right" }}>
             {props.torrent.downloadedEver === 0
                 ? "∞"
-                : (props.torrent.uploadedEver / props.torrent.downloadedEver).toFixed(2)}
+                : props.torrent.uploadedEver === 0
+                    ? "-"
+                    : (props.torrent.uploadedEver / props.torrent.downloadedEver).toFixed(2)}
         </div>
     );
 }
