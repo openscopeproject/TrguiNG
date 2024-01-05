@@ -1,6 +1,7 @@
 node_modules
 dist
 .vscode
+.idea
 webpack-report.html
 tests/manual.torrent
 *bkp
