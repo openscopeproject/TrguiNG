@@ -93,7 +93,7 @@ const AllFields: readonly TableField[] = [
         name: "uploadedEver",
         label: "U/D",
         component: UploadRatioField,
-        accessorFn: (t) => t.uploadedEver / t.downloadedEver,
+        accessorFn: (t) => t.uploadedEver === 0 ? 0 : t.uploadedEver / t.downloadedEver,
         columnId: "simpleRatio",
         requiredFields: ["uploadedEver", "downloadedEver"] as TorrentFieldsType[],
     },
@@ -219,10 +219,10 @@ function PositiveNumberField(props: TableFieldProps) {
 function UploadRatioField(props: TableFieldProps) {
     return (
         <div style={{ width: "100%", textAlign: "right" }}>
-            {props.torrent.downloadedEver === 0
-                ? "∞"
-                : props.torrent.uploadedEver === 0
-                    ? "-"
+            {props.torrent.uploadedEver === 0
+                ? "-"
+                : props.torrent.downloadedEver === 0
+                    ? "∞"
                     : (props.torrent.uploadedEver / props.torrent.downloadedEver).toFixed(2)}
         </div>
     );
