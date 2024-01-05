@@ -93,7 +93,7 @@ const AllFields: readonly TableField[] = [
         name: "uploadedEver",
         label: "U/D",
         component: UploadRatioField,
-        accessorFn: (t) => t.uploadedEver / t.downloadedEver,
+        accessorFn: (t) => t.uploadedEver === 0 ? 0 : t.uploadedEver / t.downloadedEver,
         columnId: "simpleRatio",
         requiredFields: ["uploadedEver", "downloadedEver"] as TorrentFieldsType[],
     },
