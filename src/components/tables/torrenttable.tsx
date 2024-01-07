@@ -93,10 +93,7 @@ const AllFields: readonly TableField[] = [
         name: "uploadedEver",
         label: "U/D",
         component: UploadRatioField,
-        accessorFn: (t) => t.downloadedEver === 0 ? -1
-            : t.uploadedEver === 0
-                ? 0
-                : t.uploadedEver / t.downloadedEver,
+        accessorFn: (t) => t.uploadedEver === 0 ? 0 : t.uploadedEver / t.downloadedEver,
         columnId: "simpleRatio",
         requiredFields: ["uploadedEver", "downloadedEver"] as TorrentFieldsType[],
     },
@@ -224,7 +221,9 @@ function UploadRatioField(props: TableFieldProps) {
         <div style={{ width: "100%", textAlign: "right" }}>
             {props.torrent.uploadedEver === 0
                 ? "-"
-                : (props.torrent.uploadedEver / props.torrent.downloadedEver).toFixed(2)}
+                : props.torrent.downloadedEver === 0
+                    ? "∞"
+                    : (props.torrent.uploadedEver / props.torrent.downloadedEver).toFixed(2)}
         </div>
     );
 }
