@@ -233,7 +233,7 @@ const DefaultRoot: Directory = {
     level: -1,
 };
 
-function buildDirTree(paths: string[], expanded: string[]): Directory {
+function buildDirTree(paths: string[], expanded: string[], condensedDirTree: boolean): Directory {
     const root: Directory = { ...DefaultRoot, subdirs: new Map() };
 
     paths.forEach((path) => {
@@ -258,7 +258,7 @@ function buildDirTree(paths: string[], expanded: string[]): Directory {
         }
     });
 
-    return condenseTree(root);
+    return condensedDirTree ? condenseTree(root) : root;
 }
 
 function condenseTree(root: Directory): Directory {
@@ -324,9 +324,9 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         [torrents]);
 
     const dirs = useMemo<Directory[]>(() => {
-        const tree = buildDirTree(paths, serverConfig.expandedDirFilters);
+        const tree = buildDirTree(paths, serverConfig.expandedDirFilters, config.getCondensedDirTree());
         return flattenTree(tree);
-    }, [paths, serverConfig.expandedDirFilters]);
+    }, [paths, serverConfig.expandedDirFilters, config.values.interface.condensedDirTree]);
 
     const [labels, trackers] = useMemo(() => {
         const labels: Record<string, number> = {};
@@ -352,10 +352,12 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         }, config.values.interface.filterSections);
     const [sectionsMap, setSectionsMap] = useState(getSectionsMap(sections));
     const [statusFiltersVisibility, setStatusFiltersVisibility] = useState(config.values.interface.statusFiltersVisibility);
+    const [condensedDirTree, setCondensedDirTree] = useState(config.values.interface.condensedDirTree);
 
     useEffect(() => {
         config.values.interface.filterSections = sections;
         config.values.interface.statusFiltersVisibility = statusFiltersVisibility;
+        config.values.interface.condensedDirTree = condensedDirTree;
         setSectionsMap(getSectionsMap(sections));
     }, [config, sections, statusFiltersVisibility]);
 
@@ -391,6 +393,11 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
             setCurrentFilters({ verb: "toggle", filter: selectedFilter });
         }
     }, [statusFiltersVisibility, currentFilters, setCurrentFilters]);
+
+    const onCondensedDirTreeClick = useCallback((value: boolean) => {
+        config.setCondensedDirTree(value);
+        setCondensedDirTree(value);
+    }, []);
 
     return (<>
         <Menu
@@ -467,6 +474,16 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                     onMouseDown={(e) => { e.stopPropagation(); }}
                 >
                     Status filters
+                </Menu.Item>
+                <Menu.Divider/>
+                <Menu.Item
+                    icon={condensedDirTree ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                    onMouseEnter={closeStatusFiltersSubmenu}
+                    onMouseDown={(e) => {
+                        onCondensedDirTreeClick(!condensedDirTree);
+                        e.stopPropagation(); }}
+                >
+                    Condensed Dir Tree
                 </Menu.Item>
             </MemoSectionsContextMenu>
             {sections[sectionsMap.Status].visible && <div style={{ order: sectionsMap.Status }}>

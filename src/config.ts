@@ -139,6 +139,7 @@ interface Settings {
         sashSizes: Record<SashName, [number, number]>,
         filterSections: SectionsVisibility<FilterSectionName>,
         statusFiltersVisibility: StatusFiltersVisibility,
+        condensedDirTree: boolean,
         statusBarSections: SectionsVisibility<StatusbarSectionName>,
         showFiltersPanel: boolean,
         showDetailsPanel: boolean,
@@ -242,6 +243,7 @@ const DefaultSettings: Settings = {
                 !["Running", "Magnetizing"].includes(filterName),
             ]),
         ) as Record<StatusFilterName, boolean>,
+        condensedDirTree: false,
         statusBarSections: StatusbarSections.map((section) => ({
             section,
             visible: true,
@@ -385,6 +387,14 @@ export class Config {
         while (saveDirs.length > this.values.interface.numLastSaveDirs) {
             saveDirs.pop();
         }
+    }
+
+    getCondensedDirTree() {
+        return this.values.interface.condensedDirTree;
+    }
+
+    setCondensedDirTree(value: boolean) {
+        this.values.interface.condensedDirTree = value;
     }
 }
 
