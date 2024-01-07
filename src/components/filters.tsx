@@ -264,7 +264,7 @@ function buildDirTree(paths: string[], expanded: string[]): Directory {
 function condenseTree(root: Directory): Directory {
     let result = getSequenceRoot(root);
 
-    for(let [key, dir] of result.subdirs){
+    for (let [key, dir] of result.subdirs) {
         dir.level = result.level + 1;
         const condensedDir = condenseTree(dir);
         result.subdirs.set(key, condensedDir)
@@ -273,12 +273,12 @@ function condenseTree(root: Directory): Directory {
     return result;
 }
 
-function getSequenceRoot(root: Directory): Directory{
+function getSequenceRoot(root: Directory): Directory {
     let result = root;
 
-    if(root.subdirs.size === 1) {
+    if (root.subdirs.size === 1) {
         const [child] = root.subdirs.values();
-        if(root.count === child.count) {
+        if (root.count === child.count) {
             child.name = root.name + "/" + child.name;
             child.level = root.level;
             result = getSequenceRoot(child);
