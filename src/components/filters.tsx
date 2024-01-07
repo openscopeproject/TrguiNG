@@ -262,12 +262,12 @@ function buildDirTree(paths: string[], expanded: string[]): Directory {
 }
 
 function condenseTree(root: Directory): Directory {
-    let result = getSequenceRoot(root);
+    const result = getSequenceRoot(root);
 
-    for (let [key, dir] of result.subdirs) {
+    for (const [key, dir] of result.subdirs) {
         dir.level = result.level + 1;
         const condensedDir = condenseTree(dir);
-        result.subdirs.set(key, condensedDir)
+        result.subdirs.set(key, condensedDir);
     }
 
     return result;
