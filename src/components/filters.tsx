@@ -324,7 +324,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         [torrents]);
 
     const dirs = useMemo<Directory[]>(() => {
-        const tree = buildDirTree(paths, serverConfig.expandedDirFilters, config.getCondensedDirTree());
+        const tree = buildDirTree(paths, serverConfig.expandedDirFilters, config.values.interface.condensedDirTree);
         return flattenTree(tree);
     }, [paths, serverConfig.expandedDirFilters, config.values.interface.condensedDirTree]);
 
@@ -397,7 +397,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
     const onCondensedDirTreeClick = useCallback((value: boolean) => {
         config.setCondensedDirTree(value);
         setCondensedDirTree(value);
-    }, []);
+    }, [config]);
 
     return (<>
         <Menu
@@ -481,7 +481,8 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                     onMouseEnter={closeStatusFiltersSubmenu}
                     onMouseDown={(e) => {
                         onCondensedDirTreeClick(!condensedDirTree);
-                        e.stopPropagation(); }}
+                        e.stopPropagation(); }
+                    }
                 >
                     Condensed Dir Tree
                 </Menu.Item>
