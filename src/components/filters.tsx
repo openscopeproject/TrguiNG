@@ -233,7 +233,7 @@ const DefaultRoot: Directory = {
     level: -1,
 };
 
-function buildDirTree(paths: string[], expanded: string[], condensedDirTree: boolean): Directory {
+function buildDirTree(paths: string[], expanded: string[], compactFolders: boolean): Directory {
     const root: Directory = { ...DefaultRoot, subdirs: new Map() };
 
     paths.forEach((path) => {
@@ -258,22 +258,38 @@ function buildDirTree(paths: string[], expanded: string[], condensedDirTree: boo
         }
     });
 
-    return condensedDirTree ? condenseTree(root) : root;
+    return compactFolders ? compactFoldersTree(root) : root;
 }
 
-function condenseTree(root: Directory): Directory {
-    const result = getSequenceRoot(root);
+function compactFoldersTree(root: Directory): Directory {
+    /*
+    const squashSingleChildFolders = (root: Directory) => {
+        let result = root;
+
+        if (root.subdirs.size === 1) {
+            const [child] = root.subdirs.values();
+            if (root.count === child.count) {
+                child.name = root.name + "/" + child.name;
+                child.level = root.level;
+                result = squashSingleChildFolders(child);
+            }
+        }
+
+        return result;
+    }; */
+
+    const result = squashSingleChildFolders(root);
 
     for (const [key, dir] of result.subdirs) {
         dir.level = result.level + 1;
-        const condensedDir = condenseTree(dir);
+        const condensedDir = compactFoldersTree(dir);
         result.subdirs.set(key, condensedDir);
     }
 
     return result;
 }
 
-function getSequenceRoot(root: Directory): Directory {
+function squashSingleChildFolders(root: Directory): Directory {
     let result = root;
 
     if (root.subdirs.size === 1) {
@@ -281,7 +297,7 @@ function getSequenceRoot(root: Directory): Directory {
         if (root.count === child.count) {
             child.name = root.name + "/" + child.name;
             child.level = root.level;
-            result = getSequenceRoot(child);
+            result = squashSingleChildFolders(child);
         }
     }
 
@@ -324,9 +340,9 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         [torrents]);
 
     const dirs = useMemo<Directory[]>(() => {
-        const tree = buildDirTree(paths, serverConfig.expandedDirFilters, config.values.interface.condensedDirTree);
+        const tree = buildDirTree(paths, serverConfig.expandedDirFilters, config.values.interface.compactFolders);
         return flattenTree(tree);
-    }, [paths, serverConfig.expandedDirFilters, config.values.interface.condensedDirTree]);
+    }, [paths, serverConfig.expandedDirFilters, config.values.interface.compactFolders]);
 
     const [labels, trackers] = useMemo(() => {
         const labels: Record<string, number> = {};
@@ -352,14 +368,14 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         }, config.values.interface.filterSections);
     const [sectionsMap, setSectionsMap] = useState(getSectionsMap(sections));
     const [statusFiltersVisibility, setStatusFiltersVisibility] = useState(config.values.interface.statusFiltersVisibility);
-    const [condensedDirTree, setCondensedDirTree] = useState(config.values.interface.condensedDirTree);
+    const [compactFolders, setCompactFolders] = useState(config.values.interface.compactFolders);
 
     useEffect(() => {
         config.values.interface.filterSections = sections;
         config.values.interface.statusFiltersVisibility = statusFiltersVisibility;
-        config.values.interface.condensedDirTree = condensedDirTree;
+        config.values.interface.compactFolders = compactFolders;
         setSectionsMap(getSectionsMap(sections));
-    }, [config, sections, statusFiltersVisibility, condensedDirTree]);
+    }, [config, sections, statusFiltersVisibility, compactFolders]);
 
     const [info, setInfo, handler] = useContextMenu();
 
@@ -394,8 +410,9 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         }
     }, [statusFiltersVisibility, currentFilters, setCurrentFilters]);
 
-    const onCondensedDirTreeClick = useCallback((value: boolean) => {
-        setCondensedDirTree(value);
+    const onCompactFoldersClick = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setCompactFolders(!compactFolders);
     }, []);
 
     return (<>
@@ -476,14 +493,11 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 </Menu.Item>
                 <Menu.Divider/>
                 <Menu.Item
-                    icon={condensedDirTree ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                    icon={compactFolders ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
                     onMouseEnter={closeStatusFiltersSubmenu}
-                    onMouseDown={(e) => {
-                        onCondensedDirTreeClick(!condensedDirTree);
-                        e.stopPropagation();
-                    }}
+                    onMouseDown={onCompactFoldersClick}
                 >
-                    Condensed Dir Tree
+                    Compact Folders
                 </Menu.Item>
             </MemoSectionsContextMenu>
             {sections[sectionsMap.Status].visible && <div style={{ order: sectionsMap.Status }}>
