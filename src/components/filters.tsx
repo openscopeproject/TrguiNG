@@ -359,7 +359,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         config.values.interface.statusFiltersVisibility = statusFiltersVisibility;
         config.values.interface.condensedDirTree = condensedDirTree;
         setSectionsMap(getSectionsMap(sections));
-    }, [config, sections, statusFiltersVisibility]);
+    }, [config, sections, statusFiltersVisibility, condensedDirTree]);
 
     const [info, setInfo, handler] = useContextMenu();
 
@@ -395,9 +395,8 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
     }, [statusFiltersVisibility, currentFilters, setCurrentFilters]);
 
     const onCondensedDirTreeClick = useCallback((value: boolean) => {
-        config.setCondensedDirTree(value);
         setCondensedDirTree(value);
-    }, [config]);
+    }, []);
 
     return (<>
         <Menu
@@ -481,8 +480,8 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                     onMouseEnter={closeStatusFiltersSubmenu}
                     onMouseDown={(e) => {
                         onCondensedDirTreeClick(!condensedDirTree);
-                        e.stopPropagation(); }
-                    }
+                        e.stopPropagation();
+                    }}
                 >
                     Condensed Dir Tree
                 </Menu.Item>

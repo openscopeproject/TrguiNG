@@ -388,14 +388,6 @@ export class Config {
             saveDirs.pop();
         }
     }
-
-    getCondensedDirTree() {
-        return this.values.interface.condensedDirTree;
-    }
-
-    setCondensedDirTree(value: boolean) {
-        this.values.interface.condensedDirTree = value;
-    }
 }
 
 export const ConfigContext = React.createContext(new Config());
