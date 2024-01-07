@@ -413,7 +413,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
     const onCompactFoldersClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
         setCompactFolders(!compactFolders);
-    }, []);
+    }, [compactFolders]);
 
     return (<>
         <Menu
