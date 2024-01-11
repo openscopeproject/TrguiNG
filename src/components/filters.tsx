@@ -394,7 +394,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         }
     }, [statusFiltersVisibility, currentFilters, setCurrentFilters]);
 
-    const onCompactFoldersClick = useCallback((e: React.MouseEvent) => {
+    const onCompactDirectoriesClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
         setCompactDirectories(!compactDirectories);
     }, [compactDirectories]);
@@ -479,7 +479,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 <Menu.Item
                     icon={compactDirectories ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
                     onMouseEnter={closeStatusFiltersSubmenu}
-                    onMouseDown={onCompactFoldersClick}
+                    onMouseDown={onCompactDirectoriesClick}
                 >
                     Compact Directories
                 </Menu.Item>
