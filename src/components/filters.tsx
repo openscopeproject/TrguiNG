@@ -258,38 +258,22 @@ function buildDirTree(paths: string[], expanded: string[], compactFolders: boole
         }
     });
 
-    return compactFolders ? compactFoldersTree(root) : root;
+    return compactFolders ? compactDirectoriesTree(root) : root;
 }
 
-function compactFoldersTree(root: Directory): Directory {
-    /*
-    const squashSingleChildFolders = (root: Directory) => {
-        let result = root;
-
-        if (root.subdirs.size === 1) {
-            const [child] = root.subdirs.values();
-            if (root.count === child.count) {
-                child.name = root.name + "/" + child.name;
-                child.level = root.level;
-                result = squashSingleChildFolders(child);
-            }
-        }
-
-        return result;
-    }; */
-
-    const result = squashSingleChildFolders(root);
+function compactDirectoriesTree(root: Directory): Directory {
+    const result = squashSingleChildDirectory(root);
 
     for (const [key, dir] of result.subdirs) {
         dir.level = result.level + 1;
-        const condensedDir = compactFoldersTree(dir);
+        const condensedDir = compactDirectoriesTree(dir);
         result.subdirs.set(key, condensedDir);
     }
 
     return result;
 }
 
-function squashSingleChildFolders(root: Directory): Directory {
+function squashSingleChildDirectory(root: Directory): Directory {
     let result = root;
 
     if (root.subdirs.size === 1) {
@@ -297,7 +281,7 @@ function squashSingleChildFolders(root: Directory): Directory {
         if (root.count === child.count) {
             child.name = root.name + "/" + child.name;
             child.level = root.level;
-            result = squashSingleChildFolders(child);
+            result = squashSingleChildDirectory(child);
         }
     }
 
@@ -340,9 +324,9 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         [torrents]);
 
     const dirs = useMemo<Directory[]>(() => {
-        const tree = buildDirTree(paths, serverConfig.expandedDirFilters, config.values.interface.compactFolders);
+        const tree = buildDirTree(paths, serverConfig.expandedDirFilters, config.values.interface.compactDirectories);
         return flattenTree(tree);
-    }, [paths, serverConfig.expandedDirFilters, config.values.interface.compactFolders]);
+    }, [paths, serverConfig.expandedDirFilters, config.values.interface.compactDirectories]);
 
     const [labels, trackers] = useMemo(() => {
         const labels: Record<string, number> = {};
@@ -368,14 +352,14 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         }, config.values.interface.filterSections);
     const [sectionsMap, setSectionsMap] = useState(getSectionsMap(sections));
     const [statusFiltersVisibility, setStatusFiltersVisibility] = useState(config.values.interface.statusFiltersVisibility);
-    const [compactFolders, setCompactFolders] = useState(config.values.interface.compactFolders);
+    const [compactDirectories, setCompactDirectories] = useState(config.values.interface.compactDirectories);
 
     useEffect(() => {
         config.values.interface.filterSections = sections;
         config.values.interface.statusFiltersVisibility = statusFiltersVisibility;
-        config.values.interface.compactFolders = compactFolders;
+        config.values.interface.compactDirectories = compactDirectories;
         setSectionsMap(getSectionsMap(sections));
-    }, [config, sections, statusFiltersVisibility, compactFolders]);
+    }, [config, sections, statusFiltersVisibility, compactDirectories]);
 
     const [info, setInfo, handler] = useContextMenu();
 
@@ -412,8 +396,8 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
 
     const onCompactFoldersClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
-        setCompactFolders(!compactFolders);
-    }, [compactFolders]);
+        setCompactDirectories(!compactDirectories);
+    }, [compactDirectories]);
 
     return (<>
         <Menu
@@ -493,11 +477,11 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 </Menu.Item>
                 <Menu.Divider/>
                 <Menu.Item
-                    icon={compactFolders ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                    icon={compactDirectories ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
                     onMouseEnter={closeStatusFiltersSubmenu}
                     onMouseDown={onCompactFoldersClick}
                 >
-                    Compact Folders
+                    Compact Directories
                 </Menu.Item>
             </MemoSectionsContextMenu>
             {sections[sectionsMap.Status].visible && <div style={{ order: sectionsMap.Status }}>
