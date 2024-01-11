@@ -233,7 +233,7 @@ const DefaultRoot: Directory = {
     level: -1,
 };
 
-function buildDirTree(paths: string[], expanded: string[], compactFolders: boolean): Directory {
+function buildDirTree(paths: string[], expanded: string[], compactDirectories: boolean): Directory {
     const root: Directory = { ...DefaultRoot, subdirs: new Map() };
 
     paths.forEach((path) => {
@@ -258,7 +258,7 @@ function buildDirTree(paths: string[], expanded: string[], compactFolders: boole
         }
     });
 
-    return compactFolders ? compactDirectoriesTree(root) : root;
+    return compactDirectories ? compactDirectoriesTree(root) : root;
 }
 
 function compactDirectoriesTree(root: Directory): Directory {
