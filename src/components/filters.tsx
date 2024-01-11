@@ -233,7 +233,7 @@ const DefaultRoot: Directory = {
     level: -1,
 };
 
-function buildDirTree(paths: string[], expanded: string[]): Directory {
+function buildDirTree(paths: string[], expanded: string[], compactDirectories: boolean): Directory {
     const root: Directory = { ...DefaultRoot, subdirs: new Map() };
 
     paths.forEach((path) => {
@@ -258,7 +258,34 @@ function buildDirTree(paths: string[], expanded: string[]): Directory {
         }
     });
 
-    return root;
+    return compactDirectories ? compactDirectoriesTree(root) : root;
+}
+
+function compactDirectoriesTree(root: Directory): Directory {
+    const result = squashSingleChildDirectory(root);
+
+    for (const [key, dir] of result.subdirs) {
+        dir.level = result.level + 1;
+        const condensedDir = compactDirectoriesTree(dir);
+        result.subdirs.set(key, condensedDir);
+    }
+
+    return result;
+}
+
+function squashSingleChildDirectory(root: Directory): Directory {
+    let result = root;
+
+    if (root.subdirs.size === 1) {
+        const [child] = root.subdirs.values();
+        if (root.count === child.count) {
+            child.name = root.name + "/" + child.name;
+            child.level = root.level;
+            result = squashSingleChildDirectory(child);
+        }
+    }
+
+    return result;
 }
 
 function flattenTree(root: Directory): Directory[] {
@@ -297,9 +324,9 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         [torrents]);
 
     const dirs = useMemo<Directory[]>(() => {
-        const tree = buildDirTree(paths, serverConfig.expandedDirFilters);
+        const tree = buildDirTree(paths, serverConfig.expandedDirFilters, config.values.interface.compactDirectories);
         return flattenTree(tree);
-    }, [paths, serverConfig.expandedDirFilters]);
+    }, [paths, serverConfig.expandedDirFilters, config.values.interface.compactDirectories]);
 
     const [labels, trackers] = useMemo(() => {
         const labels: Record<string, number> = {};
@@ -325,12 +352,14 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         }, config.values.interface.filterSections);
     const [sectionsMap, setSectionsMap] = useState(getSectionsMap(sections));
     const [statusFiltersVisibility, setStatusFiltersVisibility] = useState(config.values.interface.statusFiltersVisibility);
+    const [compactDirectories, setCompactDirectories] = useState(config.values.interface.compactDirectories);
 
     useEffect(() => {
         config.values.interface.filterSections = sections;
         config.values.interface.statusFiltersVisibility = statusFiltersVisibility;
+        config.values.interface.compactDirectories = compactDirectories;
         setSectionsMap(getSectionsMap(sections));
-    }, [config, sections, statusFiltersVisibility]);
+    }, [config, sections, statusFiltersVisibility, compactDirectories]);
 
     const [info, setInfo, handler] = useContextMenu();
 
@@ -364,6 +393,11 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
             setCurrentFilters({ verb: "toggle", filter: selectedFilter });
         }
     }, [statusFiltersVisibility, currentFilters, setCurrentFilters]);
+
+    const onCompactDirectoriesClick = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setCompactDirectories(!compactDirectories);
+    }, [compactDirectories]);
 
     return (<>
         <Menu
@@ -440,6 +474,14 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                     onMouseDown={(e) => { e.stopPropagation(); }}
                 >
                     Status filters
+                </Menu.Item>
+                <Menu.Divider/>
+                <Menu.Item
+                    icon={compactDirectories ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                    onMouseEnter={closeStatusFiltersSubmenu}
+                    onMouseDown={onCompactDirectoriesClick}
+                >
+                    Compact Directories
                 </Menu.Item>
             </MemoSectionsContextMenu>
             {sections[sectionsMap.Status].visible && <div style={{ order: sectionsMap.Status }}>
