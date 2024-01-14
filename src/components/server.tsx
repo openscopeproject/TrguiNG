@@ -249,6 +249,7 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                     filteredTorrents,
                     selectedTorrents,
                     hostname,
+                    torrents: torrents ?? [],
                 }} />
             </Box>
         </Flex>
