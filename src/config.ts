@@ -141,6 +141,7 @@ interface Settings {
         statusFiltersVisibility: StatusFiltersVisibility,
         compactDirectories: boolean,
         statusBarSections: SectionsVisibility<StatusbarSectionName>,
+        statusBarGlobalSpeeds: boolean,
         showFiltersPanel: boolean,
         showDetailsPanel: boolean,
         detailsTabs: SectionsVisibility<DetailsSectionsName>,
@@ -248,6 +249,7 @@ const DefaultSettings: Settings = {
             section,
             visible: true,
         })),
+        statusBarGlobalSpeeds: false,
         showFiltersPanel: true,
         showDetailsPanel: true,
         detailsTabs: DetailsSections.map((section) => ({
