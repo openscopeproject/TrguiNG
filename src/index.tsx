@@ -20,7 +20,8 @@ import "css/loader.css";
 import { Config, ConfigContext } from "./config";
 import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useContext } from "react";
+import type { CSSProperties } from "react";
 const { TAURI, appWindow, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 const TauriApp = lazy(async () => await import("components/app"));
@@ -94,9 +95,31 @@ function setupWebEvents(config: Config) {
 }
 
 function Loader() {
+    const config = useContext(ConfigContext);
+
+    const interfaceConfig = config.values.interface;
+    const theme = interfaceConfig.theme;
+    const backgroundColorOverride =
+        interfaceConfig.styleOverrides[theme ?? "light"]?.backgroundColor;
+    const spinnerStyle: CSSProperties = {
+        borderTopColor: `hsla(222, 100%, ${theme === "dark" ? "50%" : "36%"}, 0.376)`,
+    };
+
     return (
-        <div className="lds-ring">
-            <div></div><div></div><div></div><div></div>
+        <div
+            className="loader-container"
+            style={{
+                backgroundColor:
+                    backgroundColorOverride?.computed ??
+                    (theme === "dark" ? "#1A1B1E" : "#fff"), // #1A1B1E comes from theme.colors.dark[7]
+            }}
+        >
+            <div className="lds-ring">
+                <div style={spinnerStyle}></div>
+                <div style={spinnerStyle}></div>
+                <div style={spinnerStyle}></div>
+                <div style={spinnerStyle}></div>
+            </div>
         </div>
     );
 }

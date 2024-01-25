@@ -52,7 +52,7 @@ export default function ColorChooser(props: ColorChooserProps) {
                     {Object.keys(theme.colors).map((color) => shades.map((shade) => (
                         <Grid.Col key={`${color}:${shade}`} span={1} p="0.1rem">
                             <ActionIcon onClick={() => {
-                                props.onChange({ color, shade });
+                                props.onChange({ color, shade, computed: theme.colors[color][shade] });
                                 setOpened(false);
                             }}>
                                 <ColorSwatch color={theme.colors[color][shade]} />
