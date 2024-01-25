@@ -77,12 +77,12 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
     }, [style, setStyle, setFieldValue]);
 
     const defaultColor = theme.colorScheme === "dark"
-        ? { color: "dark", shade: 0 }
-        : { color: "dark", shade: 9 };
+        ? { color: "dark", shade: 0, computed: theme.colors.dark[0] }
+        : { color: "dark", shade: 9, computed: theme.colors.dark[9] };
 
     const defaultBg = theme.colorScheme === "dark"
-        ? { color: "dark", shade: 7 }
-        : { color: "gray", shade: 0 };
+        ? { color: "dark", shade: 7, computed: theme.colors.dark[7] }
+        : { color: "gray", shade: 0, computed: theme.colors.gray[0] };
 
     return (
         <Grid align="center">

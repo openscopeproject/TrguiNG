@@ -101,6 +101,7 @@ export type WindowCloseOption = typeof WindowCloseOptions[number];
 export interface ColorSetting {
     color: DefaultMantineColor,
     shade: number,
+    computed: string,
 }
 
 export interface StyleOverrideColors {
