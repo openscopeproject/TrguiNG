@@ -95,8 +95,10 @@ export type SectionsVisibility<S extends string> = Array<{
 
 export const WindowMinimizeOptions = ["minimize", "hide"] as const;
 export const WindowCloseOptions = ["hide", "close", "quit"] as const;
+export const DeleteTorrentDataOptions = ["default off", "default on", "remember selection"] as const;
 export type WindowMinimizeOption = typeof WindowMinimizeOptions[number];
 export type WindowCloseOption = typeof WindowCloseOptions[number];
+export type DeleteTorrentDataOption = typeof DeleteTorrentDataOptions[number];
 
 export interface ColorSetting {
     color: DefaultMantineColor,
@@ -149,6 +151,8 @@ interface Settings {
         showFilesSearchBox: boolean,
         mainSplit: SplitType,
         skipAddDialog: boolean,
+        deleteTorrentData: DeleteTorrentDataOption,
+        deleteTorrentDataSelection: boolean,
         numLastSaveDirs: number,
         defaultTrackers: string[],
         styleOverrides: StyleOverrides,
@@ -260,6 +264,8 @@ const DefaultSettings: Settings = {
         showFilesSearchBox: false,
         mainSplit: "vertical",
         skipAddDialog: false,
+        deleteTorrentData: "default off",
+        deleteTorrentDataSelection: false,
         numLastSaveDirs: 20,
         defaultTrackers: [...DefaultTrackerList],
         styleOverrides: {

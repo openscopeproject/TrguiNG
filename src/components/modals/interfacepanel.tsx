@@ -21,7 +21,7 @@ import { Checkbox, Grid, NativeSelect, NumberInput, Textarea, useMantineTheme } 
 import type { UseFormReturnType } from "@mantine/form";
 import ColorChooser from "components/colorchooser";
 import { useGlobalStyleOverrides } from "themehooks";
-import type { ColorSetting, StyleOverrides } from "config";
+import { DeleteTorrentDataOptions, type ColorSetting, type DeleteTorrentDataOption, type StyleOverrides } from "config";
 import { ColorSchemeToggle } from "components/miscbuttons";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -29,6 +29,7 @@ export interface InterfaceFormValues {
     interface: {
         styleOverrides: StyleOverrides,
         skipAddDialog: boolean,
+        deleteTorrentData: DeleteTorrentDataOption,
         numLastSaveDirs: number,
         defaultTrackers: string[],
     },
@@ -110,6 +111,14 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
             <Grid.Col>
                 <Checkbox label="Skip add torrent dialog"
                     {...props.form.getInputProps("interface.skipAddDialog", { type: "checkbox" })} />
+            </Grid.Col>
+            <Grid.Col span={8}>
+                Delete torrent data
+            </Grid.Col>
+            <Grid.Col span={4}>
+                <NativeSelect data={DeleteTorrentDataOptions as unknown as string[]}
+                    value={props.form.values.interface.deleteTorrentData}
+                    onChange={(e) => { setFieldValue("interface.deleteTorrentData", e.target.value); }} />
             </Grid.Col>
             <Grid.Col span={8}>Max number of saved download directories</Grid.Col>
             <Grid.Col span={2}>

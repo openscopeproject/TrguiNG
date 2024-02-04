@@ -19,14 +19,32 @@
 import { Button, Checkbox, Divider, Group, Text } from "@mantine/core";
 import type { ModalState } from "./common";
 import { HkModal, TorrentsNames } from "./common";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useRemoveTorrents } from "queries";
 import { notifications } from "@mantine/notifications";
 import { useServerSelectedTorrents } from "rpc/torrent";
+import { ConfigContext } from "config";
 
 export function RemoveModal(props: ModalState) {
+    const config = useContext(ConfigContext);
     const serverSelected = useServerSelectedTorrents();
     const [deleteData, setDeleteData] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (props.opened) {
+            if (config.values.interface.deleteTorrentData !== "remember selection") {
+                setDeleteData(config.values.interface.deleteTorrentData === "default on");
+            } else {
+                setDeleteData(config.values.interface.deleteTorrentDataSelection);
+            }
+        }
+    }, [config, props.opened]);
+
+    const onDeleteDataChanged = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.currentTarget.checked;
+        setDeleteData(value);
+        config.values.interface.deleteTorrentDataSelection = value;
+    }, [config]);
 
     const remove = useRemoveTorrents();
 
@@ -57,7 +75,7 @@ export function RemoveModal(props: ModalState) {
             <Checkbox
                 label="Delete torrent data"
                 checked={deleteData}
-                onChange={(e) => { setDeleteData(e.currentTarget.checked); }}
+                onChange={onDeleteDataChanged}
                 my="xl" />
             <Divider my="sm" />
             <Group position="center" spacing="md">
