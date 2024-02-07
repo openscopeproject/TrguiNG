@@ -113,7 +113,16 @@ pub async fn shell_open(path: String, reveal: bool) -> Result<(), String> {
     let path = path.replace('/', "\\");
 
     if reveal {
-        opener::reveal(path).map_err(|e| e.to_string())?
+        if let Err(err) = opener::reveal(path.clone()) {
+            // if reveal action failed it's possible file is not yet created or is
+            // partially downloaded and has .part suffix, so try again to just
+            // open the parent folder
+            let path = std::path::Path::new(&path);
+            if let Some(path) = path.parent() {
+                return opener::open(path).map_err(|e| e.to_string());
+            }
+            return Err(err.to_string());
+        }
     } else {
         opener::open(path).map_err(|e| e.to_string())?
     }
