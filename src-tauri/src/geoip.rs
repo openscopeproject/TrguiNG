@@ -26,7 +26,9 @@ pub struct MmdbReaderHandle(pub Arc<Mutex<Option<maxminddb::Reader<Vec<u8>>>>>);
 #[serde(rename_all = "camelCase")]
 pub struct LookupResult {
     ip: IpAddr,
+    #[serde(skip_serializing_if = "Option::is_none")]
     iso_code: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     name: Option<String>,
 }
 
