@@ -43,14 +43,13 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
 
     const [tabs, setTabs] = useState({
         openTabs: config.getOpenTabs(),
-        currentTab: 0,
+        currentTab: config.getOpenTabs().length > 0 ? 0 : -1,
     });
 
     useEffect(() => {
         config.setOpenTabs(tabs.openTabs);
-        if (tabs.currentTab < tabs.openTabs.length) {
-            const tab = tabs.openTabs[tabs.currentTab];
-            void appWindow.setTitle(`Transmission GUI - ${tab}`);
+        if (tabs.currentTab < 0) {
+            void appWindow.setTitle("Transmission GUI");
         }
     }, [config, tabs]);
 

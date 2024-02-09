@@ -23,11 +23,11 @@ import { Box, Flex, Menu } from "@mantine/core";
 import type { SessionInfo } from "rpc/client";
 import type { Torrent } from "rpc/torrent";
 import { ColorSchemeToggle, ShowVersion } from "components/miscbuttons";
-import { ConfigContext } from "config";
+import { ConfigContext, ServerConfigContext } from "config";
 import { useContextMenu } from "./contextmenu";
 import { MemoSectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
 
-const TAURI = Object.prototype.hasOwnProperty.call(window, "__TAURI__");
+const { TAURI, appWindow } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface StatusbarProps {
     session: SessionInfo | undefined,
@@ -39,6 +39,7 @@ export interface StatusbarProps {
 
 export function Statusbar({ session, torrents, filteredTorrents, selectedTorrents, hostname }: StatusbarProps) {
     const config = useContext(ConfigContext);
+    const serverConfig = useContext(ServerConfigContext);
 
     const serverFields = useMemo(() => ({
         downRateLimit: session !== undefined
@@ -91,8 +92,12 @@ export function Statusbar({ session, torrents, filteredTorrents, selectedTorrent
     ], [showGlobalSpeeds, torrents, filteredTorrents]);
 
     useEffect(() => {
-        document.title = `↓${downRate}/s ↑${upRate}/s - TrguiNG`;
-    }, [downRate, upRate]);
+        const speeds = `↓${downRate}/s ↑${upRate}/s`;
+        document.title = `${speeds} - TrguiNG`;
+        if (TAURI) {
+            void appWindow.setTitle(`Transmission GUI - ${serverConfig.name} (${speeds})`);
+        }
+    }, [serverConfig, downRate, upRate]);
 
     const [info, setInfo, handler] = useContextMenu();
 
