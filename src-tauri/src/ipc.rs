@@ -87,6 +87,11 @@ async fn http_response(
     args_lock: Arc<Semaphore>,
     req: Request<Body>,
 ) -> hyper::Result<Response<Body>> {
+    let content_type = req.headers().get("Content-Type").and_then(|ct| ct.to_str().ok()).unwrap_or("");
+    if content_type != "application/json" && req.method() != Method::OPTIONS {
+        return Ok(invalid_request(req.headers(), "unexpected content-type"));
+    }
+
     let toast = req.headers().get("X-TrguiNG-Toast").is_some();
     let sound = req.headers().get("X-TrguiNG-Sound").is_some();
 
@@ -99,7 +104,7 @@ async fn http_response(
             }
 
             let lock = args_lock.acquire().await.unwrap();
-            send_payoad(&app, payload).await;
+            send_payload(&app, payload).await;
             drop(lock);
 
             Ok(Response::builder().body(Body::from("TrguiNG OK")).unwrap())
@@ -224,7 +229,7 @@ async fn proxy_fetch(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
     }
 }
 
-async fn send_payoad(app: &AppHandle, payload: Bytes) {
+async fn send_payload(app: &AppHandle, payload: Bytes) {
     app.get_window("main")
         .unwrap()
         .emit(
