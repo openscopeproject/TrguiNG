@@ -86,7 +86,7 @@ impl CreationRequests {
 
         let mut builder = TorrentBuilder::new(info.path, info.piece_length)
             .set_name(info.name)
-            .set_announce(info.announce_list.get(0).cloned())
+            .set_announce(info.announce_list.first().cloned())
             .add_extra_field(
                 "created by".into(),
                 BencodeElem::String(format!("TrguiNG {}", info.version)),
