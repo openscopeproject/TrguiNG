@@ -83,7 +83,9 @@ export class TransmissionClient {
 
     constructor(connection: ServerConnection, toastNotifications: boolean, toastNotificationSound: boolean, timeout = 15) {
         this.url = encodeURIComponent(connection.url);
-        this.headers = {};
+        this.headers = {
+            "Content-Type": "application/json",
+        };
         if (toastNotifications) {
             this.headers["X-TrguiNG-toast"] = "true";
         }
@@ -384,7 +386,7 @@ export class TransmissionClient {
         const url = `${RUST_BACKEND}/iplookup`;
         const body = JSON.stringify(ips);
 
-        const response = await fetch(url, { method: "POST", body });
+        const response = await fetch(url, { method: "POST", body, headers: { "Content-Type": "application/json" } });
 
         if (response.ok) {
             return await response.json();
