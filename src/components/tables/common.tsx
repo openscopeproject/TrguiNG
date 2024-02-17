@@ -208,8 +208,8 @@ function useSelectHandler<TData>(
     return [lastIndex, onRowClick];
 }
 
-function useTableVirtualizer(count: number): [React.MutableRefObject<null>, number, Virtualizer<Element, Element>] {
-    const parentRef = useRef(null);
+function useTableVirtualizer(count: number): [React.MutableRefObject<HTMLElement | null>, number, Virtualizer<HTMLElement, Element>] {
+    const parentRef = useRef<HTMLElement | null>(null);
     const [rowHeight, setRowHeight] = useState(0);
 
     const { value: fontSize } = useFontSize();
@@ -231,6 +231,29 @@ function useTableVirtualizer(count: number): [React.MutableRefObject<null>, numb
     useEffect(() => { measure(); }, [rowHeight, measure]);
 
     return [parentRef, rowHeight, rowVirtualizer];
+}
+
+function useSynchronizedScroll(fromRef: React.MutableRefObject<HTMLElement | null>, toRef: React.MutableRefObject<HTMLElement | null>): [
+    (node: HTMLElement | null) => void,
+    (node: HTMLElement | null) => void,
+    () => void,
+] {
+    const syncScroll = useCallback(() => {
+        if (fromRef.current == null || toRef.current == null) return;
+        toRef.current.style.translate = `${-fromRef.current.scrollLeft}px`;
+    }, [fromRef, toRef]);
+
+    const toRefProxy = useCallback((node: HTMLElement | null) => {
+        toRef.current = node;
+        syncScroll();
+    }, [syncScroll, toRef]);
+
+    const fromRefProxy = useCallback((node: HTMLElement | null) => {
+        fromRef.current = node;
+        syncScroll();
+    }, [syncScroll, fromRef]);
+
+    return [fromRefProxy, toRefProxy, syncScroll];
 }
 
 export type TableSelectReducer = React.Dispatch<{ verb: "add" | "set" | "toggle", ids: string[] }>;
@@ -530,24 +553,20 @@ export function TrguiTable<TData>(props: {
 
     const width = table.getTotalSize();
 
-    const [horizScroll, setHorizScroll] = useState(0);
-    const onTableScroll = useCallback((e: React.UIEvent) => {
-        setHorizScroll(e.currentTarget.scrollLeft);
-    }, []);
+    const headerRef = useRef<HTMLElement | null>(null);
+    const [parentRefProxy, headerRefProxy, syncHeaderScroll] = useSynchronizedScroll(parentRef, headerRef);
 
     return (
         <div className="torrent-table-container">
             <Box
+                ref={headerRefProxy}
                 sx={(theme) => ({
                     height: `${rowHeight}px`,
                     width: `${width}px`,
                     backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
                     flexShrink: 0,
                     position: "relative",
-                })}
-                style={{
-                    translate: `${-horizScroll}px`,
-                }}>
+                })}>
                 {table.getHeaderGroups().map(headerGroup => (
                     <MemoizedHeaderRow key={headerGroup.id} {...{
                         headerGroup,
@@ -562,7 +581,7 @@ export function TrguiTable<TData>(props: {
                     }} />
                 ))}
             </Box>
-            <div ref={parentRef} className="torrent-table-rows" onScroll={onTableScroll} tabIndex={-1}>
+            <div ref={parentRefProxy} className="torrent-table-rows" onScroll={syncHeaderScroll} tabIndex={-1}>
                 <div className="torrent-table"
                     style={{ height: `${virtualizer.getTotalSize()}px`, width: `${width}px` }}>
                     {virtualizer.getVirtualItems()
