@@ -23,18 +23,17 @@ urlencoding = "^2.1"
 hyper = { version = "^0.14", features = ["full"] }
 tokio = { version = "^1.28", features = ["net"] }
 serde = { version = "^1.0", features = ["derive"] }
-tauri = { version = "^1.4", features = [ "clipboard-write-text", "cli", "devtools", "dialog-all", "fs-read-file", "fs-write-file", "notification", "path-all", "shell-open", "system-tray", "window-center", "window-close", "window-create", "window-hide", "window-set-focus", "window-set-position", "window-set-size", "window-set-title", "window-show", "window-unminimize"] }
-tauri-utils = "^1.4"
+tauri = { version = "^1.6", features = [ "clipboard-write-text", "cli", "devtools", "dialog-all", "fs-read-file", "fs-write-file", "notification", "path-all", "shell-open", "system-tray", "window-center", "window-close", "window-create", "window-hide", "window-set-focus", "window-set-position", "window-set-size", "window-set-title", "window-show", "window-unminimize"] }
+tauri-utils = "^1.5.3"
 opener = { version = "0.6", features = ["reveal"] }
 rodio = { version = "0.17.1", features = ["mp3"], default-features = false }
 hyper-tls = "0.5.0"
-notify-rust = "4.8.0"
 flate2 = "1.0.26"
-maxminddb = "0.23"
+maxminddb = "^0.24"
 font-loader = "0.11.0"
 
 [target.'cfg(windows)'.dependencies]
-winreg = "0.50.0"
+winreg = "^0.52.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.4.0"

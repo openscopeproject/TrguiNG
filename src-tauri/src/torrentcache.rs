@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::{collections::HashMap, sync::Arc, io::Read};
+use std::{collections::HashMap, io::Read, sync::Arc};
 
 use hyper::{body::to_bytes, Body, Response};
 use serde::Deserialize;
 use tauri::{
-    // api::notification::Notification,
+    api::notification::Notification,
     async_runtime::{self, Mutex},
     AppHandle, Manager, State,
 };
@@ -173,48 +173,11 @@ async fn process_torrents(
 }
 
 fn show_notification(app: &AppHandle, name: &str) {
-    // Temporarily use notify_rust directly because default sound on windows is forced
-    // see https://github.com/tauri-apps/tauri/issues/7210
-
-    // if let Err(e) = Notification::new(app.config().tauri.bundle.identifier.as_str())
-    //     .title("Download complete")
-    //     .body(name)
-    //     .show()
-    // {
-    //     println!("Cannot show notification: {:?}", e);
-    // }
-
-    let mut notification = notify_rust::Notification::new();
-    notification.summary("Download complete");
-    notification.body(name);
-    notification.auto_icon();
-
-    let config = app.config();
-    #[allow(unused_variables)]
-    let identifier = config.tauri.bundle.identifier.as_str();
-
-    #[cfg(windows)]
+    if let Err(e) = Notification::new(app.config().tauri.bundle.identifier.as_str())
+        .title("Download complete")
+        .body(name)
+        .show()
     {
-        let exe = tauri_utils::platform::current_exe().expect("failed to get exe");
-        let exe_dir = exe.parent().expect("failed to get exe directory");
-        let curr_dir = exe_dir.display().to_string();
-        // set the notification's System.AppUserModel.ID only when running the installed app
-        if !(curr_dir.ends_with("\\target\\debug")
-            || curr_dir.ends_with("\\target\\release"))
-        {
-            notification.app_id(identifier);
-        }
+        println!("Cannot show notification: {:?}", e);
     }
-    #[cfg(target_os = "macos")]
-    {
-        let _ = notify_rust::set_application(if cfg!(feature = "custom-protocol") {
-            identifier
-        } else {
-            "com.apple.Terminal"
-        });
-    }
-
-    async_runtime::spawn(async move {
-        let _ = notification.show();
-    });
 }
