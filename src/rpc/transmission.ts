@@ -332,3 +332,9 @@ export const BandwidthGroupFields = [
 ] as const;
 
 export type BandwidthGroupFieldType = typeof BandwidthGroupFields[number];
+
+export interface FreeSpace {
+    path: string, // same as the Request argument
+    ["size-bytes"]: number, // the size, in bytes, of the free space in that directory
+    total_size: number, // the total capacity, in bytes, of that directory
+}

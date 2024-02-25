@@ -19,14 +19,17 @@
 import type { ModalProps, MultiSelectValueProps } from "@mantine/core";
 import {
     Badge, Button, CloseButton, Divider, Group, Loader, Modal, MultiSelect,
-    Text, TextInput, ActionIcon, Menu, ScrollArea,
+    Text, TextInput, ActionIcon, Menu, ScrollArea, useMantineTheme, Box,
 } from "@mantine/core";
 import { ConfigContext, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { pathMapFromServer, pathMapToServer } from "trutil";
+import { bytesToHumanReadableStr, pathMapFromServer, pathMapToServer } from "trutil";
 import * as Icon from "react-bootstrap-icons";
 import { useServerSelectedTorrents, useServerTorrentData } from "rpc/torrent";
 import { useHotkeysContext } from "hotkeys";
+import { useFreeSpace } from "queries";
+import type { Property } from "csstype";
+import debounce from "lodash-es/debounce";
 const { TAURI, dialogOpen } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface ModalState {
@@ -102,25 +105,51 @@ export function TorrentsNames() {
 
 export interface LocationData {
     path: string,
-    setPath: (s: string) => void,
+    immediateSetPath: (s: string) => void,
+    debouncedSetPath: (s: string) => void,
     lastPaths: string[],
     addPath: (dir: string) => void,
     browseHandler: () => void,
     inputLabel?: string,
     disabled?: boolean,
     focusPath?: boolean,
+    freeSpace: ReturnType<typeof useFreeSpace>,
+    spaceNeeded?: number,
+    insufficientSpace: boolean,
+    errorColor: Property.Color | undefined,
 }
 
-export function useTorrentLocation(): LocationData {
+export interface UseTorrentLocationOptions {
+    freeSpaceQueryEnabled: boolean,
+    spaceNeeded?: number,
+}
+
+export function useTorrentLocation({ freeSpaceQueryEnabled, spaceNeeded }: UseTorrentLocationOptions): LocationData {
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
     const lastPaths = useMemo(() => serverConfig.lastSaveDirs, [serverConfig]);
 
     const [path, setPath] = useState<string>("");
+    const [debouncedPath, setDebouncedPath] = useState(path);
+
+    const immediateSetPath = useCallback((newPath: string) => {
+        setPath(newPath);
+        setDebouncedPath(newPath);
+    }, []);
+
+    const debouncedSetPath = useMemo(() => {
+        const debouncedSetter = debounce(setDebouncedPath, 500, { trailing: true, leading: false });
+        return (newPath: string) => {
+            setPath(newPath);
+            debouncedSetter(newPath);
+        };
+    }, []);
+
+    const freeSpace = useFreeSpace(freeSpaceQueryEnabled, debouncedPath);
 
     useEffect(() => {
-        setPath(lastPaths.length > 0 ? lastPaths[0] : "");
-    }, [lastPaths]);
+        immediateSetPath(lastPaths.length > 0 ? lastPaths[0] : "");
+    }, [lastPaths, immediateSetPath]);
 
     const browseHandler = useCallback(() => {
         const mappedLocation = pathMapFromServer(path, serverConfig);
@@ -132,52 +161,82 @@ export function useTorrentLocation(): LocationData {
         }).then((directory) => {
             if (directory === null) return;
             const mappedPath = pathMapToServer((directory as string).replace(/\\/g, "/"), serverConfig);
-            setPath(mappedPath.replace(/\\/g, "/"));
+            immediateSetPath(mappedPath.replace(/\\/g, "/"));
         }).catch(console.error);
-    }, [serverConfig, path, setPath]);
+    }, [serverConfig, path, immediateSetPath]);
 
     const addPath = useCallback(
         (dir: string) => { config.addSaveDir(serverConfig.name, dir); },
         [config, serverConfig.name]);
 
-    return { path, setPath, lastPaths, addPath, browseHandler };
+    const theme = useMantineTheme();
+    const errorColor = useMemo(
+        () => theme.fn.variant({ variant: "filled", color: "red" }).background,
+        [theme]);
+    const insufficientSpace =
+        spaceNeeded != null &&
+        !freeSpace.isLoading &&
+        !freeSpace.isError &&
+        freeSpace.data["size-bytes"] < spaceNeeded;
+
+    return { path, immediateSetPath, debouncedSetPath, lastPaths, addPath, browseHandler, freeSpace, spaceNeeded, insufficientSpace, errorColor };
 }
 
 export function TorrentLocation(props: LocationData) {
+    const { data: freeSpace, isLoading, isError } = props.freeSpace;
     return (
-        <Group align="flex-end">
-            <TextInput
-                value={props.path}
-                label={props.inputLabel}
-                disabled={props.disabled}
-                onChange={(e) => { props.setPath(e.currentTarget.value); }}
-                styles={{ root: { flexGrow: 1 } }}
-                data-autofocus={props.focusPath}
-                rightSection={
-                    <Menu position="left-start" withinPortal
-                        middlewares={{ shift: true, flip: false }} offset={{ mainAxis: -20, crossAxis: 30 }}>
-                        <Menu.Target>
-                            <ActionIcon py="md" disabled={props.disabled}>
-                                <Icon.ClockHistory size="16" />
-                            </ActionIcon>
-                        </Menu.Target>
-                        <Menu.Dropdown>
-                            <ScrollArea.Autosize
-                                type="auto"
-                                mah="calc(100vh - 0.5rem)"
-                                miw="30rem"
-                                offsetScrollbars
-                                styles={{ viewport: { paddingBottom: 0 } }}
-                            >
-                                {props.lastPaths.map((path) => (
-                                    <Menu.Item key={path} onClick={() => { props.setPath(path); }}>{path}</Menu.Item>
-                                ))}
-                            </ScrollArea.Autosize>
-                        </Menu.Dropdown>
-                    </Menu>
-                } />
-            {TAURI && <Button onClick={props.browseHandler} disabled={props.disabled}>Browse</Button>}
-        </Group>
+        <TextInput
+            value={props.path}
+            label={props.inputLabel}
+            disabled={props.disabled}
+            onChange={(e) => { props.debouncedSetPath(e.currentTarget.value); }}
+            styles={{
+                wrapper: { flexGrow: 1 },
+                description: {
+                    color: props.insufficientSpace ? props.errorColor : undefined,
+                },
+            }}
+            data-autofocus={props.focusPath}
+            inputWrapperOrder={["label", "input", "description"]}
+            description={
+                <Text>
+                    {"Free space: "}
+                    {isLoading
+                        ? <Box ml="xs" component={Loader} variant="dots" size="xs"/>
+                        : isError
+                            ? "Unknown"
+                            : bytesToHumanReadableStr(freeSpace["size-bytes"])}
+                </Text>
+            }
+            inputContainer={
+                (children) => <Group align="flex-start">
+                    {children}
+                    {TAURI && <Button onClick={props.browseHandler} disabled={props.disabled}>Browse</Button>}
+                </Group>
+            }
+            rightSection={
+                <Menu position="left-start" withinPortal
+                    middlewares={{ shift: true, flip: false }} offset={{ mainAxis: -20, crossAxis: 30 }}>
+                    <Menu.Target>
+                        <ActionIcon py="md" disabled={props.disabled}>
+                            <Icon.ClockHistory size="16" />
+                        </ActionIcon>
+                    </Menu.Target>
+                    <Menu.Dropdown>
+                        <ScrollArea.Autosize
+                            type="auto"
+                            mah="calc(100vh - 0.5rem)"
+                            miw="30rem"
+                            offsetScrollbars
+                            styles={{ viewport: { paddingBottom: 0 } }}
+                        >
+                            {props.lastPaths.map((path) => (
+                                <Menu.Item key={path} onClick={() => { props.immediateSetPath(path); }}>{path}</Menu.Item>
+                            ))}
+                        </ScrollArea.Autosize>
+                    </Menu.Dropdown>
+                </Menu>
+            } />
     );
 }
 

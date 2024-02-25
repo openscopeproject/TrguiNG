@@ -18,7 +18,7 @@
 
 import { Buffer } from "buffer";
 
-import type { PriorityNumberType, SessionAllFieldsType, SessionStatistics, TorrentFieldsType } from "./transmission";
+import type { FreeSpace, PriorityNumberType, SessionAllFieldsType, SessionStatistics, TorrentFieldsType } from "./transmission";
 import { SessionAllFields, SessionFields, TorrentAllFields } from "./transmission";
 import type { ServerConnection } from "../config";
 import type { BandwidthGroup, TorrentBase } from "./torrent";
@@ -394,6 +394,15 @@ export class TransmissionClient {
             console.log(response);
             throw new Error(`Server returned error: ${response.status} (${response.statusText})`);
         }
+    }
+
+    async getFreeSpace(path: string): Promise<FreeSpace> {
+        const request = {
+            method: "free-space",
+            arguments: { path },
+        };
+
+        return (await this._sendRpc(request)).arguments;
     }
 }
 
