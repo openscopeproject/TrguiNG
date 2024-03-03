@@ -87,3 +87,15 @@ img {
     background-color: rgb(50, 80, 170);
     color: white;
 }
+
+.list-delete-icon {
+    height: initial;
+    width: initial;
+    min-height: initial;
+    min-width: initial;
+    display: none;
+}
+
+button[data-hovered="true"] .list-delete-icon {
+    display: block;
+}

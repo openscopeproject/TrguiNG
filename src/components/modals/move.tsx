@@ -30,7 +30,7 @@ export function MoveModal(props: ModalState) {
     const [moveData, setMoveData] = useState<boolean>(true);
 
     const location = useTorrentLocation();
-    const { setPath } = location;
+    const { setPath, addPath } = location;
 
     const changeDirectory = useTorrentChangeDirectory();
 
@@ -42,6 +42,9 @@ export function MoveModal(props: ModalState) {
                 move: moveData,
             },
             {
+                onSuccess: () => {
+                    addPath(location.path);
+                },
                 onError: (e) => {
                     console.log("Error moving torrents", e);
                     notifications.show({
@@ -53,7 +56,7 @@ export function MoveModal(props: ModalState) {
         );
 
         props.close();
-    }, [changeDirectory, serverSelected, location.path, moveData, props]);
+    }, [changeDirectory, serverSelected, location.path, moveData, props, addPath]);
 
     const calculateInitialLocation = useCallback(() => {
         const [id] = [...serverSelected];

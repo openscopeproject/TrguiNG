@@ -22,7 +22,7 @@ import {
     Text, TextInput, ActionIcon, Menu, ScrollArea,
 } from "@mantine/core";
 import { ConfigContext, ServerConfigContext } from "config";
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { pathMapFromServer, pathMapToServer } from "trutil";
 import * as Icon from "react-bootstrap-icons";
 import { useServerSelectedTorrents, useServerTorrentData } from "rpc/torrent";
@@ -105,6 +105,7 @@ export interface LocationData {
     setPath: (s: string) => void,
     lastPaths: string[],
     addPath: (dir: string) => void,
+    removePath: (dir: string) => void,
     browseHandler: () => void,
     inputLabel?: string,
     disabled?: boolean,
@@ -114,12 +115,17 @@ export interface LocationData {
 export function useTorrentLocation(): LocationData {
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
-    const lastPaths = useMemo(() => serverConfig.lastSaveDirs, [serverConfig]);
+    const [lastPaths, setLastPaths] = useState(serverConfig.lastSaveDirs);
 
     const [path, setPath] = useState<string>("");
 
+    const pathRef = useRef(path);
+    pathRef.current = path;
+
     useEffect(() => {
-        setPath(lastPaths.length > 0 ? lastPaths[0] : "");
+        if (!lastPaths.includes(pathRef.current) && lastPaths.length > 0) {
+            setPath(lastPaths[0]);
+        }
     }, [lastPaths]);
 
     const browseHandler = useCallback(() => {
@@ -136,11 +142,17 @@ export function useTorrentLocation(): LocationData {
         }).catch(console.error);
     }, [serverConfig, path, setPath]);
 
-    const addPath = useCallback(
-        (dir: string) => { config.addSaveDir(serverConfig.name, dir); },
-        [config, serverConfig.name]);
+    const addPath = useCallback((dir: string) => {
+        config.addSaveDir(serverConfig.name, dir);
+        setLastPaths([...serverConfig.lastSaveDirs]);
+    }, [config, serverConfig]);
 
-    return { path, setPath, lastPaths, addPath, browseHandler };
+    const removePath = useCallback((dir: string) => {
+        config.removeSaveDir(serverConfig.name, dir);
+        setLastPaths([...serverConfig.lastSaveDirs]);
+    }, [config, serverConfig]);
+
+    return { path, setPath, lastPaths, addPath, removePath, browseHandler };
 }
 
 export function TorrentLocation(props: LocationData) {
@@ -170,7 +182,22 @@ export function TorrentLocation(props: LocationData) {
                                 styles={{ viewport: { paddingBottom: 0 } }}
                             >
                                 {props.lastPaths.map((path) => (
-                                    <Menu.Item key={path} onClick={() => { props.setPath(path); }}>{path}</Menu.Item>
+                                    <Menu.Item key={path}
+                                        onClick={() => { props.setPath(path); }}
+                                        rightSection={
+                                            <ActionIcon
+                                                component="div"
+                                                title="Remove path"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    props.removePath(path);
+                                                }}
+                                                className="list-delete-icon">
+                                                <Icon.Trash size="12" />
+                                            </ActionIcon>}
+                                    >
+                                        {path}
+                                    </Menu.Item>
                                 ))}
                             </ScrollArea.Autosize>
                         </Menu.Dropdown>

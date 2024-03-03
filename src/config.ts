@@ -388,14 +388,20 @@ export class Config {
     }
 
     addSaveDir(serverName: string, dir: string) {
-        const saveDirs = this.getServer(serverName)?.lastSaveDirs;
+        const saveDirs = this.removeSaveDir(serverName, dir);
         if (saveDirs === undefined) return;
-        const index = saveDirs.findIndex((d) => d === dir);
-        if (index >= 0) saveDirs.splice(index, 1);
         saveDirs.unshift(dir);
         while (saveDirs.length > this.values.interface.numLastSaveDirs) {
             saveDirs.pop();
         }
+    }
+
+    removeSaveDir(serverName: string, dir: string): string[] | undefined {
+        const saveDirs = this.getServer(serverName)?.lastSaveDirs;
+        if (saveDirs === undefined) return;
+        const index = saveDirs.findIndex((d) => d === dir);
+        if (index >= 0) saveDirs.splice(index, 1);
+        return saveDirs;
     }
 }
 
