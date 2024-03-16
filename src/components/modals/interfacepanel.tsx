@@ -17,6 +17,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from "react";
+import type { ColorScheme } from "@mantine/core";
 import { Checkbox, Grid, NativeSelect, NumberInput, Textarea, useMantineTheme } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import ColorChooser from "components/colorchooser";
@@ -27,6 +28,7 @@ const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"tauri
 
 export interface InterfaceFormValues {
     interface: {
+        theme?: ColorScheme,
         styleOverrides: StyleOverrides,
         skipAddDialog: boolean,
         deleteTorrentData: DeleteTorrentDataOption,
@@ -52,6 +54,10 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
     }, []);
 
     const { setFieldValue } = props.form as unknown as UseFormReturnType<InterfaceFormValues>;
+
+    useEffect(() => {
+        setFieldValue("interface.theme", theme.colorScheme);
+    }, [setFieldValue, theme]);
 
     const setTextColor = useCallback((color: ColorSetting | undefined) => {
         const newStyle = { dark: { ...style.dark }, light: { ...style.light }, font: style.font };
