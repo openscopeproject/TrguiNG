@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Text } from "@mantine/core";
+import { Box, Text } from "@mantine/core";
 import type { ModalState } from "./common";
 import { SaveCancelModal, TorrentLabels, TorrentsNames } from "./common";
 import React, { useCallback, useEffect, useState } from "react";
@@ -97,7 +97,9 @@ export function EditLabelsModal(props: ModalState) {
                         <Text mb="md">Enter new labels for</Text>
                         <TorrentsNames />
                     </>}
-                <TorrentLabels labels={labels} setLabels={setLabels} disabled={rpcVersion < 16} />
+                <Box mih="17rem">
+                    <TorrentLabels labels={labels} setLabels={setLabels} disabled={rpcVersion < 16} initiallyOpened />
+                </Box>
             </SaveCancelModal>}
     </>;
 }

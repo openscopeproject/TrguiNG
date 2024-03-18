@@ -239,6 +239,7 @@ interface TorrentLabelsProps {
     setLabels: React.Dispatch<string[]>,
     inputLabel?: string,
     disabled?: boolean,
+    initiallyOpened?: boolean,
 }
 
 export function TorrentLabels(props: TorrentLabelsProps) {
@@ -262,6 +263,7 @@ export function TorrentLabels(props: TorrentLabelsProps) {
             withinPortal
             searchable
             creatable
+            initiallyOpened={props.initiallyOpened}
             disabled={props.disabled}
             getCreateLabel={(query) => `+ Add ${query}`}
             onCreate={(query) => {
