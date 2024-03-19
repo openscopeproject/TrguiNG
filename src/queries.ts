@@ -18,7 +18,7 @@
 
 import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import type { CachedFileTree } from "cachedfiletree";
-import { ServerConfigContext } from "config";
+import { ConfigContext, ServerConfigContext } from "config";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { SessionInfo, TorrentActionMethodsType, TorrentAddParams } from "rpc/client";
 import { useTransmissionClient } from "rpc/client";
@@ -346,13 +346,18 @@ export function useBandwidthGroups(enabled: boolean) {
 }
 
 export function useFileTree(name: string, fileTree: CachedFileTree) {
-    const initialData = useMemo(() => fileTree.getView(), [fileTree]);
+    const config = useContext(ConfigContext);
+
+    const initialData = useMemo(
+        () => fileTree.getView(config.values.interface.flatFileTree),
+        [fileTree, config]);
+
     return useQuery({
         queryKey: [name],
         initialData,
         staleTime: Infinity,
         refetchOnWindowFocus: false,
-        queryFn: () => fileTree.getView(),
+        queryFn: () => fileTree.getView(config.values.interface.flatFileTree),
     });
 }
 

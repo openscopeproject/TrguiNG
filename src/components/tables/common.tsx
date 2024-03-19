@@ -628,7 +628,7 @@ export function EditableNameField(props: EditableNameFieldProps) {
     const renameHandler = useCallback((e?: React.MouseEvent) => {
         e?.stopPropagation();
         setRenaming(true);
-        setNewName(props.currentName);
+        setNewName(props.currentName.split("/").pop() ?? "");
     }, [props.currentName]);
 
     const ref = useRef<HTMLDivElement>(null);

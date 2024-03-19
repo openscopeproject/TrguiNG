@@ -395,29 +395,48 @@ export class CachedFileTree {
         return result;
     }
 
-    getView(): FileDirEntryView[] {
-        const toView: (e: FileDirEntry) => FileDirEntryView = (e) => {
-            const subrows: FileDirEntryView[] = [];
-            if (isDirEntry(e)) {
-                subrows.push(...Array.from(e.subdirs.values()).map(toView));
-                subrows.push(...Array.from(e.files.values()).map(toView));
-            }
-            return {
-                name: e.name,
-                level: e.level,
-                fullpath: e.fullpath,
-                size: e.size,
-                done: e.done,
-                percent: e.percent,
-                wantedUpdating: e.wantedUpdating,
-                want: e.want,
-                priority: e.priority,
-                subrows,
-            };
+    getView(flat: boolean): FileDirEntryView[] {
+        const result: FileDirEntryView[] = [];
+        const getName = (e: FileDirEntry) => {
+            if (!flat || e.fullpath === e.name) return e.name;
+            return e.fullpath.split("/").slice(1).join("/");
         };
+        const copyEntry: (e: FileDirEntry, subrows: FileDirEntryView[]) => FileDirEntryView = (e, subrows) => ({
+            name: getName(e),
+            level: flat ? 0 : e.level,
+            fullpath: e.fullpath,
+            size: e.size,
+            done: e.done,
+            percent: e.percent,
+            wantedUpdating: e.wantedUpdating,
+            want: e.want,
+            priority: e.priority,
+            subrows,
+        });
 
-        const result = Array.from(this.tree.subdirs.values()).map(toView);
-        result.push(...Array.from(this.tree.files.values()).map(toView));
+        if (flat) {
+            const flatten = (e: FileDirEntry) => {
+                if (isDirEntry(e)) {
+                    for (const subdir of e.subdirs.values()) flatten(subdir);
+                    result.push(...Array.from(e.files.values()).map((e) => copyEntry(e, [])));
+                } else {
+                    result.push(copyEntry(e, []));
+                }
+            };
+            flatten(this.tree);
+        } else {
+            const toView: (e: FileDirEntry) => FileDirEntryView = (e) => {
+                const subrows: FileDirEntryView[] = [];
+                if (isDirEntry(e)) {
+                    subrows.push(...Array.from(e.subdirs.values()).map(toView));
+                    subrows.push(...Array.from(e.files.values()).map(toView));
+                }
+                return copyEntry(e, subrows);
+            };
+
+            result.push(...Array.from(this.tree.subdirs.values()).map(toView));
+            result.push(...Array.from(this.tree.files.values()).map(toView));
+        }
 
         return result;
     }

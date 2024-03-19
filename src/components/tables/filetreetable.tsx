@@ -432,6 +432,8 @@ function FiletreeContextMenu(props: {
     setExpanded?: (state: boolean) => void,
     toggleFileSearchBox: () => void,
 }) {
+    const config = useContext(ConfigContext);
+
     const { onEntryOpen } = props;
     const onOpen = useCallback((reveal: boolean) => {
         const entry = props.fileTree.findEntry(props.currentRow);
@@ -493,6 +495,13 @@ function FiletreeContextMenu(props: {
             },
         );
     }, [mutate, props.fileTree, props.selected]);
+
+    const [flatFileTree, toggleFlatFileTree] = useReducer((value: boolean) => {
+        value = !value;
+        refreshFileTree("filetree");
+        config.values.interface.flatFileTree = value;
+        return value;
+    }, config.values.interface.flatFileTree);
 
     return (
         <ContextMenu contextMenuInfo={props.contextMenuInfo} setContextMenuInfo={props.setContextMenuInfo}>
@@ -558,6 +567,11 @@ function FiletreeContextMenu(props: {
                 onClick={props.toggleFileSearchBox}
                 icon={<Icon.Search size="1.1rem" />}>
                 Toggle search
+            </Menu.Item>
+            <Menu.Item
+                onClick={toggleFlatFileTree}
+                icon={<Checkbox checked={!flatFileTree} readOnly />}>
+                Show as tree
             </Menu.Item>
         </ContextMenu >
     );
