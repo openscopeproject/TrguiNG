@@ -659,7 +659,7 @@ export function EditableNameField(props: EditableNameFieldProps) {
         if (ref.current != null) {
             const row = ref.current.parentNode?.parentNode as HTMLDivElement;
             row.onfocus = () => {
-                ref.current?.focus();
+                ref.current?.focus({ preventScroll: true });
             };
             return () => { row.onfocus = null; };
         }
