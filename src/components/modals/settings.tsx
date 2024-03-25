@@ -318,7 +318,7 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
         validateInputOnChange: true,
     });
 
-    const [currentServerIndex, setCurrentServerIndex] = useState(0);
+    const [currentServerIndex, setCurrentServerIndex] = useState(-1);
     const { setValues } = form;
 
     useEffect(() => {
@@ -360,7 +360,7 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
                     </Tabs.List>
 
                     <Tabs.Panel value="servers" pt="md" mih="24rem">
-                        <Flex h="100%" gap="0.5rem">
+                        <Flex h="100%" gap="0.5rem" mih="24rem">
                             <ServerListPanel form={form} current={currentServerIndex} setCurrent={setCurrentServerIndex} />
                             {currentServerIndex === -1
                                 ? <></>
