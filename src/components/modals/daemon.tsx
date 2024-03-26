@@ -17,13 +17,13 @@
  */
 
 import type { NumberInputProps } from "@mantine/core";
-import { Box, Button, Checkbox, Grid, Group, Loader, LoadingOverlay, NativeSelect, NumberInput, Tabs, Text, TextInput } from "@mantine/core";
+import { Box, Button, Checkbox, Grid, Group, Loader, LoadingOverlay, NativeSelect, NumberInput, Tabs, Text, TextInput, Tooltip } from "@mantine/core";
 import type { ServerConfig } from "config";
 import { ConfigContext, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import type { ModalState } from "./common";
 import { SaveCancelModal } from "./common";
-import { useMutateSession, useSessionFull, useTestPort } from "queries";
+import { useMutateSession, useSessionFull, useTestPort, useUpdateBlocklist } from "queries";
 import type { UseFormReturnType } from "@mantine/form";
 import { useForm } from "@mantine/form";
 import type { SessionInfo } from "rpc/client";
@@ -206,6 +206,20 @@ function NetworkPanel(
         }
     }, [opened, setTestPortResult, removeQuery]);
 
+    const { mutate: updateBlocklist, isLoading: updatePending } = useUpdateBlocklist();
+    const onUpdateBlocklist = useCallback(() => {
+        updateBlocklist(undefined, {
+            onError: (e) => {
+                console.log(e);
+                notifications.show({
+                    title: "Error updating blocklist",
+                    message: e.message,
+                    color: "red",
+                });
+            },
+        });
+    }, [updateBlocklist]);
+
     return (
         <Grid align="center">
             <Grid.Col span={3}>
@@ -220,13 +234,17 @@ function NetworkPanel(
                 />
             </Grid.Col>
             <Grid.Col span={3}>
-                <Button
-                    w="100%"
-                    onClick={onTestPort}
-                    title="Save port changes before testing"
-                >
-                    Test port
-                </Button>
+                <Tooltip
+                    withArrow
+                    label="Checks currently configured port. If you made changes save them before testing.">
+                    <Button
+                        w="100%"
+                        onClick={onTestPort}
+                        title="Save port changes before testing"
+                    >
+                        Test port
+                    </Button>
+                </Tooltip>
             </Grid.Col>
             <Grid.Col span={3}>
                 {fetchStatus === "fetching"
@@ -243,9 +261,6 @@ function NetworkPanel(
                 <Checkbox
                     label="Enable UPnP port forwarding"
                     {...form.getInputProps("session.port-forwarding-enabled", { type: "checkbox" })} />
-            </Grid.Col>
-            <Grid.Col>
-                <Text my="md" italic>[Test port] checks current incoming port, if you made changes save them before testing.</Text>
             </Grid.Col>
             <Grid.Col span={3}>
                 Encryption:
@@ -303,6 +318,25 @@ function NetworkPanel(
                 <TextInput
                     {...form.getInputProps("session.blocklist-url")}
                     disabled={session["blocklist-enabled"] !== true} />
+            </Grid.Col>
+            <Grid.Col span={6}>
+                <Text>Blocklist contains {session["blocklist-size"]} entries</Text>
+            </Grid.Col>
+            <Grid.Col span={3}>
+                <Tooltip
+                    withArrow
+                    label="Fetches currently configured blocklist. If you made changes save them before updating.">
+                    <Button
+                        w="100%"
+                        onClick={onUpdateBlocklist}
+                        title="Save blocklist changes before updating"
+                    >
+                        Update blocklist
+                    </Button>
+                </Tooltip>
+            </Grid.Col>
+            <Grid.Col span={3}>
+                {updatePending && <Loader size="1.5rem" />}
             </Grid.Col>
         </Grid>
     );
