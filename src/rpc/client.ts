@@ -330,6 +330,16 @@ export class TransmissionClient {
         return await this._sendRpc(request);
     }
 
+    async updateBlocklist() {
+        const request = {
+            method: "blocklist-update",
+        };
+
+        const response = await this._sendRpc(request);
+
+        return response.arguments["blocklist-size"] as number;
+    }
+
     async getBandwidthGroups(): Promise<BandwidthGroup[]> {
         const request = {
             method: "group-get",

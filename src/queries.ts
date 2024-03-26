@@ -331,6 +331,20 @@ export function useTestPort(enabled: boolean) {
     });
 }
 
+export function useUpdateBlocklist() {
+    const serverConfig = useContext(ServerConfigContext);
+    const client = useTransmissionClient();
+
+    return useMutation<number, Error>({
+        mutationFn: async () => {
+            return await client.updateBlocklist();
+        },
+        onSuccess: () => {
+            void queryClient.refetchQueries(SessionKeys.full(serverConfig.name));
+        },
+    });
+}
+
 export function useBandwidthGroups(enabled: boolean) {
     const serverConfig = useContext(ServerConfigContext);
     const client = useTransmissionClient();
