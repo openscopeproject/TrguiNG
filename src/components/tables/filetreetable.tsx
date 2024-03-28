@@ -498,8 +498,8 @@ function FiletreeContextMenu(props: {
 
     const [flatFileTree, toggleFlatFileTree] = useReducer((value: boolean) => {
         value = !value;
-        refreshFileTree("filetree");
         config.values.interface.flatFileTree = value;
+        refreshFileTree("filetree");
         return value;
     }, config.values.interface.flatFileTree);
 
