@@ -208,7 +208,7 @@ export function TorrentLocation(props: LocationData) {
     );
 }
 
-function Label({
+export function Label({
     label,
     onRemove,
     classNames,
@@ -243,14 +243,15 @@ interface TorrentLabelsProps {
 }
 
 export function TorrentLabels(props: TorrentLabelsProps) {
+    const config = useContext(ConfigContext);
     const serverData = useServerTorrentData();
 
     const initialLabelset = useMemo(() => {
-        const labels = new Set<string>();
+        const labels = new Set<string>(config.values.interface.preconfiguredLabels);
         serverData.torrents.forEach((t) => t.labels?.forEach((l: string) => labels.add(l)));
 
         return Array.from(labels).sort();
-    }, [serverData.torrents]);
+    }, [config, serverData.torrents]);
 
     const [data, setData] = useState<string[]>(initialLabelset);
 

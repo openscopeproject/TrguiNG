@@ -331,6 +331,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
     const [labels, trackers] = useMemo(() => {
         const labels: Record<string, number> = {};
         const trackers: Record<string, number> = {};
+        config.values.interface.preconfiguredLabels.forEach((label) => { labels[label] = 0; });
 
         torrents.forEach((t) => t.labels?.forEach((l: string) => {
             if (!(l in labels)) labels[l] = 0;
@@ -343,7 +344,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         });
 
         return [labels, trackers];
-    }, [torrents]);
+    }, [config, torrents]);
 
     const [sections, setSections] = useReducer(
         (_: SectionsVisibility<FilterSectionName>, sections: SectionsVisibility<FilterSectionName>) => {

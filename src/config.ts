@@ -155,6 +155,7 @@ interface Settings {
         deleteTorrentData: DeleteTorrentDataOption,
         deleteTorrentDataSelection: boolean,
         numLastSaveDirs: number,
+        preconfiguredLabels: string[],
         defaultTrackers: string[],
         styleOverrides: StyleOverrides,
     },
@@ -269,6 +270,7 @@ const DefaultSettings: Settings = {
         deleteTorrentData: "default off",
         deleteTorrentDataSelection: false,
         numLastSaveDirs: 20,
+        preconfiguredLabels: [],
         defaultTrackers: [...DefaultTrackerList],
         styleOverrides: {
             dark: {},
