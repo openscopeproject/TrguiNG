@@ -125,6 +125,9 @@ function GlobalStyles() {
                     ? theme.fn.rgba(theme.colors.gray[7], 0.5)
                     : theme.fn.rgba(theme.colors.gray[5], 0.5),
             },
+            "svg:not(:root)": {
+                overflow: "visible",
+            },
         })} />
     );
 }

@@ -193,7 +193,7 @@ function NameField(props: TableFieldProps) {
 
     return (
         <EditableNameField currentName={currentName} onUpdate={rpcVersion >= 15 ? updateTorrentName : undefined}>
-            <Box pb="xs" sx={{ flexShrink: 0 }}>
+            <Box pb="xs" className="icon-container">
                 <StatusIcon />
             </Box>
         </EditableNameField>

@@ -143,7 +143,7 @@ const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
                 filter: { id: props.id, filter: props.filter.filter },
             });
         }}>
-        <div style={{ flexShrink: 0 }}><props.filter.icon /></div>
+        <div className="icon-container"><props.filter.icon /></div>
         <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.filter.name}</div>
         <div style={{ flexShrink: 0 }}>{`(${props.count})`}</div>
     </Flex>;
@@ -201,7 +201,7 @@ function DirFilterRow(props: DirFilterRowProps) {
                     filter: { id: props.id, filter },
                 });
             }}>
-            <div style={{ flexShrink: 0 }}>
+            <div className="icon-container">
                 {expandable
                     ? props.dir.expanded
                         ? <Icon.DashSquare size="1.1rem" onClick={onCollapse} style={{ cursor: "pointer" }} />

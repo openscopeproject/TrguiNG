@@ -29,6 +29,15 @@ img {
     vertical-align: middle;
 }
 
+svg:not(:root) {
+    overflow: visible;
+}
+
+.icon-container {
+    flex-shrink: 0;
+    display: contents;
+}
+
 .split-horizontal {
     display: flex;
     flex-direction: row;

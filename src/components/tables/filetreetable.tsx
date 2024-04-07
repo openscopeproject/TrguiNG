@@ -121,7 +121,7 @@ function NameField(props: TableFieldProps) {
                         onDoubleClick={(e) => { e.stopPropagation(); }} />
                 }
             </Box>
-            <Box ml="xs" sx={{ flexShrink: 0, height: "100%" }}>
+            <Box ml="xs" className="icon-container">
                 {isDir
                     ? props.row.getIsExpanded()
                         ? <Icon.DashSquare size="1.1rem" onClick={onToggleExpand} style={{ cursor: "pointer" }} />
