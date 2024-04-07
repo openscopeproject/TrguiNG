@@ -24,6 +24,7 @@ import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { bytesToHumanReadableStr, fileSystemSafeName, modKeyString, pathMapFromServer, secondsToHumanReadableStr, timestampToDateString } from "trutil";
+import type { ProgressBarVariant } from "../progressbar";
 import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
 import type { TableSelectReducer } from "./common";
@@ -324,13 +325,26 @@ function ByteRateField(props: TableFieldProps) {
 }
 
 function PercentBarField(props: TableFieldProps) {
+    const config = useContext(ConfigContext);
     const now = props.torrent[props.fieldName] * 100;
     const active = props.torrent.rateDownload > 0 || props.torrent.rateUpload > 0;
+    let variant: ProgressBarVariant = "default";
+    if (config.values.interface.progressbarStyle === "colorful") {
+        if ((props.torrent.error !== undefined && props.torrent.error > 0) ||
+            props.torrent.cachedError !== "") variant = "red";
+        else {
+            if (active) variant = "green";
+            else if (props.torrent.status === Status.stopped &&
+                props.torrent.sizeWhenDone > 0 &&
+                props.torrent.leftUntilDone === 0) variant = "dark-green";
+        }
+    }
 
     return <ProgressBar
         now={now}
         className="white-outline"
-        animate={active} />;
+        animate={config.values.interface.progressbarStyle === "animated" && active}
+        variant={variant} />;
 }
 
 const Columns = AllFields.map((f): ColumnDef<Torrent> => {

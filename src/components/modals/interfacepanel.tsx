@@ -22,7 +22,8 @@ import { Checkbox, Grid, MultiSelect, NativeSelect, NumberInput, Textarea, useMa
 import type { UseFormReturnType } from "@mantine/form";
 import ColorChooser from "components/colorchooser";
 import { useGlobalStyleOverrides } from "themehooks";
-import { DeleteTorrentDataOptions, type ColorSetting, type DeleteTorrentDataOption, type StyleOverrides } from "config";
+import { DeleteTorrentDataOptions, ProgressbarStyleOptions } from "config";
+import type { ProgressbarStyleOption, ColorSetting, DeleteTorrentDataOption, StyleOverrides } from "config";
 import { ColorSchemeToggle } from "components/miscbuttons";
 import { Label } from "./common";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
@@ -33,6 +34,7 @@ export interface InterfaceFormValues {
         styleOverrides: StyleOverrides,
         skipAddDialog: boolean,
         deleteTorrentData: DeleteTorrentDataOption,
+        progressbarStyle: ProgressbarStyleOption,
         numLastSaveDirs: number,
         preconfiguredLabels: string[],
         defaultTrackers: string[],
@@ -120,26 +122,31 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
             <Grid.Col span={1}>
                 <ColorChooser value={style[theme.colorScheme].backgroundColor ?? defaultBg} onChange={setBgColor} />
             </Grid.Col>
-            <Grid.Col span={4}>
+            <Grid.Col span={3}>
                 Delete torrent data
             </Grid.Col>
-            <Grid.Col span={4}>
+            <Grid.Col span={3}>
                 <NativeSelect data={DeleteTorrentDataOptions as unknown as string[]}
                     value={props.form.values.interface.deleteTorrentData}
                     onChange={(e) => { setFieldValue("interface.deleteTorrentData", e.target.value); }} />
             </Grid.Col>
-            <Grid.Col span={4}>
+            <Grid.Col span={6}>
                 <Checkbox label="Skip add torrent dialog"
                     {...props.form.getInputProps("interface.skipAddDialog", { type: "checkbox" })} />
             </Grid.Col>
-            <Grid.Col span={6}>Max number of saved download directories</Grid.Col>
+            <Grid.Col span={4}>Max number of saved download directories</Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
                     min={1}
                     max={100}
                     {...props.form.getInputProps("interface.numLastSaveDirs")} />
             </Grid.Col>
-            <Grid.Col span={4}></Grid.Col>
+            <Grid.Col span={3}>Progressbars</Grid.Col>
+            <Grid.Col span={3}>
+                <NativeSelect data={ProgressbarStyleOptions as unknown as string[]}
+                    value={props.form.values.interface.progressbarStyle}
+                    onChange={(e) => { setFieldValue("interface.progressbarStyle", e.target.value); }} />
+            </Grid.Col>
             <Grid.Col>
                 <MultiSelect
                     data={props.form.values.interface.preconfiguredLabels}

@@ -17,12 +17,13 @@
  */
 
 import type { AccessorFn, CellContext, ColumnDef } from "@tanstack/react-table";
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useContext } from "react";
 import type { Torrent, PeerStats } from "rpc/torrent";
 import { bytesToHumanReadableStr } from "trutil";
 import { TrguiTable, useStandardSelect } from "./common";
 import { ProgressBar } from "components/progressbar";
 import { Flex } from "@mantine/core";
+import { ConfigContext } from "config";
 const { TAURI } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 if (TAURI) await import(/* webpackChunkName: "flag-icons" */"flagsshim");
 
@@ -74,13 +75,15 @@ function ByteRateField(props: TableFieldProps) {
 }
 
 function PercentField(props: TableFieldProps) {
+    const config = useContext(ConfigContext);
     const now = props.entry[props.fieldName] * 100;
     const active = props.entry.rateToClient > 0 || props.entry.rateToPeer > 0;
 
     return <ProgressBar
         now={now}
         className="white-outline"
-        animate={active} />;
+        animate={config.values.interface.progressbarStyle === "animated" && active}
+        variant={config.values.interface.progressbarStyle === "colorful" && active ? "green" : "default"} />;
 }
 
 const Columns = AllFields.map((field): ColumnDef<PeerStats> => {
