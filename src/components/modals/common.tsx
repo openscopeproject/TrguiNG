@@ -220,6 +220,8 @@ export function Label({
                 rightSection={
                     <CloseButton
                         onMouseDown={onRemove}
+                        title="Remove"
+                        color="gray.0"
                         variant="transparent"
                         size={22}
                         iconSize={14}
