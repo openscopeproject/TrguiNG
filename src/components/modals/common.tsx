@@ -115,7 +115,11 @@ export interface LocationData {
 export function useTorrentLocation(): LocationData {
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
-    const [lastPaths, setLastPaths] = useState(serverConfig.lastSaveDirs);
+    const [lastPaths, setLastPaths] = useState([] as string[]);
+
+    useEffect(() => {
+        setLastPaths(serverConfig.lastSaveDirs);
+    }, [serverConfig]);
 
     const [path, setPath] = useState<string>("");
 
