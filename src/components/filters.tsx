@@ -134,15 +134,61 @@ interface FilterRowProps extends WithCurrentFilters {
     count: number,
 }
 
+function focusNextFilter(element: HTMLElement, next: boolean) {
+    let nextElement: HTMLElement | null | undefined;
+    const parent = element.parentElement as HTMLElement;
+    const order = parseInt(parent.style.order);
+    if (next) {
+        if (element.nextElementSibling?.hasAttribute("tabIndex") === true) {
+            nextElement = element.nextElementSibling as HTMLElement;
+        } else {
+            for (const node of parent.parentElement?.children ?? []) {
+                if (parseInt((node as HTMLElement).style.order) === order + 1) {
+                    nextElement = node.firstElementChild?.nextElementSibling as HTMLElement | null | undefined;
+                }
+            }
+        }
+    } else {
+        if (element.previousElementSibling?.hasAttribute("tabIndex") === true) {
+            nextElement = element.previousElementSibling as HTMLElement;
+        } else {
+            for (const node of parent.parentElement?.children ?? []) {
+                if (parseInt((node as HTMLElement).style.order) === order - 1) {
+                    nextElement = node.lastElementChild as HTMLElement | null | undefined;
+                }
+            }
+        }
+    }
+
+    if (nextElement !== undefined && nextElement != null) {
+        nextElement.focus();
+        nextElement.click?.();
+    }
+}
+
+function filterOnKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (event.key === "ArrowDown") {
+        event.stopPropagation();
+        event.preventDefault();
+        focusNextFilter(event.currentTarget, true);
+    }
+    if (event.key === "ArrowUp") {
+        event.stopPropagation();
+        event.preventDefault();
+        focusNextFilter(event.currentTarget, false);
+    }
+}
+
 const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
-    return <Flex align="center" gap="sm" px="xs"
+    return <Flex align="center" gap="sm" px="xs" tabIndex={-1}
         className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
         onClick={(event) => {
             props.setCurrentFilters({
                 verb: eventHasModKey(event) ? "toggle" : "set",
                 filter: { id: props.id, filter: props.filter.filter },
             });
-        }}>
+        }}
+        onKeyDown={filterOnKeyDown}>
         <div className="icon-container"><props.filter.icon /></div>
         <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.filter.name}</div>
         <div style={{ flexShrink: 0 }}>{`(${props.count})`}</div>
@@ -191,8 +237,20 @@ function DirFilterRow(props: DirFilterRowProps) {
 
     const expandable = props.dir.subdirs.size > 0;
 
+    const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLElement>) => {
+        if (expandable && !props.dir.expanded && event.key === "ArrowRight") {
+            props.dir.expanded = true;
+            props.expandedReducer({ verb: "add", value: props.dir.path });
+        } else if (expandable && props.dir.expanded && event.key === "ArrowLeft") {
+            props.dir.expanded = false;
+            props.expandedReducer({ verb: "remove", value: props.dir.path });
+        } else {
+            filterOnKeyDown(event);
+        }
+    }, [expandable, props]);
+
     return (
-        <Flex align="center" gap="sm"
+        <Flex align="center" gap="sm" tabIndex={-1}
             style={{ paddingLeft: `${props.dir.level * 1.4 + 0.25}em`, cursor: "default" }}
             className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
             onClick={(event) => {
@@ -200,7 +258,8 @@ function DirFilterRow(props: DirFilterRowProps) {
                     verb: eventHasModKey(event) ? "toggle" : "set",
                     filter: { id: props.id, filter },
                 });
-            }}>
+            }}
+            onKeyDown={onKeyDown}>
             <div className="icon-container">
                 {expandable
                     ? props.dir.expanded
@@ -441,13 +500,13 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 <Menu.Dropdown miw="10rem">
                     {statusFilters.map((f, index) =>
                         f.required !== true &&
-                            <Menu.Item
-                                key={f.name}
-                                onClick={ () => { onStatusFiltersSubmenuItemClick(index); }}
-                                icon={statusFiltersVisibility[f.name] ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
-                            >
-                                {f.name}
-                            </Menu.Item>)}
+                        <Menu.Item
+                            key={f.name}
+                            onClick={() => { onStatusFiltersSubmenuItemClick(index); }}
+                            icon={statusFiltersVisibility[f.name] ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                        >
+                            {f.name}
+                        </Menu.Item>)}
                 </Menu.Dropdown>
             </Portal>
         </Menu>
@@ -466,7 +525,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 onSectionItemMouseEnter={closeStatusFiltersSubmenu}
                 closeOnClickOutside={!statusFiltersSubmenuOpened}
             >
-                <Menu.Divider/>
+                <Menu.Divider />
                 <Menu.Item
                     ref={statusFiltersItemRef}
                     icon={<Box miw="1rem" />}
@@ -476,7 +535,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 >
                     Status filters
                 </Menu.Item>
-                <Menu.Divider/>
+                <Menu.Divider />
                 <Menu.Item
                     icon={compactDirectories ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
                     onMouseEnter={closeStatusFiltersSubmenu}
