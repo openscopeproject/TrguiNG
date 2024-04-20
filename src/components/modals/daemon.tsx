@@ -240,7 +240,7 @@ function NetworkPanel(
                     <Button
                         w="100%"
                         onClick={onTestPort}
-                        title="Save port changes before testing"
+                        title="Test port"
                     >
                         Test port
                     </Button>
@@ -329,9 +329,9 @@ function NetworkPanel(
                     <Button
                         w="100%"
                         onClick={onUpdateBlocklist}
-                        title="Save blocklist changes before updating"
+                        title="Update blocklist"
                     >
-                        Update blocklist
+                        Update
                     </Button>
                 </Tooltip>
             </Grid.Col>
