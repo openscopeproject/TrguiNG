@@ -123,7 +123,7 @@ const AllFields: readonly TableField[] = [
         accessorFn: (t) => t.peersGettingFromUs * 1e+6 + t.cachedPeersTotal,
     },
     { name: "eta", label: "ETA", component: EtaField },
-    { name: "uploadRatio", label: "Ratio", component: PositiveNumberField },
+    { name: "uploadRatio", label: "Ratio", component: FixedDecimalField },
     {
         name: "trackerStats",
         label: "Tracker",
@@ -142,8 +142,8 @@ const AllFields: readonly TableField[] = [
     { name: "activityDate", label: "Last active", component: DateDiffField },
     { name: "downloadDir", label: "Path", component: StringField },
     { name: "bandwidthPriority", label: "Priority", component: PriorityField },
-    { name: "id", label: "ID", component: StringField },
-    { name: "queuePosition", label: "Queue position", component: StringField },
+    { name: "id", label: "ID", component: PositiveNumberField },
+    { name: "queuePosition", label: "Queue position", component: PositiveNumberField },
     { name: "secondsSeeding", label: "Seeding time", component: TimeField },
     { name: "isPrivate", label: "Private", component: StringField },
     { name: "labels", label: "Labels", component: LabelsField },
@@ -213,6 +213,15 @@ function PositiveNumberField(props: TableFieldProps) {
     return (
         <div style={{ width: "100%", textAlign: "right" }}>
             {num < 0 ? "" : num}
+        </div>
+    );
+}
+
+function FixedDecimalField(props: TableFieldProps) {
+    const num = props.torrent[props.fieldName];
+    return (
+        <div style={{ width: "100%", textAlign: "right" }}>
+            {num < 0 ? "" : Number(num).toFixed(2)}
         </div>
     );
 }
