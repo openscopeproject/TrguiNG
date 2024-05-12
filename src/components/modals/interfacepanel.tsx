@@ -36,6 +36,7 @@ export interface InterfaceFormValues {
         deleteTorrentData: DeleteTorrentDataOption,
         progressbarStyle: ProgressbarStyleOption,
         numLastSaveDirs: number,
+        sortLastSaveDirs: boolean,
         preconfiguredLabels: string[],
         defaultTrackers: string[],
     },
@@ -140,6 +141,10 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                     min={1}
                     max={100}
                     {...props.form.getInputProps("interface.numLastSaveDirs")} />
+            </Grid.Col>
+            <Grid.Col span={6}>
+                <Checkbox label="Sort download directories list"
+                    {...props.form.getInputProps("interface.sortLastSaveDirs", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={3}>Progressbars</Grid.Col>
             <Grid.Col span={3}>
