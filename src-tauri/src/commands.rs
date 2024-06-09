@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::fs;
+
 use base64::{engine::general_purpose::STANDARD as b64engine, Engine as _};
 use font_loader::system_fonts;
 use lava_torrent::torrent::v1::Torrent;
@@ -265,4 +267,14 @@ pub async fn create_tray(app_handle: tauri::AppHandle) {
             .build(&app_handle)
             .ok();
     }
+}
+
+#[tauri::command]
+pub async fn save_text_file(contents: String, path: String) -> Result<(), String> {
+    fs::write(path, contents).map_err(|e| format!("Unable to write file: {}", e))
+}
+
+#[tauri::command]
+pub async fn load_text_file(path: String) -> Result<String, String> {
+    fs::read_to_string(path).map_err(|e| format!("Unable to read file: {}", e))
 }
