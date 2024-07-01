@@ -17,10 +17,10 @@
  */
 
 import type { NumberInputProps } from "@mantine/core";
-import { Box, Button, Checkbox, Grid, Group, Loader, LoadingOverlay, NativeSelect, NumberInput, Tabs, Text, TextInput, Tooltip } from "@mantine/core";
+import { Box, Button, Checkbox, Flex, Grid, Group, Loader, LoadingOverlay, NativeSelect, NumberInput, Tabs, Text, TextInput, Tooltip } from "@mantine/core";
 import type { ServerConfig } from "config";
 import { ConfigContext, ServerConfigContext } from "config";
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ModalState } from "./common";
 import { SaveCancelModal } from "./common";
 import { useMutateSession, useSessionFull, useTestPort, useUpdateBlocklist } from "queries";
@@ -498,6 +498,51 @@ function QueuePanel({ form, session }: { form: UseFormReturnType<FormValues>, se
     );
 }
 
+function MagnetHandlerPanel() {
+    const handlerUrl = useMemo(() => {
+        const handlerUrl = new URL(window.location.href);
+        handlerUrl.search = "add=%s";
+        return handlerUrl;
+    }, []);
+
+    const registerHandler = useCallback(() => {
+        navigator.registerProtocolHandler("magnet", handlerUrl.toString());
+    }, [handlerUrl]);
+
+    const unregisterHandler = useCallback(() => {
+        (navigator as any).unregisterProtocolHandler?.("magnet", handlerUrl.toString());
+    }, [handlerUrl]);
+
+    return (
+        <Grid align="center">
+            {window.location.protocol === "https:"
+                ? <>
+                    <Grid.Col span={6}>
+                        <Text>Register magnet protocol handler</Text>
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                        <Flex justify="space-around">
+                            <Button onClick={registerHandler}>Register</Button>
+                            {typeof (navigator as any).unregisterProtocolHandler === "function" &&
+                                <Button onClick={unregisterHandler}>Unregister</Button>}
+                        </Flex>
+                    </Grid.Col>
+                </>
+                : <Grid.Col>
+                    <Text mb="md">
+                        Registering magnet protocol handler is currently not available.
+                        Browsers support this feature only in secure contexts, i.e. https websites.
+                    </Text>
+                    <Text>
+                        Transmission does not natively support serving the web interface with https but you can
+                        setup a reverse proxy with ssl termination in front of it and use a self signed or letsencrypt
+                        provided free certificate to secure your transmission web endpoint.
+                    </Text>
+                </Grid.Col>}
+        </Grid>
+    );
+}
+
 export function DaemonSettingsModal(props: ModalState) {
     const { data: session, fetchStatus } = useSessionFull(props.opened);
     const mutation = useMutateSession();
@@ -552,14 +597,17 @@ export function DaemonSettingsModal(props: ModalState) {
         >
             <Box pos="relative">
                 <LoadingOverlay visible={fetchStatus === "fetching"} overlayBlur={2} />
-                <Tabs defaultValue="polling" mih="25rem">
+                <Tabs defaultValue="polling" mih="28rem">
                     <Tabs.List>
                         <Tabs.Tab value="polling" p="lg">Polling</Tabs.Tab>
                         <Tabs.Tab value="download" p="lg">Download</Tabs.Tab>
                         <Tabs.Tab value="network" p="lg">Network</Tabs.Tab>
                         <Tabs.Tab value="bandwidth" p="lg">Bandwidth</Tabs.Tab>
                         <Tabs.Tab value="queue" p="lg">Queue</Tabs.Tab>
-                        {!TAURI && <Tabs.Tab value="interface" p="lg">Interface</Tabs.Tab>}
+                        {!TAURI && <>
+                            <Tabs.Tab value="interface" p="lg">Interface</Tabs.Tab>
+                            <Tabs.Tab value="magnethandler" p="lg">Magnet links</Tabs.Tab>
+                        </>}
                     </Tabs.List>
                     {form.values.session !== undefined
                         ? <>
@@ -583,9 +631,14 @@ export function DaemonSettingsModal(props: ModalState) {
                                 <QueuePanel form={form} session={form.values.session} />
                             </Tabs.Panel>
 
-                            {!TAURI && <Tabs.Panel value="interface" pt="md">
-                                <InterfaceSettigsPanel form={form} />
-                            </Tabs.Panel>}
+                            {!TAURI && <>
+                                <Tabs.Panel value="interface" pt="md">
+                                    <InterfaceSettigsPanel form={form} />
+                                </Tabs.Panel>
+                                <Tabs.Panel value="magnethandler" pt="md">
+                                    <MagnetHandlerPanel />
+                                </Tabs.Panel>
+                            </>}
                         </>
                         : <></>}
                 </Tabs>
