@@ -255,7 +255,7 @@ export function AddMagnet(props: AddCommonModalProps) {
             <AddCommon {...common.props} disabled={existingTorrent !== undefined} />
             <Divider my="sm" />
             <Group position="center" spacing="md">
-                <Button onClick={onAdd} variant="filled"
+                <Button onClick={onAdd} variant="filled" data-autofocus
                     disabled={existingTorrent !== undefined && (magnetData?.trackers.length ?? 0) === 0}>
                     {existingTorrent === undefined ? "Add" : "Add trackers"}
                 </Button>
