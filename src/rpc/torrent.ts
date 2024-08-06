@@ -191,7 +191,7 @@ async function processPeerStats(peer: PeerStatsBase, lookupIps: boolean, client:
 
     return {
         ...peer,
-        cachedEncrypted: flags.includes("E") ? "yes" : "no",
+        cachedEncrypted: flags.includes("E") ? "🔒" : "",
         cachedFrom,
         cachedConnection: flags.includes("I") ? "incoming" : "outgoing",
         cachedProtocol: flags.includes("T") ? "µTP" : "TCP",

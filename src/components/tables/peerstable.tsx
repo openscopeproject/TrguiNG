@@ -22,7 +22,7 @@ import type { Torrent, PeerStats } from "rpc/torrent";
 import { bytesToHumanReadableStr } from "trutil";
 import { TrguiTable, useStandardSelect } from "./common";
 import { ProgressBar } from "components/progressbar";
-import { Flex } from "@mantine/core";
+import { Badge, Flex } from "@mantine/core";
 import { ConfigContext } from "config";
 const { TAURI } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 if (TAURI) await import(/* webpackChunkName: "flag-icons" */"flagsshim");
@@ -48,10 +48,10 @@ const AllFields: TableField[] = [
     { name: "progress", label: "Have", component: PercentField },
     { name: "rateToPeer", label: "Up speed", component: ByteRateField },
     { name: "rateToClient", label: "Down speed", component: ByteRateField },
-    { name: "cachedEncrypted", label: "Encrypted" },
-    { name: "cachedFrom", label: "From" },
-    { name: "cachedConnection", label: "Connection" },
-    { name: "cachedProtocol", label: "Protocol" },
+    { name: "cachedEncrypted", label: "🔒" },
+    { name: "cachedFrom", label: "From", component: FromField },
+    { name: "cachedConnection", label: "Connection", component: ConnectionField },
+    { name: "cachedProtocol", label: "Protocol", component: ProtocolField },
     { name: "cachedStatus", label: "Status" },
 ];
 
@@ -63,6 +63,51 @@ function CountryField(props: TableFieldProps) {
         {iso !== undefined && <span className={`fi fi-${iso.toLowerCase()}`} />}
         <span>{props.entry.cachedCountryName}</span>
     </Flex>;
+}
+
+function ProtocolField(props: TableFieldProps) {
+    const config = useContext(ConfigContext);
+    const protocol = props.entry.cachedProtocol;
+    if (config.values.interface.colorfulPeers) {
+        return <Badge
+            radius="md"
+            variant="filled"
+            bg={protocol === "µTP" ? "green" : "blue"}>
+            {protocol === "µTP" ? "UTP" : protocol}
+        </Badge>;
+    } else {
+        return <div>{protocol}</div>;
+    }
+}
+
+function ConnectionField(props: TableFieldProps) {
+    const config = useContext(ConfigContext);
+    const connection = props.entry.cachedConnection;
+    if (config.values.interface.colorfulPeers) {
+        return <Badge
+            radius="md"
+            variant="filled"
+            bg={connection === "incoming" ? "green" : "blue"}>
+            {connection}
+        </Badge>;
+    } else {
+        return <div>{connection}</div>;
+    }
+}
+
+function FromField(props: TableFieldProps) {
+    const config = useContext(ConfigContext);
+    const from = props.entry.cachedFrom;
+    if (config.values.interface.colorfulPeers) {
+        return <Badge
+            radius="md"
+            variant="filled"
+            bg={from === "DHT" ? "orange.7" : from === "PEX" ? "yellow.6" : "blue"}>
+            {from}
+        </Badge>;
+    } else {
+        return <div>{from}</div>;
+    }
 }
 
 function ByteRateField(props: TableFieldProps) {
