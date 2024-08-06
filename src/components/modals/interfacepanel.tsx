@@ -18,7 +18,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import type { ColorScheme } from "@mantine/core";
-import { Checkbox, Grid, MultiSelect, NativeSelect, NumberInput, Textarea, useMantineTheme } from "@mantine/core";
+import { Checkbox, Grid, MultiSelect, NativeSelect, NumberInput, Switch, Textarea, useMantineTheme } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import ColorChooser from "components/colorchooser";
 import { useGlobalStyleOverrides } from "themehooks";
@@ -35,6 +35,7 @@ export interface InterfaceFormValues {
         skipAddDialog: boolean,
         deleteTorrentData: DeleteTorrentDataOption,
         progressbarStyle: ProgressbarStyleOption,
+        colorfulPeers: boolean,
         numLastSaveDirs: number,
         sortLastSaveDirs: boolean,
         preconfiguredLabels: string[],
@@ -151,6 +152,11 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                 <NativeSelect data={ProgressbarStyleOptions as unknown as string[]}
                     value={props.form.values.interface.progressbarStyle}
                     onChange={(e) => { setFieldValue("interface.progressbarStyle", e.target.value); }} />
+            </Grid.Col>
+            <Grid.Col span={6}>Colorful peers list</Grid.Col>
+            <Grid.Col span={2}>
+                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={{ track: { flexGrow: 1 } }}
+                    {...props.form.getInputProps("interface.colorfulPeers", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col>
                 <MultiSelect
