@@ -349,21 +349,35 @@ function PercentBarField(props: TableFieldProps) {
     const now = props.torrent[props.fieldName] * 100;
     const active = props.torrent.rateDownload > 0 || props.torrent.rateUpload > 0;
     let variant: ProgressBarVariant = "default";
-    if (config.values.interface.progressbarStyle === "colorful") {
-        if ((props.torrent.error !== undefined && props.torrent.error > 0) ||
-            props.torrent.cachedError !== "") variant = "red";
-        else {
-            if (active) variant = "green";
-            else if (props.torrent.status === Status.stopped &&
-                props.torrent.sizeWhenDone > 0 &&
-                props.torrent.leftUntilDone === 0) variant = "dark-green";
+
+    if (config.values.interface.colorfulProgressbars) {
+        if ((props.torrent.error !== undefined && props.torrent.error > 0) || props.torrent.cachedError !== "") {
+            variant = "red";
+        } else {
+            if (!config.values.interface.animatedProgressbars) {
+                if (active) variant = "green";
+            } else {
+                if (props.torrent.status === Status.stopped && props.torrent.sizeWhenDone > 0) {
+                    if (props.torrent.leftUntilDone === 0) {
+                        variant = "dark-green";
+                    } else {
+                        variant = "yellow";
+                    }
+                } else if (props.torrent.status === Status.seeding) {
+                    variant = "green";
+                } else if (props.torrent.status === Status.queuedToVerify ||
+                    props.torrent.status === Status.queuedToDownload ||
+                    props.torrent.status === Status.queuedToSeed) {
+                    variant = "grey";
+                }
+            }
         }
     }
 
     return <ProgressBar
         now={now}
         className="white-outline"
-        animate={config.values.interface.progressbarStyle === "animated" && active}
+        animate={config.values.interface.animatedProgressbars && active}
         variant={variant} />;
 }
 

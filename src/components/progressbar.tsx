@@ -19,7 +19,7 @@
 import "../css/progressbar.css";
 import React from "react";
 
-export type ProgressBarVariant = "default" | "green" | "dark-green" | "red" | "grey";
+export type ProgressBarVariant = "default" | "yellow" | "green" | "dark-green" | "red" | "grey";
 
 interface ProgressBarProps {
     now: number,
