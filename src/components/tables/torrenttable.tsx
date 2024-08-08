@@ -138,6 +138,13 @@ const AllFields: readonly TableField[] = [
         columnId: "trackerStatus",
         accessorFn: (t) => t.cachedTrackerStatus,
     },
+    {
+        name: "errorString",
+        label: "Error",
+        component: ErrorField,
+        columnId: "error",
+        accessorFn: (t) => t.cachedError,
+    },
     { name: "doneDate", label: "Completed on", component: DateField },
     { name: "activityDate", label: "Last active", component: DateDiffField },
     { name: "downloadDir", label: "Path", component: StringField },
@@ -271,6 +278,10 @@ export function TrackerField(props: TableFieldProps) {
 
 function TrackerStatusField(props: TableFieldProps) {
     return <div>{props.torrent.cachedTrackerStatus}</div>;
+}
+
+function ErrorField(props: TableFieldProps) {
+    return <div>{props.torrent.cachedError}</div>;
 }
 
 function PriorityField(props: TableFieldProps) {
