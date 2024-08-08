@@ -187,6 +187,7 @@ const DefaultColumnVisibility: Partial<Record<TableName, VisibilityState>> = {
         "file-count": false,
         pieceCount: false,
         metadataPercentComplete: false,
+        error: false,
     },
     peers: {
         flagStr: false,
