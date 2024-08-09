@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Button, Checkbox, Divider, Flex, Group, Menu, SegmentedControl, Text, TextInput } from "@mantine/core";
+import { ActionIcon, Box, Button, Checkbox, Divider, Flex, Group, Menu, SegmentedControl, Text, TextInput } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ModalState, LocationData } from "./common";
 import { HkModal, LimitedNamesList, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
@@ -32,6 +32,9 @@ import { useAddTorrent, useFileTree, useTorrentAddTrackers } from "queries";
 import { ConfigContext, ServerConfigContext } from "config";
 import type { ServerTabsRef } from "components/servertabs";
 import { bytesToHumanReadableStr, decodeMagnetLink } from "trutil";
+import { useToggle } from "@mantine/hooks";
+import * as Icon from "react-bootstrap-icons";
+
 const { TAURI, dialogOpen, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface AddCommonProps extends React.PropsWithChildren {
@@ -570,48 +573,59 @@ export function AddTorrent(props: AddCommonModalProps) {
 
     const torrentExists = existingTorrent !== undefined;
 
+    const [fullScreen, toggleFullScreen] = useToggle();
+
     return (<>
         {!TAURI && <input ref={filesInputRef} type="file" accept=".torrent" multiple
             style={{ position: "absolute", top: "-20rem", zIndex: -1 }} />}
         {shouldOpen &&
             <HkModal opened={true} onClose={modalClose} centered size="lg"
-                styles={{ title: { flexGrow: 1 } }}
-                title={<Flex w="100%" align="center" justify="space-between">
+                fullScreen={fullScreen}
+                styles={{
+                    title: { flexGrow: 1 },
+                    content: { display: fullScreen ? "flex" : "block", flexDirection: "column" },
+                    body: { display: fullScreen ? "flex" : "block", flexDirection: "column", flexGrow: 1 },
+                }}
+                title={<Flex w="100%" align="center">
                     <span>Add torrent</span>
-                    {TAURI && <TabSwitchDropdown tabsRef={props.tabsRef} />}
+                    <Box sx={{ flexGrow: 1 }} />
+                    {TAURI && <>
+                        <TabSwitchDropdown tabsRef={props.tabsRef} />
+                        <ActionIcon onClick={() => { toggleFullScreen(); }}>
+                            {fullScreen ? <Icon.FullscreenExit /> : <Icon.ArrowsFullscreen />}
+                        </ActionIcon>
+                    </>}
                 </Flex>} >
                 <Divider my="sm" />
                 {torrentExists
                     ? <Text color="red" fw="bold" fz="lg">Torrent already exists</Text>
                     : <LimitedNamesList names={names} limit={1} />}
-                <div style={{ position: "relative" }}>
-                    <AddCommon {...common.props} disabled={torrentExists}>
-                        {(wantedSize > 0 || torrentData[0].files != null) &&
-                            <Text>{bytesToHumanReadableStr(wantedSize)}</Text>}
-                        {(torrentData.length > 1 || torrentData[0].files == null)
-                            ? <></>
-                            : <>
-                                <Button variant="subtle" disabled={torrentExists}
-                                    onClick={() => { setAllWanted(true); }} title="Mark all files wanted">
-                                    All
-                                </Button>
-                                <Button variant="subtle" disabled={torrentExists}
-                                    onClick={() => { setAllWanted(false); }} title="Mark all files unwanted">
-                                    None
-                                </Button>
-                            </>}
-                    </AddCommon>
+                <AddCommon {...common.props} disabled={torrentExists}>
+                    {(wantedSize > 0 || torrentData[0].files != null) &&
+                        <Text>{bytesToHumanReadableStr(wantedSize)}</Text>}
                     {(torrentData.length > 1 || torrentData[0].files == null)
                         ? <></>
-                        : <Box w="100%" h="15rem">
-                            <FileTreeTable
-                                fileTree={fileTree}
-                                data={data}
-                                brief
-                                onCheckboxChange={onCheckboxChange} />
-                        </Box>
-                    }
-                </div>
+                        : <>
+                            <Button variant="subtle" disabled={torrentExists}
+                                onClick={() => { setAllWanted(true); }} title="Mark all files wanted">
+                                All
+                            </Button>
+                            <Button variant="subtle" disabled={torrentExists}
+                                onClick={() => { setAllWanted(false); }} title="Mark all files unwanted">
+                                None
+                            </Button>
+                        </>}
+                </AddCommon>
+                {(torrentData.length > 1 || torrentData[0].files == null)
+                    ? <></>
+                    : <Box w="100%" h="15rem" sx={{ position: "relative", flexGrow: 1 }}>
+                        <FileTreeTable
+                            fileTree={fileTree}
+                            data={data}
+                            brief
+                            onCheckboxChange={onCheckboxChange} />
+                    </Box>
+                }
                 <Divider my="sm" />
                 <Group position="center" spacing="md">
                     <Button onClick={onAdd} variant="filled" data-autofocus
