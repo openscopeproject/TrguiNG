@@ -38,7 +38,7 @@ Transmission v2.40 or later is required.
 
 Prerequisites:
 - [Node.js 16](https://nodejs.org/) or later
-- [rust 1.69](https://www.rust-lang.org/) or later
+- [rust 1.70](https://www.rust-lang.org/) or later
 - Geoip lookup database in mmdb format, put it in `src-tauri`
    ```
    wget -nv -O src-tauri/dbip.mmdb "https://github.com/openscopeproject/TrguiNG/releases/latest/download/dbip.mmdb"
