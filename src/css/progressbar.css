@@ -17,6 +17,10 @@
     color: white;
 }
 
+.progressbar.yellow>:first-child {
+    background: #fab007;
+}
+
 .progressbar.red>:first-child {
     background: #fa5252;
 }
