@@ -30,7 +30,7 @@ url="https://github.com/openscopeproject/TrguiNG"
 arch=('x86_64')
 license=('AGPL-3.0')
 depends=('alsa-lib' 'cairo' 'desktop-file-utils' 'fontconfig' 'gdk-pixbuf2' 'glib2' 'gtk3' 'hicolor-icon-theme' 'libayatana-appindicator' 'libsoup' 'openssl' 'webkit2gtk')
-makedepends=('rust>=1.69.0' 'nodejs>=16.0.0' 'npm' 'git')
+makedepends=('rust>=1.70.0' 'nodejs>=16.0.0' 'npm' 'git')
 conflicts=('trgui-ng-git')
 source=("git+https://github.com/openscopeproject/TrguiNG#tag=v$pkgver"
         "https://github.com/openscopeproject/TrguiNG/releases/download/v$pkgver/dbip.mmdb"
