@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { OpenDialogOptions } from "@tauri-apps/api/dialog";
+import type { OpenDialogOptions, SaveDialogOptions } from "@tauri-apps/api/dialog";
 import type { EventCallback } from "@tauri-apps/api/event";
 import type { CloseRequestedEvent, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
 
@@ -79,6 +79,11 @@ export const dialogOpen = TAURI
     : async (options?: OpenDialogOptions) =>
         await Promise.reject<string[] | string | null>(new Error("Running outside of tauri app"));
 
+export const dialogSave = TAURI
+    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/dialog")).save
+    : async (options?: SaveDialogOptions) =>
+        await Promise.reject<string | null>(new Error("Running outside of tauri app"));
+
 export async function makeCreateTorrentView() {
     if (WebviewWindow !== undefined) {
         const webview = new WebviewWindow(`createtorrent-${Math.floor(Math.random() * 2 ** 30)}`, {
@@ -134,5 +139,68 @@ export function copyToClipboard(text: string) {
         }
 
         document.body.removeChild(textArea);
+    }
+}
+
+export async function saveJsonFile(contents: string, filename: string) {
+    if (fs !== undefined) {
+        dialogSave({
+            title: "Save interface settings",
+            defaultPath: filename,
+            filters: [{
+                name: "JSON",
+                extensions: ["json"],
+            }],
+        }).then((path) => {
+            if (path != null) {
+                void invoke("save_text_file", { contents, path });
+            }
+        }).catch(console.error);
+    } else {
+        const blob = new Blob([contents], { type: "application/json" });
+        const link = document.createElement("a");
+        const objurl = URL.createObjectURL(blob);
+        link.download = filename;
+        link.href = objurl;
+        link.click();
+    }
+}
+
+export async function loadJsonFile(): Promise<string> {
+    if (fs !== undefined) {
+        return await new Promise((resolve, reject) => {
+            dialogOpen({
+                title: "Select interface settings file",
+                filters: [{
+                    name: "JSON",
+                    extensions: ["json"],
+                }],
+            }).then((path) => {
+                if (path != null) {
+                    invoke<string>("load_text_file", { path }).then(resolve).catch(reject);
+                }
+            }).catch(reject);
+        });
+    } else {
+        return await new Promise((resolve, reject) => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = ".json";
+            input.onchange = () => {
+                const files = input.files;
+                if (files == null) reject(new Error("file not chosen"));
+                else {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        resolve(reader.result as string);
+                    };
+                    reader.onerror = () => {
+                        reject(new Error("Unable to read file"));
+                    };
+                    reader.readAsText(files[0], "UTF-8");
+                }
+            };
+            input.click();
+        });
     }
 }

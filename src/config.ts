@@ -55,7 +55,6 @@ export interface SortByConfig {
 }
 
 interface TableSettings {
-    columns: string[],
     columnVisibility: Record<string, boolean>,
     columnOrder: string[],
     columnSizes: Record<string, number>,
@@ -96,9 +95,11 @@ export type SectionsVisibility<S extends string> = Array<{
 export const WindowMinimizeOptions = ["minimize", "hide"] as const;
 export const WindowCloseOptions = ["hide", "close", "quit"] as const;
 export const DeleteTorrentDataOptions = ["default off", "default on", "remember selection"] as const;
+export const ProgressbarStyleOptions = ["plain", "animated", "colorful"] as const;
 export type WindowMinimizeOption = typeof WindowMinimizeOptions[number];
 export type WindowCloseOption = typeof WindowCloseOptions[number];
 export type DeleteTorrentDataOption = typeof DeleteTorrentDataOptions[number];
+export type ProgressbarStyleOption = typeof ProgressbarStyleOptions[number];
 
 export interface ColorSetting {
     color: DefaultMantineColor,
@@ -121,12 +122,14 @@ export interface StyleOverrides {
 
 interface Settings {
     servers: ServerConfig[],
-    openTabs: string[],
+    openTabs?: string[], // moved into app
     app: {
         window: {
             size: [number, number],
             position: [number, number] | undefined,
         },
+        openTabs: string[],
+        lastTab: number,
         deleteAdded: boolean,
         toastNotifications: boolean,
         toastNotificationSound: boolean,
@@ -155,9 +158,13 @@ interface Settings {
         deleteTorrentData: DeleteTorrentDataOption,
         deleteTorrentDataSelection: boolean,
         numLastSaveDirs: number,
+        sortLastSaveDirs: boolean,
+        preconfiguredLabels: string[],
         defaultTrackers: string[],
         styleOverrides: StyleOverrides,
+        progressbarStyle: ProgressbarStyleOption,
     },
+    configVersion: number,
 }
 
 const DefaultColumnVisibility: Partial<Record<TableName, VisibilityState>> = {
@@ -180,6 +187,7 @@ const DefaultColumnVisibility: Partial<Record<TableName, VisibilityState>> = {
         "file-count": false,
         pieceCount: false,
         metadataPercentComplete: false,
+        error: false,
     },
     peers: {
         flagStr: false,
@@ -212,12 +220,13 @@ const DefaultTrackerList = [
 
 const DefaultSettings: Settings = {
     servers: [],
-    openTabs: [],
     app: {
         window: {
             size: [1024, 800],
             position: undefined,
         },
+        openTabs: [],
+        lastTab: 0,
         deleteAdded: false,
         toastNotifications: true,
         toastNotificationSound: true,
@@ -269,12 +278,20 @@ const DefaultSettings: Settings = {
         deleteTorrentData: "default off",
         deleteTorrentDataSelection: false,
         numLastSaveDirs: 20,
+        sortLastSaveDirs: false,
+        preconfiguredLabels: [],
         defaultTrackers: [...DefaultTrackerList],
         styleOverrides: {
             dark: {},
             light: {},
         },
+        progressbarStyle: "animated",
     },
+    // This field is used to verify config struct compatibility when importing settings
+    // Bump this only when incompatible changes are made that cannot be imported into older
+    // version.
+    // 1 is used in v1.4 and later
+    configVersion: 1,
 };
 
 export class Config {
@@ -294,17 +311,25 @@ export class Config {
                 overrides[this.values.interface.theme ?? "light"].backgroundColor = overrides.backgroundColor;
                 overrides.backgroundColor = undefined;
             }
+            if (this.values.openTabs !== undefined) {
+                this.values.app.openTabs = this.values.openTabs;
+                this.values.openTabs = undefined;
+            }
         } catch (e) {
             console.log(e);
         }
 
         // sanitize data
-        this.values.openTabs = this.values.openTabs.filter(
+        this.values.app.openTabs = this.values.app.openTabs.filter(
             (name) => this.values.servers.find((s) => s.name === name) !== undefined,
         );
 
         this.values.servers = this.values.servers.map(
             (s) => ({ ...s, connection: { ...s.connection, password: deobfuscate(s.connection.password) } }));
+
+        if (this.values.app.lastTab >= this.values.app.openTabs.length) {
+            this.values.app.lastTab = -1;
+        }
 
         return this;
     }
@@ -338,23 +363,28 @@ export class Config {
     }
 
     getOpenServers(): ServerConfig[] {
-        return this.values.servers.filter((s) => this.values.openTabs.includes(s.name));
+        return this.values.servers.filter((s) => this.values.app.openTabs.includes(s.name));
     }
 
     setServers(servers: ServerConfig[]) {
         this.values.servers = servers;
     }
 
-    getServer(name: string): ServerConfig | undefined {
+    getServer(name: string | undefined): ServerConfig | undefined {
         return this.values.servers.find((s) => s.name === name);
     }
 
     getOpenTabs() {
-        return this.values.openTabs;
+        return this.values.app.openTabs;
     }
 
-    setOpenTabs(tabs: string[]) {
-        this.values.openTabs = tabs;
+    getLastOpenTab(): string | undefined {
+        return this.values.app.openTabs[this.values.app.lastTab];
+    }
+
+    setOpenTabs(tabs: string[], current: number) {
+        this.values.app.openTabs = tabs;
+        this.values.app.lastTab = current;
     }
 
     setTableColumnSizes(table: TableName, sizes: ColumnSizingState) {
@@ -404,6 +434,35 @@ export class Config {
         const index = saveDirs.findIndex((d) => d === dir);
         if (index >= 0) saveDirs.splice(index, 1);
         return saveDirs;
+    }
+
+    getExportedInterfaceSettings(): string {
+        const settings = {
+            interface: this.values.interface,
+            meta: {
+                configType: "trguing interface settings",
+                configVersion: this.values.configVersion,
+            },
+        };
+        return JSON.stringify(settings, null, 4);
+    }
+
+    async tryMergeInterfaceSettings(obj: any) {
+        if (!Object.prototype.hasOwnProperty.call(obj, "meta") ||
+            !Object.prototype.hasOwnProperty.call(obj, "interface") ||
+            !Object.prototype.hasOwnProperty.call(obj.meta, "configType") ||
+            !Object.prototype.hasOwnProperty.call(obj.meta, "configVersion") ||
+            obj.meta.configType !== "trguing interface settings") {
+            throw new Error("File does not appear to contain valid trguing interface settings");
+        }
+        if (obj.meta.configVersion > this.values.configVersion) {
+            throw new Error(
+                "This interface settings file was generated by a newer " +
+                "version of TrguiNG and can not be safely imported");
+        }
+        const merge = (await import(/* webpackChunkName: "lodash" */ "lodash-es/merge")).default;
+        merge(this.values.interface, obj.interface);
+        await this.save();
     }
 }
 

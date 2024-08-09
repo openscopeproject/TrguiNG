@@ -24,6 +24,7 @@ import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { bytesToHumanReadableStr, fileSystemSafeName, modKeyString, pathMapFromServer, secondsToHumanReadableStr, timestampToDateString } from "trutil";
+import type { ProgressBarVariant } from "../progressbar";
 import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
 import type { TableSelectReducer } from "./common";
@@ -122,7 +123,7 @@ const AllFields: readonly TableField[] = [
         accessorFn: (t) => t.peersGettingFromUs * 1e+6 + t.cachedPeersTotal,
     },
     { name: "eta", label: "ETA", component: EtaField },
-    { name: "uploadRatio", label: "Ratio", component: PositiveNumberField },
+    { name: "uploadRatio", label: "Ratio", component: FixedDecimalField },
     {
         name: "trackerStats",
         label: "Tracker",
@@ -137,12 +138,19 @@ const AllFields: readonly TableField[] = [
         columnId: "trackerStatus",
         accessorFn: (t) => t.cachedTrackerStatus,
     },
+    {
+        name: "errorString",
+        label: "Error",
+        component: ErrorField,
+        columnId: "error",
+        accessorFn: (t) => t.cachedError,
+    },
     { name: "doneDate", label: "Completed on", component: DateField },
     { name: "activityDate", label: "Last active", component: DateDiffField },
     { name: "downloadDir", label: "Path", component: StringField },
     { name: "bandwidthPriority", label: "Priority", component: PriorityField },
-    { name: "id", label: "ID", component: StringField },
-    { name: "queuePosition", label: "Queue position", component: StringField },
+    { name: "id", label: "ID", component: PositiveNumberField },
+    { name: "queuePosition", label: "Queue position", component: PositiveNumberField },
     { name: "secondsSeeding", label: "Seeding time", component: TimeField },
     { name: "isPrivate", label: "Private", component: StringField },
     { name: "labels", label: "Labels", component: LabelsField },
@@ -192,7 +200,7 @@ function NameField(props: TableFieldProps) {
 
     return (
         <EditableNameField currentName={currentName} onUpdate={rpcVersion >= 15 ? updateTorrentName : undefined}>
-            <Box pb="xs" sx={{ flexShrink: 0 }}>
+            <Box pb="xs" className="icon-container">
                 <StatusIcon />
             </Box>
         </EditableNameField>
@@ -212,6 +220,15 @@ function PositiveNumberField(props: TableFieldProps) {
     return (
         <div style={{ width: "100%", textAlign: "right" }}>
             {num < 0 ? "" : num}
+        </div>
+    );
+}
+
+function FixedDecimalField(props: TableFieldProps) {
+    const num = props.torrent[props.fieldName];
+    return (
+        <div style={{ width: "100%", textAlign: "right" }}>
+            {num < 0 ? "" : Number(num).toFixed(2)}
         </div>
     );
 }
@@ -261,6 +278,10 @@ export function TrackerField(props: TableFieldProps) {
 
 function TrackerStatusField(props: TableFieldProps) {
     return <div>{props.torrent.cachedTrackerStatus}</div>;
+}
+
+function ErrorField(props: TableFieldProps) {
+    return <div>{props.torrent.cachedError}</div>;
 }
 
 function PriorityField(props: TableFieldProps) {
@@ -324,13 +345,26 @@ function ByteRateField(props: TableFieldProps) {
 }
 
 function PercentBarField(props: TableFieldProps) {
+    const config = useContext(ConfigContext);
     const now = props.torrent[props.fieldName] * 100;
     const active = props.torrent.rateDownload > 0 || props.torrent.rateUpload > 0;
+    let variant: ProgressBarVariant = "default";
+    if (config.values.interface.progressbarStyle === "colorful") {
+        if ((props.torrent.error !== undefined && props.torrent.error > 0) ||
+            props.torrent.cachedError !== "") variant = "red";
+        else {
+            if (active) variant = "green";
+            else if (props.torrent.status === Status.stopped &&
+                props.torrent.sizeWhenDone > 0 &&
+                props.torrent.leftUntilDone === 0) variant = "dark-green";
+        }
+    }
 
     return <ProgressBar
         now={now}
         className="white-outline"
-        animate={active} />;
+        animate={config.values.interface.progressbarStyle === "animated" && active}
+        variant={variant} />;
 }
 
 const Columns = AllFields.map((f): ColumnDef<Torrent> => {

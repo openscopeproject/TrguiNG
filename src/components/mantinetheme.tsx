@@ -39,16 +39,6 @@ const Theme: (colorScheme: ColorScheme, font?: string) => MantineThemeOverride =
                 },
             },
         },
-        Tabs: {
-            styles: (theme) => ({
-                tab: {
-                    borderColor: colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
-                    "&[data-active]": {
-                        borderColor: theme.colorScheme === "dark" ? theme.colors.dark[3] : theme.colors.gray[5],
-                    },
-                },
-            }),
-        },
         Checkbox: {
             styles: {
                 input: {
@@ -124,6 +114,9 @@ function GlobalStyles() {
                 backgroundColor: theme.colorScheme === "dark"
                     ? theme.fn.rgba(theme.colors.gray[7], 0.5)
                     : theme.fn.rgba(theme.colors.gray[5], 0.5),
+            },
+            "svg:not(:root)": {
+                overflow: "visible",
             },
         })} />
     );

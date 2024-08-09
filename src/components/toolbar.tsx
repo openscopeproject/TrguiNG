@@ -19,7 +19,7 @@
 import type { MantineTheme } from "@mantine/core";
 import { ActionIcon, Button, Flex, Kbd, Menu, TextInput, useMantineTheme } from "@mantine/core";
 import debounce from "lodash-es/debounce";
-import React, { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { forwardRef, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import * as Icon from "react-bootstrap-icons";
 import PriorityIcon from "svg/icons/priority.svg";
 import type { PriorityNumberType } from "rpc/transmission";
@@ -33,6 +33,9 @@ import { useHotkeysContext } from "hotkeys";
 import { useHotkeys } from "@mantine/hooks";
 import { modKeyString } from "trutil";
 import { useServerSelectedTorrents } from "rpc/torrent";
+import { ConfigContext } from "config";
+
+const { saveJsonFile, loadJsonFile } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentPropsWithRef<"button">> {
     depressed?: boolean,
@@ -167,6 +170,8 @@ function useButtonHandlers(
 }
 
 function Toolbar(props: ToolbarProps) {
+    const config = useContext(ConfigContext);
+
     const debouncedSetSearchTerms = useMemo(
         () => debounce(props.setSearchTerms, 500, { trailing: true, leading: false }),
         [props.setSearchTerms]);
@@ -207,6 +212,30 @@ function Toolbar(props: ToolbarProps) {
         ["mod + O", props.toggleFiltersPanel],
         ["mod + I", props.toggleDetailsPanel],
     ]);
+
+    const onSettingsExport = useCallback(() => {
+        void saveJsonFile(config.getExportedInterfaceSettings(), "trguing-interface.json");
+    }, [config]);
+
+    const onSettingsImport = useCallback(async () => {
+        try {
+            const settings = await loadJsonFile();
+            await config.tryMergeInterfaceSettings(JSON.parse(settings));
+            window.location.reload();
+        } catch (e) {
+            let msg = "";
+            if (typeof e === "string") {
+                msg = e;
+            } else if (e instanceof Error) {
+                msg = e.message;
+            }
+            notifications.show({
+                title: "Error importing settings",
+                message: msg,
+                color: "red",
+            });
+        }
+    }, [config]);
 
     return (
         <Flex w="100%" align="stretch">
@@ -328,6 +357,14 @@ function Toolbar(props: ToolbarProps) {
                     <Menu.Item
                         onClick={props.toggleDetailsPanel} rightSection={<Kbd>{`${modKeyString()} I`}</Kbd>}>
                         Toggle details
+                    </Menu.Item>
+                    <Menu.Divider />
+                    <Menu.Label>Interface settings</Menu.Label>
+                    <Menu.Item onClick={onSettingsExport}>
+                        Export
+                    </Menu.Item>
+                    <Menu.Item onClick={() => { void onSettingsImport(); }}>
+                        Import
                     </Menu.Item>
                 </Menu.Dropdown>
             </Menu>

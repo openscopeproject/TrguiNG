@@ -39,6 +39,9 @@ function getTorrentError(t: TorrentBase): string {
     let noTrackerError = false;
 
     for (const trackerStat of t.trackerStats) {
+        if (trackerStat.isBackup as boolean) {
+            continue;
+        }
         let err = "";
         if (trackerStat.hasAnnounced as boolean && !(trackerStat.lastAnnounceSucceeded as boolean)) {
             err = trackerStat.lastAnnounceResult as string;

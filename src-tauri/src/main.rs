@@ -173,6 +173,8 @@ fn main() {
             commands::pass_to_window,
             commands::list_system_fonts,
             commands::create_tray,
+            commands::save_text_file,
+            commands::load_text_file,
         ])
         .manage(ListenerHandle(Arc::new(RwLock::new(ipc))))
         .manage(TorrentCacheHandle::default())

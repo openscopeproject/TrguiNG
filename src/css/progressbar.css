@@ -17,6 +17,22 @@
     color: white;
 }
 
+.progressbar.red>:first-child {
+    background: #fa5252;
+}
+
+.progressbar.green>:first-child {
+    background: #37b24d;
+}
+
+.progressbar.dark-green>:first-child {
+    background: #0f6d20;
+}
+
+.progressbar.grey>:first-child {
+    background: #677274;
+}
+
 .progressbar>:last-child {
     position: absolute;
     display: flex;

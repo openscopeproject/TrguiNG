@@ -19,11 +19,14 @@
 import "../css/progressbar.css";
 import React from "react";
 
+export type ProgressBarVariant = "default" | "green" | "dark-green" | "red" | "grey";
+
 interface ProgressBarProps {
     now: number,
     max?: number,
     label?: string,
     animate?: boolean,
+    variant?: ProgressBarVariant,
     className?: string,
 }
 
@@ -31,7 +34,10 @@ export function ProgressBar(props: ProgressBarProps) {
     const max = props.max ?? 100;
     const percent = Math.floor(1000 * props.now / max) / 10;
     const label = props.label ?? `${percent}%`;
-    const className = `progressbar ${props.animate === true ? "animate" : ""} ${props.className ?? ""}`;
+    const className = "progressbar " +
+        `${props.animate === true ? "animate" : ""} ` +
+        `${props.variant !== undefined && props.variant !== "default" ? props.variant : ""} ` +
+        `${props.className ?? ""}`;
     return (
         <div className={className}>
             <div>{label}</div>

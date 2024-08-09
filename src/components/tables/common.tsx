@@ -210,14 +210,10 @@ function useSelectHandler<TData>(
 
 function useTableVirtualizer(count: number): [React.MutableRefObject<HTMLElement | null>, number, Virtualizer<HTMLElement, Element>] {
     const parentRef = useRef<HTMLElement | null>(null);
-    const [rowHeight, setRowHeight] = useState(0);
 
     const { value: fontSize } = useFontSize();
 
-    useEffect(() => {
-        const lineHeight = getComputedStyle(document.body).lineHeight.match(/[\d.]+/)?.[0];
-        setRowHeight(Math.ceil(Number(lineHeight) * 1.05));
-    }, [fontSize]);
+    const rowHeight = Math.ceil(16 * fontSize * 1.6);
 
     const rowVirtualizer = useVirtualizer({
         count,

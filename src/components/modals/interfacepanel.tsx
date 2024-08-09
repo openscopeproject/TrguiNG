@@ -18,12 +18,14 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import type { ColorScheme } from "@mantine/core";
-import { Checkbox, Grid, NativeSelect, NumberInput, Textarea, useMantineTheme } from "@mantine/core";
+import { Checkbox, Grid, MultiSelect, NativeSelect, NumberInput, Textarea, useMantineTheme } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import ColorChooser from "components/colorchooser";
 import { useGlobalStyleOverrides } from "themehooks";
-import { DeleteTorrentDataOptions, type ColorSetting, type DeleteTorrentDataOption, type StyleOverrides } from "config";
+import { DeleteTorrentDataOptions, ProgressbarStyleOptions } from "config";
+import type { ProgressbarStyleOption, ColorSetting, DeleteTorrentDataOption, StyleOverrides } from "config";
 import { ColorSchemeToggle } from "components/miscbuttons";
+import { Label } from "./common";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface InterfaceFormValues {
@@ -32,7 +34,10 @@ export interface InterfaceFormValues {
         styleOverrides: StyleOverrides,
         skipAddDialog: boolean,
         deleteTorrentData: DeleteTorrentDataOption,
+        progressbarStyle: ProgressbarStyleOption,
         numLastSaveDirs: number,
+        sortLastSaveDirs: boolean,
+        preconfiguredLabels: string[],
         defaultTrackers: string[],
     },
 }
@@ -91,6 +96,10 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
         ? { color: "dark", shade: 7, computed: theme.colors.dark[7] }
         : { color: "gray", shade: 0, computed: theme.colors.gray[0] };
 
+    const setPreconfiguredLabels = useCallback((labels: string[]) => {
+        setFieldValue("interface.preconfiguredLabels", labels);
+    }, [setFieldValue]);
+
     return (
         <Grid align="center">
             <Grid.Col span={1}>
@@ -114,28 +123,54 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
             <Grid.Col span={1}>
                 <ColorChooser value={style[theme.colorScheme].backgroundColor ?? defaultBg} onChange={setBgColor} />
             </Grid.Col>
-            <Grid.Col>
-                <Checkbox label="Skip add torrent dialog"
-                    {...props.form.getInputProps("interface.skipAddDialog", { type: "checkbox" })} />
-            </Grid.Col>
-            <Grid.Col span={8}>
+            <Grid.Col span={3}>
                 Delete torrent data
             </Grid.Col>
-            <Grid.Col span={4}>
+            <Grid.Col span={3}>
                 <NativeSelect data={DeleteTorrentDataOptions as unknown as string[]}
                     value={props.form.values.interface.deleteTorrentData}
                     onChange={(e) => { setFieldValue("interface.deleteTorrentData", e.target.value); }} />
             </Grid.Col>
-            <Grid.Col span={8}>Max number of saved download directories</Grid.Col>
+            <Grid.Col span={6}>
+                <Checkbox label="Skip add torrent dialog"
+                    {...props.form.getInputProps("interface.skipAddDialog", { type: "checkbox" })} />
+            </Grid.Col>
+            <Grid.Col span={4}>Max number of saved download directories</Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
                     min={1}
                     max={100}
                     {...props.form.getInputProps("interface.numLastSaveDirs")} />
             </Grid.Col>
-            <Grid.Col span={2}></Grid.Col>
+            <Grid.Col span={6}>
+                <Checkbox label="Sort download directories list"
+                    {...props.form.getInputProps("interface.sortLastSaveDirs", { type: "checkbox" })} />
+            </Grid.Col>
+            <Grid.Col span={3}>Progressbars</Grid.Col>
+            <Grid.Col span={3}>
+                <NativeSelect data={ProgressbarStyleOptions as unknown as string[]}
+                    value={props.form.values.interface.progressbarStyle}
+                    onChange={(e) => { setFieldValue("interface.progressbarStyle", e.target.value); }} />
+            </Grid.Col>
             <Grid.Col>
-                <Textarea minRows={10}
+                <MultiSelect
+                    data={props.form.values.interface.preconfiguredLabels}
+                    value={props.form.values.interface.preconfiguredLabels}
+                    onChange={setPreconfiguredLabels}
+                    label="Preconfigured labels"
+                    withinPortal
+                    searchable
+                    creatable
+                    getCreateLabel={(query) => `+ Add ${query}`}
+                    onCreate={(query) => {
+                        setPreconfiguredLabels([...props.form.values.interface.preconfiguredLabels, query]);
+                        return query;
+                    }}
+                    valueComponent={Label}
+                />
+            </Grid.Col>
+            <Grid.Col>
+                <Textarea minRows={6}
                     label="Default tracker list"
                     value={props.form.values.interface.defaultTrackers.join("\n")}
                     onChange={(e) => {

@@ -23,6 +23,7 @@ import { isDirEntry } from "../../cachedfiletree";
 import { ConfigContext, ServerConfigContext } from "../../config";
 import { PriorityColors, PriorityStrings } from "../../rpc/transmission";
 import { bytesToHumanReadableStr, fileSystemSafeName, pathMapFromServer } from "../../trutil";
+import type { ProgressBarVariant } from "../progressbar";
 import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
 import type { TrguiTableRef } from "./common";
@@ -120,7 +121,7 @@ function NameField(props: TableFieldProps) {
                         onDoubleClick={(e) => { e.stopPropagation(); }} />
                 }
             </Box>
-            <Box ml="xs" sx={{ flexShrink: 0, height: "100%" }}>
+            <Box ml="xs" className="icon-container">
                 {isDir
                     ? props.row.getIsExpanded()
                         ? <Icon.DashSquare size="1.1rem" onClick={onToggleExpand} style={{ cursor: "pointer" }} />
@@ -141,9 +142,15 @@ function ByteSizeField(props: TableFieldProps) {
 }
 
 function PercentBarField(props: TableFieldProps) {
+    const config = useContext(ConfigContext);
     const now = props.entry.percent ?? 0;
+    let variant: ProgressBarVariant = "default";
+    if (config.values.interface.progressbarStyle === "colorful") {
+        if (props.entry.want === false) variant = "grey";
+        else if (now === 100) variant = "dark-green";
+    }
 
-    return <ProgressBar now={now} className="white-outline" />;
+    return <ProgressBar now={now} className="white-outline" variant={variant} />;
 }
 
 function PriorityField(props: TableFieldProps) {
@@ -498,8 +505,8 @@ function FiletreeContextMenu(props: {
 
     const [flatFileTree, toggleFlatFileTree] = useReducer((value: boolean) => {
         value = !value;
-        refreshFileTree("filetree");
         config.values.interface.flatFileTree = value;
+        refreshFileTree("filetree");
         return value;
     }, config.values.interface.flatFileTree);
 

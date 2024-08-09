@@ -61,6 +61,13 @@ function usePausingModalState(runUpdates: (run: boolean) => void): [boolean, () 
     return [opened, pauseOpen, closeResume];
 }
 
+const urlAddParam = new URLSearchParams(window.location.search).get("add");
+if (urlAddParam != null && urlAddParam !== "") {
+    const newUrl = new URL(window.location.href);
+    newUrl.search = "";
+    window.history.pushState("", "", newUrl.toString());
+}
+
 const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(function ServerModals(props, ref) {
     const [showAddMagnetModal, { open: openAddMagnetModal, close: closeAddMagnetModal }] = useDisclosure(false);
     const [showAddTorrentModal, { open: openAddTorrentModal, close: closeAddTorrentModal }] = useDisclosure(false);
@@ -86,7 +93,7 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
     const [magnetLink, setMagnetLink] = useState<string>();
     const [torrent, setTorrent] = useState<string | File>();
 
-    const [addQueue, setAddQueue] = useState<Array<string | File>>([]);
+    const [addQueue, setAddQueue] = useState<Array<string | File>>(urlAddParam != null ? [urlAddParam] : []);
 
     const enqueue = useCallback((paths: string[] | File[]) => {
         setAddQueue([...addQueue, ...paths]);
