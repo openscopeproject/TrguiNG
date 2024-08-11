@@ -160,6 +160,7 @@ interface Settings {
         preconfiguredLabels: string[],
         defaultTrackers: string[],
         styleOverrides: StyleOverrides,
+        progressbarStyle?: string, // deprecated
         animatedProgressbars: boolean,
         colorfulProgressbars: boolean,
     },
@@ -285,7 +286,7 @@ const DefaultSettings: Settings = {
             light: {},
         },
         animatedProgressbars: true,
-        colorfulProgressbars: true,
+        colorfulProgressbars: false,
     },
     // This field is used to verify config struct compatibility when importing settings
     // Bump this only when incompatible changes are made that cannot be imported into older
@@ -314,6 +315,11 @@ export class Config {
             if (this.values.openTabs !== undefined) {
                 this.values.app.openTabs = this.values.openTabs;
                 this.values.openTabs = undefined;
+            }
+            if (this.values.interface.progressbarStyle !== undefined) {
+                this.values.interface.animatedProgressbars = this.values.interface.progressbarStyle === "animated";
+                this.values.interface.colorfulProgressbars = this.values.interface.progressbarStyle === "colorful";
+                this.values.interface.progressbarStyle = undefined;
             }
         } catch (e) {
             console.log(e);
