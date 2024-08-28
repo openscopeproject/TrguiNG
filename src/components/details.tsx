@@ -18,10 +18,9 @@
 
 import React, { memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Torrent, TrackerStats } from "../rpc/torrent";
-import { bytesToHumanReadableStr, ensurePathDelimiter, fileSystemSafeName, secondsToHumanReadableStr, timestampToDateString } from "../trutil";
+import { bytesToHumanReadableStr, ensurePathDelimiter, fileSystemSafeName, secondsToHumanReadableStr, timestampToDateString, torrentProgressbarVariant } from "../trutil";
 import { FileTreeTable, useUnwantedFiles } from "./tables/filetreetable";
 import { PiecesCanvas } from "./piecescanvas";
-import type { ProgressBarVariant } from "./progressbar";
 import { ProgressBar } from "./progressbar";
 import { DateField, LabelsField, StatusField, TrackerField } from "./tables/torrenttable";
 import { TrackersTable } from "./tables/trackertable";
@@ -61,31 +60,7 @@ function DownloadBar(props: { torrent: Torrent }) {
     const now = Math.floor(percent * 1000);
     const nowStr = `${prefix}: ${now / 10}%`;
     const active = props.torrent.rateDownload > 0 || props.torrent.rateUpload > 0;
-    let variant: ProgressBarVariant = "default";
-
-    if (config.values.interface.colorfulProgressbars) {
-        if ((props.torrent.error !== undefined && props.torrent.error > 0) || props.torrent.cachedError !== "") {
-            variant = "red";
-        } else {
-            if (!config.values.interface.animatedProgressbars) {
-                if (active) variant = "green";
-            } else {
-                if (props.torrent.status === Status.stopped && props.torrent.sizeWhenDone > 0) {
-                    if (props.torrent.leftUntilDone === 0) {
-                        variant = "dark-green";
-                    } else {
-                        variant = "yellow";
-                    }
-                } else if (props.torrent.status === Status.seeding) {
-                    variant = "green";
-                } else if (props.torrent.status === Status.queuedToVerify ||
-                    props.torrent.status === Status.queuedToDownload ||
-                    props.torrent.status === Status.queuedToSeed) {
-                    variant = "grey";
-                }
-            }
-        }
-    }
+    const variant = torrentProgressbarVariant(props, config, active);
 
     return (
         <Box w="100%" my="0.5rem">
