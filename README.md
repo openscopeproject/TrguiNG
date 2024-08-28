@@ -8,7 +8,7 @@
 ![logo](https://i.imgur.com/QdgMWwW.png)
 
 `TrguiNG` is a rewrite of [transgui](https://github.com/transmission-remote-gui/transgui)
-project using [tauri](https://tauri.studio/).
+project using [tauri](https://tauri.app).
 Frontend is written in typescript with [react.js](https://react.dev/) and
 [mantine](https://mantine.dev/) library. Backend for the app is written in
 [rust](https://www.rust-lang.org/).
