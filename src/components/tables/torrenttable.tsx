@@ -23,7 +23,7 @@ import { useServerTorrentData, useServerRpcVersion, useServerSelectedTorrents } 
 import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
-import { bytesToHumanReadableStr, fileSystemSafeName, modKeyString, pathMapFromServer, secondsToHumanReadableStr, timestampToDateString, torrentProgressbarVariant } from "trutil";
+import { bytesToHumanReadableStr, fileSystemSafeName, modKeyString, pathMapFromServer, secondsToHumanReadableStr, timestampToDateString, torrentProgressbarStyle } from "trutil";
 import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
 import type { TableSelectReducer } from "./common";
@@ -346,14 +346,13 @@ function ByteRateField(props: TableFieldProps) {
 function PercentBarField(props: TableFieldProps) {
     const config = useContext(ConfigContext);
     const now = props.torrent[props.fieldName] * 100;
-    const active = props.torrent.rateDownload > 0 || props.torrent.rateUpload > 0;
-    const variant = torrentProgressbarVariant(props, config, active);
+    const progressbarStyle = torrentProgressbarStyle(props.torrent, config);
 
     return <ProgressBar
         now={now}
         className="white-outline"
-        animate={config.values.interface.animatedProgressbars && active}
-        variant={variant} />;
+        {...progressbarStyle}
+    />;
 }
 
 const Columns = AllFields.map((f): ColumnDef<Torrent> => {

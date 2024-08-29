@@ -18,7 +18,7 @@
 
 import React, { memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Torrent, TrackerStats } from "../rpc/torrent";
-import { bytesToHumanReadableStr, ensurePathDelimiter, fileSystemSafeName, secondsToHumanReadableStr, timestampToDateString, torrentProgressbarVariant } from "../trutil";
+import { bytesToHumanReadableStr, ensurePathDelimiter, fileSystemSafeName, secondsToHumanReadableStr, timestampToDateString, torrentProgressbarStyle } from "../trutil";
 import { FileTreeTable, useUnwantedFiles } from "./tables/filetreetable";
 import { PiecesCanvas } from "./piecescanvas";
 import { ProgressBar } from "./progressbar";
@@ -59,8 +59,7 @@ function DownloadBar(props: { torrent: Torrent }) {
     const config = useContext(ConfigContext);
     const now = Math.floor(percent * 1000);
     const nowStr = `${prefix}: ${now / 10}%`;
-    const active = props.torrent.rateDownload > 0 || props.torrent.rateUpload > 0;
-    const variant = torrentProgressbarVariant(props, config, active);
+    const progressbarStyle = torrentProgressbarStyle(props.torrent, config);
 
     return (
         <Box w="100%" my="0.5rem">
@@ -68,8 +67,7 @@ function DownloadBar(props: { torrent: Torrent }) {
                 now={now}
                 max={1000}
                 label={nowStr}
-                animate={config.values.interface.animatedProgressbars && active}
-                variant={variant}
+                {...progressbarStyle}
             />
         </Box>
     );
