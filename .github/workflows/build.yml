@@ -76,7 +76,7 @@ jobs:
       - name: install npm packages
         run: npm ci
 
-      - uses: qu1ck/action-tauri-build@5c69c9fdbb4231a738b4a668a2caddf6af45eab8
+      - uses: JonasKruckenberg/tauri-build@v1
         id: tauri_build
         with:
           target: ${{ matrix.platform.rust_target }}
