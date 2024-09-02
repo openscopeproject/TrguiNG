@@ -62,6 +62,10 @@ jobs:
         if: matrix.platform.rust_target == 'aarch64-apple-darwin'
         run: rustup target add aarch64-apple-darwin
 
+      - name: "Setup Rust"
+        if: matrix.platform.rust_target == 'x86_64-apple-darwin'
+        run: rustup target add x86_64-apple-darwin
+
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ${{ matrix.platform.rust_target }}
