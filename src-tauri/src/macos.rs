@@ -24,14 +24,13 @@ use std::{
 use objc2::{
     class, declare_class,
     ffi::NSInteger,
-    msg_send, msg_send_id,
-    mutability::Immutable,
+    msg_send, msg_send_id, mutability,
     rc::Id,
-    runtime::{NSObject, Object},
-    sel, ClassType,
+    runtime::{AnyObject, NSObject},
+    sel, ClassType, DeclaredClass,
 };
 use once_cell::sync::OnceCell;
-use tauri::{Menu, MenuItem, Submenu, CustomMenuItem};
+use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
 
 type THandler = OnceCell<Mutex<Box<dyn FnMut(Vec<String>) + Send + 'static>>>;
 
@@ -54,7 +53,7 @@ const EVENT_OPEN_DOCUMENTS: u32 = 0x6F646F63;
 const EVENT_REOPEN_APP: u32 = 0x72617070;
 
 // Adapted from https://github.com/mrmekon/fruitbasket/blob/aad14e400d710d1d46317c0d8c55ff742bfeaadd/src/osx.rs#L848
-fn parse_event(event: *mut Object) -> Vec<String> {
+fn parse_event(event: *mut AnyObject) -> Vec<String> {
     if event as u64 == 0u64 {
         return vec![];
     }
@@ -64,9 +63,9 @@ fn parse_event(event: *mut Object) -> Vec<String> {
 
         match (class, id) {
             (GURL_EVENT_CLASS, EVENT_GET_URL) => {
-                let url: *mut Object =
+                let url: *mut AnyObject =
                     msg_send![event, paramDescriptorForKeyword: KEY_DIRECT_OBJECT];
-                let nsstring: *mut Object = msg_send![url, stringValue];
+                let nsstring: *mut AnyObject = msg_send![url, stringValue];
                 let cstr: *const i8 = msg_send![nsstring, UTF8String];
 
                 if !cstr.is_null() {
@@ -76,15 +75,15 @@ fn parse_event(event: *mut Object) -> Vec<String> {
                 }
             }
             (CORE_EVENT_CLASS, EVENT_OPEN_DOCUMENTS) => {
-                let documents: *mut Object =
+                let documents: *mut AnyObject =
                     msg_send![event, paramDescriptorForKeyword: KEY_DIRECT_OBJECT];
                 let count: NSInteger = msg_send![documents, numberOfItems];
 
                 let mut paths = Vec::<String>::new();
 
                 for i in 1..count + 1 {
-                    let path: *mut Object = msg_send![documents, descriptorAtIndex: i];
-                    let nsstring: *mut Object = msg_send![path, stringValue];
+                    let path: *mut AnyObject = msg_send![documents, descriptorAtIndex: i];
+                    let nsstring: *mut AnyObject = msg_send![path, stringValue];
                     let cstr: *const i8 = msg_send![nsstring, UTF8String];
 
                     if !cstr.is_null() {
@@ -108,13 +107,15 @@ declare_class!(
 
     unsafe impl ClassType for Handler {
         type Super = NSObject;
-        type Mutability = Immutable;
+        type Mutability = mutability::Immutable;
         const NAME: &'static str = "TauriPluginDeepLinkHandler";
     }
 
+    impl DeclaredClass for Handler {}
+
     unsafe impl Handler {
         #[method(handleEvent:withReplyEvent:)]
-        fn handle_event(&self, event: *mut Object, _replace: *const Object) {
+        fn handle_event(&self, event: *mut AnyObject, _replace: *const AnyObject) {
             let s = parse_event(event);
             let mut cb = HANDLER.get().unwrap().lock().unwrap();
             cb(s);
@@ -143,7 +144,7 @@ pub fn set_handler<F: FnMut(Vec<String>) + Send + 'static>(handler: F) -> Result
 
 fn listen_apple_event(event_class: u32, event_id: u32) {
     unsafe {
-        let event_manager: Id<Object> =
+        let event_manager: Id<AnyObject> =
             msg_send_id![class!(NSAppleEventManager), sharedAppleEventManager];
 
         let handler = Handler::new();
