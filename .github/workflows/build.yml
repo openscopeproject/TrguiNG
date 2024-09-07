@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download dbip database
-        run: wget -nv -O- "https://download.db-ip.com/free/dbip-country-lite-2024-04.mmdb.gz" | zcat > dbip.mmdb
+        run: wget -nv -O- "https://download.db-ip.com/free/dbip-country-lite-2024-09.mmdb.gz" | zcat > dbip.mmdb
       - uses: actions/upload-artifact@v3
         with:
           name: dbip
@@ -62,6 +62,10 @@ jobs:
         if: matrix.platform.rust_target == 'aarch64-apple-darwin'
         run: rustup target add aarch64-apple-darwin
 
+      - name: "Setup Rust"
+        if: matrix.platform.rust_target == 'x86_64-apple-darwin'
+        run: rustup target add x86_64-apple-darwin
+
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ${{ matrix.platform.rust_target }}
@@ -76,7 +80,7 @@ jobs:
       - name: install npm packages
         run: npm ci
 
-      - uses: qu1ck/action-tauri-build@5c69c9fdbb4231a738b4a668a2caddf6af45eab8
+      - uses: JonasKruckenberg/tauri-build@v1
         id: tauri_build
         with:
           target: ${{ matrix.platform.rust_target }}
