@@ -22,8 +22,8 @@ import { Checkbox, Grid, MultiSelect, NativeSelect, NumberInput, Textarea, useMa
 import type { UseFormReturnType } from "@mantine/form";
 import ColorChooser from "components/colorchooser";
 import { useGlobalStyleOverrides } from "themehooks";
-import { DeleteTorrentDataOptions, ProgressbarStyleOptions } from "config";
-import type { ProgressbarStyleOption, ColorSetting, DeleteTorrentDataOption, StyleOverrides } from "config";
+import { DeleteTorrentDataOptions } from "config";
+import type { ColorSetting, DeleteTorrentDataOption, StyleOverrides } from "config";
 import { ColorSchemeToggle } from "components/miscbuttons";
 import { Label } from "./common";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
@@ -34,7 +34,8 @@ export interface InterfaceFormValues {
         styleOverrides: StyleOverrides,
         skipAddDialog: boolean,
         deleteTorrentData: DeleteTorrentDataOption,
-        progressbarStyle: ProgressbarStyleOption,
+        animatedProgressbars: boolean,
+        colorfulProgressbars: boolean,
         numLastSaveDirs: number,
         sortLastSaveDirs: boolean,
         preconfiguredLabels: string[],
@@ -146,11 +147,14 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                 <Checkbox label="Sort download directories list"
                     {...props.form.getInputProps("interface.sortLastSaveDirs", { type: "checkbox" })} />
             </Grid.Col>
-            <Grid.Col span={3}>Progressbars</Grid.Col>
+            <Grid.Col span={3}>Progress bars</Grid.Col>
             <Grid.Col span={3}>
-                <NativeSelect data={ProgressbarStyleOptions as unknown as string[]}
-                    value={props.form.values.interface.progressbarStyle}
-                    onChange={(e) => { setFieldValue("interface.progressbarStyle", e.target.value); }} />
+                <Checkbox label="Colorful"
+                    {...props.form.getInputProps("interface.colorfulProgressbars", { type: "checkbox" })} />
+            </Grid.Col>
+            <Grid.Col span={3}>
+                <Checkbox label="Animated"
+                    {...props.form.getInputProps("interface.animatedProgressbars", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col>
                 <MultiSelect

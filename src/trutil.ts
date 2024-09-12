@@ -16,8 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { ServerConfig } from "config";
+import type { Config, ServerConfig } from "config";
 import { useReducer } from "react";
+import type { ProgressBarVariant } from "./components/progressbar";
+import { Status } from "rpc/transmission";
+import type { Torrent } from "rpc/torrent";
 
 const SISuffixes = ["B", "KB", "MB", "GB", "TB"];
 
@@ -230,4 +233,32 @@ export function fileSystemSafeName(name: string) {
 
 export function * chainedIterables<T>(...iterables: Array<Iterable<T>>) {
     for (const iterable of iterables) yield * iterable;
+}
+
+export function torrentProgressbarStyle(torrent: Torrent, config: Config) {
+    const active = torrent.rateDownload > 0 || torrent.rateUpload > 0;
+    const animate = config.values.interface.animatedProgressbars && active;
+
+    let variant: ProgressBarVariant = "default";
+    if (config.values.interface.colorfulProgressbars) {
+        if ((torrent.error !== undefined && torrent.error > 0) || torrent.cachedError !== "") {
+            variant = "red";
+        } else {
+            if (torrent.status === Status.stopped && torrent.sizeWhenDone > 0) {
+                if (torrent.leftUntilDone === 0) {
+                    variant = "dark-green";
+                } else {
+                    variant = "yellow";
+                }
+            } else if (torrent.status === Status.seeding) {
+                variant = "green";
+            } else if (torrent.status === Status.queuedToVerify ||
+                torrent.status === Status.queuedToDownload ||
+                torrent.status === Status.queuedToSeed) {
+                variant = "grey";
+            }
+        }
+    }
+
+    return { animate, variant };
 }
