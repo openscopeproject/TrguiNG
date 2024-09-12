@@ -238,28 +238,24 @@ export function * chainedIterables<T>(...iterables: Array<Iterable<T>>) {
 export function torrentProgressbarStyle(torrent: Torrent, config: Config) {
     const active = torrent.rateDownload > 0 || torrent.rateUpload > 0;
     const animate = config.values.interface.animatedProgressbars && active;
-    let variant: ProgressBarVariant = "default";
 
+    let variant: ProgressBarVariant = "default";
     if (config.values.interface.colorfulProgressbars) {
         if ((torrent.error !== undefined && torrent.error > 0) || torrent.cachedError !== "") {
             variant = "red";
         } else {
-            if (!config.values.interface.animatedProgressbars) {
-                if (active) variant = "green";
-            } else {
-                if (torrent.status === Status.stopped && torrent.sizeWhenDone > 0) {
-                    if (torrent.leftUntilDone === 0) {
-                        variant = "dark-green";
-                    } else {
-                        variant = "yellow";
-                    }
-                } else if (torrent.status === Status.seeding) {
-                    variant = "green";
-                } else if (torrent.status === Status.queuedToVerify ||
-                    torrent.status === Status.queuedToDownload ||
-                    torrent.status === Status.queuedToSeed) {
-                    variant = "grey";
+            if (torrent.status === Status.stopped && torrent.sizeWhenDone > 0) {
+                if (torrent.leftUntilDone === 0) {
+                    variant = "dark-green";
+                } else {
+                    variant = "yellow";
                 }
+            } else if (torrent.status === Status.seeding) {
+                variant = "green";
+            } else if (torrent.status === Status.queuedToVerify ||
+                torrent.status === Status.queuedToDownload ||
+                torrent.status === Status.queuedToSeed) {
+                variant = "grey";
             }
         }
     }
