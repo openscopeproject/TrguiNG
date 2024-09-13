@@ -64,6 +64,7 @@ function DownloadBar(props: { torrent: Torrent }) {
     return (
         <Box w="100%" my="0.5rem">
             <ProgressBar
+                key={props.torrent.hashString}
                 now={now}
                 max={1000}
                 label={nowStr}

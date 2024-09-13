@@ -22,11 +22,11 @@
 }
 
 .progressbar.red>:first-child {
-    background: #fa5252;
+    background: #d84d4d;
 }
 
 .progressbar.green>:first-child {
-    background: #37b24d;
+    background: #36a049;
 }
 
 .progressbar.dark-green>:first-child {
