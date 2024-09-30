@@ -50,6 +50,12 @@ const BandwidthGroupKeys = {
     all: (server: string) => [server, "bandwidth-group"] as const,
 };
 
+function useIgnoredTrackerPrefixesRe() {
+    const config = useContext(ConfigContext);
+    return useMemo(() => new RegExp(`^(?<prefix>(${config.values.interface.ignoredTrackerPrefixes.join("|")})\\d*)\\.[^.]+\\.[^.]+$`, "i"),
+        [config.values.interface.ignoredTrackerPrefixes]);
+}
+
 export function useTorrentList(enabled: boolean, fields: TorrentFieldsType[]) {
     const serverConfig = useContext(ServerConfigContext);
     const client = useTransmissionClient();
@@ -78,6 +84,8 @@ export function useTorrentList(enabled: boolean, fields: TorrentFieldsType[]) {
         ? serverConfig.intervals.torrentsMinimized
         : serverConfig.intervals.torrents);
 
+    const prefixesRe = useIgnoredTrackerPrefixesRe();
+
     return useQuery({
         queryKey: TorrentKeys.listAll(serverConfig.name, fields),
         refetchInterval,
@@ -87,8 +95,8 @@ export function useTorrentList(enabled: boolean, fields: TorrentFieldsType[]) {
         queryFn: useCallback(async () => {
             const torrents = await client.getTorrents(fields);
             return await Promise.all(torrents.map(
-                async (t: TorrentBase) => await processTorrent(t, false, client)));
-        }, [client, fields]),
+                async (t: TorrentBase) => await processTorrent(t, false, prefixesRe, client)));
+        }, [client, fields, prefixesRe]),
     });
 }
 
@@ -96,14 +104,16 @@ export function useTorrentDetails(torrentId: number, enabled: boolean, lookupIps
     const serverConfig = useContext(ServerConfigContext);
     const client = useTransmissionClient();
 
+    const prefixesRe = useIgnoredTrackerPrefixesRe();
+
     return useQuery({
         queryKey: TorrentKeys.details(serverConfig.name, torrentId),
         refetchInterval: disableRefetch === true ? false : 1000 * serverConfig.intervals.details,
         staleTime: 1000 * 5,
         enabled,
         queryFn: useCallback(async () => {
-            return await processTorrent(await client.getTorrentDetails(torrentId), TAURI && lookupIps, client);
-        }, [client, torrentId, lookupIps]),
+            return await processTorrent(await client.getTorrentDetails(torrentId), TAURI && lookupIps, prefixesRe, client);
+        }, [client, torrentId, lookupIps, prefixesRe]),
     });
 }
 

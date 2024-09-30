@@ -173,7 +173,7 @@ function ServerPanel(props: ServerPanelProps) {
                             setMappingsString(e.target.value);
                         }}
                         value={mappingsString}
-                        minRows={4}
+                        minRows={7}
                     />
                 </Grid.Col>
             </Grid>
@@ -352,15 +352,15 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
             title="Application Settings"
         >
             <form>
-                <Tabs mih="25rem" defaultValue="servers">
+                <Tabs mih="33rem" defaultValue="servers">
                     <Tabs.List>
                         <Tabs.Tab value="servers" p="lg">Servers</Tabs.Tab>
                         <Tabs.Tab value="integrations" p="lg">Integrations</Tabs.Tab>
                         {TAURI && <Tabs.Tab value="interface" p="lg">Interface</Tabs.Tab>}
                     </Tabs.List>
 
-                    <Tabs.Panel value="servers" pt="md" mih="24rem">
-                        <Flex h="100%" gap="0.5rem" mih="24rem">
+                    <Tabs.Panel value="servers" pt="md">
+                        <Flex h="100%" gap="0.5rem" mih="28rem">
                             <ServerListPanel form={form} current={currentServerIndex} setCurrent={setCurrentServerIndex} />
                             {currentServerIndex === -1
                                 ? <></>
@@ -368,11 +368,11 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
                         </Flex>
                     </Tabs.Panel>
 
-                    <Tabs.Panel value="integrations" pt="md" mih="24rem">
+                    <Tabs.Panel value="integrations" pt="md">
                         <IntegrationsPanel form={form} />
                     </Tabs.Panel>
 
-                    {TAURI && <Tabs.Panel value="interface" pt="md" mih="24rem">
+                    {TAURI && <Tabs.Panel value="interface" pt="md">
                         <InterfaceSettigsPanel form={form} />
                     </Tabs.Panel>}
                 </Tabs>

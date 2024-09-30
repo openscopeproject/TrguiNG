@@ -80,16 +80,15 @@ function getTrackerStatus(torrent: TorrentBase): string {
 }
 
 const portRe = /:\d+$/;
-const prefixRe = /^((t|tr|tk|tracker|bt|open|opentracker)\d*)\.[^.]+\.[^.]+$/;
 const httpRe = /^https?:\/\//;
 
-function getTorrentMainTracker(t: TorrentBase): string {
+function getTorrentMainTracker(t: TorrentBase, ignoredPrefixesRe: RegExp): string {
     if (t.trackerStats.length === 0) return "<No trackers>";
     let host = t.trackerStats[0].host as string;
     const portMatch = portRe.exec(host);
     if (portMatch != null) host = host.substring(0, portMatch.index);
-    const prefixMatch = prefixRe.exec(host);
-    if (prefixMatch != null) host = host.substring(prefixMatch[1].length + 1);
+    const prefixMatch = ignoredPrefixesRe.exec(host);
+    if (prefixMatch?.groups !== undefined) host = host.substring(prefixMatch.groups.prefix.length + 1);
     const httpMatch = httpRe.exec(host);
     if (httpMatch != null) host = host.substring(httpMatch[0].length);
     return host;
@@ -109,7 +108,7 @@ function getPeersTotal(t: TorrentBase) {
     return peers;
 }
 
-export async function processTorrent(t: TorrentBase, lookupIps: boolean, client: TransmissionClient): Promise<Torrent> {
+export async function processTorrent(t: TorrentBase, lookupIps: boolean, ignoredPrefixesRe: RegExp, client: TransmissionClient): Promise<Torrent> {
     const peers = t.peers === undefined
         ? undefined
         : await Promise.all(t.peers.map(async (p: PeerStatsBase) => await processPeerStats(p, lookupIps, client)));
@@ -119,7 +118,7 @@ export async function processTorrent(t: TorrentBase, lookupIps: boolean, client:
         downloadDir: (t.downloadDir as string).replaceAll("\\", "/"),
         cachedError: getTorrentError(t),
         cachedTrackerStatus: getTrackerStatus(t),
-        cachedMainTracker: getTorrentMainTracker(t),
+        cachedMainTracker: getTorrentMainTracker(t, ignoredPrefixesRe),
         cachedSeedsTotal: getSeedsTotal(t),
         cachedPeersTotal: getPeersTotal(t),
         peers,

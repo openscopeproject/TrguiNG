@@ -18,7 +18,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import type { ColorScheme } from "@mantine/core";
-import { Checkbox, Grid, MultiSelect, NativeSelect, NumberInput, Textarea, useMantineTheme } from "@mantine/core";
+import { Box, Checkbox, Grid, HoverCard, MultiSelect, NativeSelect, NumberInput, Text, Textarea, useMantineTheme } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import ColorChooser from "components/colorchooser";
 import { useGlobalStyleOverrides } from "themehooks";
@@ -26,6 +26,7 @@ import { DeleteTorrentDataOptions } from "config";
 import type { ColorSetting, DeleteTorrentDataOption, StyleOverrides } from "config";
 import { ColorSchemeToggle } from "components/miscbuttons";
 import { Label } from "./common";
+import * as Icon from "react-bootstrap-icons";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface InterfaceFormValues {
@@ -39,6 +40,7 @@ export interface InterfaceFormValues {
         numLastSaveDirs: number,
         sortLastSaveDirs: boolean,
         preconfiguredLabels: string[],
+        ignoredTrackerPrefixes: string[],
         defaultTrackers: string[],
     },
 }
@@ -59,7 +61,7 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
         }
     }, []);
 
-    const { setFieldValue } = props.form as unknown as UseFormReturnType<InterfaceFormValues>;
+    const { setFieldValue, setFieldError, clearFieldError } = props.form as unknown as UseFormReturnType<InterfaceFormValues>;
 
     useEffect(() => {
         setFieldValue("interface.theme", theme.colorScheme);
@@ -100,6 +102,17 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
     const setPreconfiguredLabels = useCallback((labels: string[]) => {
         setFieldValue("interface.preconfiguredLabels", labels);
     }, [setFieldValue]);
+
+    const setIgnoredTrackerPrefixes = useCallback((prefixes: string[]) => {
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const _ = new RegExp(`^(?<prefix>(${prefixes.join("|")})\\d*)\\.[^.]+\\.[^.]+$`, "i");
+            setFieldValue("interface.ignoredTrackerPrefixes", prefixes);
+            clearFieldError("interface.ignoredTrackerPrefixes");
+        } catch (SyntaxError) {
+            setFieldError("interface.ignoredTrackerPrefixes", "Invalid regex");
+        }
+    }, [setFieldValue, setFieldError, clearFieldError]);
 
     return (
         <Grid align="center">
@@ -161,13 +174,59 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                     data={props.form.values.interface.preconfiguredLabels}
                     value={props.form.values.interface.preconfiguredLabels}
                     onChange={setPreconfiguredLabels}
-                    label="Preconfigured labels"
+                    label={<Box>
+                        <span>Preconfigured labels</span>
+                        <HoverCard width={280} shadow="md">
+                            <HoverCard.Target>
+                                <Icon.Question />
+                            </HoverCard.Target>
+                            <HoverCard.Dropdown>
+                                <Text size="sm">
+                                    These labels will always be present in the suggestions list
+                                    and filters even if no existing torrents have them.
+                                </Text>
+                            </HoverCard.Dropdown>
+                        </HoverCard>
+                    </Box>}
                     withinPortal
                     searchable
                     creatable
                     getCreateLabel={(query) => `+ Add ${query}`}
                     onCreate={(query) => {
                         setPreconfiguredLabels([...props.form.values.interface.preconfiguredLabels, query]);
+                        return query;
+                    }}
+                    valueComponent={Label}
+                />
+            </Grid.Col>
+            <Grid.Col>
+                <MultiSelect
+                    data={props.form.values.interface.ignoredTrackerPrefixes}
+                    value={props.form.values.interface.ignoredTrackerPrefixes}
+                    onChange={setIgnoredTrackerPrefixes}
+                    label={<Box>
+                        <span>Ignored tracker prefixes</span>
+                        <HoverCard width={380} shadow="md">
+                            <HoverCard.Target>
+                                <Icon.Question />
+                            </HoverCard.Target>
+                            <HoverCard.Dropdown>
+                                <Text size="sm">
+                                    When subdomain of the tracker looks like one of these strings + (optional) digits,
+                                    it will be omitted. This affects grouping in filters and display in table columns.
+                                    You can use regex here for more advanced filtering, the list will be combined
+                                    using &quot;|&quot;.
+                                </Text>
+                            </HoverCard.Dropdown>
+                        </HoverCard>
+                    </Box>}
+                    withinPortal
+                    searchable
+                    creatable
+                    error={props.form.errors["interface.ignoredTrackerPrefixes"]}
+                    getCreateLabel={(query) => `+ Add ${query}`}
+                    onCreate={(query) => {
+                        setIgnoredTrackerPrefixes([...props.form.values.interface.ignoredTrackerPrefixes, query]);
                         return query;
                     }}
                     valueComponent={Label}

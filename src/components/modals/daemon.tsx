@@ -597,7 +597,7 @@ export function DaemonSettingsModal(props: ModalState) {
         >
             <Box pos="relative">
                 <LoadingOverlay visible={fetchStatus === "fetching"} overlayBlur={2} />
-                <Tabs defaultValue="polling" mih="28rem">
+                <Tabs defaultValue="polling" mih="33rem">
                     <Tabs.List>
                         <Tabs.Tab value="polling" p="lg">Polling</Tabs.Tab>
                         <Tabs.Tab value="download" p="lg">Download</Tabs.Tab>

@@ -158,6 +158,7 @@ interface Settings {
         numLastSaveDirs: number,
         sortLastSaveDirs: boolean,
         preconfiguredLabels: string[],
+        ignoredTrackerPrefixes: string[],
         defaultTrackers: string[],
         styleOverrides: StyleOverrides,
         progressbarStyle?: string, // deprecated
@@ -280,6 +281,7 @@ const DefaultSettings: Settings = {
         numLastSaveDirs: 20,
         sortLastSaveDirs: false,
         preconfiguredLabels: [],
+        ignoredTrackerPrefixes: ["t", "tr", "tk", "tracker", "bt", "open", "opentracker"],
         defaultTrackers: [...DefaultTrackerList],
         styleOverrides: {
             dark: {},
