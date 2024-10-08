@@ -30,6 +30,7 @@ interface ServerTabsProps extends React.PropsWithChildren {
     clientManager: ClientManager,
     servers: ServerConfig[],
     setCurrentServer: React.Dispatch<ServerConfig | undefined>,
+    visible: boolean,
 }
 
 export interface ServerTabsRef {
@@ -178,6 +179,7 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
                 },
                 tabsList: {
                     flexWrap: "nowrap",
+                    display: props.visible ? undefined : "none",
                 },
             })}
         >

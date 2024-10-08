@@ -41,7 +41,7 @@ interface ToolbarButtonProps extends React.PropsWithChildren<React.ComponentProp
     depressed?: boolean,
 }
 
-const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(function ToolbarButton(
+export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(function ToolbarButton(
     { children, depressed, ...other }: ToolbarButtonProps, ref,
 ) {
     return (
@@ -67,9 +67,11 @@ interface ToolbarProps {
     setSearchTerms: (terms: string[]) => void,
     modals: React.RefObject<ModalCallbacks>,
     altSpeedMode: boolean,
+    extra?: React.ReactNode,
     toggleFiltersPanel: () => void,
     toggleDetailsPanel: () => void,
     toggleMainSplit: () => void,
+    toggleTabStrip: () => void,
 }
 
 function useButtonHandlers(
@@ -211,6 +213,7 @@ function Toolbar(props: ToolbarProps) {
         ["mod + P", props.toggleMainSplit],
         ["mod + O", props.toggleFiltersPanel],
         ["mod + I", props.toggleDetailsPanel],
+        ["mod + [", props.toggleTabStrip],
     ]);
 
     const onSettingsExport = useCallback(() => {
@@ -358,6 +361,11 @@ function Toolbar(props: ToolbarProps) {
                         onClick={props.toggleDetailsPanel} rightSection={<Kbd>{`${modKeyString()} I`}</Kbd>}>
                         Toggle details
                     </Menu.Item>
+                    {props.extra !== undefined &&
+                        <Menu.Item
+                            onClick={props.toggleTabStrip} rightSection={<Kbd>{`${modKeyString()} [`}</Kbd>}>
+                            Toggle tab strip
+                        </Menu.Item>}
                     <Menu.Divider />
                     <Menu.Label>Interface settings</Menu.Label>
                     <Menu.Item onClick={onSettingsExport}>
@@ -374,6 +382,8 @@ function Toolbar(props: ToolbarProps) {
                 onClick={handlers.daemonSettings}>
                 <Icon.Tools size="1.5rem" />
             </ToolbarButton>
+
+            {props.extra}
         </Flex>
     );
 }

@@ -35,9 +35,10 @@ export interface StatusbarProps {
     filteredTorrents: Torrent[],
     selectedTorrents: Set<number>,
     hostname: string,
+    showMisc: boolean,
 }
 
-export function Statusbar({ session, torrents, filteredTorrents, selectedTorrents, hostname }: StatusbarProps) {
+export function Statusbar({ session, torrents, filteredTorrents, selectedTorrents, hostname, showMisc }: StatusbarProps) {
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
 
@@ -145,7 +146,7 @@ export function Statusbar({ session, torrents, filteredTorrents, selectedTorrent
                 <div style={{ flex: "1 1 23%", order: sectionsMap.Selected }}>
                     {`Selected: ${sizeSelected}, done ${sizeDone}, left ${sizeLeft}`}
                 </div>}
-            {!TAURI &&
+            {(!TAURI || showMisc) &&
                 <div style={{ flexShrink: 0, display: "flex", order: 100 }}>
                     <ShowVersion sz="0.9rem" btn="md" />
                     <ColorSchemeToggle sz="0.9rem" btn="md" />

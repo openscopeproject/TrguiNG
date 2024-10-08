@@ -54,7 +54,7 @@ export default function WebApp() {
         <App>
             <ServerConfigContext.Provider value={serverConfig}>
                 <ClientContext.Provider value={client}>
-                    <Server hostname={client.hostname} tabsRef={tabsRef}/>
+                    <Server hostname={client.hostname} tabsRef={tabsRef} toggleTabStrip={() => { }} />
                 </ClientContext.Provider>
             </ServerConfigContext.Provider>
         </App>

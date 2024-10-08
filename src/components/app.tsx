@@ -21,7 +21,7 @@ import type { ServerConfig } from "../config";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Server } from "../components/server";
 import { ClientManager } from "../clientmanager";
-import { ActionIcon, Box, Button, Flex, Stack, useMantineColorScheme } from "@mantine/core";
+import { ActionIcon, Box, Button, Flex, Menu, Stack, useMantineColorScheme } from "@mantine/core";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { queryClient } from "queries";
@@ -34,6 +34,7 @@ import * as Icon from "react-bootstrap-icons";
 import { modKeyString } from "trutil";
 import { ColorSchemeToggle, FontSizeToggle, ShowVersion } from "./miscbuttons";
 import { AppSettingsModal } from "./modals/settings";
+import { ToolbarButton } from "./toolbar";
 
 const { appWindow, invoke, makeCreateTorrentView } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -112,6 +113,17 @@ export default function TauriApp() {
         config.setServers(servers);
     }, [config]);
 
+    const [showTabStrip, setShowTabStrip] = useState(config.values.app.showTabStrip);
+
+    const toggleTabStrip = useCallback(() => {
+        config.values.app.showTabStrip = !showTabStrip;
+        setShowTabStrip(!showTabStrip);
+    }, [config, showTabStrip]);
+
+    const onCreateTorrent = useCallback(() => {
+        void makeCreateTorrentView();
+    }, []);
+
     return (
         <App>
             <AppSettingsModal
@@ -121,7 +133,9 @@ export default function TauriApp() {
                 <ServerTabs ref={tabsRef}
                     clientManager={clientManager}
                     servers={servers}
-                    setCurrentServer={setCurrentServer} >
+                    setCurrentServer={setCurrentServer}
+                    visible={showTabStrip}
+                >
                     <ShowVersion btn="lg" />
                     <ColorSchemeToggle btn="lg" />
                     <FontSizeToggle />
@@ -136,7 +150,33 @@ export default function TauriApp() {
                 {currentServer !== undefined
                     ? <ServerConfigContext.Provider value={currentServer}>
                         <ClientContext.Provider value={clientManager.getClient(currentServer.name)}>
-                            <Server hostname={clientManager.getHostname(currentServer.name)} tabsRef={tabsRef} />
+                            <Server
+                                hostname={clientManager.getHostname(currentServer.name)}
+                                tabsRef={tabsRef}
+                                toolbarExtra={!showTabStrip && <>
+                                    <ToolbarButton title={`Create torrent (${modKeyString()} + T)`} onClick={onCreateTorrent}>
+                                        <Icon.Stars size="1.5rem" />
+                                    </ToolbarButton>
+                                    <ToolbarButton title="Configure servers" onClick={serverConfigHandlers.open}>
+                                        <Icon.GearFill size="1.5rem" />
+                                    </ToolbarButton>
+                                    {tabsRef.current?.getOpenTabs() !== undefined && tabsRef.current?.getOpenTabs()?.length > 1 &&
+                                        <Menu shadow="md" width="12rem" withinPortal middlewares={{ shift: true, flip: true }}>
+                                            <Menu.Target>
+                                                <ToolbarButton title="Switch server">
+                                                    <Icon.Diagram2 size="1.5rem" />
+                                                </ToolbarButton>
+                                            </Menu.Target>
+
+                                            <Menu.Dropdown>
+                                                {tabsRef.current?.getOpenTabs().map((tab, index) =>
+                                                    <Menu.Item key={index} onClick={() => { tabsRef.current?.switchTab(index); }}>
+                                                        {tab}
+                                                    </Menu.Item>)}
+                                            </Menu.Dropdown>
+                                        </Menu>}
+                                </>}
+                                toggleTabStrip={toggleTabStrip} />
                         </ClientContext.Provider>
                     </ServerConfigContext.Provider>
                     : <Flex justify="center" align="center" w="100%" h="100%">

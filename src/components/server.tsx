@@ -105,9 +105,11 @@ function ServerContext(props: ServerContextProps) {
 interface ServerProps {
     hostname: string,
     tabsRef: React.RefObject<ServerTabsRef>,
+    toolbarExtra?: React.ReactNode,
+    toggleTabStrip: () => void,
 }
 
-export function Server({ hostname, tabsRef }: ServerProps) {
+export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: ServerProps) {
     useAppHotkeys();
 
     const [currentFilters, setCurrentFilters] = useReducer(currentFiltersReducer, [{ id: "", filter: DefaultFilter }]);
@@ -214,9 +216,11 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                     setSearchTerms={setSearchTerms}
                     modals={modals}
                     altSpeedMode={session?.["alt-speed-enabled"] ?? false}
+                    extra={toolbarExtra}
                     toggleFiltersPanel={toggleFiltersPanel}
                     toggleDetailsPanel={toggleDetailsPanel}
                     toggleMainSplit={toggleMainSplit}
+                    toggleTabStrip={toggleTabStrip}
                 />
             </Box>
             <SplitLayout key={`split-${showFiltersPanel ? "1" : "0"}-${showDetailsPanel ? "1" : "0"}-${mainSplit}`}
@@ -250,6 +254,7 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                     selectedTorrents,
                     hostname,
                     torrents: torrents ?? [],
+                    showMisc: Boolean(toolbarExtra),
                 }} />
             </Box>
         </Flex>
