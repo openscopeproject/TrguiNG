@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download dbip database
-        run: wget -nv -O- "https://download.db-ip.com/free/dbip-country-lite-2024-09.mmdb.gz" | zcat > dbip.mmdb
+        run: wget -nv -O- "https://download.db-ip.com/free/dbip-country-lite-2024-10.mmdb.gz" | zcat > dbip.mmdb
       - uses: actions/upload-artifact@v3
         with:
           name: dbip
@@ -184,7 +184,7 @@ jobs:
           python3 ci/generate_pkgbuild.py
           cat PKGBUILD
       - name: Publish to the AUR
-        uses: KSXGitHub/github-actions-deploy-aur@v2.7.0
+        uses: KSXGitHub/github-actions-deploy-aur@v3.0.1
         with:
           pkgname: trgui-ng
           pkgbuild: ./PKGBUILD
