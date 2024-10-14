@@ -254,7 +254,8 @@ export function AddMagnet(props: AddCommonModalProps) {
                 onChange={(e) => { setMagnet(e.currentTarget.value); }}
                 error={existingTorrent === undefined
                     ? undefined
-                    : "Torrent already exists"} />
+                    : "Torrent already exists"}
+                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
             <AddCommon {...common.props} disabled={existingTorrent !== undefined} />
             <Divider my="sm" />
             <Group position="center" spacing="md">

@@ -211,13 +211,15 @@ export default function CreateTorrentForm() {
                 <TextInput
                     label={"Select file or folder"}
                     {...form.getInputProps("path")}
-                    styles={{ root: { flexGrow: 1 } }} />
+                    styles={{ root: { flexGrow: 1 } }}
+                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
                 <Button onClick={onBrowseFile}>File</Button>
                 <Button onClick={onBrowseDirectory}>Directory</Button>
             </Group>
             <TextInput
                 label={"Torrent name"}
-                {...form.getInputProps("name")} />
+                {...form.getInputProps("name")}
+                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
             <Text fz="sm">Piece size</Text>
             <Slider
                 pt="2.5rem"
@@ -236,7 +238,8 @@ export default function CreateTorrentForm() {
                 {...form.getInputProps("comment")} />
             <TextInput
                 label={"Source (leave empty unless required by a private tracker)"}
-                {...form.getInputProps("source")} />
+                {...form.getInputProps("source")}
+                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
             <Checkbox
                 label="Private torrent"
                 {...form.getInputProps("private", { type: "checkbox" })} />

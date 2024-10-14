@@ -134,26 +134,25 @@ function ServerPanel(props: ServerPanelProps) {
             <TextInput
                 label="Name"
                 {...props.form.getInputProps(`servers.${props.current}.name`)}
-            />
+                autoCorrect="off" autoCapitalize="off" />
 
             <TextInput
                 label="Server rpc url"
                 {...props.form.getInputProps(`servers.${props.current}.connection.url`)}
                 placeholder="http://1.2.3.4:9091/transmission/rpc"
-            />
+                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
 
             <Grid>
                 <Grid.Col span={6}>
                     <TextInput
                         label="User name"
                         {...props.form.getInputProps(`servers.${props.current}.connection.username`)}
-                    />
+                        autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
                 </Grid.Col>
                 <Grid.Col span={6}>
                     <PasswordInput
                         label="Password"
-                        {...props.form.getInputProps(`servers.${props.current}.connection.password`)}
-                    />
+                        {...props.form.getInputProps(`servers.${props.current}.connection.password`)} />
                 </Grid.Col>
 
                 <Grid.Col span={12}>

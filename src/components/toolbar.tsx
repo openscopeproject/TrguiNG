@@ -339,6 +339,7 @@ function Toolbar(props: ToolbarProps) {
                 </ActionIcon>}
                 onInput={onSearchInput}
                 styles={{ root: { flexGrow: 1 }, input: { height: "auto" } }}
+                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false"
             />
 
             <Menu shadow="md" width="12rem" withinPortal middlewares={{ shift: true, flip: true }}>

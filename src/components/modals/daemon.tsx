@@ -90,7 +90,8 @@ function DownloadPanel({ form, session }: { form: UseFormReturnType<FormValues>,
             <Grid.Col>
                 <TextInput
                     label="Default download folder (server setting)"
-                    {...form.getInputProps("session.download-dir")} />
+                    {...form.getInputProps("session.download-dir")}
+                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
             </Grid.Col>
             <Grid.Col>
                 <Checkbox
@@ -106,7 +107,8 @@ function DownloadPanel({ form, session }: { form: UseFormReturnType<FormValues>,
                 <TextInput
                     label="Path for incomplete files"
                     {...form.getInputProps("session.incomplete-dir")}
-                    disabled={session["incomplete-dir-enabled"] !== true} />
+                    disabled={session["incomplete-dir-enabled"] !== true}
+                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
             </Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
@@ -317,7 +319,8 @@ function NetworkPanel(
             <Grid.Col span={6}>
                 <TextInput
                     {...form.getInputProps("session.blocklist-url")}
-                    disabled={session["blocklist-enabled"] !== true} />
+                    disabled={session["blocklist-enabled"] !== true}
+                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
             </Grid.Col>
             <Grid.Col span={6}>
                 <Text>Blocklist contains {session["blocklist-size"]} entries</Text>

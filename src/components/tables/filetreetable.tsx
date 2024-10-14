@@ -285,7 +285,7 @@ function SearchBox({ setSearchTerms }: {
                         lineHeight: "1rem",
                     },
                 }}
-            />
+                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
         </Box>
     );
 }

@@ -214,7 +214,8 @@ export function TorrentLocation(props: LocationData) {
                             </ScrollArea.Autosize>
                         </Menu.Dropdown>
                     </Menu>
-                } />
+                }
+                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
             {TAURI && <Button onClick={props.browseHandler} disabled={props.disabled}>Browse</Button>}
         </Group>
     );
