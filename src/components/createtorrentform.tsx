@@ -19,10 +19,11 @@
 import type { Styles, TextInputStylesNames } from "@mantine/core";
 import { Box, Button, Checkbox, Flex, Group, Slider, Text, TextInput, Textarea, useMantineColorScheme } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { dialog } from "@tauri-apps/api";
+import {  } from "@tauri-apps/api";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { appVersion } from "./modals/version";
 import { ProgressBar } from "./progressbar";
+import * as dialog from "@tauri-apps/plugin-dialog"
 const { appWindow, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface FormValues {

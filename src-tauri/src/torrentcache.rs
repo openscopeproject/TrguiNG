@@ -19,10 +19,10 @@ use std::{collections::HashMap, io::Read, sync::Arc};
 use hyper::{body::to_bytes, Body, Response};
 use serde::Deserialize;
 use tauri::{
-    api::notification::Notification,
     async_runtime::{self, Mutex},
     AppHandle, Manager, State,
 };
+use tauri_plugin_notification::NotificationExt;
 
 use crate::sound::play_ping;
 
@@ -176,7 +176,9 @@ async fn process_torrents(
 }
 
 fn show_notification(app: &AppHandle, name: &str) {
-    if let Err(e) = Notification::new(app.config().tauri.bundle.identifier.as_str())
+    if let Err(e) = app
+        .notification()
+        .builder()
         .title("Download complete")
         .body(name)
         .show()

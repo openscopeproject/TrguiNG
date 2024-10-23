@@ -19,7 +19,7 @@ use std::fs;
 use base64::{engine::general_purpose::STANDARD as b64engine, Engine as _};
 use font_loader::system_fonts;
 use lava_torrent::torrent::v1::Torrent;
-use tauri::{Manager, State};
+use tauri::{Emitter, Manager, State};
 
 use crate::{
     createtorrent::{CreateCheckResult, CreationRequestsHandle, TorrentCreateInfo},
@@ -66,7 +66,7 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
         Err(e) => {
             println!("Failed to parse torrent {:?}", e.to_string());
             Err(format!("Failed to parse torrent {:?}", path))
-        },
+        }
         Ok(torrent) => {
             let b64 = b64engine.encode(read_result.unwrap());
             let mut trackers = vec![];
@@ -244,7 +244,7 @@ pub async fn pass_to_window(
     to: String,
     payload: String,
 ) {
-    if let Some(dest) = app_handle.get_window(to.as_str()) {
+    if let Some(dest) = app_handle.get_webview_window(to.as_str()) {
         let _ = dest.emit(
             "pass-from-window",
             PassEventData {
@@ -261,11 +261,9 @@ pub async fn list_system_fonts() -> Vec<String> {
 }
 
 #[tauri::command]
-pub async fn create_tray(app_handle: tauri::AppHandle) {
-    if app_handle.tray_handle_by_id(tray::TRAY_ID).is_none() {
-        tray::create_tray(app_handle.clone())
-            .build(&app_handle)
-            .ok();
+pub fn create_tray(app_handle: tauri::AppHandle) {
+    if app_handle.tray_by_id(tray::TRAY_ID).is_none() {
+        tray::create_tray(app_handle);
     }
 }
 

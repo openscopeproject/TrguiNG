@@ -24,7 +24,8 @@ use std::sync::Arc;
 use createtorrent::CreationRequestsHandle;
 use geoip::MmdbReaderHandle;
 use poller::PollerHandle;
-use tauri::{api::cli::get_matches, async_runtime, App, AppHandle, Manager, State};
+use tauri::{async_runtime, App, AppHandle, Emitter, Listener, Manager, State};
+use tauri_plugin_cli::CliExt;
 use tokio::sync::RwLock;
 use torrentcache::TorrentCacheHandle;
 
@@ -66,28 +67,32 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         macos::listen_url();
     }
 
-    let config = app.config();
-    let cli_config = &config.tauri.cli.as_ref().unwrap();
-    let args = get_matches(cli_config, app.package_info()).unwrap().args;
-
-    if args.contains_key("help") {
-        println!("{}", args["help"].value.as_str().unwrap());
-        app.handle().exit(0);
-        return Ok(());
-    }
-
     let mut torrents: Vec<String> = vec![];
-    if args["torrent"].value.is_array() {
-        torrents = args["torrent"]
-            .value
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|v| v.as_str().unwrap().to_string())
-            .collect();
+    match app.cli().matches() {
+        Ok(matches) => {
+            if matches.args.contains_key("help") {
+                println!("{}", matches.args["help"].value.as_str().unwrap());
+                app.handle().exit(0);
+                return Ok(());
+            }
+
+            if matches.args["torrent"].value.is_array() {
+                torrents = matches.args["torrent"]
+                    .value
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|v| v.as_str().unwrap().to_string())
+                    .collect();
+            }
+        }
+        Err(_) => {
+            println!("Unable to read cli args");
+            app.handle().exit(0);
+        }
     }
 
-    let app: Arc<AppHandle> = app.handle().into();
+    let app: AppHandle = app.handle().clone();
 
     async_runtime::spawn(async move {
         let poller_state: State<PollerHandle> = app.state();
@@ -99,11 +104,11 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 
         let mut listener = listener_lock.write().await;
         listener.init().await;
-        listener.listen(app.clone()).await.ok();
+        listener.listen(&app).await.ok();
 
         if listener.listening {
             let listener_lock1 = listener_lock.clone();
-            let _ = app.listen_global("listener-start", move |_| {
+            let _ = app.listen("listener-start", move |_| {
                 let listener_lock = listener_lock1.clone();
                 async_runtime::spawn(async move {
                     let mut listener = listener_lock.write().await;
@@ -111,14 +116,14 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
                 });
             });
             let listener_lock2 = listener_lock.clone();
-            let _ = app.listen_global("listener-pause", move |_| {
+            let _ = app.listen("listener-pause", move |_| {
                 let listener_lock = listener_lock2.clone();
                 async_runtime::spawn(async move {
                     let mut listener = listener_lock.write().await;
                     listener.pause().await;
                 });
             });
-            let main_window = app.get_window("main").unwrap();
+            let main_window = app.get_webview_window("main").unwrap();
             main_window.show().ok();
             main_window.emit("window-shown", "").ok();
         }
@@ -127,7 +132,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         let app_clone = app.clone();
         async_runtime::spawn(async move {
             let listener = listener_lock.read().await;
-            if let Err(e) = listener.send(&torrents, app_clone.clone()).await {
+            if let Err(e) = listener.send(&torrents, app_clone).await {
                 println!("Unable to send args to listener: {:?}", e);
             }
 
@@ -139,13 +144,14 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         });
 
         let app_clone = app.clone();
-        app.listen_global("app-exit", move |_| {
+        app.listen("app-exit", move |_| {
             println!("Exiting");
-            app_clone.exit(0);
+            app_clone.cleanup_before_exit();
+            std::process::exit(0);
         });
 
         let app_clone = app.clone();
-        app.listen_global("window-hidden", move |_| {
+        app.listen("window-hidden", move |_| {
             tray::set_tray_showhide_text(&app_clone, "Show");
         })
     });
@@ -160,6 +166,12 @@ fn main() {
     let context = tauri::generate_context!();
 
     let app_builder = tauri::Builder::default()
+        .plugin(tauri_plugin_cli::init())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .invoke_handler(tauri::generate_handler![
             commands::read_file,
             commands::remove_file,

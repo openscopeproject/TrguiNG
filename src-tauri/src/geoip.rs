@@ -37,8 +37,8 @@ pub async fn lookup(app: &AppHandle, ips: Vec<IpAddr>) -> Vec<LookupResult> {
     let mut reader = reader_handle.0.lock().await;
     if reader.is_none() {
         let dbip_path = app
-            .path_resolver()
-            .resolve_resource("dbip.mmdb")
+            .path()
+            .resolve("dbip.mmdb", tauri::path::BaseDirectory::Resource)
             .expect("failed to resolve resource");
 
         if dbip_path.is_file() {

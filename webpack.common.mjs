@@ -32,7 +32,7 @@ const tauriConf = JSON.parse(await readFile("./src-tauri/tauri.conf.json"));
 const gitVersion = execaSync("git", ["describe", "--tags", "--dirty", "--always"]);
 const versionInfo = `{
     "gitVersion": "${gitVersion.stdout}",
-    "backendVersion": "${tauriConf.package.version}",
+    "backendVersion": "${tauriConf.version}",
     "buildDate": ${Date.now()}
 }`;
 console.log(versionInfo);

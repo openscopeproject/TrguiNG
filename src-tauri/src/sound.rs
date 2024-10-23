@@ -16,7 +16,7 @@
 
 use std::io::Cursor;
 
-use rodio::{OutputStream, Decoder, Sink};
+use rodio::{Decoder, OutputStream, Sink};
 
 static PING: &[u8] = include_bytes!("../sound/ping.mp3");
 

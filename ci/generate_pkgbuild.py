@@ -12,9 +12,13 @@ if REF is None or not REF.startswith("refs/tags/v"):
 
 VERSION = REF[len("refs/tags/v"):]
 
-with subprocess.Popen(["sha256sum", "dbip.mmdb"], stdout=subprocess.PIPE) as proc:
+with subprocess.Popen(
+        ["sha256sum", "dbip.mmdb"],
+        stdout=subprocess.PIPE) as proc:
     DBIP_SHA = proc.stdout.read().decode()[:64]
-with subprocess.Popen(["sha256sum", "TrguiNG.desktop"], stdout=subprocess.PIPE) as proc:
+with subprocess.Popen(
+        ["sha256sum", "TrguiNG.desktop"],
+        stdout=subprocess.PIPE) as proc:
     DESKTOP_SHA = proc.stdout.read().decode()[:64]
 
 
@@ -30,7 +34,7 @@ url="https://github.com/openscopeproject/TrguiNG"
 arch=('x86_64')
 license=('AGPL-3.0')
 depends=('alsa-lib' 'cairo' 'desktop-file-utils' 'fontconfig' 'gdk-pixbuf2' 'glib2' 'gtk3' 'hicolor-icon-theme' 'libayatana-appindicator' 'libsoup' 'openssl' 'webkit2gtk')
-makedepends=('rust>=1.70.0' 'nodejs>=16.0.0' 'npm' 'git')
+makedepends=('rust>=1.77.2' 'nodejs>=16.0.0' 'npm' 'git')
 conflicts=('trgui-ng-git' 'trgui-ng-bin')
 source=("git+https://github.com/openscopeproject/TrguiNG#tag=v$pkgver"
         "https://github.com/openscopeproject/TrguiNG/releases/download/v$pkgver/dbip.mmdb"

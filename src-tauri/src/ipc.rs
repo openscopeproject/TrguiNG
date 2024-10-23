@@ -29,7 +29,7 @@ use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Client, HeaderMap, Method, Request, Response, Server, StatusCode};
 use hyper_timeout::TimeoutConnector;
 use hyper_tls::HttpsConnector;
-use tauri::{async_runtime, AppHandle, Manager};
+use tauri::{async_runtime, AppHandle, Emitter, Manager};
 use tokio::sync::{oneshot, OwnedSemaphorePermit, Semaphore};
 
 use crate::torrentcache::process_response;
@@ -37,7 +37,7 @@ use crate::tray::toggle_main_window;
 
 const ADDRESS: &str = "127.0.0.1:44321";
 const ALLOW_ORIGINS: &[&str] = if cfg!(feature = "custom-protocol") {
-    &["tauri://localhost", "https://tauri.localhost"]
+    &["tauri://localhost", "http://tauri.localhost"]
 } else {
     &["http://localhost:8080"]
 };
@@ -96,7 +96,7 @@ fn cors(request_headers: &HeaderMap, r: &mut Response<Body>, allowed_origins: &[
 }
 
 async fn http_response(
-    app: Arc<AppHandle>,
+    app: AppHandle,
     args_lock: Arc<Semaphore>,
     req: Request<Body>,
 ) -> hyper::Result<Response<Body>> {
@@ -116,8 +116,8 @@ async fn http_response(
         (&Method::POST, "/args") => {
             let payload = hyper::body::to_bytes(req.into_body()).await?;
 
-            if app.get_window("main").is_none() {
-                toggle_main_window(app.as_ref().clone(), None);
+            if app.get_webview_window("main").is_none() {
+                toggle_main_window(&app, None);
             }
 
             let lock = args_lock.acquire().await.unwrap();
@@ -151,7 +151,7 @@ async fn http_response(
 }
 
 async fn geoip_lookup(
-    app: &Arc<AppHandle>,
+    app: &AppHandle,
     req: Request<Body>,
 ) -> Result<Response<Body>, hyper::Error> {
     let headers = req.headers().clone();
@@ -266,7 +266,7 @@ async fn proxy_fetch(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
 }
 
 async fn send_payload(app: &AppHandle, payload: Bytes) {
-    app.get_window("main")
+    app.get_webview_window("main")
         .unwrap()
         .emit(
             "app-arg",
@@ -305,12 +305,13 @@ impl Ipc {
         }
     }
 
-    pub async fn listen(&mut self, app: Arc<AppHandle>) -> Result<(), &str> {
+    pub async fn listen(&mut self, app: &AppHandle) -> Result<(), &str> {
         if !self.listening {
             return Err("No TCP listener");
         }
 
         let args_sem = self.args_sem.clone();
+        let app = app.clone();
         let make_service = make_service_fn(move |_| {
             let app = app.clone();
             let args_sem = args_sem.clone();
@@ -357,7 +358,7 @@ impl Ipc {
         self.listening = false;
     }
 
-    pub async fn send(&self, args: &Vec<String>, app: Arc<AppHandle>) -> Result<(), hyper::Error> {
+    pub async fn send(&self, args: &Vec<String>, app: AppHandle) -> Result<(), hyper::Error> {
         let req = Request::builder()
             .method(Method::POST)
             .uri(format!("http://{}/args", ADDRESS))
@@ -379,7 +380,8 @@ impl Ipc {
             }
 
             if should_stop {
-                app.exit(0);
+                app.cleanup_before_exit();
+                std::process::exit(0);
             }
         });
 
