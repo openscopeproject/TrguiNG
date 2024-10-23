@@ -96,7 +96,10 @@ impl CreationRequests {
                 BencodeElem::Integer(
                     SystemTime::now()
                         .duration_since(UNIX_EPOCH)
-                        .expect("System time is before Unix epoch!").as_secs().try_into().unwrap(),
+                        .expect("System time is before Unix epoch!")
+                        .as_secs()
+                        .try_into()
+                        .unwrap(),
                 ),
             );
 
@@ -107,10 +110,12 @@ impl CreationRequests {
             builder = builder.set_announce_list(announce_list);
         }
         if !info.comment.is_empty() {
-            builder = builder.add_extra_field("comment".into(), BencodeElem::String(info.comment.clone()));
+            builder = builder
+                .add_extra_field("comment".into(), BencodeElem::String(info.comment.clone()));
         }
         if !info.source.is_empty() {
-            builder = builder.add_extra_info_field("source".into(), BencodeElem::String(info.source.clone()));
+            builder = builder
+                .add_extra_info_field("source".into(), BencodeElem::String(info.source.clone()));
         }
         if info.private {
             builder = builder.set_privacy(true);
@@ -129,8 +134,7 @@ impl CreationRequests {
     pub fn check(&mut self, id: i32) -> CreateCheckResult {
         if let Some(BuildOrTorrent::Build(build)) = self.requests.get(&id) {
             if build.is_finished() {
-                let BuildOrTorrent::Build(build) = self.requests.remove(&id).unwrap()
-                else {
+                let BuildOrTorrent::Build(build) = self.requests.remove(&id).unwrap() else {
                     panic!("The build entry was just here")
                 };
                 self.requests

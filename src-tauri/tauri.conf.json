@@ -1,101 +1,82 @@
 {
-  "package": {
-    "productName": "TrguiNG",
-    "version": "1.4.0"
-  },
-  "build": {
-    "distDir": "../dist",
-    "devPath": "http://localhost:8080/",
-    "beforeDevCommand": "",
-    "beforeBuildCommand": "npm run webpack-prod"
-  },
-  "tauri": {
-    "bundle": {
-      "active": true,
-      "targets": [
-        "app",
-        "appimage",
-        "deb",
-        "nsis",
-        "msi"
-      ],
-      "identifier": "org.openscopeproject.trguing",
-      "publisher": "OpenScopeProject",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ],
-      "resources": [
-        "dbip.mmdb"
-      ],
-      "externalBin": [],
-      "copyright": "",
-      "category": "Utility",
-      "shortDescription": "Transmission torrent daemon remote GUI",
-      "longDescription": "Remote control GUI for Transmission torrent daemon",
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "active": true,
+    "targets": [
+      "app",
+      "appimage",
+      "deb",
+      "nsis",
+      "msi"
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "",
+      "nsis": {
+        "template": "installer.nsi"
+      }
+    },
+    "publisher": "OpenScopeProject",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [
+      "dbip.mmdb"
+    ],
+    "externalBin": [],
+    "copyright": "",
+    "category": "Utility",
+    "shortDescription": "Transmission torrent daemon remote GUI",
+    "longDescription": "Remote control GUI for Transmission torrent daemon",
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "",
+      "exceptionDomain": "",
+      "signingIdentity": null,
+      "providerShortName": null,
+      "entitlements": null
+    },
+    "linux": {
       "deb": {
         "depends": [
           "libasound2"
         ],
         "desktopTemplate": "app.desktop"
-      },
-      "macOS": {
-        "frameworks": [],
-        "minimumSystemVersion": "",
-        "exceptionDomain": "",
-        "signingIdentity": null,
-        "providerShortName": null,
-        "entitlements": null
-      },
-      "windows": {
-        "certificateThumbprint": null,
-        "digestAlgorithm": "sha256",
-        "timestampUrl": "",
-        "nsis": {
-          "template": "installer.nsi",
-          "license": "../LICENSE.txt"
+      }
+    },
+    "licenseFile": "../LICENSE.txt"
+  },
+  "build": {
+    "beforeBuildCommand": "npm run webpack-prod",
+    "frontendDist": "../dist",
+    "beforeDevCommand": "",
+    "devUrl": "http://localhost:8080/"
+  },
+  "productName": "TrguiNG",
+  "mainBinaryName": "TrguiNG",
+  "version": "1.4.0",
+  "identifier": "org.openscopeproject.trguing",
+  "plugins": {
+    "cli": {
+      "description": "TrguiNG - Remote control GUI for the Transmission torrent daemon",
+      "args": [
+        {
+          "name": "torrent",
+          "index": 1,
+          "multiple": true,
+          "takesValue": true,
+          "description": "torrent file or magnet link url"
         }
-      }
-    },
-    "updater": {
-      "active": false
-    },
-    "allowlist": {
-      "clipboard": {
-        "writeText": true
-      },
-      "fs": {
-        "scope": [
-          "$CONFIG/trguing.json"
-        ],
-        "readFile": true,
-        "writeFile": true
-      },
-      "path": {
-        "all": true
-      },
-      "shell": {
-        "open": "^(/)|([a-zA-Z]:[\\\\/])|(\\\\\\\\)|((file:|https?:)//)"
-      },
-      "window": {
-        "setTitle": true,
-        "close": true,
-        "create": true,
-        "setSize": true,
-        "setPosition": true,
-        "setFocus": true,
-        "center": true,
-        "hide": true,
-        "show": true,
-        "unminimize": true
-      },
-      "dialog": {
-        "all": true
-      }
-    },
+      ]
+    }
+  },
+  "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "Transmission GUI",
@@ -108,22 +89,6 @@
     ],
     "security": {
       "csp": null
-    },
-    "cli": {
-      "description": "TrguiNG - Remote control GUI for the Transmission torrent daemon",
-      "args": [
-        {
-          "name": "torrent",
-          "index": 1,
-          "multiple": true,
-          "takesValue": true,
-          "description": "torrent file or magnet link url"
-        }
-      ]
-    },
-    "systemTray": {
-      "iconPath": "icons/icon.png",
-      "iconAsTemplate": false
     }
   }
 }

@@ -1,0 +1,49 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "app",
+  "description": "Application permissions",
+  "local": true,
+  "windows": [
+    "*"
+  ],
+  "platforms": [
+    "macOS",
+    "windows",
+    "linux"
+  ],
+  "permissions": [
+    "core:default",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        "$CONFIG/trguing.json"
+      ]
+    },
+    "core:webview:allow-create-webview-window",
+    "core:window:allow-create",
+    "core:window:allow-center",
+    "core:window:allow-set-title",
+    "core:window:allow-unminimize",
+    "core:window:allow-show",
+    "core:window:allow-hide",
+    "core:window:allow-close",
+    "core:window:allow-set-size",
+    "core:window:allow-set-position",
+    "core:window:allow-set-focus",
+    "shell:allow-open",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "dialog:allow-message",
+    "dialog:allow-ask",
+    "dialog:allow-confirm",
+    "clipboard-manager:allow-write-text",
+    "clipboard-manager:default",
+    "fs:default",
+    "dialog:default",
+    "shell:default",
+    "notification:default",
+    "cli:default"
+  ]
+}

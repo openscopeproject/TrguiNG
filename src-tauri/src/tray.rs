@@ -17,8 +17,10 @@
 use std::sync::{Arc, Mutex};
 
 use tauri::{
-    async_runtime, AppHandle, CustomMenuItem, Manager, State, SystemTray, SystemTrayEvent,
-    SystemTrayMenu, SystemTrayMenuItem, Window, WindowBuilder,
+    async_runtime,
+    menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    AppHandle, Emitter, Listener, Manager, State, WebviewWindow, WebviewWindowBuilder,
 };
 use tokio::sync::oneshot;
 
@@ -26,47 +28,64 @@ use crate::ListenerHandle;
 
 pub const TRAY_ID: &str = "tray";
 
-pub fn create_tray(app: AppHandle) -> SystemTray {
-    let hide = CustomMenuItem::new("showhide", "Hide");
-    let quit = CustomMenuItem::new("quit", "Quit");
-    let tray_menu = SystemTrayMenu::new()
-        .add_item(hide)
-        .add_native_item(SystemTrayMenuItem::Separator)
-        .add_item(quit);
+pub fn create_tray(app: AppHandle) {
+    let menu = create_menu(&app, "Hide");
 
-    SystemTray::new()
-        .with_id(TRAY_ID)
-        .with_menu(tray_menu)
-        .on_event(move |event| on_tray_event(&app, event))
+    #[allow(clippy::single_match)]
+    TrayIconBuilder::with_id(TRAY_ID)
+        .icon(app.default_window_icon().unwrap().clone())
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .on_tray_icon_event(|tray, event| {
+            match event {
+                TrayIconEvent::Click {
+                    button: MouseButton::Left,
+                    button_state: MouseButtonState::Up,
+                    ..
+                } => {
+                    #[cfg(not(target_os = "macos"))]
+                    toggle_main_window(
+                        tray.app_handle(),
+                        tray.app_handle().get_webview_window("main"),
+                    );
+                }
+                _ => {}
+            };
+        })
+        .on_menu_event(on_menu_event)
+        .build(&app)
+        .ok();
+}
+
+fn create_menu<R>(app: &AppHandle<R>, showhide_text: &str) -> tauri::menu::Menu<R>
+where
+    R: tauri::Runtime,
+{
+    let hide = MenuItem::with_id(app, "showhide", showhide_text, true, None::<&str>).unwrap();
+    let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>).unwrap();
+    let separator = PredefinedMenuItem::separator(app).unwrap();
+    Menu::with_items(app, &[&hide, &separator, &quit]).unwrap()
 }
 
 pub fn set_tray_showhide_text(app: &AppHandle, text: &str) {
-    if let Some(tray) = app.tray_handle_by_id(TRAY_ID) {
-        tray.get_item("showhide").set_title(text).ok();
+    if let Some(tray) = app.tray_by_id(TRAY_ID) {
+        tray.set_menu(Some(create_menu(app, text))).ok();
     }
 }
 
-fn on_tray_event(app: &AppHandle, event: SystemTrayEvent) {
-    let main_window = app.get_window("main");
-    match event {
-        SystemTrayEvent::LeftClick { .. } => {
-            #[cfg(not(target_os = "macos"))]
-            toggle_main_window(app.clone(), main_window);
+fn on_menu_event(app: &AppHandle, event: MenuEvent) {
+    match event.id.as_ref() {
+        "quit" => {
+            exit(app.clone());
         }
-        SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
-            "quit" => {
-                exit(app.clone());
-            }
-            "showhide" => {
-                toggle_main_window(app.clone(), main_window);
-            }
-            _ => {}
-        },
+        "showhide" => {
+            toggle_main_window(app, app.get_webview_window("main"));
+        }
         _ => {}
     }
 }
 
-pub fn toggle_main_window(app: AppHandle, window: Option<Window>) {
+pub fn toggle_main_window(app: &AppHandle, window: Option<WebviewWindow>) {
     match window {
         Some(window) => {
             if !window.is_visible().unwrap() {
@@ -74,21 +93,21 @@ pub fn toggle_main_window(app: AppHandle, window: Option<Window>) {
                 window.unminimize().ok();
                 window.set_focus().ok();
                 window.emit("window-shown", "").ok();
-                set_tray_showhide_text(&app, "Hide");
+                set_tray_showhide_text(app, "Hide");
                 return;
             }
-            set_tray_showhide_text(&app, "Show");
+            set_tray_showhide_text(app, "Show");
             async_runtime::spawn(async move {
                 close_main(window).await;
             });
         }
         None => {
             let window =
-                WindowBuilder::new(&app, "main", tauri::WindowUrl::App("index.html".into()))
+                WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
+                    .title("Transmission GUI")
                     .build()
                     .unwrap();
-            set_tray_showhide_text(&app, "Hide");
-            window.set_title("Transmission GUI").ok();
+            set_tray_showhide_text(app, "Hide");
             window.set_focus().ok();
         }
     }
@@ -96,7 +115,7 @@ pub fn toggle_main_window(app: AppHandle, window: Option<Window>) {
 
 pub fn exit(app: AppHandle) {
     async_runtime::spawn(async move {
-        if let Some(window) = app.get_window("main") {
+        if let Some(window) = app.get_webview_window("main") {
             close_main(window).await;
         }
 
@@ -104,11 +123,15 @@ pub fn exit(app: AppHandle) {
         let mut listener = listener_state.0.write().await;
         println!("Stopping");
         listener.stop();
-        app.exit(0);
+        let appc = app.clone();
+        let _ = app.run_on_main_thread(move || {
+            appc.cleanup_before_exit();
+            std::process::exit(0);
+        });
     });
 }
 
-async fn close_main(window: Window) {
+async fn close_main(window: WebviewWindow) {
     let (tx, rx) = oneshot::channel::<()>();
     let tx = Arc::new(Mutex::new(Some(tx)));
     window.listen("frontend-done", move |_| {
@@ -118,5 +141,5 @@ async fn close_main(window: Window) {
     });
     window.emit("exit-requested", ()).ok();
     rx.await.ok();
-    window.close().ok();
+    window.destroy().ok();
 }

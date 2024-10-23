@@ -127,7 +127,9 @@ async fn polling_task(app: AppHandle, name: String, toast: bool, sound: bool) {
             }
             Err(Some(session)) => {
                 // try again with new session token
-                if let Ok(session) = poll(&app.clone(), connection, Some(session), toast, sound).await {
+                if let Ok(session) =
+                    poll(&app.clone(), connection, Some(session), toast, sound).await
+                {
                     new_session = Some(session);
                 }
             }

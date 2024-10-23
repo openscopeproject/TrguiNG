@@ -16,20 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { OpenDialogOptions, SaveDialogOptions } from "@tauri-apps/api/dialog";
+import type { OpenDialogOptions, SaveDialogOptions } from "@tauri-apps/plugin-dialog";
 import type { EventCallback } from "@tauri-apps/api/event";
 import type { CloseRequestedEvent, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
 
 export const TAURI = Object.prototype.hasOwnProperty.call(window, "__TAURI__");
-const realAppWindow = TAURI ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/window")).appWindow : undefined;
+const realAppWindow = TAURI ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/window")).getCurrentWindow() : undefined;
 const WebviewWindow = TAURI
-    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/window")).WebviewWindow
+    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/webviewWindow")).WebviewWindow
     : undefined;
 const fs = TAURI
-    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api")).fs
+    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/plugin-fs"))
     : undefined;
 const clipboard = TAURI
-    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api")).clipboard
+    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/plugin-clipboard-manager"))
     : undefined;
 
 export const appWindow = {
@@ -70,17 +70,17 @@ export const appWindow = {
 };
 
 export const invoke = TAURI
-    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api")).invoke
+    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/core")).invoke
     : async <T>(c: string, a: unknown) =>
         await Promise.reject<T>(new Error("Running outside of tauri app"));
 
 export const dialogOpen = TAURI
-    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/dialog")).open
+    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/plugin-dialog")).open
     : async (options?: OpenDialogOptions) =>
         await Promise.reject<string[] | string | null>(new Error("Running outside of tauri app"));
 
 export const dialogSave = TAURI
-    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/dialog")).save
+    ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/plugin-dialog")).save
     : async (options?: SaveDialogOptions) =>
         await Promise.reject<string | null>(new Error("Running outside of tauri app"));
 
@@ -105,7 +105,7 @@ const configFile = "trguing.json";
 
 export async function readConfigText() {
     if (fs !== undefined) {
-        return await fs.readTextFile(configFile, { dir: fs.BaseDirectory.Config });
+        return await fs.readTextFile(configFile, { baseDir: fs.BaseDirectory.Config });
     } else {
         return localStorage.getItem("trguing-config") ?? "{}";
     }
@@ -113,10 +113,7 @@ export async function readConfigText() {
 
 export async function writeConfigText(contents: string) {
     if (fs !== undefined) {
-        await fs.writeFile(
-            { path: configFile, contents },
-            { dir: fs.BaseDirectory.Config },
-        );
+        await fs.writeTextFile(configFile, contents, { baseDir: fs.BaseDirectory.Config });
     } else {
         localStorage.setItem("trguing-config", contents);
     }
