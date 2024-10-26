@@ -30,7 +30,7 @@ use objc2::{
     sel, ClassType, DeclaredClass,
 };
 use once_cell::sync::OnceCell;
-use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
+use tauri::{menu::{Menu, MenuItem, PredefinedMenuItem, Submenu}, AppHandle};
 
 type THandler = OnceCell<Mutex<Box<dyn FnMut(Vec<String>) + Send + 'static>>>;
 
@@ -173,33 +173,31 @@ pub fn listen_reopen_app() {
     listen_apple_event(CORE_EVENT_CLASS, EVENT_REOPEN_APP);
 }
 
-pub fn make_menu(app_name: &str) -> Menu {
-    let mut menu = Menu::new();
+pub fn make_menu<R>(app: &AppHandle<R>) -> tauri::Result<Menu<R>>
+where
+    R: tauri::Runtime,
+{
+    let app_name = app.config().product_name.as_ref().unwrap();
 
-    menu = menu.add_submenu(Submenu::new(
-        app_name,
-        Menu::new()
-            .add_native_item(MenuItem::CloseWindow)
-            .add_item(CustomMenuItem::new("quit", "Quit").accelerator("Cmd+q")),
-    ));
-
-    let mut edit_menu = Menu::new();
-    edit_menu = edit_menu.add_native_item(MenuItem::Cut);
-    edit_menu = edit_menu.add_native_item(MenuItem::Copy);
-    edit_menu = edit_menu.add_native_item(MenuItem::Paste);
-    menu = menu.add_submenu(Submenu::new("Edit", edit_menu));
-
-    menu = menu.add_submenu(Submenu::new(
-        "View",
-        Menu::new().add_native_item(MenuItem::EnterFullScreen),
-    ));
-
-    let mut window_menu = Menu::new();
-    window_menu = window_menu.add_native_item(MenuItem::Minimize);
-    window_menu = window_menu.add_native_item(MenuItem::Zoom);
-    window_menu = window_menu.add_native_item(MenuItem::Separator);
-    window_menu = window_menu.add_native_item(MenuItem::CloseWindow);
-    menu = menu.add_submenu(Submenu::new("Window", window_menu));
-
-    menu
+    Menu::with_items(app, &[
+        &Submenu::with_items(app, app_name.as_str(), true, &[
+            &PredefinedMenuItem::close_window(app, "Close".into())?,
+            &MenuItem::with_id(app, "quit", "Quit", true, "Cmd+q".into())?,
+        ])?,
+        &Submenu::with_items(app, "Edit", true, &[
+            &PredefinedMenuItem::select_all(app, "Select All".into())?,
+            &PredefinedMenuItem::cut(app, "Cut".into())?,
+            &PredefinedMenuItem::copy(app, "Copy".into())?,
+            &PredefinedMenuItem::paste(app, "Paste".into())?,
+        ])?,
+        &Submenu::with_items(app, "View", true, &[
+            &PredefinedMenuItem::fullscreen(app, "Full Screen".into())?
+        ])?,
+        &Submenu::with_items(app, "Window", true, &[
+            &PredefinedMenuItem::minimize(app, "Minimize".into())?,
+            // zoom missing ??
+            &PredefinedMenuItem::separator(app)?,
+            &PredefinedMenuItem::close_window(app, "Close".into())?,
+        ])?,
+    ])
 }

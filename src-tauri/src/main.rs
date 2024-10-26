@@ -44,10 +44,10 @@ mod tray;
 struct ListenerHandle(Arc<RwLock<ipc::Ipc>>);
 
 #[cfg(target_os = "macos")]
-fn handle_uris(app: AppHandle, uris: Vec<String>) {
+fn handle_uris(app: &AppHandle, uris: Vec<String>) {
     let listener_state: State<ListenerHandle> = app.state();
     let listener_lock = listener_state.0.clone();
-    let app_handle = Arc::new(app.clone());
+    let app_handle = app.clone();
     async_runtime::spawn(async move {
         let listener = listener_lock.read().await;
         if let Err(e) = listener.send(&uris, app_handle).await {
@@ -59,9 +59,9 @@ fn handle_uris(app: AppHandle, uris: Vec<String>) {
 fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(target_os = "macos")]
     {
-        let app_handle = app.handle();
+        let app_handle = app.handle().clone();
         macos::set_handler(move |uris| {
-            handle_uris(app_handle.clone(), uris);
+            handle_uris(&app_handle, uris);
         })
         .expect("Unable to set apple event handler");
         macos::listen_url();
@@ -197,12 +197,10 @@ fn main() {
 
     #[cfg(target_os = "macos")]
     let app_builder = app_builder
-        .menu(macos::make_menu(
-            context.config().package.product_name.as_ref().unwrap(),
-        ))
-        .on_menu_event(|event| match event.menu_item_id() {
+        .menu(macos::make_menu)
+        .on_menu_event(|app, event| match event.id().as_ref() {
             "quit" => {
-                tray::exit(event.window().app_handle());
+                tray::exit(app.clone());
             }
             _ => {}
         });
