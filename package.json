@@ -9,9 +9,9 @@
     "tauri-dev": "tauri dev",
     "build": "tauri build",
     "build-bin": "tauri build -b none",
-    "webpack-serve": "webpack serve --config webpack.dev.js",
-    "webpack-dev": "webpack --config webpack.dev.js",
-    "webpack-prod": "webpack --config webpack.prod.js",
+    "webpack-serve": "webpack serve --config webpack.dev.mjs",
+    "webpack-dev": "webpack --config webpack.dev.mjs",
+    "webpack-prod": "webpack --config webpack.prod.mjs",
     "info": "tauri info",
     "react-devtools": "npx react-devtools"
   },

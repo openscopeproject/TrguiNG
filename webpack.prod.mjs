@@ -17,15 +17,23 @@
  */
 
 import { merge } from "webpack-merge";
-import common from "./webpack.common.js";
+import common, { __dirname } from "./webpack.common.mjs";
+import path from "path";
+import { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
-export default merge(common("development"), {
+export default merge(common("production"), {
+    plugins: [
+        new BundleAnalyzerPlugin({
+            analyzerMode: "static",
+            openAnalyzer: false,
+            reportFilename: path.resolve(__dirname, "webpack-report.html"),
+        }),
+    ],
     devtool: "source-map",
-    devServer: {
-        static: "./dist",
-        client: {
-            overlay: true,
-            progress: true,
+    resolve: {
+        alias: {
+            // Uncomment for profiling build
+            // "react-dom$": "react-dom/profiling",
         },
     },
 });
