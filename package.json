@@ -7,6 +7,7 @@
   "type": "module",
   "scripts": {
     "tauri-dev": "WEBKIT_DISABLE_DMABUF_RENDERER=1 tauri dev",
+    "tauri": "tauri",
     "build": "tauri build",
     "build-bin": "tauri build -b",
     "webpack-serve": "webpack serve --config webpack.dev.mjs",
