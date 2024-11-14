@@ -1,19 +1,46 @@
 ; This file is taken directly from tauri repo
-; https://github.com/tauri-apps/tauri/blob/dev/tooling/bundler/src/bundle/windows/templates/installer.nsi
+; https://github.com/tauri-apps/tauri/blob/tauri-v2.1.1/crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi
 ; Only difference is that the reinstall/uninstall page is skipped since
 ; for TrguiNG uninstall option is useless and doesn't work properly
 ; if elevated privileges are required for uninstallation.
+Unicode true
+ManifestDPIAware true
+; Add in `dpiAwareness` `PerMonitorV2` to manifest for Windows 10 1607+ (note this should not affect lower versions since they should be able to ignore this and pick up `dpiAware` `true` set by `ManifestDPIAware true`)
+; Currently undocumented on NSIS's website but is in the Docs folder of source tree, see
+; https://github.com/kichik/nsis/blob/5fc0b87b819a9eec006df4967d08e522ddd651c9/Docs/src/attributes.but#L286-L300
+; https://github.com/tauri-apps/tauri/pull/10106
+ManifestDPIAwareness PerMonitorV2
+
+!if "{{compression}}" == "none"
+  SetCompress off
+!else
+  ; Set the compression algorithm. We default to LZMA.
+  SetCompressor /SOLID "{{compression}}"
+!endif
 
 !include MUI2.nsh
 !include FileFunc.nsh
 !include x64.nsh
 !include WordFunc.nsh
+!include "utils.nsh"
+!include "FileAssociation.nsh"
+!include "Win\COM.nsh"
+!include "Win\Propkey.nsh"
+!include "StrFunc.nsh"
+${StrCase}
+${StrLoc}
+
+{{#if installer_hooks}}
+!include "{{installer_hooks}}"
+{{/if}}
+
+!define WEBVIEW2APPGUID "{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
 
 !define MANUFACTURER "{{manufacturer}}"
 !define PRODUCTNAME "{{product_name}}"
 !define VERSION "{{version}}"
 !define VERSIONWITHBUILD "{{version_with_build}}"
-!define SHORTDESCRIPTION "{{short_description}}"
+!define HOMEPAGE "{{homepage}}"
 !define INSTALLMODE "{{install_mode}}"
 !define LICENSE "{{license}}"
 !define INSTALLERICON "{{installer_icon}}"
@@ -22,6 +49,7 @@
 !define MAINBINARYNAME "{{main_binary_name}}"
 !define MAINBINARYSRCPATH "{{main_binary_path}}"
 !define BUNDLEID "{{bundle_id}}"
+!define COPYRIGHT "{{copyright}}"
 !define OUTFILE "{{out_file}}"
 !define ARCH "{{arch}}"
 !define PLUGINSPATH "{{additional_plugins_path}}"
@@ -31,18 +59,32 @@
 !define WEBVIEW2INSTALLERARGS "{{webview2_installer_args}}"
 !define WEBVIEW2BOOTSTRAPPERPATH "{{webview2_bootstrapper_path}}"
 !define WEBVIEW2INSTALLERPATH "{{webview2_installer_path}}"
+!define MINIMUMWEBVIEW2VERSION "{{minimum_webview2_version}}"
 !define UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCTNAME}"
 !define MANUPRODUCTKEY "Software\${MANUFACTURER}\${PRODUCTNAME}"
+!define UNINSTALLERSIGNCOMMAND "{{uninstaller_sign_cmd}}"
+!define ESTIMATEDSIZE "{{estimated_size}}"
+!define STARTMENUFOLDER "{{start_menu_folder}}"
+
+Var PassiveMode
+Var UpdateMode
+Var NoShortcutMode
+Var WixMode
+Var OldMainBinaryName
 
 Name "${PRODUCTNAME}"
-BrandingText "{{copyright}}"
+BrandingText "${COPYRIGHT}"
 OutFile "${OUTFILE}"
-Unicode true
-SetCompressor /SOLID lzma
+
+; We don't actually use this value as default install path,
+; it's just for nsis to append the product name folder in the directory selector
+; https://nsis.sourceforge.io/Reference/InstallDir
+!define PLACEHOLDER_INSTALL_DIR "placeholder\${PRODUCTNAME}"
+InstallDir "${PLACEHOLDER_INSTALL_DIR}"
 
 VIProductVersion "${VERSIONWITHBUILD}"
 VIAddVersionKey "ProductName" "${PRODUCTNAME}"
-VIAddVersionKey "FileDescription" "${SHORTDESCRIPTION}"
+VIAddVersionKey "FileDescription" "${PRODUCTNAME}"
 VIAddVersionKey "LegalCopyright" "${COPYRIGHT}"
 VIAddVersionKey "FileVersion" "${VERSION}"
 VIAddVersionKey "ProductVersion" "${VERSION}"
@@ -50,6 +92,11 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 ; Plugins path, currently exists for linux only
 !if "${PLUGINSPATH}" != ""
     !addplugindir "${PLUGINSPATH}"
+!endif
+
+; Uninstaller signing command
+!if "${UNINSTALLERSIGNCOMMAND}" != ""
+  !uninstfinalize '${UNINSTALLERSIGNCOMMAND}'
 !endif
 
 ; Handle install mode, `perUser`, `perMachine` or `both`
@@ -78,17 +125,17 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
   !include MultiUser.nsh
 !endif
 
-; installer icon
+; Installer icon
 !if "${INSTALLERICON}" != ""
   !define MUI_ICON "${INSTALLERICON}"
 !endif
 
-; installer sidebar image
+; Installer sidebar image
 !if "${SIDEBARIMAGE}" != ""
   !define MUI_WELCOMEFINISHPAGE_BITMAP "${SIDEBARIMAGE}"
 !endif
 
-; installer header image
+; Installer header image
 !if "${HEADERIMAGE}" != ""
   !define MUI_HEADERIMAGE
   !define MUI_HEADERIMAGE_BITMAP  "${HEADERIMAGE}"
@@ -116,38 +163,42 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
   !insertmacro MULTIUSER_PAGE_INSTALLMODE
 !endif
 
-
 ; 4. Custom page to ask user if he wants to reinstall/uninstall
-;    only if a previous installtion was detected
+;    only if a previous installation was detected
 Var ReinstallPageCheck
 Page custom PageReinstall PageLeaveReinstall
 Function PageReinstall
-  ; Skip this page entirely for TrguiNG
+  ; ============ TrguiNG edit begin ===============
   Abort
+  ; ============ TrguiNG edit end ===============
 
   ; Uninstall previous WiX installation if exists.
   ;
-  ; A WiX installer stores the isntallation info in registry
+  ; A WiX installer stores the installation info in registry
   ; using a UUID and so we have to loop through all keys under
   ; `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall`
   ; and check if `DisplayName` and `Publisher` keys match ${PRODUCTNAME} and ${MANUFACTURER}
   ;
-  ; This has a potentional issue that there maybe another installation that matches
+  ; This has a potential issue that there maybe another installation that matches
   ; our ${PRODUCTNAME} and ${MANUFACTURER} but wasn't installed by our WiX installer,
   ; however, this should be fine since the user will have to confirm the uninstallation
   ; and they can chose to abort it if doesn't make sense.
   StrCpy $0 0
   wix_loop:
     EnumRegKey $1 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" $0
-    StrCmp $1 "" wix_done ; Exit loop if there is no more keys to loop on
+    StrCmp $1 "" wix_loop_done ; Exit loop if there is no more keys to loop on
     IntOp $0 $0 + 1
     ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1" "DisplayName"
     ReadRegStr $R1 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1" "Publisher"
     StrCmp "$R0$R1" "${PRODUCTNAME}${MANUFACTURER}" 0 wix_loop
-    StrCpy $R5 "wix"
+    ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1" "UninstallString"
+    ${StrCase} $R1 $R0 "L"
+    ${StrLoc} $R0 $R1 "msiexec" ">"
+    StrCmp $R0 0 0 wix_loop_done
+    StrCpy $WixMode 1
     StrCpy $R6 "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1"
     Goto compare_version
-  wix_done:
+  wix_loop_done:
 
   ; Check if there is an existing installation, if not, abort the reinstall page
   ReadRegStr $R0 SHCTX "${UNINSTKEY}" ""
@@ -158,7 +209,7 @@ Function PageReinstall
   ; and modify the messages presented to the user accordingly
   compare_version:
   StrCpy $R4 "$(older)"
-  ${If} $R5 == "wix"
+  ${If} $WixMode = 1
     ReadRegStr $R0 HKLM "$R6" "DisplayVersion"
   ${Else}
     ReadRegStr $R0 SHCTX "${UNINSTKEY}" "DisplayVersion"
@@ -168,21 +219,19 @@ Function PageReinstall
   nsis_tauri_utils::SemverCompare "${VERSION}" $R0
   Pop $R0
   ; Reinstalling the same version
-  ${If} $R0 == 0
+  ${If} $R0 = 0
     StrCpy $R1 "$(alreadyInstalledLong)"
     StrCpy $R2 "$(addOrReinstall)"
     StrCpy $R3 "$(uninstallApp)"
     !insertmacro MUI_HEADER_TEXT "$(alreadyInstalled)" "$(chooseMaintenanceOption)"
-    StrCpy $R5 "2"
   ; Upgrading
-  ${ElseIf} $R0 == 1
+  ${ElseIf} $R0 = 1
     StrCpy $R1 "$(olderOrUnknownVersionInstalled)"
     StrCpy $R2 "$(uninstallBeforeInstalling)"
     StrCpy $R3 "$(dontUninstall)"
     !insertmacro MUI_HEADER_TEXT "$(alreadyInstalled)" "$(choowHowToInstall)"
-    StrCpy $R5 "1"
   ; Downgrading
-  ${ElseIf} $R0 == -1
+  ${ElseIf} $R0 = -1
     StrCpy $R1 "$(newerVersionInstalled)"
     StrCpy $R2 "$(uninstallBeforeInstalling)"
     !if "${ALLOWDOWNGRADES}" == "true"
@@ -191,43 +240,50 @@ Function PageReinstall
       StrCpy $R3 "$(dontUninstallDowngrade)"
     !endif
     !insertmacro MUI_HEADER_TEXT "$(alreadyInstalled)" "$(choowHowToInstall)"
-    StrCpy $R5 "1"
   ${Else}
     Abort
   ${EndIf}
 
-  Call SkipIfPassive
-
-  nsDialogs::Create 1018
-  Pop $R4
-  ${IfThen} $(^RTL) == 1 ${|} nsDialogs::SetRTL $(^RTL) ${|}
-
-  ${NSD_CreateLabel} 0 0 100% 24u $R1
-  Pop $R1
-
-  ${NSD_CreateRadioButton} 30u 50u -30u 8u $R2
-  Pop $R2
-  ${NSD_OnClick} $R2 PageReinstallUpdateSelection
-
-  ${NSD_CreateRadioButton} 30u 70u -30u 8u $R3
-  Pop $R3
-  ; disable this radio button if downgrading and downgrades are disabled
-  !if "${ALLOWDOWNGRADES}" == "false"
-    ${IfThen} $R0 == -1 ${|} EnableWindow $R3 0 ${|}
-  !endif
-  ${NSD_OnClick} $R3 PageReinstallUpdateSelection
-
-  ; Check the first radio button if this the first time
-  ; we enter this page or if the second button wasn't
-  ; selected the last time we were on this page
-  ${If} $ReinstallPageCheck != 2
-    SendMessage $R2 ${BM_SETCHECK} ${BST_CHECKED} 0
+  ; Skip showing the page if passive
+  ;
+  ; Note that we don't call this earlier at the begining
+  ; of this function because we need to populate some variables
+  ; related to current installed version if detected and whether
+  ; we are downgrading or not.
+  ${If} $PassiveMode = 1
+    Call PageLeaveReinstall
   ${Else}
-    SendMessage $R3 ${BM_SETCHECK} ${BST_CHECKED} 0
-  ${EndIf}
+    nsDialogs::Create 1018
+    Pop $R4
+    ${IfThen} $(^RTL) = 1 ${|} nsDialogs::SetRTL $(^RTL) ${|}
 
-  ${NSD_SetFocus} $R2
-  nsDialogs::Show
+    ${NSD_CreateLabel} 0 0 100% 24u $R1
+    Pop $R1
+
+    ${NSD_CreateRadioButton} 30u 50u -30u 8u $R2
+    Pop $R2
+    ${NSD_OnClick} $R2 PageReinstallUpdateSelection
+
+    ${NSD_CreateRadioButton} 30u 70u -30u 8u $R3
+    Pop $R3
+    ; Disable this radio button if downgrading and downgrades are disabled
+    !if "${ALLOWDOWNGRADES}" == "false"
+      ${IfThen} $R0 = -1 ${|} EnableWindow $R3 0 ${|}
+    !endif
+    ${NSD_OnClick} $R3 PageReinstallUpdateSelection
+
+    ; Check the first radio button if this the first time
+    ; we enter this page or if the second button wasn't
+    ; selected the last time we were on this page
+    ${If} $ReinstallPageCheck <> 2
+      SendMessage $R2 ${BM_SETCHECK} ${BST_CHECKED} 0
+    ${Else}
+      SendMessage $R3 ${BM_SETCHECK} ${BST_CHECKED} 0
+    ${EndIf}
+
+    ${NSD_SetFocus} $R2
+    nsDialogs::Show
+  ${EndIf}
 FunctionEnd
 Function PageReinstallUpdateSelection
   ${NSD_GetState} $R2 $R1
@@ -240,27 +296,54 @@ FunctionEnd
 Function PageLeaveReinstall
   ${NSD_GetState} $R2 $R1
 
-  ; $R5 holds whether we are reinstalling the same version or not
-  ; $R5 == "1" -> different versions
-  ; $R5 == "2" -> same version
-  ;
-  ; $R1 holds the radio buttons state. its meaning is dependant on the context
-  StrCmp $R5 "1" 0 +2 ; Existing install is not the same version?
-    StrCmp $R1 "1" reinst_uninstall reinst_done ; $R1 == "1", then user chose to uninstall existing version, otherwise skip uninstalling
-  StrCmp $R1 "1" reinst_done ; Same version? skip uninstalling
+  ; If migrating from Wix, always uninstall
+  ${If} $WixMode = 1
+    Goto reinst_uninstall
+  ${EndIf}
+
+  ; In update mode, always proceeds without uninstalling
+  ${If} $UpdateMode = 1
+    Goto reinst_done
+  ${EndIf}
+
+  ; $R0 holds whether same(0)/upgrading(1)/downgrading(-1) version
+  ; $R1 holds the radio buttons state:
+  ;   1 => first choice was selected
+  ;   0 => second choice was selected
+  ${If} $R0 = 0 ; Same version, proceed
+    ${If} $R1 = 1              ; User chose to add/reinstall
+      Goto reinst_done
+    ${Else}                    ; User chose to uninstall
+      Goto reinst_uninstall
+    ${EndIf}
+  ${ElseIf} $R0 = 1 ; Upgrading
+    ${If} $R1 = 1              ; User chose to uninstall
+      Goto reinst_uninstall
+    ${Else}
+      Goto reinst_done         ; User chose NOT to uninstall
+    ${EndIf}
+  ${ElseIf} $R0 = -1 ; Downgrading
+    ${If} $R1 = 1              ; User chose to uninstall
+      Goto reinst_uninstall
+    ${Else}
+      Goto reinst_done         ; User chose NOT to uninstall
+    ${EndIf}
+  ${EndIf}
 
   reinst_uninstall:
     HideWindow
     ClearErrors
-    ExecWait '$R1 /P _?=$4' $0
 
-    ${If} $R5 == "wix"
+    ${If} $WixMode = 1
       ReadRegStr $R1 HKLM "$R6" "UninstallString"
       ExecWait '$R1' $0
     ${Else}
       ReadRegStr $4 SHCTX "${MANUPRODUCTKEY}" ""
       ReadRegStr $R1 SHCTX "${UNINSTKEY}" "UninstallString"
-      ExecWait '$R1 _?=$4' $0
+      ${IfThen} $UpdateMode = 1 ${|} StrCpy $R1 "$R1 /UPDATE" ${|} ; append /UPDATE
+      ${IfThen} $PassiveMode = 1 ${|} StrCpy $R1 "$R1 /P" ${|} ; append /P
+      StrCpy $R1 "$R1 _?=$4" ; append uninstall directory
+      ExecWait '$R1' $0
     ${EndIf}
 
     BringToFront
@@ -269,29 +352,36 @@ Function PageLeaveReinstall
 
     ${If} $0 <> 0
     ${OrIf} ${FileExists} "$INSTDIR\${MAINBINARYNAME}.exe"
-      ${If} $0 = 1 ; User aborted uninstaller?
-        StrCmp $R5 "2" 0 +2 ; Is the existing install the same version?
-          Quit ; ...yes, already installed, we are done
+      ; User cancelled wix uninstaller? return to select un/reinstall page
+      ${If} $WixMode = 1
+      ${AndIf} $0 = 1602
         Abort
       ${EndIf}
+
+      ; User cancelled NSIS uninstaller? return to select un/reinstall page
+      ${If} $0 = 1
+        Abort
+      ${EndIf}
+
+      ; Other erros? show generic error message and return to select un/reinstall page
       MessageBox MB_ICONEXCLAMATION "$(unableToUninstall)"
       Abort
-    ${Else}
-      StrCpy $0 $R1 1
-      ${IfThen} $0 == '"' ${|} StrCpy $R1 $R1 -1 1 ${|} ; Strip quotes from UninstallString
-      Delete $R1
-      RMDir $INSTDIR
     ${EndIf}
   reinst_done:
 FunctionEnd
 
-; 5. Choose install directoy page
+; 5. Choose install directory page
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
 !insertmacro MUI_PAGE_DIRECTORY
 
 ; 6. Start menu shortcut page
-!define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
 Var AppStartMenuFolder
+!if "${STARTMENUFOLDER}" != ""
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
+  !define MUI_STARTMENUPAGE_DEFAULTFOLDER "${STARTMENUFOLDER}"
+!else
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE Skip
+!endif
 !insertmacro MUI_PAGE_STARTMENU Application $AppStartMenuFolder
 
 ; 7. Installation page
@@ -305,11 +395,16 @@ Var AppStartMenuFolder
 ; Use show readme button in the finish page as a button create a desktop shortcut
 !define MUI_FINISHPAGE_SHOWREADME
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "$(createDesktop)"
-!define MUI_FINISHPAGE_SHOWREADME_FUNCTION CreateDesktopShortcut
+!define MUI_FINISHPAGE_SHOWREADME_FUNCTION CreateOrUpdateDesktopShortcut
 ; Show run app after installation.
-!define MUI_FINISHPAGE_RUN "$INSTDIR\${MAINBINARYNAME}.exe"
+!define MUI_FINISHPAGE_RUN
+!define MUI_FINISHPAGE_RUN_FUNCTION RunMainBinary
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
 !insertmacro MUI_PAGE_FINISH
+
+Function RunMainBinary
+  nsis_tauri_utils::RunAsUser "$INSTDIR\${MAINBINARYNAME}.exe" ""
+FunctionEnd
 
 ; Uninstaller Pages
 ; 1. Confirm uninstall page
@@ -317,21 +412,40 @@ Var DeleteAppDataCheckbox
 Var DeleteAppDataCheckboxState
 !define /ifndef WS_EX_LAYOUTRTL         0x00400000
 !define MUI_PAGE_CUSTOMFUNCTION_SHOW un.ConfirmShow
-Function un.ConfirmShow
-    FindWindow $1 "#32770" "" $HWNDPARENT ; Find inner dialog
-    ${If} $(^RTL) == 1
-      System::Call 'USER32::CreateWindowEx(i${__NSD_CheckBox_EXSTYLE}|${WS_EX_LAYOUTRTL},t"${__NSD_CheckBox_CLASS}",t "$(deleteAppData)",i${__NSD_CheckBox_STYLE},i 50,i 100,i 400, i 25,i$1,i0,i0,i0)i.s'
-    ${Else}
-      System::Call 'USER32::CreateWindowEx(i${__NSD_CheckBox_EXSTYLE},t"${__NSD_CheckBox_CLASS}",t "$(deleteAppData)",i${__NSD_CheckBox_STYLE},i 0,i 100,i 400, i 25,i$1,i0,i0,i0)i.s'
-    ${EndIf}
-    Pop $DeleteAppDataCheckbox
-    SendMessage $HWNDPARENT ${WM_GETFONT} 0 0 $1
-    SendMessage $DeleteAppDataCheckbox ${WM_SETFONT} $1 1
+Function un.ConfirmShow ; Add add a `Delete app data` check box
+  ; $1 inner dialog HWND
+  ; $2 window DPI
+  ; $3 style
+  ; $4 x
+  ; $5 y
+  ; $6 width
+  ; $7 height
+  FindWindow $1 "#32770" "" $HWNDPARENT ; Find inner dialog
+  System::Call "user32::GetDpiForWindow(p r1) i .r2"
+  ${If} $(^RTL) = 1
+    StrCpy $3 "${__NSD_CheckBox_EXSTYLE} | ${WS_EX_LAYOUTRTL}"
+    IntOp $4 50 * $2
+  ${Else}
+    StrCpy $3 "${__NSD_CheckBox_EXSTYLE}"
+    IntOp $4 0 * $2
+  ${EndIf}
+  IntOp $5 100 * $2
+  IntOp $6 400 * $2
+  IntOp $7 25 * $2
+  IntOp $4 $4 / 96
+  IntOp $5 $5 / 96
+  IntOp $6 $6 / 96
+  IntOp $7 $7 / 96
+  System::Call 'user32::CreateWindowEx(i r3, w "${__NSD_CheckBox_CLASS}", w "$(deleteAppData)", i ${__NSD_CheckBox_STYLE}, i r4, i r5, i r6, i r7, p r1, i0, i0, i0) i .s'
+  Pop $DeleteAppDataCheckbox
+  SendMessage $HWNDPARENT ${WM_GETFONT} 0 0 $1
+  SendMessage $DeleteAppDataCheckbox ${WM_SETFONT} $1 1
 FunctionEnd
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE un.ConfirmLeave
 Function un.ConfirmLeave
-    SendMessage $DeleteAppDataCheckbox ${BM_GETCHECK} 0 0 $DeleteAppDataCheckboxState
+  SendMessage $DeleteAppDataCheckbox ${BM_GETCHECK} 0 0 $DeleteAppDataCheckboxState
 FunctionEnd
+!define MUI_PAGE_CUSTOMFUNCTION_PRE un.SkipIfPassive
 !insertmacro MUI_UNPAGE_CONFIRM
 
 ; 2. Uninstalling Page
@@ -346,33 +460,29 @@ FunctionEnd
   !include "{{this}}"
 {{/each}}
 
-Var PassiveMode
 Function .onInit
   ${GetOptions} $CMDLINE "/P" $PassiveMode
-  IfErrors +2 0
+  ${IfNot} ${Errors}
     StrCpy $PassiveMode 1
+  ${EndIf}
+
+  ${GetOptions} $CMDLINE "/NS" $NoShortcutMode
+  ${IfNot} ${Errors}
+    StrCpy $NoShortcutMode 1
+  ${EndIf}
+
+  ${GetOptions} $CMDLINE "/UPDATE" $UpdateMode
+  ${IfNot} ${Errors}
+    StrCpy $UpdateMode 1
+  ${EndIf}
 
   !if "${DISPLAYLANGUAGESELECTOR}" == "true"
     !insertmacro MUI_LANGDLL_DISPLAY
   !endif
 
-  !if "${INSTALLMODE}" == "currentUser"
-    SetShellVarContext current
-  !else if "${INSTALLMODE}" == "perMachine"
-    SetShellVarContext all
-  !endif
+  !insertmacro SetContext
 
-  ${If} ${RunningX64}
-    !if "${ARCH}" == "x64"
-      SetRegView 64
-    !else if "${ARCH}" == "arm64"
-      SetRegView 64
-    !else
-      SetRegView 32
-    !endif
-  ${EndIf}
-
-  ${If} $INSTDIR == ""
+  ${If} $INSTDIR == "${PLACEHOLDER_INSTALL_DIR}"
     ; Set default install location
     !if "${INSTALLMODE}" == "perMachine"
       ${If} ${RunningX64}
@@ -403,18 +513,18 @@ FunctionEnd
 Section EarlyChecks
   ; Abort silent installer if downgrades is disabled
   !if "${ALLOWDOWNGRADES}" == "false"
-  IfSilent 0 silent_downgrades_done
+  ${If} ${Silent}
     ; If downgrading
-    ${If} $R0 == -1
+    ${If} $R0 = -1
       System::Call 'kernel32::AttachConsole(i -1)i.r0'
-      ${If} $0 != 0
+      ${If} $0 <> 0
         System::Call 'kernel32::GetStdHandle(i -11)i.r0'
         System::call 'kernel32::SetConsoleTextAttribute(i r0, i 0x0004)' ; set red color
         FileWrite $0 "$(silentDowngrades)"
       ${EndIf}
       Abort
     ${EndIf}
-  silent_downgrades_done:
+  ${EndIf}
   !endif
 
 SectionEnd
@@ -422,118 +532,133 @@ SectionEnd
 Section WebView2
   ; Check if Webview2 is already installed and skip this section
   ${If} ${RunningX64}
-    ReadRegStr $4 HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
+    ReadRegStr $4 HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\${WEBVIEW2APPGUID}" "pv"
   ${Else}
-    ReadRegStr $4 HKLM "SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
+    ReadRegStr $4 HKLM "SOFTWARE\Microsoft\EdgeUpdate\Clients\${WEBVIEW2APPGUID}" "pv"
   ${EndIf}
-  ReadRegStr $5 HKCU "SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
+  ${If} $4 == ""
+    ReadRegStr $4 HKCU "SOFTWARE\Microsoft\EdgeUpdate\Clients\${WEBVIEW2APPGUID}" "pv"
+  ${EndIf}
 
-  StrCmp $4 "" 0 webview2_done
-  StrCmp $5 "" 0 webview2_done
+  ${If} $4 == ""
+    ; Webview2 installation
+    ;
+    ; Skip if updating
+    ${If} $UpdateMode <> 1
+      !if "${INSTALLWEBVIEW2MODE}" == "downloadBootstrapper"
+        Delete "$TEMP\MicrosoftEdgeWebview2Setup.exe"
+        DetailPrint "$(webview2Downloading)"
+        NSISdl::download "https://go.microsoft.com/fwlink/p/?LinkId=2124703" "$TEMP\MicrosoftEdgeWebview2Setup.exe"
+        Pop $0
+        ${If} $0 == "success"
+          DetailPrint "$(webview2DownloadSuccess)"
+        ${Else}
+          DetailPrint "$(webview2DownloadError)"
+          Abort "$(webview2AbortError)"
+        ${EndIf}
+        StrCpy $6 "$TEMP\MicrosoftEdgeWebview2Setup.exe"
+        Goto install_webview2
+      !endif
 
-  ; Webview2 install modes
-  !if "${INSTALLWEBVIEW2MODE}" == "downloadBootstrapper"
-    Delete "$TEMP\MicrosoftEdgeWebview2Setup.exe"
-    DetailPrint "$(webview2Downloading)"
-    nsis_tauri_utils::download "https://go.microsoft.com/fwlink/p/?LinkId=2124703" "$TEMP\MicrosoftEdgeWebview2Setup.exe"
-    Pop $0
-    ${If} $0 == 0
-      DetailPrint "$(webview2DownloadSuccess)"
-    ${Else}
-      DetailPrint "$(webview2DownloadError)"
-      Abort "$(webview2AbortError)"
+      !if "${INSTALLWEBVIEW2MODE}" == "embedBootstrapper"
+        Delete "$TEMP\MicrosoftEdgeWebview2Setup.exe"
+        File "/oname=$TEMP\MicrosoftEdgeWebview2Setup.exe" "${WEBVIEW2BOOTSTRAPPERPATH}"
+        DetailPrint "$(installingWebview2)"
+        StrCpy $6 "$TEMP\MicrosoftEdgeWebview2Setup.exe"
+        Goto install_webview2
+      !endif
+
+      !if "${INSTALLWEBVIEW2MODE}" == "offlineInstaller"
+        Delete "$TEMP\MicrosoftEdgeWebView2RuntimeInstaller.exe"
+        File "/oname=$TEMP\MicrosoftEdgeWebView2RuntimeInstaller.exe" "${WEBVIEW2INSTALLERPATH}"
+        DetailPrint "$(installingWebview2)"
+        StrCpy $6 "$TEMP\MicrosoftEdgeWebView2RuntimeInstaller.exe"
+        Goto install_webview2
+      !endif
+
+      Goto webview2_done
+
+      install_webview2:
+        DetailPrint "$(installingWebview2)"
+        ; $6 holds the path to the webview2 installer
+        ExecWait "$6 ${WEBVIEW2INSTALLERARGS} /install" $1
+        ${If} $1 = 0
+          DetailPrint "$(webview2InstallSuccess)"
+        ${Else}
+          DetailPrint "$(webview2InstallError)"
+          Abort "$(webview2AbortError)"
+        ${EndIf}
+      webview2_done:
     ${EndIf}
-    StrCpy $6 "$TEMP\MicrosoftEdgeWebview2Setup.exe"
-    Goto install_webview2
-  !endif
-
-  !if "${INSTALLWEBVIEW2MODE}" == "embedBootstrapper"
-    CreateDirectory "$INSTDIR\redist"
-    File "/oname=$INSTDIR\redist\MicrosoftEdgeWebview2Setup.exe" "${WEBVIEW2BOOTSTRAPPERPATH}"
-    DetailPrint "$(installingWebview2)"
-    StrCpy $6 "$INSTDIR\redist\MicrosoftEdgeWebview2Setup.exe"
-    Goto install_webview2
-  !endif
-
-  !if "${INSTALLWEBVIEW2MODE}" == "offlineInstaller"
-    CreateDirectory "$INSTDIR\redist"
-    File "/oname=$INSTDIR\redist\MicrosoftEdgeWebView2RuntimeInstaller.exe" "${WEBVIEW2INSTALLERPATH}"
-    DetailPrint "$(installingWebview2)"
-    StrCpy $6 "$INSTDIR\redist\MicrosoftEdgeWebView2RuntimeInstaller.exe"
-    Goto install_webview2
-  !endif
-
-  Goto webview2_done
-
-  install_webview2:
-    DetailPrint "$(installingWebview2)"
-    ; $6 holds the path to the webview2 installer
-    ExecWait "$6 ${WEBVIEW2INSTALLERARGS} /install" $1
-    ${If} $1 == 0
-      DetailPrint "$(webview2InstallSuccess)"
-    ${Else}
-      DetailPrint "$(webview2InstallError)"
-      Abort "$(webview2AbortError)"
-    ${EndIf}
-  webview2_done:
+  ${Else}
+    !if "${MINIMUMWEBVIEW2VERSION}" != ""
+      ${VersionCompare} "${MINIMUMWEBVIEW2VERSION}" "$4" $R0
+      ${If} $R0 = 1
+        update_webview:
+          DetailPrint "$(installingWebview2)"
+          ${If} ${RunningX64}
+            ReadRegStr $R1 HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate" "path"
+          ${Else}
+            ReadRegStr $R1 HKLM "SOFTWARE\Microsoft\EdgeUpdate" "path"
+          ${EndIf}
+          ${If} $R1 == ""
+            ReadRegStr $R1 HKCU "SOFTWARE\Microsoft\EdgeUpdate" "path"
+          ${EndIf}
+          ${If} $R1 != ""
+            ; Chromium updater docs: https://source.chromium.org/chromium/chromium/src/+/main:docs/updater/user_manual.md
+            ; Modified from "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Microsoft EdgeWebView\ModifyPath"
+            ExecWait `"$R1" /install appguid=${WEBVIEW2APPGUID}&needsadmin=true` $1
+            ${If} $1 = 0
+              DetailPrint "$(webview2InstallSuccess)"
+            ${Else}
+              MessageBox MB_ICONEXCLAMATION|MB_ABORTRETRYIGNORE "$(webview2InstallError)" IDIGNORE ignore IDRETRY update_webview
+              Quit
+              ignore:
+            ${EndIf}
+          ${EndIf}
+      ${EndIf}
+    !endif
+  ${EndIf}
 SectionEnd
 
-!macro CheckIfAppIsRunning
-  nsis_tauri_utils::FindProcess "${MAINBINARYNAME}.exe"
-  Pop $R0
-  ${If} $R0 = 0
-      IfSilent kill 0
-      ${IfThen} $PassiveMode != 1 ${|} MessageBox MB_OKCANCEL "$(appRunningOkKill)" IDOK kill IDCANCEL cancel ${|}
-      kill:
-        nsis_tauri_utils::KillProcess "${MAINBINARYNAME}.exe"
-        Pop $R0
-        Sleep 500
-        ${If} $R0 = 0
-          Goto app_check_done
-        ${Else}
-          IfSilent silent ui
-          silent:
-            System::Call 'kernel32::AttachConsole(i -1)i.r0'
-            ${If} $0 != 0
-              System::Call 'kernel32::GetStdHandle(i -11)i.r0'
-              System::call 'kernel32::SetConsoleTextAttribute(i r0, i 0x0004)' ; set red color
-              FileWrite $0 "$(appRunning)$\n"
-            ${EndIf}
-            Abort
-          ui:
-            Abort "$(failedToKillApp)"
-        ${EndIf}
-      cancel:
-        Abort "$(appRunning)"
-  ${EndIf}
-  app_check_done:
-!macroend
-
-Var AppSize
 Section Install
   SetOutPath $INSTDIR
-  StrCpy $AppSize 0
+
+  !ifmacrodef NSIS_HOOK_PREINSTALL
+    !insertmacro NSIS_HOOK_PREINSTALL
+  !endif
 
   !insertmacro CheckIfAppIsRunning
 
   ; Copy main executable
   File "${MAINBINARYSRCPATH}"
-  ${GetSize} "$INSTDIR" "/M=${MAINBINARYNAME}.exe /S=0B" $0 $1 $2
-  IntOp $AppSize $AppSize + $0
 
   ; Copy resources
+  {{#each resources_dirs}}
+    CreateDirectory "$INSTDIR\\{{this}}"
+  {{/each}}
   {{#each resources}}
-    CreateDirectory "$INSTDIR\\{{this.[0]}}"
     File /a "/oname={{this.[1]}}" "{{@key}}"
-    ${GetSize} "$INSTDIR" "/M={{this.[1]}} /S=0B" $0 $1 $2
-    IntOp $AppSize $AppSize + $0
   {{/each}}
 
   ; Copy external binaries
   {{#each binaries}}
     File /a "/oname={{this}}" "{{@key}}"
-    ${GetSize} "$INSTDIR" "/M={{this}} /S=0B" $0 $1 $2
-    IntOp $AppSize $AppSize + $0
+  {{/each}}
+
+  ; Create file associations
+  {{#each file_associations as |association| ~}}
+    {{#each association.ext as |ext| ~}}
+       !insertmacro APP_ASSOCIATE "{{ext}}" "{{or association.name ext}}" "{{association-description association.description ext}}" "$INSTDIR\${MAINBINARYNAME}.exe,0" "Open with ${PRODUCTNAME}" "$INSTDIR\${MAINBINARYNAME}.exe $\"%1$\""
+    {{/each}}
+  {{/each}}
+
+  ; Register deep links
+  {{#each deep_link_protocols as |protocol| ~}}
+    WriteRegStr SHCTX "Software\Classes\\{{protocol}}" "URL Protocol" ""
+    WriteRegStr SHCTX "Software\Classes\\{{protocol}}" "" "URL:${BUNDLEID} protocol"
+    WriteRegStr SHCTX "Software\Classes\\{{protocol}}\DefaultIcon" "" "$\"$INSTDIR\${MAINBINARYNAME}.exe$\",0"
+    WriteRegStr SHCTX "Software\Classes\\{{protocol}}\shell\open\command" "" "$\"$INSTDIR\${MAINBINARYNAME}.exe$\" $\"%1$\""
   {{/each}}
 
   ; Create uninstaller
@@ -548,6 +673,16 @@ Section Install
     WriteRegStr SHCTX "${UNINSTKEY}" $MultiUser.InstallMode 1
   !endif
 
+  ; Remove old main binary if it doesn't match new main binary name
+  ReadRegStr $OldMainBinaryName SHCTX "${UNINSTKEY}" "MainBinaryName"
+  ${If} $OldMainBinaryName != ""
+  ${AndIf} $OldMainBinaryName != "${MAINBINARYNAME}.exe"
+    Delete "$INSTDIR\$OldMainBinaryName"
+  ${EndIf}
+
+  ; Save current MAINBINARYNAME for future updates
+  WriteRegStr SHCTX "${UNINSTKEY}" "MainBinaryName" "${MAINBINARYNAME}.exe"
+
   ; Registry information for add/remove programs
   WriteRegStr SHCTX "${UNINSTKEY}" "DisplayName" "${PRODUCTNAME}"
   WriteRegStr SHCTX "${UNINSTKEY}" "DisplayIcon" "$\"$INSTDIR\${MAINBINARYNAME}.exe$\""
@@ -557,64 +692,79 @@ Section Install
   WriteRegStr SHCTX "${UNINSTKEY}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
   WriteRegDWORD SHCTX "${UNINSTKEY}" "NoModify" "1"
   WriteRegDWORD SHCTX "${UNINSTKEY}" "NoRepair" "1"
-  IntOp $AppSize $AppSize / 1000
-  IntFmt $AppSize "0x%08X" $AppSize
-  WriteRegDWORD SHCTX "${UNINSTKEY}" "EstimatedSize" "$AppSize"
 
-  ; Create start menu shortcut (GUI)
+  ${GetSize} "$INSTDIR" "/M=uninstall.exe /S=0K /G=0" $0 $1 $2
+  IntOp $0 $0 + ${ESTIMATEDSIZE}
+  IntFmt $0 "0x%08X" $0
+  WriteRegDWORD SHCTX "${UNINSTKEY}" "EstimatedSize" "$0"
+
+  !if "${HOMEPAGE}" != ""
+    WriteRegStr SHCTX "${UNINSTKEY}" "URLInfoAbout" "${HOMEPAGE}"
+    WriteRegStr SHCTX "${UNINSTKEY}" "URLUpdateInfo" "${HOMEPAGE}"
+    WriteRegStr SHCTX "${UNINSTKEY}" "HelpLink" "${HOMEPAGE}"
+  !endif
+
+  ; Create start menu shortcut
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
-    Call CreateStartMenuShortcut
+    Call CreateOrUpdateStartMenuShortcut
   !insertmacro MUI_STARTMENU_WRITE_END
 
-  ; Create shortcuts for silent and passive installers, which
-  ; can be disabled by passing `/NS` flag
-  ; GUI installer has buttons for users to control creating them
-  IfSilent check_ns_flag 0
-  ${IfThen} $PassiveMode == 1 ${|} Goto check_ns_flag ${|}
-  Goto shortcuts_done
-  check_ns_flag:
-    ${GetOptions} $CMDLINE "/NS" $R0
-    IfErrors 0 shortcuts_done
-      Call CreateDesktopShortcut
-      Call CreateStartMenuShortcut
-  shortcuts_done:
+  ; Create desktop shortcut for silent and passive installers
+  ; because finish page will be skipped
+  ${If} $PassiveMode = 1
+  ${OrIf} ${Silent}
+    Call CreateOrUpdateDesktopShortcut
+  ${EndIf}
+
+  !ifmacrodef NSIS_HOOK_POSTINSTALL
+    !insertmacro NSIS_HOOK_POSTINSTALL
+  !endif
 
   ; Auto close this page for passive mode
-  ${IfThen} $PassiveMode == 1 ${|} SetAutoClose true ${|}
+  ${If} $PassiveMode = 1
+    SetAutoClose true
+  ${EndIf}
 SectionEnd
 
 Function .onInstSuccess
   ; Check for `/R` flag only in silent and passive installers because
   ; GUI installer has a toggle for the user to (re)start the app
-  IfSilent check_r_flag 0
-  ${IfThen} $PassiveMode == 1 ${|} Goto check_r_flag ${|}
-  Goto run_done
-  check_r_flag:
+  ${If} $PassiveMode = 1
+  ${OrIf} ${Silent}
     ${GetOptions} $CMDLINE "/R" $R0
-    IfErrors run_done 0
-      Exec '"$INSTDIR\${MAINBINARYNAME}.exe"'
-  run_done:
+    ${IfNot} ${Errors}
+      ${GetOptions} $CMDLINE "/ARGS" $R0
+      nsis_tauri_utils::RunAsUser "$INSTDIR\${MAINBINARYNAME}.exe" "$R0"
+    ${EndIf}
+  ${EndIf}
 FunctionEnd
 
 Function un.onInit
-  ${If} ${RunningX64}
-    !if "${ARCH}" == "x64"
-      SetRegView 64
-    !else if "${ARCH}" == "arm64"
-      SetRegView 64
-    !else
-      SetRegView 32
-    !endif
-  ${EndIf}
+  !insertmacro SetContext
 
   !if "${INSTALLMODE}" == "both"
     !insertmacro MULTIUSER_UNINIT
   !endif
 
   !insertmacro MUI_UNGETLANGUAGE
+
+  ${GetOptions} $CMDLINE "/P" $PassiveMode
+  ${IfNot} ${Errors}
+    StrCpy $PassiveMode 1
+  ${EndIf}
+
+  ${GetOptions} $CMDLINE "/UPDATE" $UpdateMode
+  ${IfNot} ${Errors}
+    StrCpy $UpdateMode 1
+  ${EndIf}
 FunctionEnd
 
 Section Uninstall
+
+  !ifmacrodef NSIS_HOOK_PREUNINSTALL
+    !insertmacro NSIS_HOOK_PREUNINSTALL
+  !endif
+
   !insertmacro CheckIfAppIsRunning
 
   ; Delete the app directory and its content from disk
@@ -624,7 +774,6 @@ Section Uninstall
   ; Delete resources
   {{#each resources}}
     Delete "$INSTDIR\\{{this.[1]}}"
-    RMDir "$INSTDIR\\{{this.[0]}}"
   {{/each}}
 
   ; Delete external binaries
@@ -632,23 +781,57 @@ Section Uninstall
     Delete "$INSTDIR\\{{this}}"
   {{/each}}
 
+  ; Delete app associations
+  {{#each file_associations as |association| ~}}
+    {{#each association.ext as |ext| ~}}
+      !insertmacro APP_UNASSOCIATE "{{ext}}" "{{or association.name ext}}"
+    {{/each}}
+  {{/each}}
+
+  ; Delete deep links
+  {{#each deep_link_protocols as |protocol| ~}}
+    ReadRegStr $R7 SHCTX "Software\Classes\\{{protocol}}\shell\open\command" ""
+    ${If} $R7 == "$\"$INSTDIR\${MAINBINARYNAME}.exe$\" $\"%1$\""
+      DeleteRegKey SHCTX "Software\Classes\\{{protocol}}"
+    ${EndIf}
+  {{/each}}
+
+
   ; Delete uninstaller
   Delete "$INSTDIR\uninstall.exe"
 
+  {{#each resources_ancestors}}
+  RMDir /REBOOTOK "$INSTDIR\\{{this}}"
+  {{/each}}
   RMDir "$INSTDIR"
 
-  ; Remove start menu shortcut
-  !insertmacro MUI_STARTMENU_GETFOLDER Application $AppStartMenuFolder
-  Delete "$SMPROGRAMS\$AppStartMenuFolder\${MAINBINARYNAME}.lnk"
-  RMDir "$SMPROGRAMS\$AppStartMenuFolder"
+  ; Remove shortcuts if not updating
+  ${If} $UpdateMode <> 1
+    !insertmacro DeleteAppUserModelId
 
-  ; Remove desktop shortcuts
-  Delete "$DESKTOP\${MAINBINARYNAME}.lnk"
+    ; Remove start menu shortcut
+    !insertmacro MUI_STARTMENU_GETFOLDER Application $AppStartMenuFolder
+    !insertmacro IsShortcutTarget "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+    Pop $0
+    ${If} $0 = 1
+      !insertmacro UnpinShortcut "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
+      Delete "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
+      RMDir "$SMPROGRAMS\$AppStartMenuFolder"
+    ${EndIf}
+    !insertmacro IsShortcutTarget "$SMPROGRAMS\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+    Pop $0
+    ${If} $0 = 1
+      !insertmacro UnpinShortcut "$SMPROGRAMS\${PRODUCTNAME}.lnk"
+      Delete "$SMPROGRAMS\${PRODUCTNAME}.lnk"
+    ${EndIf}
 
-  ; Delete app data
-  ${If} $DeleteAppDataCheckboxState == 1
-    RmDir /r "$APPDATA\${BUNDLEID}"
-    RmDir /r "$LOCALAPPDATA\${BUNDLEID}"
+    ; Remove desktop shortcuts
+    !insertmacro IsShortcutTarget "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+    Pop $0
+    ${If} $0 = 1
+      !insertmacro UnpinShortcut "$DESKTOP\${PRODUCTNAME}.lnk"
+      Delete "$DESKTOP\${PRODUCTNAME}.lnk"
+    ${EndIf}
   ${EndIf}
 
   ; Remove registry information for add/remove programs
@@ -662,9 +845,24 @@ Section Uninstall
 
   DeleteRegValue HKCU "${MANUPRODUCTKEY}" "Installer Language"
 
-  ${GetOptions} $CMDLINE "/P" $R0
-  IfErrors +2 0
+  ; Delete app data if the checkbox is selected
+  ; and if not updating
+  ${If} $DeleteAppDataCheckboxState = 1
+  ${AndIf} $UpdateMode <> 1
+    SetShellVarContext current
+    RmDir /r "$APPDATA\${BUNDLEID}"
+    RmDir /r "$LOCALAPPDATA\${BUNDLEID}"
+  ${EndIf}
+
+  !ifmacrodef NSIS_HOOK_POSTUNINSTALL
+    !insertmacro NSIS_HOOK_POSTUNINSTALL
+  !endif
+
+  ; Auto close if passive mode or updating
+  ${If} $PassiveMode = 1
+  ${OrIf} $UpdateMode = 1
     SetAutoClose true
+  ${EndIf}
 SectionEnd
 
 Function RestorePreviousInstallLocation
@@ -673,17 +871,78 @@ Function RestorePreviousInstallLocation
     StrCpy $INSTDIR $4
 FunctionEnd
 
+Function Skip
+  Abort
+FunctionEnd
+
 Function SkipIfPassive
-  ${IfThen} $PassiveMode == 1  ${|} Abort ${|}
+  ${IfThen} $PassiveMode = 1  ${|} Abort ${|}
+FunctionEnd
+Function un.SkipIfPassive
+  ${IfThen} $PassiveMode = 1  ${|} Abort ${|}
 FunctionEnd
 
-Function CreateDesktopShortcut
-  CreateShortcut "$DESKTOP\${MAINBINARYNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
-  ApplicationID::Set "$DESKTOP\${MAINBINARYNAME}.lnk" "${BUNDLEID}"
+Function CreateOrUpdateStartMenuShortcut
+  ; We used to use product name as MAINBINARYNAME
+  ; migrate old shortcuts to target the new MAINBINARYNAME
+  StrCpy $R0 0
+
+  !insertmacro IsShortcutTarget "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk" "$INSTDIR\$OldMainBinaryName"
+  Pop $0
+  ${If} $0 = 1
+    !insertmacro SetShortcutTarget "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+    StrCpy $R0 1
+  ${EndIf}
+
+  !insertmacro IsShortcutTarget "$SMPROGRAMS\${PRODUCTNAME}.lnk" "$INSTDIR\$OldMainBinaryName"
+  Pop $0
+  ${If} $0 = 1
+    !insertmacro SetShortcutTarget "$SMPROGRAMS\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+    StrCpy $R0 1
+  ${EndIf}
+
+  ${If} $R0 = 1
+    Return
+  ${EndIf}
+
+  ; Skip creating shortcut if in update mode or no shortcut mode
+  ; but always create if migrating from wix
+  ${If} $WixMode = 0
+    ${If} $UpdateMode = 1
+    ${OrIf} $NoShortcutMode = 1
+      Return
+    ${EndIf}
+  ${EndIf}
+
+  !if "${STARTMENUFOLDER}" != ""
+    CreateDirectory "$SMPROGRAMS\$AppStartMenuFolder"
+    CreateShortcut "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+    !insertmacro SetLnkAppUserModelId "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
+  !else
+    CreateShortcut "$SMPROGRAMS\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+    !insertmacro SetLnkAppUserModelId "$SMPROGRAMS\${PRODUCTNAME}.lnk"
+  !endif
 FunctionEnd
 
-Function CreateStartMenuShortcut
-  CreateDirectory "$SMPROGRAMS\$AppStartMenuFolder"
-  CreateShortcut "$SMPROGRAMS\$AppStartMenuFolder\${MAINBINARYNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
-  ApplicationID::Set "$SMPROGRAMS\$AppStartMenuFolder\${MAINBINARYNAME}.lnk" "${BUNDLEID}"
+Function CreateOrUpdateDesktopShortcut
+  ; We used to use product name as MAINBINARYNAME
+  ; migrate old shortcuts to target the new MAINBINARYNAME
+  !insertmacro IsShortcutTarget "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\$OldMainBinaryName"
+  Pop $0
+  ${If} $0 = 1
+    !insertmacro SetShortcutTarget "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+    Return
+  ${EndIf}
+
+  ; Skip creating shortcut if in update mode or no shortcut mode
+  ; but always create if migrating from wix
+  ${If} $WixMode = 0
+    ${If} $UpdateMode = 1
+    ${OrIf} $NoShortcutMode = 1
+      Return
+    ${EndIf}
+  ${EndIf}
+
+  CreateShortcut "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+  !insertmacro SetLnkAppUserModelId "$DESKTOP\${PRODUCTNAME}.lnk"
 FunctionEnd
