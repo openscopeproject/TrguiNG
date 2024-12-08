@@ -262,3 +262,19 @@ export function torrentProgressbarStyle(torrent: Torrent, config: Config) {
 
     return { animate, variant };
 }
+
+export function hasEllipsis(element: HTMLElement) {
+    if (element == null) return false;
+
+    let scrollWidth = element.scrollWidth;
+
+    element.style.width = "max-content";
+    const itemRects = element.getClientRects();
+
+    if (itemRects.length > 0 && itemRects[0].width > scrollWidth) {
+        scrollWidth = itemRects[0].width;
+    }
+
+    element.style.width = "auto";
+    return scrollWidth > element.clientWidth;
+}

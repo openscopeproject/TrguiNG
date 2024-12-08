@@ -31,11 +31,11 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { ContextMenu, useContextMenu } from "components/contextmenu";
 import type { TableName } from "config";
 import { ConfigContext } from "config";
-import React, { memo, useReducer, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { memo, useReducer, useCallback, useContext, useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
 import type { DropResult } from "react-beautiful-dnd";
 import { DragDropContext, Draggable } from "react-beautiful-dnd";
 import { StrictModeDroppable } from "components/strictmodedroppable";
-import { eventHasModKey, reorderElements } from "trutil";
+import { eventHasModKey, hasEllipsis, reorderElements } from "trutil";
 import { useFontSize } from "themehooks";
 
 const defaultColumn = {
@@ -628,6 +628,14 @@ export function EditableNameField(props: EditableNameFieldProps) {
     }, [props.currentName]);
 
     const ref = useRef<HTMLDivElement>(null);
+    const innerRef = useRef<HTMLDivElement>(null);
+    const [showNameTooltip, setShowNameTooltip] = useState(false);
+
+    useLayoutEffect(() => {
+        if (innerRef.current != null) {
+            setShowNameTooltip(hasEllipsis(innerRef.current));
+        }
+    }, [isHover, isRenaming]);
 
     const onTextKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "Enter") {
@@ -691,7 +699,9 @@ export function EditableNameField(props: EditableNameFieldProps) {
                     onClick={(e) => { e.stopPropagation(); }}
                     onDoubleClick={(e) => { e.stopPropagation(); }}
                     autoCorrect="off" autoCapitalize="off" spellCheck="false" />
-                : <Box pl="xs" sx={{ flexGrow: 1, textOverflow: "ellipsis", overflow: "hidden" }}>
+                : <Box ref={innerRef}
+                    pl="xs" sx={{ flexGrow: 1, textOverflow: "ellipsis", overflow: "hidden" }}
+                    title={showNameTooltip ? props.currentName : undefined}>
                     {props.currentName}
                 </Box>}
             {isHover && !isRenaming && props.onUpdate !== undefined
