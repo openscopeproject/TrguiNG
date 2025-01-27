@@ -33,7 +33,7 @@ pkgdesc='Remote GUI for Transmission torrent daemon'
 url="https://github.com/openscopeproject/TrguiNG"
 arch=('x86_64')
 license=('AGPL-3.0')
-depends=('alsa-lib' 'cairo' 'desktop-file-utils' 'fontconfig' 'gdk-pixbuf2' 'glib2' 'gtk3' 'hicolor-icon-theme' 'libayatana-appindicator' 'libsoup' 'openssl' 'webkit2gtk')
+depends=('alsa-lib' 'cairo' 'desktop-file-utils' 'fontconfig' 'gdk-pixbuf2' 'glib2' 'gtk3' 'hicolor-icon-theme' 'libayatana-appindicator' 'libsoup' 'openssl' 'webkit2gtk' 'webkit2gtk-4.1')
 makedepends=('rust>=1.77.2' 'nodejs>=16.0.0' 'npm' 'git')
 conflicts=('trgui-ng-git' 'trgui-ng-bin')
 source=("git+https://github.com/openscopeproject/TrguiNG#tag=v$pkgver"
@@ -63,7 +63,7 @@ package() {
     install -dm755 "$pkgdir/usr/lib/trgui-ng"
     install -dm755 "$pkgdir/usr/share/icons/hicolor/32x32/apps"
     install -dm755 "$pkgdir/usr/share/icons/hicolor/128x128/apps"
-    install -Dm755 "$srcdir/TrguiNG/src-tauri/target/release/trgui-ng" "$pkgdir/usr/bin/trgui-ng"
+    install -Dm755 "$srcdir/TrguiNG/src-tauri/target/release/TrguiNG" "$pkgdir/usr/bin/trgui-ng"
     install -Dm644 "$srcdir/TrguiNG/src-tauri/dbip.mmdb" "$pkgdir/usr/lib/trgui-ng/dbip.mmdb"
     install -Dm755 "$srcdir/TrguiNG.desktop" "$pkgdir/usr/share/applications/TrguiNG.desktop"
     install -Dm644 "$srcdir/TrguiNG/src-tauri/icons/32x32.png" "$pkgdir/usr/share/icons/hicolor/32x32/apps/trgui-ng.png"
