@@ -123,8 +123,11 @@ pub fn exit(app: AppHandle) {
         let mut listener = listener_state.0.write().await;
         println!("Stopping");
         listener.stop();
-        app.cleanup_before_exit();
-        std::process::exit(0);
+        let appc = app.clone();
+        let _ = app.run_on_main_thread(move || {
+            appc.cleanup_before_exit();
+            std::process::exit(0);
+        });
     });
 }
 

@@ -146,8 +146,11 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         let app_clone = app.clone();
         app.listen("app-exit", move |_| {
             println!("Exiting");
-            app_clone.cleanup_before_exit();
-            std::process::exit(0);
+            let appc = app_clone.clone();
+            let _ = app_clone.run_on_main_thread(move || {
+                appc.cleanup_before_exit();
+                std::process::exit(0);
+            });
         });
 
         let app_clone = app.clone();
