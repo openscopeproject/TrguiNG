@@ -33,7 +33,7 @@ pkgdesc='Remote GUI for Transmission torrent daemon'
 url="https://github.com/openscopeproject/TrguiNG"
 arch=('x86_64')
 license=('AGPL-3.0')
-depends=('alsa-lib' 'cairo' 'desktop-file-utils' 'fontconfig' 'gdk-pixbuf2' 'glib2' 'gtk3' 'hicolor-icon-theme' 'libayatana-appindicator' 'libsoup' 'openssl' 'webkit2gtk' 'webkit2gtk-4.1')
+depends=('alsa-lib' 'cairo' 'desktop-file-utils' 'fontconfig' 'gdk-pixbuf2' 'glib2' 'gtk3' 'hicolor-icon-theme' 'libayatana-appindicator' 'libsoup' 'openssl' 'webkit2gtk-4.1')
 makedepends=('rust>=1.77.2' 'nodejs>=16.0.0' 'npm' 'git')
 conflicts=('trgui-ng-git' 'trgui-ng-bin')
 source=("git+https://github.com/openscopeproject/TrguiNG#tag=v$pkgver"
