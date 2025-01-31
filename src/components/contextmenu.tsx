@@ -69,6 +69,7 @@ export function ContextMenu({
             middlewares={{ shift: true, flip: true }}
             position="right-start"
             closeOnClickOutside={closeOnClickOutside}
+            zIndex={500}
         >
             <Portal innerRef={containerRef}>
                 <Menu.Target>

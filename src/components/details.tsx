@@ -519,7 +519,9 @@ function Details(props: DetailsProps) {
             </Tabs.List>
             <div style={{ flexGrow: 1, position: "relative" }}>
                 <LoadingOverlay
-                    visible={props.torrentId !== undefined && isLoading} transitionDuration={500}
+                    visible={props.torrentId !== undefined && isLoading}
+                    zIndex={400}
+                    transitionDuration={500}
                     loaderProps={{ size: "xl" }}
                     overlayOpacity={0.35} />
                 <DetailsPanels torrent={torrent} />
