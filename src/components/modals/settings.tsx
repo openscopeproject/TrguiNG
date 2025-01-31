@@ -325,6 +325,7 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
             setValues({
                 servers: config.getServers(),
                 app: { ...config.values.app },
+                interface: { ...config.values.interface },
             });
             setCurrentServerIndex(config.getServers().length > 0 ? 0 : -1);
         }

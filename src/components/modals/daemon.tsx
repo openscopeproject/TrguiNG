@@ -560,8 +560,14 @@ export function DaemonSettingsModal(props: ModalState) {
         },
     });
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { form.setFieldValue("session", session); }, [session]);
+    const { setFieldValue } = form;
+    useEffect(() => { setFieldValue("session", session); }, [session, setFieldValue]);
+
+    useEffect(() => {
+        if (props.opened) {
+            setFieldValue("interface", config.values.interface);
+        }
+    }, [config, props.opened, setFieldValue]);
 
     const onSave = useCallback(() => {
         serverConfig.intervals = { ...form.values.intervals };
