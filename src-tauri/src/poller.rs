@@ -14,14 +14,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use base64::{engine::general_purpose::STANDARD as b64engine, Engine as _};
-use hyper::{http::HeaderValue, Client, Method, Request};
-use hyper_timeout::TimeoutConnector;
-use hyper_tls::HttpsConnector;
 use serde::Deserialize;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tauri::{
     async_runtime::{self, JoinHandle, Mutex},
+    http::HeaderValue,
     AppHandle, Manager, State,
 };
 
@@ -122,14 +119,10 @@ async fn polling_task(app: AppHandle, name: String, toast: bool, sound: bool) {
         let mut new_session = None;
 
         match result {
-            Ok(session) => {
-                new_session = Some(session);
-            }
+            Ok(_) => {}
             Err(Some(session)) => {
                 // try again with new session token
-                if let Ok(session) =
-                    poll(&app.clone(), connection, Some(session), toast, sound).await
-                {
+                if (poll(&app, connection, Some(session.clone()), toast, sound).await).is_ok() {
                     new_session = Some(session);
                 }
             }
@@ -145,7 +138,6 @@ async fn polling_task(app: AppHandle, name: String, toast: bool, sound: bool) {
 }
 
 const TRANSMISSION_SESSION: &str = "X-Transmission-Session-Id";
-const AUTHORIZATION: &str = "Authorization";
 const TORRENT_GET_BODY: &str = r#"
 {
     "method": "torrent-get",
@@ -161,10 +153,11 @@ async fn poll(
     toast: bool,
     sound: bool,
 ) -> Result<String, Option<String>> {
-    let mut req = Request::builder()
-        .uri(connection.url.clone())
-        .header(hyper::header::ACCEPT_ENCODING, "gzip, deflate")
-        .method(Method::POST);
+    let client = app.state::<reqwest::Client>();
+
+    let mut req = client
+        .post(connection.url.clone())
+        .header(reqwest::header::CONTENT_TYPE, "application/json");
     if let Some(session) = session {
         req = req.header(
             TRANSMISSION_SESSION,
@@ -172,29 +165,11 @@ async fn poll(
         );
     }
     if !connection.username.is_empty() || !connection.password.is_empty() {
-        let b64_value =
-            b64engine.encode(format!("{}:{}", connection.username, connection.password).as_bytes());
-        let value = format!("Basic {}", b64_value);
-        req = req.header(
-            AUTHORIZATION,
-            HeaderValue::from_bytes(value.as_bytes()).unwrap(),
-        );
+        req = req.basic_auth(connection.username, Some(connection.password));
     }
-    let mut connector = TimeoutConnector::new(HttpsConnector::new());
-    connector.set_connect_timeout(Some(Duration::from_secs(10)));
-    connector.set_read_timeout(Some(Duration::from_secs(40)));
-    connector.set_write_timeout(Some(Duration::from_secs(20)));
-    let client = Client::builder().build::<_, hyper::Body>(connector);
 
-    match client
-        .request(req.body(TORRENT_GET_BODY.into()).unwrap())
-        .await
-    {
-        Ok(mut response) => {
-            response.headers_mut().append(
-                "X-Original-URL",
-                HeaderValue::from_str(&connection.url).unwrap(),
-            );
+    match req.body(reqwest::Body::from(TORRENT_GET_BODY)).send().await {
+        Ok(response) => {
             let session = response
                 .headers()
                 .get(TRANSMISSION_SESSION)
@@ -204,7 +179,18 @@ async fn poll(
                     f.to_str().unwrap_or_default().to_string()
                 });
                 if response.status().is_success() {
-                    let _ = process_response(app, response, toast, sound).await;
+                    let response_bytes = response
+                        .bytes()
+                        .await
+                        .map_err(|_| "Failed to read response".to_string())?;
+                    let _ = process_response(
+                        app,
+                        &response_bytes,
+                        connection.url.as_str(),
+                        toast,
+                        sound,
+                    )
+                    .await;
                     Ok(session_str)
                 } else {
                     Err(Some(session_str))

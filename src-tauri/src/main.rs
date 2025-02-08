@@ -19,7 +19,7 @@
     windows_subsystem = "windows"
 )]
 
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use createtorrent::CreationRequestsHandle;
 use geoip::MmdbReaderHandle;
@@ -133,7 +133,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         async_runtime::spawn(async move {
             let listener = listener_lock.read().await;
             if let Err(e) = listener.send(&torrents, app_clone).await {
-                println!("Unable to send args to listener: {:?}", e);
+                println!("Unable to send args to listener: {}", e);
             }
 
             #[cfg(target_os = "macos")]
@@ -162,10 +162,19 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn main() {
-    let mut ipc = ipc::Ipc::new();
-    ipc.try_bind();
+static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
+fn http_client() -> reqwest::Client {
+    reqwest::Client::builder()
+        .user_agent(APP_USER_AGENT)
+        .connect_timeout(Duration::from_secs(10))
+        .read_timeout(Duration::from_secs(40))
+        .timeout(Duration::from_secs(60))
+        .build()
+        .expect("Failed to initialize http client")
+}
+
+fn main() {
     let context = tauri::generate_context!();
 
     let app_builder = tauri::Builder::default()
@@ -191,11 +200,12 @@ fn main() {
             commands::save_text_file,
             commands::load_text_file,
         ])
-        .manage(ListenerHandle(Arc::new(RwLock::new(ipc))))
+        .manage(ListenerHandle(Arc::new(RwLock::new(ipc::Ipc::new()))))
         .manage(TorrentCacheHandle::default())
         .manage(PollerHandle::default())
         .manage(MmdbReaderHandle::default())
         .manage(CreationRequestsHandle::default())
+        .manage(http_client())
         .setup(setup);
 
     #[cfg(target_os = "macos")]

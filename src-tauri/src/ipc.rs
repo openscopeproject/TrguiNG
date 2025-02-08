@@ -16,20 +16,22 @@
 
 use std::error::Error;
 use std::io;
-use std::net::{IpAddr, TcpListener};
+use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
-use hyper::body::{to_bytes, Bytes};
+use http_body_util::combinators::BoxBody;
+use http_body_util::{BodyExt, Empty, Full};
+use hyper::body::{Bytes, Incoming};
 use hyper::header::{
-    self, HeaderValue, ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS,
+    self, HeaderName, HeaderValue, ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS,
     ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_EXPOSE_HEADERS, AUTHORIZATION, ORIGIN,
 };
-use hyper::service::{make_service_fn, service_fn};
-use hyper::{Body, Client, HeaderMap, Method, Request, Response, Server, StatusCode};
-use hyper_timeout::TimeoutConnector;
-use hyper_tls::HttpsConnector;
+use hyper::service::service_fn;
+use hyper::{HeaderMap, Method, Request, Response, StatusCode};
 use tauri::{async_runtime, AppHandle, Emitter, Manager};
+use tokio::net::TcpListener;
+use tokio::sync::oneshot::Receiver;
 use tokio::sync::{oneshot, OwnedSemaphorePermit, Semaphore};
 
 use crate::torrentcache::process_response;
@@ -46,32 +48,44 @@ const TRANSMISSION_SESSION_ID: &str = "X-Transmission-Session-Id";
 #[derive(Clone, serde::Serialize)]
 struct Payload(String);
 
-fn not_found() -> Response<Body> {
+fn not_found() -> Response<BoxBody<Bytes, hyper::Error>> {
     Response::builder()
         .status(StatusCode::NOT_FOUND)
-        .body("NOT FOUND".into())
+        .body(make_body("NOT FOUND"))
         .unwrap()
 }
 
-fn timed_out(request_headers: &HeaderMap) -> Response<Body> {
+fn timed_out(request_headers: &HeaderMap) -> Response<BoxBody<Bytes, hyper::Error>> {
     let mut response = Response::builder()
         .status(StatusCode::REQUEST_TIMEOUT)
-        .body("Request timed out".into())
+        .body(make_body("Request timed out"))
         .unwrap();
     cors(request_headers, &mut response, ALLOW_ORIGINS);
     response
 }
 
-fn invalid_request(request_headers: &HeaderMap, msg: &str) -> Response<Body> {
+fn fetch_error(request_headers: &HeaderMap) -> Response<BoxBody<Bytes, hyper::Error>> {
+    let mut response = Response::builder()
+        .status(StatusCode::SERVICE_UNAVAILABLE)
+        .body(make_body("Proxy fetch error"))
+        .unwrap();
+    cors(request_headers, &mut response, ALLOW_ORIGINS);
+    response
+}
+
+fn invalid_request(
+    request_headers: &HeaderMap,
+    msg: &str,
+) -> Response<BoxBody<Bytes, hyper::Error>> {
     let mut response = Response::builder()
         .status(StatusCode::BAD_REQUEST)
-        .body(format!("INVALID REQUEST: {}", msg).into())
+        .body(make_body(format!("INVALID REQUEST: {}", msg)))
         .unwrap();
     cors(request_headers, &mut response, ALLOW_ORIGINS);
     response
 }
 
-fn cors(request_headers: &HeaderMap, r: &mut Response<Body>, allowed_origins: &[&str]) {
+fn cors<T>(request_headers: &HeaderMap, r: &mut Response<T>, allowed_origins: &[&str]) {
     if let header::Entry::Occupied(e) = r.headers_mut().entry(ACCESS_CONTROL_ALLOW_ORIGIN) {
         e.remove_entry_mult();
     }
@@ -95,11 +109,17 @@ fn cors(request_headers: &HeaderMap, r: &mut Response<Body>, allowed_origins: &[
     );
 }
 
+fn make_body<T: Into<Bytes>>(chunk: T) -> BoxBody<Bytes, hyper::Error> {
+    Full::new(chunk.into())
+        .map_err(|never| match never {})
+        .boxed()
+}
+
 async fn http_response(
     app: AppHandle,
     args_lock: Arc<Semaphore>,
-    req: Request<Body>,
-) -> hyper::Result<Response<Body>> {
+    req: Request<Incoming>,
+) -> hyper::Result<Response<BoxBody<Bytes, hyper::Error>>> {
     let content_type = req
         .headers()
         .get("Content-Type")
@@ -109,12 +129,9 @@ async fn http_response(
         return Ok(invalid_request(req.headers(), "unexpected content-type"));
     }
 
-    let toast = req.headers().get("X-TrguiNG-Toast").is_some();
-    let sound = req.headers().get("X-TrguiNG-Sound").is_some();
-
     match (req.method(), req.uri().path()) {
         (&Method::POST, "/args") => {
-            let payload = hyper::body::to_bytes(req.into_body()).await?;
+            let payload = req.collect().await?.to_bytes();
 
             if app.get_webview_window("main").is_none() {
                 toggle_main_window(&app, None);
@@ -124,27 +141,18 @@ async fn http_response(
             send_payload(&app, payload).await;
             drop(lock);
 
-            Ok(Response::builder().body(Body::from("TrguiNG OK")).unwrap())
+            Ok(Response::builder().body(make_body("TrguiNG OK")).unwrap())
         }
         (&Method::OPTIONS, _) => {
             let mut response = Response::builder()
                 .status(200u16)
-                .body(Body::empty())
+                .body(Empty::<Bytes>::new().map_err(|n| match n {}).boxed())
                 .unwrap();
             cors(req.headers(), &mut response, ALLOW_ORIGINS);
             Ok(response)
         }
-        (&Method::POST, "/post") => proxy_fetch(req).await,
-        (&Method::POST, "/torrentget") => match proxy_fetch(req).await {
-            Ok(response) => {
-                if response.status().is_success() {
-                    process_response(&app, response, toast, sound).await
-                } else {
-                    Ok(response)
-                }
-            }
-            Err(e) => Err(e),
-        },
+        (&Method::POST, "/post") => proxy_fetch(&app, req, false).await,
+        (&Method::POST, "/torrentget") => proxy_fetch(&app, req, true).await,
         (&Method::POST, "/iplookup") => geoip_lookup(&app, req).await,
         _ => Ok(not_found()),
     }
@@ -152,10 +160,10 @@ async fn http_response(
 
 async fn geoip_lookup(
     app: &AppHandle,
-    req: Request<Body>,
-) -> Result<Response<Body>, hyper::Error> {
+    req: Request<Incoming>,
+) -> hyper::Result<Response<BoxBody<Bytes, hyper::Error>>> {
     let headers = req.headers().clone();
-    let request_body = to_bytes(req.into_body()).await?;
+    let request_body = req.collect().await?.to_bytes();
     let request_bytes = request_body.as_ref();
 
     match serde_json::from_slice::<Vec<String>>(request_bytes) {
@@ -182,11 +190,9 @@ async fn geoip_lookup(
 
             let mut response = Response::builder()
                 .status(StatusCode::OK)
-                .body(
-                    lookup_response
-                        .unwrap_or("Error serializing response".to_string())
-                        .into(),
-                )
+                .body(make_body(
+                    lookup_response.unwrap_or("Error serializing response".to_string()),
+                ))
                 .unwrap();
             cors(&headers, &mut response, ALLOW_ORIGINS);
             Ok(response)
@@ -198,7 +204,15 @@ async fn geoip_lookup(
     }
 }
 
-async fn proxy_fetch(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+async fn proxy_fetch(
+    app: &AppHandle,
+    req: Request<Incoming>,
+    process: bool,
+) -> hyper::Result<Response<BoxBody<Bytes, hyper::Error>>> {
+    let req_headers = req.headers().clone();
+    let toast = req_headers.get("X-TrguiNG-Toast").is_some();
+    let sound = req_headers.get("X-TrguiNG-Sound").is_some();
+
     if let Some(query) = req.uri().query() {
         if let Some(url) = query
             .split('&')
@@ -208,61 +222,89 @@ async fn proxy_fetch(req: Request<Body>) -> Result<Response<Body>, hyper::Error>
             })
             .find_map(|p| if p.0 == "url" { Some(p.1) } else { None })
         {
+            let client = app.state::<reqwest::Client>();
+
             let url = urlencoding::decode(url).ok().unwrap().into_owned();
             let headers = req.headers().clone();
-            let tr_header = headers.get(TRANSMISSION_SESSION_ID);
-            let auth_header = headers.get(AUTHORIZATION);
-            let mut req_builder = Request::builder()
-                .method(Method::POST)
-                .uri(url.clone())
-                .header(hyper::header::CONTENT_TYPE, "application/json")
-                .header(hyper::header::ACCEPT_ENCODING, "gzip, deflate");
-            if tr_header.is_some() {
-                req_builder = req_builder.header(TRANSMISSION_SESSION_ID, tr_header.unwrap());
+            let mut req_builder = client
+                .post(url.clone())
+                .header(reqwest::header::CONTENT_TYPE, "application/json");
+
+            if let Some(tr_header) = headers.get(TRANSMISSION_SESSION_ID) {
+                req_builder =
+                    req_builder.header(TRANSMISSION_SESSION_ID, tr_header.to_str().unwrap());
             }
-            if auth_header.is_some() {
-                req_builder = req_builder.header(AUTHORIZATION, auth_header.unwrap());
+            if let Some(auth_header) = headers.get(AUTHORIZATION) {
+                req_builder = req_builder.header(
+                    reqwest::header::AUTHORIZATION,
+                    auth_header.to_str().unwrap(),
+                );
             }
 
-            match req_builder.body(req.into_body()) {
-                Ok(req) => {
-                    let mut connector = TimeoutConnector::new(HttpsConnector::new());
-                    connector.set_connect_timeout(Some(Duration::from_secs(10)));
-                    connector.set_read_timeout(Some(Duration::from_secs(40)));
-                    connector.set_write_timeout(Some(Duration::from_secs(20)));
-                    let client = Client::builder().build::<_, hyper::Body>(connector);
+            let req_body = req.collect().await?.to_bytes();
 
-                    match client.request(req).await {
-                        Ok(mut response) => {
-                            cors(&headers, &mut response, ALLOW_ORIGINS);
-                            response.headers_mut().insert(
-                                "X-Original-URL",
-                                HeaderValue::from_str(url.as_ref()).unwrap(),
-                            );
-                            Ok(response)
-                        }
-                        Err(e) => {
-                            if e.is_timeout()
-                                || e.source().is_some_and(|s| {
-                                    s.downcast_ref::<io::Error>()
-                                        .is_some_and(|s| s.kind() == io::ErrorKind::TimedOut)
-                                })
-                            {
-                                Ok(timed_out(&headers))
-                            } else {
-                                Err(e)
-                            }
-                        }
+            match req_builder.body(reqwest::Body::from(req_body)).send().await {
+                Ok(response) => {
+                    let is_ok = response.status().is_success();
+                    let hyper_response = convert_response(&response);
+
+                    let response_bytes = response.bytes().await;
+                    if response_bytes.is_err() {
+                        return Ok(fetch_error(&req_headers));
+                    }
+                    let response_bytes = response_bytes.unwrap();
+
+                    if is_ok && process {
+                        let _ = process_response(app, &response_bytes, url.as_str(), toast, sound)
+                            .await;
+                    }
+                    let mut hyper_response =
+                        hyper_response.body(make_body(response_bytes)).unwrap();
+                    cors(&headers, &mut hyper_response, ALLOW_ORIGINS);
+                    Ok(hyper_response)
+                }
+                Err(e) => {
+                    if e.is_timeout()
+                        || e.source().is_some_and(|s| {
+                            s.downcast_ref::<io::Error>()
+                                .is_some_and(|s| s.kind() == io::ErrorKind::TimedOut)
+                        })
+                    {
+                        Ok(timed_out(&headers))
+                    } else {
+                        Ok(Response::builder()
+                            .status(e.status().unwrap_or(StatusCode::SERVICE_UNAVAILABLE))
+                            .body(make_body(e.to_string()))
+                            .unwrap())
                     }
                 }
-                Err(e) => Ok(invalid_request(&headers, e.to_string().as_str())),
             }
         } else {
-            return Ok(invalid_request(req.headers(), "no url query parameter"));
+            Ok(invalid_request(req.headers(), "no url query parameter"))
         }
     } else {
-        return Ok(invalid_request(req.headers(), "no query parameters"));
+        Ok(invalid_request(req.headers(), "no query parameters"))
     }
+}
+
+fn convert_response(response: &reqwest::Response) -> tauri::http::response::Builder {
+    let mut hyper_response = hyper::Response::builder()
+        .status(response.status().as_u16())
+        .version(response.version());
+    if let Some(headers) = hyper_response.headers_mut() {
+        response.headers().iter().for_each(|(name, value)| {
+            headers.insert(
+                HeaderName::from_bytes(name.as_str().as_bytes()).unwrap(),
+                HeaderValue::from_str(
+                    value
+                        .to_str()
+                        .expect("Received non ascii chars in http header"),
+                )
+                .unwrap(),
+            );
+        });
+    }
+    hyper_response
 }
 
 async fn send_payload(app: &AppHandle, payload: Bytes) {
@@ -273,6 +315,57 @@ async fn send_payload(app: &AppHandle, payload: Bytes) {
             Payload(std::str::from_utf8(&payload).unwrap().to_string()),
         )
         .unwrap();
+}
+
+async fn http_server(
+    app: AppHandle,
+    args_sem: Arc<Semaphore>,
+    rx_stop: Receiver<()>,
+    listener: TcpListener,
+) {
+    let server = hyper_util::server::conn::auto::Builder::new(hyper_util::rt::TokioExecutor::new());
+    let graceful = hyper_util::server::graceful::GracefulShutdown::new();
+    let func = move |req| http_response(app.clone(), args_sem.clone(), req);
+    tokio::pin!(rx_stop);
+
+    loop {
+        tokio::select! {
+            conn = listener.accept() => {
+                let (stream, _) = match conn {
+                    Ok(conn) => conn,
+                    Err(e) => {
+                        eprintln!("tcp accept error: {}", e);
+                        continue;
+                    }
+                };
+
+                let io = hyper_util::rt::TokioIo::new(Box::pin(stream));
+                let service = service_fn(func.clone());
+                let conn = graceful.watch(server.serve_connection(io, service).into_owned());
+
+                tokio::spawn(async move {
+                    if let Err(err) = conn.await {
+                        eprintln!("connection error: {}", err);
+                    }
+                });
+            },
+
+            _ = &mut rx_stop => {
+                drop(listener);
+                break;
+            }
+        }
+    }
+
+    tokio::select! {
+        biased;
+        _ = graceful.shutdown() => {
+            eprintln!("Gracefully shutdown!");
+        },
+        _ = tokio::time::sleep(Duration::from_secs(10)) => {
+            eprintln!("Waited 10 seconds for graceful shutdown, aborting...");
+        }
+    }
 }
 
 pub struct Ipc {
@@ -296,10 +389,8 @@ impl Ipc {
 
     pub async fn init(&mut self) {
         self.args_lock = self.args_sem.clone().acquire_owned().await.ok();
-    }
 
-    pub fn try_bind(&mut self) {
-        if let Ok(listener) = TcpListener::bind(ADDRESS) {
+        if let Ok(listener) = TcpListener::bind(ADDRESS).await {
             self.listener = Some(listener);
             self.listening = true;
         }
@@ -312,34 +403,16 @@ impl Ipc {
 
         let args_sem = self.args_sem.clone();
         let app = app.clone();
-        let make_service = make_service_fn(move |_| {
-            let app = app.clone();
-            let args_sem = args_sem.clone();
-            let service_fn =
-                service_fn(move |req| http_response(app.clone(), args_sem.clone(), req));
-            async move { Ok::<_, hyper::Error>(service_fn) }
-        });
 
         let (tx_stop, rx_stop) = oneshot::channel::<()>();
+        let tcp_listener = self.listener.take().unwrap();
+        self.stop_signal = Some(tx_stop);
 
-        if let Ok(server) = Server::from_tcp(self.listener.take().unwrap()) {
-            let server = server
-                .serve(make_service)
-                .with_graceful_shutdown(async move {
-                    rx_stop.await.ok();
-                    println!("Shutdown request received");
-                });
+        async_runtime::spawn(async move {
+            http_server(app, args_sem, rx_stop, tcp_listener).await;
+        });
 
-            self.stop_signal = Some(tx_stop);
-
-            async_runtime::spawn(async move {
-                server.await.unwrap();
-            });
-
-            Ok(())
-        } else {
-            Err("Unable to create server")
-        }
+        Ok(())
     }
 
     pub fn start(&mut self) {
@@ -358,20 +431,19 @@ impl Ipc {
         self.listening = false;
     }
 
-    pub async fn send(&self, args: &Vec<String>, app: AppHandle) -> Result<(), hyper::Error> {
-        let req = Request::builder()
-            .method(Method::POST)
-            .uri(format!("http://{}/args", ADDRESS))
-            .header("content-type", "application/json")
-            .body(Body::from(serde_json::to_vec(args).unwrap()))
-            .unwrap();
+    pub async fn send(&self, args: &Vec<String>, app: AppHandle) -> Result<(), String> {
+        let client = app.state::<reqwest::Client>();
 
-        let client = Client::new();
+        let req = client
+            .post(format!("http://{}/args", ADDRESS))
+            .header(tauri::http::header::CONTENT_TYPE, "application/json")
+            .body(reqwest::Body::from(serde_json::to_vec(args).unwrap()));
+
         let should_stop = !self.listening;
 
         async_runtime::spawn(async move {
-            if let Ok(resp) = client.request(req).await {
-                if let Ok(resp_bytes) = hyper::body::to_bytes(resp.into_body()).await {
+            if let Ok(resp) = req.send().await {
+                if let Ok(resp_bytes) = resp.bytes().await {
                     println!(
                         "Got response: {}",
                         std::str::from_utf8(&resp_bytes).unwrap()
@@ -380,8 +452,10 @@ impl Ipc {
             }
 
             if should_stop {
-                app.cleanup_before_exit();
-                std::process::exit(0);
+                let _ = app.clone().run_on_main_thread(move || {
+                    app.cleanup_before_exit();
+                    std::process::exit(0);
+                });
             }
         });
 
