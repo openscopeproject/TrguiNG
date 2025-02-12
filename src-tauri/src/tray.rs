@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::sync::{Arc, Mutex};
+use std::{sync::{Arc, Mutex}, time::Duration};
 
 use tauri::{
     async_runtime,
@@ -91,9 +91,12 @@ pub fn toggle_main_window(app: &AppHandle, window: Option<WebviewWindow>) {
             if !window.is_visible().unwrap() {
                 window.show().ok();
                 window.unminimize().ok();
-                window.set_focus().ok();
                 window.emit("window-shown", "").ok();
                 set_tray_showhide_text(app, "Hide");
+                async_runtime::spawn(async move {
+                    tokio::time::sleep(Duration::from_millis(150)).await;
+                    window.set_focus().ok();
+                });
                 return;
             }
             set_tray_showhide_text(app, "Show");
