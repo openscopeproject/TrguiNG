@@ -32,7 +32,7 @@
 }
 
 .torrent-table-container .th div, .torrent-table-container .td div {
-    white-space: nowrap;
+    white-space: pre;
     overflow: hidden;
     text-overflow: ellipsis;
 }
