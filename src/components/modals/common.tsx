@@ -74,7 +74,7 @@ export function LimitedNamesList({ names, limit }: { names: string[], limit?: nu
 
     return <>
         {t.map((s, i) => <Text key={i} mx="md" my="xs" px="sm" sx={{
-            whiteSpace: "nowrap",
+            whiteSpace: "pre",
             overflow: "hidden",
             textOverflow: "ellipsis",
             boxShadow: "inset 0 0 0 9999px rgba(133, 133, 133, 0.1)",
