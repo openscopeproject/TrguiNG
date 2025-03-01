@@ -22,13 +22,13 @@ import type { ProgressBarVariant } from "./components/progressbar";
 import { Status } from "rpc/transmission";
 import type { Torrent } from "rpc/torrent";
 
-const SISuffixes = ["B", "KB", "MB", "GB", "TB"];
+const SIUnits = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"];
 
 export function bytesToHumanReadableStr(value: number): string {
     let unit = "";
     let divisor = 1.0;
 
-    for (unit of SISuffixes) {
+    for (unit of SIUnits) {
         if (value < 1024 * divisor) break;
         divisor *= 1024;
     }
