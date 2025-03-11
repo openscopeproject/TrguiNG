@@ -111,6 +111,7 @@ export default function TauriApp() {
     const onServerSave = useCallback((servers: ServerConfig[]) => {
         setServers(servers);
         config.setServers(servers);
+        void config.save();
     }, [config]);
 
     const [showTabStrip, setShowTabStrip] = useState(config.values.app.showTabStrip);
