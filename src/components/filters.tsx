@@ -218,11 +218,15 @@ interface DirFilterRowProps extends FiltersProps {
 }
 
 function DirFilterRow(props: DirFilterRowProps) {
+    const config = useContext(ConfigContext);
     const filter = useCallback((t: Torrent) => {
-        const path = t.downloadDir as string;
-        if (path.length + 1 === props.dir.path.length) return props.dir.path.startsWith(path);
-        return path.startsWith(props.dir.path);
-    }, [props.dir.path]);
+        let path = t.downloadDir as string;
+        if (!path.endsWith("/") && !path.endsWith("\\")) path = path + "/";
+        if (config.values.interface.recursiveDirectories) {
+            return path.startsWith(props.dir.path);
+        }
+        return path === props.dir.path;
+    }, [props.dir.path, config.values.interface.recursiveDirectories]);
 
     const onExpand = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
@@ -249,6 +253,13 @@ function DirFilterRow(props: DirFilterRowProps) {
         }
     }, [expandable, props]);
 
+    const count = useMemo(() => {
+        if (config.values.interface.recursiveDirectories || props.dir.count === props.dir.recursiveCount) {
+            return `(${props.dir.recursiveCount})`;
+        }
+        return `(${props.dir.count}/${props.dir.recursiveCount})`;
+    }, [config.values.interface.recursiveDirectories, props.dir]);
+
     return (
         <Flex align="center" gap="sm" tabIndex={-1}
             style={{ paddingLeft: `${props.dir.level * 1.4 + 0.25}em`, cursor: "default" }}
@@ -269,7 +280,7 @@ function DirFilterRow(props: DirFilterRowProps) {
                 }
             </div>
             <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.dir.name}</div>
-            <div style={{ flexShrink: 0 }}>{`(${props.dir.count})`}</div>
+            <div style={{ flexShrink: 0 }}>{count}</div>
         </Flex>
     );
 }
@@ -280,6 +291,7 @@ interface Directory {
     subdirs: Map<string, Directory>,
     expanded: boolean,
     count: number,
+    recursiveCount: number,
     level: number,
 }
 
@@ -289,6 +301,7 @@ const DefaultRoot: Directory = {
     subdirs: new Map(),
     expanded: true,
     count: 0,
+    recursiveCount: 0,
     level: -1,
 };
 
@@ -309,12 +322,14 @@ function buildDirTree(paths: string[], expanded: string[], compactDirectories: b
                     subdirs: new Map(),
                     expanded: expanded.includes(currentPath),
                     count: 0,
+                    recursiveCount: 0,
                     level: dir.level + 1,
                 });
             }
             dir = dir.subdirs.get(part) as Directory;
-            dir.count++;
+            dir.recursiveCount++;
         }
+        dir.count++;
     });
 
     return compactDirectories ? compactDirectoriesTree(root) : root;
@@ -413,13 +428,15 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
     const [sectionsMap, setSectionsMap] = useState(getSectionsMap(sections));
     const [statusFiltersVisibility, setStatusFiltersVisibility] = useState(config.values.interface.statusFiltersVisibility);
     const [compactDirectories, setCompactDirectories] = useState(config.values.interface.compactDirectories);
+    const [recursiveDirectories, setRecursiveDirectories] = useState(config.values.interface.recursiveDirectories);
 
     useEffect(() => {
         config.values.interface.filterSections = sections;
         config.values.interface.statusFiltersVisibility = statusFiltersVisibility;
         config.values.interface.compactDirectories = compactDirectories;
+        config.values.interface.recursiveDirectories = recursiveDirectories;
         setSectionsMap(getSectionsMap(sections));
-    }, [config, sections, statusFiltersVisibility, compactDirectories]);
+    }, [config, sections, statusFiltersVisibility, compactDirectories, recursiveDirectories]);
 
     const [info, setInfo, handler] = useContextMenu();
 
@@ -458,6 +475,12 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         e.stopPropagation();
         setCompactDirectories(!compactDirectories);
     }, [compactDirectories]);
+
+    const onRecursiveDirectoriesClick = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setRecursiveDirectories(!recursiveDirectories);
+        setCurrentFilters({ verb: "set", filter: { id: "", filter: DefaultFilter } });
+    }, [recursiveDirectories, setCurrentFilters]);
 
     return (<>
         <Menu
@@ -542,6 +565,13 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                     onMouseDown={onCompactDirectoriesClick}
                 >
                     Compact Directories
+                </Menu.Item>
+                <Menu.Item
+                    icon={recursiveDirectories ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                    onMouseEnter={closeStatusFiltersSubmenu}
+                    onMouseDown={onRecursiveDirectoriesClick}
+                >
+                    Recursive Directories
                 </Menu.Item>
             </MemoSectionsContextMenu>
             {sections[sectionsMap.Status].visible && <div style={{ order: sectionsMap.Status }}>
