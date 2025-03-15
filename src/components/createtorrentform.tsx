@@ -19,12 +19,11 @@
 import type { Styles, TextInputStylesNames } from "@mantine/core";
 import { Box, Button, Checkbox, Flex, Group, Slider, Text, TextInput, Textarea, useMantineColorScheme } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import {  } from "@tauri-apps/api";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { appVersion } from "./modals/version";
 import { ProgressBar } from "./progressbar";
-import * as dialog from "@tauri-apps/plugin-dialog"
-const { appWindow, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
+import { bytesToHumanReadableStr } from "trutil";
+const { appWindow, invoke, dialogOpen, dialogSave } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface FormValues {
     path: string,
@@ -73,6 +72,18 @@ interface CreateCheckResult {
     },
 }
 
+interface GetFileStatsResult {
+    files: number,
+    size: number,
+}
+
+interface InfobarState {
+    state: "idle" | "calculating" | "sizes" | "error" | "generating" | "done",
+    sizes?: GetFileStatsResult,
+    error: string,
+    hash: string,
+}
+
 export default function CreateTorrentForm() {
     const { toggleColorScheme } = useMantineColorScheme();
     const [defaultTrackers, setDefaultTrackers] = useState<string[]>([]);
@@ -80,7 +91,7 @@ export default function CreateTorrentForm() {
         done: 0,
         total: 0,
     });
-    const [state, setState] = useState({
+    const [state, setState] = useState<InfobarState>({
         state: "idle",
         error: "",
         hash: "",
@@ -102,7 +113,6 @@ export default function CreateTorrentForm() {
 
     useEffect(() => {
         void appWindow.once<PassEventData>("pass-from-window", ({ payload: data }) => {
-            console.log("Got from window", data);
             const { colorScheme, defaultTrackers } = JSON.parse(data.payload);
             toggleColorScheme(colorScheme);
             setDefaultTrackers(defaultTrackers);
@@ -112,31 +122,57 @@ export default function CreateTorrentForm() {
 
     const { setFieldValue } = form;
 
+    const setPathAndCalculate = useCallback((path: string[] | string | null) => {
+        if (typeof path !== "string") return;
+        setFieldValue("path", path);
+        const name = path.split(/[\\/]/).pop() ?? "";
+        setFieldValue("name", name);
+        setState({
+            state: "calculating",
+            error: "",
+            hash: "",
+        });
+        invoke<GetFileStatsResult>("get_file_stats", { path }).then((sizes) => {
+            if (sizes.files === -1) {
+                setState({
+                    state: "error",
+                    error: "Failed to calculate file sizes",
+                    hash: "",
+                });
+                return;
+            }
+            setState({
+                state: "sizes",
+                sizes,
+                error: "",
+                hash: "",
+            });
+            // suggest appropriate piece size
+            let pieceLength = Math.ceil(Math.log2(sizes.size / 2000));
+            if (pieceLength < 18) pieceLength = 18; // at least 256KB
+            if (pieceLength > 24) pieceLength = 24; // at most 16MB
+            setFieldValue("pieceLength", 2 ** pieceLength);
+        }).catch((error) => {
+            setState({ state: "error", error, hash: "" });
+            clearInterval(timer.current);
+        });
+    }, [setFieldValue]);
+
     const onBrowseFile = useCallback(() => {
-        dialog.open({
+        dialogOpen({
             title: "Select file",
             defaultPath: form.values.path === "" ? undefined : form.values.path,
             multiple: false,
-        }).then((path) => {
-            if (path === null) return;
-            setFieldValue("path", path as string);
-            const name = (path as string).split(/[\\/]/).pop() ?? "";
-            setFieldValue("name", name);
-        }).catch(console.error);
-    }, [form.values.path, setFieldValue]);
+        }).then(setPathAndCalculate).catch(console.error);
+    }, [form.values.path, setPathAndCalculate]);
 
     const onBrowseDirectory = useCallback(() => {
-        dialog.open({
+        dialogOpen({
             title: "Select directory",
             defaultPath: form.values.path === "" ? undefined : form.values.path,
             directory: true,
-        }).then((path) => {
-            if (path === null) return;
-            setFieldValue("path", path as string);
-            const name = (path as string).split(/[\\/]/).pop() ?? "";
-            setFieldValue("name", name);
-        }).catch(console.error);
-    }, [form.values.path, setFieldValue]);
+        }).then(setPathAndCalculate).catch(console.error);
+    }, [form.values.path, setPathAndCalculate]);
 
     const timer = useRef(0);
 
@@ -183,8 +219,9 @@ export default function CreateTorrentForm() {
     }, []);
 
     const onSave = useCallback(() => {
-        dialog.save({
+        dialogSave({
             title: "Save torrent file",
+            defaultPath: form.values.name,
             filters: [{
                 name: "Torrent",
                 extensions: ["torrent"],
@@ -198,7 +235,7 @@ export default function CreateTorrentForm() {
                 });
             }
         }).catch(console.error);
-    }, []);
+    }, [form.values.name]);
 
     const addDefaultTrackers = useCallback(() => {
         let list = form.values.announceList;
@@ -206,16 +243,19 @@ export default function CreateTorrentForm() {
         form.setFieldValue("announceList", list);
     }, [defaultTrackers, form]);
 
+    const browseDisabled = ["calculating", "generating"].includes(state.state);
+
     return (
         <Flex direction="column" h="100%" w="100%" p="lg" gap="lg">
             <Group align="flex-end">
                 <TextInput
-                    label={"Select file or folder"}
+                    label={"Select file or directory"}
                     {...form.getInputProps("path")}
                     styles={{ root: { flexGrow: 1 } }}
+                    readOnly
                     autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
-                <Button onClick={onBrowseFile}>File</Button>
-                <Button onClick={onBrowseDirectory}>Directory</Button>
+                <Button onClick={onBrowseFile} disabled={browseDisabled}>File</Button>
+                <Button onClick={onBrowseDirectory} disabled={browseDisabled}>Directory</Button>
             </Group>
             <TextInput
                 label={"Torrent name"}
@@ -260,6 +300,14 @@ export default function CreateTorrentForm() {
             <Box h="1.5rem">
                 {state.state === "error" &&
                     <Text color="red">{state.error}</Text>}
+                {state.state === "calculating" &&
+                    <Text>Calculating sizes...</Text>}
+                {state.state === "sizes" &&
+                    <Text>
+                        {`${state.sizes?.files ?? 1} file${(state.sizes?.files ?? 1) > 1 ? "s" : ""}, `}
+                        {`${bytesToHumanReadableStr(state.sizes?.size ?? 0)}, `}
+                        {`${Math.ceil((state.sizes?.size ?? 0) / form.values.pieceLength)} pieces`}
+                    </Text>}
                 {state.state === "generating" &&
                     <ProgressBar
                         now={pieces.done}
@@ -270,8 +318,8 @@ export default function CreateTorrentForm() {
                     <Text>{`Torrent infohash: ${state.hash}`}</Text>}
             </Box>
             <Group position="center">
-                {(state.state === "idle" || state.state === "error") &&
-                    <Button miw="10rem" onClick={onGenerate}>Generate</Button>}
+                {(["idle", "error", "calculating", "sizes"].includes(state.state)) &&
+                    <Button miw="10rem" onClick={onGenerate} disabled={state.state === "calculating"}>Generate</Button>}
                 {state.state === "generating" &&
                     <Button miw="10rem" onClick={onCancel} color="red">Cancel</Button>}
                 {state.state === "done" &&

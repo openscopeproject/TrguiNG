@@ -190,6 +190,7 @@ fn main() {
             commands::shell_open,
             commands::set_poller_config,
             commands::app_integration,
+            commands::get_file_stats,
             commands::create_torrent,
             commands::check_create_torrent,
             commands::cancel_create_torrent,

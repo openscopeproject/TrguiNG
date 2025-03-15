@@ -28,6 +28,12 @@ use crate::{
 };
 
 #[derive(serde::Serialize)]
+pub struct FileStats {
+    files: i64,
+    size: u64,
+}
+
+#[derive(serde::Serialize)]
 pub struct TorrentFileEntry {
     name: String,
     length: i64,
@@ -146,6 +152,24 @@ pub async fn set_poller_config(
 #[tauri::command]
 pub async fn app_integration(mode: String) -> bool {
     crate::integrations::app_integration_impl(mode)
+}
+
+#[tauri::command]
+pub async fn get_file_stats(path: String) -> FileStats {
+    if let Ok(metadata) = std::path::PathBuf::from(path.clone()).metadata() {
+        if metadata.is_file() {
+            return FileStats {
+                files: 1,
+                size: metadata.len(),
+            };
+        } else if let Ok(entries) = lava_torrent::list_dir(path) {
+            return FileStats {
+                files: entries.len() as i64,
+                size: entries.iter().fold(0, |a, (_, s)| a + s),
+            };
+        }
+    };
+    FileStats { files: -1, size: 0 }
 }
 
 #[tauri::command]
