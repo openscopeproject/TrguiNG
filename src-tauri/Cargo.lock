@@ -2541,7 +2541,7 @@ dependencies = [
 [[package]]
 name = "lava_torrent"
 version = "0.11.1"
-source = "git+https://github.com/openscopeproject/lava_torrent?branch=patches#eeff9da0fd630f1994439e5590f0a285360671e8"
+source = "git+https://github.com/openscopeproject/lava_torrent?branch=patches#1ce05d0f9ef32127bfcc378d98fa09dbf3b684e8"
 dependencies = [
  "conv",
  "itertools 0.10.5",
