@@ -349,6 +349,9 @@ function TableRow<TData>(props: {
             newIndex += 1;
         } else if (e.key === "ArrowUp") {
             newIndex -= 1;
+        } else if (e.key === "PageUp" || e.key === "PageDown") {
+            ref.current?.parentElement?.parentElement?.focus();
+            return;
         } else if (e.key !== "ContextMenu") {
             return;
         }
@@ -371,6 +374,16 @@ function TableRow<TData>(props: {
             isRmb: e.key === "ContextMenu",
         }, newIndex, lastIndex);
     }, [index, lastIndex, onRowClick]);
+
+    useEffect(() => {
+        const node = ref.current;
+        return () => {
+            if (node?.matches(":focus-within") === true) {
+                console.log("Trying to focus", node.parentElement?.parentElement);
+                node.parentElement?.parentElement?.focus();
+            }
+        };
+    }, []);
 
     return (
         <div ref={ref}
