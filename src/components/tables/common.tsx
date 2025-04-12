@@ -375,16 +375,6 @@ function TableRow<TData>(props: {
         }, newIndex, lastIndex);
     }, [index, lastIndex, onRowClick]);
 
-    useEffect(() => {
-        const node = ref.current;
-        return () => {
-            if (node?.matches(":focus-within") === true) {
-                console.log("Trying to focus", node.parentElement?.parentElement);
-                node.parentElement?.parentElement?.focus();
-            }
-        };
-    }, []);
-
     return (
         <div ref={ref}
             className={`tr${props.selected ? " selected" : props.descendantSelected ? " descendant-selected" : ""}`}
