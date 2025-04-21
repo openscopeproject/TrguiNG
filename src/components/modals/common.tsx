@@ -168,6 +168,8 @@ export function useTorrentLocation(): LocationData {
 }
 
 export function TorrentLocation(props: LocationData) {
+    const config = useContext(ConfigContext);
+
     return (
         <Group align="flex-end">
             <TextInput
@@ -193,6 +195,13 @@ export function TorrentLocation(props: LocationData) {
                                 offsetScrollbars
                                 styles={{ viewport: { paddingBottom: 0 } }}
                             >
+                                {config.values.interface.preconfiguredDirs.map((path) => (
+                                    <Menu.Item key={path} onClick={() => { props.setPath(path); }}>
+                                        {path}
+                                    </Menu.Item>
+                                ))}
+                                {config.values.interface.preconfiguredDirs.length > 0 && props.lastPaths.length > 0 &&
+                                    <Menu.Divider />}
                                 {props.lastPaths.map((path) => (
                                     <Menu.Item key={path}
                                         onClick={() => { props.setPath(path); }}

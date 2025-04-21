@@ -572,6 +572,7 @@ export function DaemonSettingsModal(props: ModalState) {
     const onSave = useCallback(() => {
         serverConfig.intervals = { ...form.values.intervals };
         config.values.interface = { ...config.values.interface, ...form.values.interface };
+        config.cleanup();
         if (form.values.session !== undefined) {
             mutation.mutate(form.values.session, {
                 onSuccess: () => {

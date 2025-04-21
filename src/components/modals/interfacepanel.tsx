@@ -18,7 +18,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import type { ColorScheme } from "@mantine/core";
-import { Box, Checkbox, Grid, HoverCard, MultiSelect, NativeSelect, NumberInput, Text, Textarea, useMantineTheme } from "@mantine/core";
+import { Accordion, Box, Checkbox, Grid, HoverCard, MultiSelect, NativeSelect, NumberInput, Text, Textarea, useMantineTheme } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import ColorChooser from "components/colorchooser";
 import { useGlobalStyleOverrides } from "themehooks";
@@ -40,6 +40,7 @@ export interface InterfaceFormValues {
         numLastSaveDirs: number,
         sortLastSaveDirs: boolean,
         preconfiguredLabels: string[],
+        preconfiguredDirs: string[],
         ignoredTrackerPrefixes: string[],
         defaultTrackers: string[],
     },
@@ -115,132 +116,165 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
     }, [setFieldValue, setFieldError, clearFieldError]);
 
     return (
-        <Grid align="center">
-            <Grid.Col span={1}>
-                <ColorSchemeToggle />
-            </Grid.Col>
-            <Grid.Col span={1}>
-                Font
-            </Grid.Col>
-            <Grid.Col span={4}>
-                <NativeSelect data={systemFonts} value={style.font} onChange={(e) => { setFont(e.currentTarget.value); }} />
-            </Grid.Col>
-            <Grid.Col span={2}>
-                Text color
-            </Grid.Col>
-            <Grid.Col span={1}>
-                <ColorChooser value={style[theme.colorScheme].color ?? defaultColor} onChange={setTextColor} />
-            </Grid.Col>
-            <Grid.Col span={2}>
-                Background
-            </Grid.Col>
-            <Grid.Col span={1}>
-                <ColorChooser value={style[theme.colorScheme].backgroundColor ?? defaultBg} onChange={setBgColor} />
-            </Grid.Col>
-            <Grid.Col span={3}>
-                Delete torrent data
-            </Grid.Col>
-            <Grid.Col span={3}>
-                <NativeSelect data={DeleteTorrentDataOptions as unknown as string[]}
-                    value={props.form.values.interface.deleteTorrentData}
-                    onChange={(e) => { setFieldValue("interface.deleteTorrentData", e.target.value); }} />
-            </Grid.Col>
-            <Grid.Col span={6}>
-                <Checkbox label="Skip add torrent dialog"
-                    {...props.form.getInputProps("interface.skipAddDialog", { type: "checkbox" })} />
-            </Grid.Col>
-            <Grid.Col span={4}>Max number of saved download directories</Grid.Col>
-            <Grid.Col span={2}>
-                <NumberInput
-                    min={1}
-                    max={100}
-                    {...props.form.getInputProps("interface.numLastSaveDirs")} />
-            </Grid.Col>
-            <Grid.Col span={6}>
-                <Checkbox label="Sort download directories list"
-                    {...props.form.getInputProps("interface.sortLastSaveDirs", { type: "checkbox" })} />
-            </Grid.Col>
-            <Grid.Col span={3}>Progress bars</Grid.Col>
-            <Grid.Col span={3}>
-                <Checkbox label="Colorful"
-                    {...props.form.getInputProps("interface.colorfulProgressbars", { type: "checkbox" })} />
-            </Grid.Col>
-            <Grid.Col span={3}>
-                <Checkbox label="Animated"
-                    {...props.form.getInputProps("interface.animatedProgressbars", { type: "checkbox" })} />
-            </Grid.Col>
-            <Grid.Col>
-                <MultiSelect
-                    data={props.form.values.interface.preconfiguredLabels}
-                    value={props.form.values.interface.preconfiguredLabels}
-                    onChange={setPreconfiguredLabels}
-                    label={<Box>
-                        <span>Preconfigured labels</span>
-                        <HoverCard width={280} shadow="md">
-                            <HoverCard.Target>
-                                <Icon.Question />
-                            </HoverCard.Target>
-                            <HoverCard.Dropdown>
-                                <Text size="sm">
-                                    These labels will always be present in the suggestions list
-                                    and filters even if no existing torrents have them.
-                                </Text>
-                            </HoverCard.Dropdown>
-                        </HoverCard>
-                    </Box>}
-                    withinPortal
-                    searchable
-                    creatable
-                    getCreateLabel={(query) => `+ Add ${query}`}
-                    onCreate={(query) => {
-                        setPreconfiguredLabels([...props.form.values.interface.preconfiguredLabels, query]);
-                        return query;
-                    }}
-                    valueComponent={Label}
-                />
-            </Grid.Col>
-            <Grid.Col>
-                <MultiSelect
-                    data={props.form.values.interface.ignoredTrackerPrefixes}
-                    value={props.form.values.interface.ignoredTrackerPrefixes}
-                    onChange={setIgnoredTrackerPrefixes}
-                    label={<Box>
-                        <span>Ignored tracker prefixes</span>
-                        <HoverCard width={380} shadow="md">
-                            <HoverCard.Target>
-                                <Icon.Question />
-                            </HoverCard.Target>
-                            <HoverCard.Dropdown>
-                                <Text size="sm">
-                                    When subdomain of the tracker looks like one of these strings + (optional) digits,
-                                    it will be omitted. This affects grouping in filters and display in table columns.
-                                    You can use regex here for more advanced filtering, the list will be combined
-                                    using &quot;|&quot;.
-                                </Text>
-                            </HoverCard.Dropdown>
-                        </HoverCard>
-                    </Box>}
-                    withinPortal
-                    searchable
-                    creatable
-                    error={props.form.errors["interface.ignoredTrackerPrefixes"]}
-                    getCreateLabel={(query) => `+ Add ${query}`}
-                    onCreate={(query) => {
-                        setIgnoredTrackerPrefixes([...props.form.values.interface.ignoredTrackerPrefixes, query]);
-                        return query;
-                    }}
-                    valueComponent={Label}
-                />
-            </Grid.Col>
-            <Grid.Col>
-                <Textarea minRows={6}
-                    label="Default tracker list"
-                    value={props.form.values.interface.defaultTrackers.join("\n")}
-                    onChange={(e) => {
-                        props.form.setFieldValue(
-                            "interface.defaultTrackers", e.currentTarget.value.split("\n") as any);
-                    }} />
-            </Grid.Col>
-        </Grid>
+        <Accordion defaultValue="appearance">
+            <Accordion.Item value="appearance">
+                <Accordion.Control>Appearance</Accordion.Control>
+                <Accordion.Panel>
+                    <Grid align="center">
+                        <Grid.Col span={3}>
+                            Theme
+                        </Grid.Col>
+                        <Grid.Col span={1}>
+                            <ColorSchemeToggle />
+                        </Grid.Col>
+                        <Grid.Col span={3}>
+                            Font
+                        </Grid.Col>
+                        <Grid.Col span={5}>
+                            <NativeSelect data={systemFonts} value={style.font} onChange={(e) => { setFont(e.currentTarget.value); }} />
+                        </Grid.Col>
+                        <Grid.Col span={3}>
+                            Text color
+                        </Grid.Col>
+                        <Grid.Col span={1}>
+                            <ColorChooser value={style[theme.colorScheme].color ?? defaultColor} onChange={setTextColor} />
+                        </Grid.Col>
+                        <Grid.Col span={3}>
+                            Background
+                        </Grid.Col>
+                        <Grid.Col span={1}>
+                            <ColorChooser value={style[theme.colorScheme].backgroundColor ?? defaultBg} onChange={setBgColor} />
+                        </Grid.Col>
+                        <Grid.Col span={4} />
+                        <Grid.Col span={3}>Progress bars</Grid.Col>
+                        <Grid.Col span={3}>
+                            <Checkbox label="Colorful"
+                                {...props.form.getInputProps("interface.colorfulProgressbars", { type: "checkbox" })} />
+                            <Checkbox label="Animated"
+                                {...props.form.getInputProps("interface.animatedProgressbars", { type: "checkbox" })} />
+                        </Grid.Col>
+                    </Grid>
+                </Accordion.Panel>
+            </Accordion.Item>
+            <Accordion.Item value="downloads">
+                <Accordion.Control>Downloads</Accordion.Control>
+                <Accordion.Panel>
+                    <Grid align="center">
+                        <Grid.Col span={6}>
+                            <Checkbox label="Skip add torrent dialog"
+                                {...props.form.getInputProps("interface.skipAddDialog", { type: "checkbox" })} />
+                        </Grid.Col>
+                        <Grid.Col span={6} />
+                        <Grid.Col span={6}>
+                            <Checkbox label="Sort download directories list"
+                                {...props.form.getInputProps("interface.sortLastSaveDirs", { type: "checkbox" })} />
+                        </Grid.Col>
+                        <Grid.Col span={4}>Max number of saved download directories</Grid.Col>
+                        <Grid.Col span={2}>
+                            <NumberInput
+                                min={1}
+                                max={100}
+                                {...props.form.getInputProps("interface.numLastSaveDirs")} />
+                        </Grid.Col>
+                        <Grid.Col>
+                            <Textarea minRows={6}
+                                label="Preconfigured directories (one per line)"
+                                value={props.form.values.interface.preconfiguredDirs.join("\n")}
+                                onChange={(e) => {
+                                    props.form.setFieldValue(
+                                        "interface.preconfiguredDirs", e.currentTarget.value.split("\n") as any);
+                                }} />
+                        </Grid.Col>
+                        <Grid.Col>
+                            <MultiSelect
+                                data={props.form.values.interface.preconfiguredLabels}
+                                value={props.form.values.interface.preconfiguredLabels}
+                                onChange={setPreconfiguredLabels}
+                                label={<Box>
+                                    <span>Preconfigured labels</span>
+                                    <HoverCard width={280} shadow="md">
+                                        <HoverCard.Target>
+                                            <Icon.Question />
+                                        </HoverCard.Target>
+                                        <HoverCard.Dropdown>
+                                            <Text size="sm">
+                                                These labels will always be present in the suggestions list
+                                                and filters even if no existing torrents have them.
+                                            </Text>
+                                        </HoverCard.Dropdown>
+                                    </HoverCard>
+                                </Box>}
+                                withinPortal
+                                searchable
+                                creatable
+                                getCreateLabel={(query) => `+ Add ${query}`}
+                                onCreate={(query) => {
+                                    setPreconfiguredLabels([...props.form.values.interface.preconfiguredLabels, query]);
+                                    return query;
+                                }}
+                                valueComponent={Label}
+                            />
+                        </Grid.Col>
+                    </Grid>
+                </Accordion.Panel>
+            </Accordion.Item>
+            <Accordion.Item value="miscellaneous">
+                <Accordion.Control>Miscellaneous</Accordion.Control>
+                <Accordion.Panel>
+                    <Grid align="center">
+                        <Grid.Col span={3}>
+                            Delete torrent data
+                        </Grid.Col>
+                        <Grid.Col span={3}>
+                            <NativeSelect data={DeleteTorrentDataOptions as unknown as string[]}
+                                value={props.form.values.interface.deleteTorrentData}
+                                onChange={(e) => { setFieldValue("interface.deleteTorrentData", e.target.value); }} />
+                        </Grid.Col>
+                        <Grid.Col>
+                            <MultiSelect
+                                data={props.form.values.interface.ignoredTrackerPrefixes}
+                                value={props.form.values.interface.ignoredTrackerPrefixes}
+                                onChange={setIgnoredTrackerPrefixes}
+                                label={<Box>
+                                    <span>Ignored tracker prefixes</span>
+                                    <HoverCard width={380} shadow="md">
+                                        <HoverCard.Target>
+                                            <Icon.Question />
+                                        </HoverCard.Target>
+                                        <HoverCard.Dropdown>
+                                            <Text size="sm">
+                                                When subdomain of the tracker looks like one of these strings + (optional) digits,
+                                                it will be omitted. This affects grouping in filters and display in table columns.
+                                                You can use regex here for more advanced filtering, the list will be combined
+                                                using &quot;|&quot;.
+                                            </Text>
+                                        </HoverCard.Dropdown>
+                                    </HoverCard>
+                                </Box>}
+                                withinPortal
+                                searchable
+                                creatable
+                                error={props.form.errors["interface.ignoredTrackerPrefixes"]}
+                                getCreateLabel={(query) => `+ Add ${query}`}
+                                onCreate={(query) => {
+                                    setIgnoredTrackerPrefixes([...props.form.values.interface.ignoredTrackerPrefixes, query]);
+                                    return query;
+                                }}
+                                valueComponent={Label}
+                            />
+                        </Grid.Col>
+                        <Grid.Col>
+                            <Textarea minRows={6}
+                                label="Default tracker list"
+                                value={props.form.values.interface.defaultTrackers.join("\n")}
+                                onChange={(e) => {
+                                    props.form.setFieldValue(
+                                        "interface.defaultTrackers", e.currentTarget.value.split("\n") as any);
+                                }} />
+                        </Grid.Col>
+                    </Grid>
+                </Accordion.Panel>
+            </Accordion.Item>
+        </Accordion >
     );
 }

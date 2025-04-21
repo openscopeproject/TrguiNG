@@ -160,6 +160,7 @@ interface Settings {
         numLastSaveDirs: number,
         sortLastSaveDirs: boolean,
         preconfiguredLabels: string[],
+        preconfiguredDirs: string[],
         ignoredTrackerPrefixes: string[],
         defaultTrackers: string[],
         styleOverrides: StyleOverrides,
@@ -285,6 +286,7 @@ const DefaultSettings: Settings = {
         numLastSaveDirs: 20,
         sortLastSaveDirs: false,
         preconfiguredLabels: [],
+        preconfiguredDirs: [],
         ignoredTrackerPrefixes: ["t", "tr", "tk", "tracker", "bt", "open", "opentracker"],
         defaultTrackers: [...DefaultTrackerList],
         styleOverrides: {
@@ -434,6 +436,7 @@ export class Config {
     addSaveDir(serverName: string, dir: string) {
         const saveDirs = this.removeSaveDir(serverName, dir);
         if (saveDirs === undefined) return;
+        if (this.values.interface.preconfiguredDirs.includes(dir)) return;
         saveDirs.unshift(dir);
         while (saveDirs.length > this.values.interface.numLastSaveDirs) {
             saveDirs.pop();
@@ -475,6 +478,15 @@ export class Config {
         const merge = (await import(/* webpackChunkName: "lodash" */ "lodash-es/merge")).default;
         merge(this.values.interface, obj.interface);
         await this.save();
+    }
+
+    cleanup() {
+        const dirs = this.values.interface.preconfiguredDirs;
+        this.values.interface.preconfiguredDirs = dirs.filter(
+            (s, i) => s !== "" && i === dirs.indexOf(s));
+        for (const server of this.values.servers) {
+            server.pathMappings = server.pathMappings.filter((m) => m.from !== "");
+        }
     }
 }
 

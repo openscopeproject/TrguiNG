@@ -337,6 +337,7 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
             config.setServers(form.values.servers);
             config.values.app = { ...config.values.app, ...form.values.app };
             config.values.interface = { ...config.values.interface, ...form.values.interface };
+            config.cleanup();
             props.onSave(form.values.servers);
             props.close();
         }
