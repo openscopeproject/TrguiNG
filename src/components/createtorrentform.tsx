@@ -183,7 +183,6 @@ export default function CreateTorrentForm() {
             timer.current = window.setInterval(() => {
                 invoke<CreateCheckResult>("check_create_torrent").then((result) => {
                     setState({ state: "generating", error: "", hash: "" });
-                    console.log("Check result", result);
                     if (result.error !== undefined) {
                         setState({ state: "error", error: result.error, hash: "" });
                         clearInterval(timer.current);

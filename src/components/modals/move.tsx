@@ -46,7 +46,7 @@ export function MoveModal(props: ModalState) {
                     addPath(location.path);
                 },
                 onError: (e) => {
-                    console.log("Error moving torrents", e);
+                    console.error("Error moving torrents", e);
                     notifications.show({
                         message: "Error moving torrents",
                         color: "red",

@@ -97,7 +97,7 @@ function useButtonHandlers(
                 },
                 {
                     onError: (e) => {
-                        console.log("Error running torrent update method", method, e);
+                        console.error("Error running torrent update method", method, e);
                         notifications.show({
                             message: "Error updating torrent",
                             color: "red",

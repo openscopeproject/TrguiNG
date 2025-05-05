@@ -56,7 +56,7 @@ export function RemoveModal(props: ModalState) {
             },
             {
                 onError: (e) => {
-                    console.log("Error removing torrents", e);
+                    console.error("Error removing torrents", e);
                     notifications.show({
                         message: "Error removing torrents",
                         color: "red",

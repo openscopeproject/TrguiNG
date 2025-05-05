@@ -358,7 +358,7 @@ export class CachedFileTree {
         ids.forEach((id) => {
             const entry = this.findEntry(id);
             if (entry === undefined) {
-                console.log("What the horse?", id);
+                console.error("What the horse? Unexpected state in cached file tree", id);
                 return;
             }
             if (entry.parent != null) affectedParents.add(entry.parent);

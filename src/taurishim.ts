@@ -132,7 +132,7 @@ export function copyToClipboard(text: string) {
         try {
             document.execCommand("copy");
         } catch (err) {
-            console.log("Can not copy to clipboard.");
+            console.error("Can not copy to clipboard.", err);
         }
 
         document.body.removeChild(textArea);
