@@ -14,8 +14,9 @@ jobs:
   download-dbip:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - name: Download dbip database
-        run: wget -nv -O- "https://download.db-ip.com/free/dbip-country-lite-2025-02.mmdb.gz" | zcat > dbip.mmdb
+        run: ./ci/fetch_latest_dbip.sh
       - uses: actions/upload-artifact@v4
         with:
           name: dbip
