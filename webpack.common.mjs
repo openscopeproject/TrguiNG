@@ -29,9 +29,9 @@ export const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 const tsConfig = JSON.parse(await readFile("./tsconfig.json"));
 const tauriConf = JSON.parse(await readFile("./src-tauri/tauri.conf.json"));
 
-const gitVersion = execaSync("git", ["describe", "--tags", "--dirty", "--always"]);
+const gitVersion = process.env.TRGUING_VERSION ?? execaSync("git", ["describe", "--tags", "--dirty", "--always"]).stdout;
 const versionInfo = `{
-    "gitVersion": "${gitVersion.stdout}",
+    "gitVersion": "${gitVersion}",
     "backendVersion": "${tauriConf.version}",
     "buildDate": ${Date.now()}
 }`;
