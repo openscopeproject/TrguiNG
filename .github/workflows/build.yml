@@ -5,13 +5,48 @@ on:
   push:
     tags:
       - v**
+  schedule:
+    - cron: '37 2 * * 0'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  check-commits:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install GitHub CLI
+        run: sudo apt-get update && sudo apt-get install -y gh
+
+      - name: Check for new commits since last successful run
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          LAST_SUCCESS=$(gh run list --workflow build.yml --branch ${{ github.ref_name }} --status success --limit 1 --json startedAt --jq '.[0].startedAt')
+          if [ -z "$LAST_SUCCESS" ]; then
+            echo "No previous successful run, continuing."
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          NEW_COMMITS=$(git rev-list --count --since="$LAST_SUCCESS" ${{ github.ref_name }})
+          if [ "$NEW_COMMITS" -eq 0 ]; then
+            echo "No new commits since last successful run, skipping workflow."
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "should_run=true" >> $GITHUB_OUTPUT
+
   download-dbip:
+    needs: check-commits
+    if: needs.check-commits.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

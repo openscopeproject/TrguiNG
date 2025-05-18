@@ -34,6 +34,15 @@ Planned:
 
 Transmission v2.40 or later is required.
 
+## Downloads
+
+You can get the latest release from the
+[releases page](https://github.com/openscopeproject/TrguiNG/releases).
+
+Weekly builds of current development version are available from github
+[build workflows](https://github.com/openscopeproject/TrguiNG/actions/workflows/build.yml).
+Pick the latest successful run and scroll down to the artifacts section.
+
 ## Compiling
 
 Prerequisites:

@@ -9,12 +9,12 @@ url_last_month="https://download.db-ip.com/free/dbip-country-lite-$last_month.mm
 output_file="dbip-country-lite.mmdb.gz"
 
 echo "Trying to download today's DB-IP file..."
-wget -O "$output_file" "$url_today"
+wget -q -O "$output_file" "$url_today"
 if [ $? -eq 0 ]; then
     echo "Downloaded today's file successfully."
 else
     echo "Today's file not available. Trying last month's file..."
-    wget -O "$output_file" "$url_last_month"
+    wget -q -O "$output_file" "$url_last_month"
     if [ $? -eq 0 ]; then
         echo "Downloaded last month's file successfully."
     else
