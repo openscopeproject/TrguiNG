@@ -233,7 +233,6 @@ export function TorrentLocation(props: LocationData) {
 export function Label({
     label,
     onRemove,
-    classNames,
     ...others
 }: MultiSelectValueProps) {
     return (

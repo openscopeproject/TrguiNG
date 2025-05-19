@@ -110,7 +110,7 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
             const _ = new RegExp(`^(?<prefix>(${prefixes.join("|")})\\d*)\\.[^.]+\\.[^.]+$`, "i");
             setFieldValue("interface.ignoredTrackerPrefixes", prefixes);
             clearFieldError("interface.ignoredTrackerPrefixes");
-        } catch (SyntaxError) {
+        } catch {
             setFieldError("interface.ignoredTrackerPrefixes", "Invalid regex");
         }
     }, [setFieldValue, setFieldError, clearFieldError]);
@@ -182,6 +182,7 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                                 value={props.form.values.interface.preconfiguredDirs.join("\n")}
                                 onChange={(e) => {
                                     props.form.setFieldValue(
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                         "interface.preconfiguredDirs", e.currentTarget.value.split("\n") as any);
                                 }} />
                         </Grid.Col>
@@ -269,6 +270,7 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                                 value={props.form.values.interface.defaultTrackers.join("\n")}
                                 onChange={(e) => {
                                     props.form.setFieldValue(
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                         "interface.defaultTrackers", e.currentTarget.value.split("\n") as any);
                                 }} />
                         </Grid.Col>

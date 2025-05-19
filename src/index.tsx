@@ -69,7 +69,7 @@ function setupTauriEvents(config: Config, app: Root) {
         }
     });
 
-    void appWindow.listen("exit-requested", (event) => {
+    void appWindow.listen("exit-requested", () => {
         void onCloseRequested(app, config);
     });
 
@@ -91,7 +91,7 @@ function setupTauriEvents(config: Config, app: Root) {
 function setupWebEvents(config: Config) {
     document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "hidden") {
-            config.save().catch((e) => { });
+            config.save().catch(() => { });
         }
     });
 }
@@ -164,6 +164,6 @@ async function run(config: Config) {
         </React.StrictMode>);
 }
 
-window.onload = (event) => {
+window.onload = () => {
     new Config().read().then(run).catch(console.error);
 };

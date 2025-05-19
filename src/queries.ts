@@ -119,13 +119,13 @@ export function useTorrentDetails(torrentId: number, enabled: boolean, lookupIps
 
 export interface TorrentMutationVariables {
     torrentIds: number[],
-    fields: Partial<Record<TorrentMutableFieldsType, any>>,
+    fields: Partial<Record<TorrentMutableFieldsType, unknown>>,
 }
 
 function updateCachedTorrentFields(
     serverName: string,
     torrentIds: number[],
-    fields: Partial<Record<TorrentMutableFieldsType | TorrentAllFieldsType, any>>,
+    fields: Partial<Record<TorrentMutableFieldsType | TorrentAllFieldsType, unknown>>,
 ) {
     queryClient.setQueriesData(
         {
@@ -217,7 +217,7 @@ export interface TorrentAddQueryParams extends TorrentAddParams {
     filePath?: string,
 }
 
-export function useAddTorrent(onSuccess: (response: any, vars: TorrentAddQueryParams) => void, onError: (e: Error) => void) {
+export function useAddTorrent(onSuccess: (response: unknown, vars: TorrentAddQueryParams) => void, onError: (e: Error) => void) {
     const serverConfig = useContext(ServerConfigContext);
     const client = useTransmissionClient();
 
@@ -225,7 +225,7 @@ export function useAddTorrent(onSuccess: (response: any, vars: TorrentAddQueryPa
         mutationFn: async (params: TorrentAddQueryParams) => {
             return await client.torrentAdd(params);
         },
-        onSuccess: (response: any, vars: TorrentAddQueryParams) => {
+        onSuccess: (response: unknown, vars: TorrentAddQueryParams) => {
             onSuccess(response, vars);
             void queryClient.invalidateQueries(TorrentKeys.all(serverConfig.name));
         },

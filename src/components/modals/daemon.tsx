@@ -323,7 +323,7 @@ function NetworkPanel(
                     autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
             </Grid.Col>
             <Grid.Col span={6}>
-                <Text>Blocklist contains {session["blocklist-size"]} entries</Text>
+                <Text>Blocklist contains {session["blocklist-size"] as number} entries</Text>
             </Grid.Col>
             <Grid.Col span={3}>
                 <Tooltip
@@ -372,9 +372,9 @@ const DaysOfTheWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const
 function DayOfWeekCheckbox({ form, day, session }: { form: UseFormReturnType<FormValues>, day: number, session: SessionInfo }) {
     return <Checkbox
         label={DaysOfTheWeek[day]}
-        checked={(session["alt-speed-time-day"] & (1 << day)) > 0}
+        checked={((session["alt-speed-time-day"] as number) & (1 << day)) > 0}
         onChange={(event) => {
-            const val = session["alt-speed-time-day"];
+            const val = session["alt-speed-time-day"] as number;
             form.setFieldValue(
                 "session.alt-speed-time-day",
                 event.currentTarget.checked ? val | (1 << day) : val & ~(1 << day));
@@ -512,7 +512,9 @@ function MagnetHandlerPanel() {
         navigator.registerProtocolHandler("magnet", handlerUrl.toString());
     }, [handlerUrl]);
 
+    // Unregister handler only exists in some browsers
     const unregisterHandler = useCallback(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (navigator as any).unregisterProtocolHandler?.("magnet", handlerUrl.toString());
     }, [handlerUrl]);
 
@@ -526,7 +528,9 @@ function MagnetHandlerPanel() {
                     <Grid.Col span={6}>
                         <Flex justify="space-around">
                             <Button onClick={registerHandler}>Register</Button>
-                            {typeof (navigator as any).unregisterProtocolHandler === "function" &&
+                            {
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                typeof (navigator as any).unregisterProtocolHandler === "function" &&
                                 <Button onClick={unregisterHandler}>Unregister</Button>}
                         </Flex>
                     </Grid.Col>

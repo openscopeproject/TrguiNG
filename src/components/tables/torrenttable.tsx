@@ -434,7 +434,7 @@ export function TorrentTable(props: {
             }
             path = path + fileSystemSafeName(torrent.name);
             path = pathMapFromServer(path, serverConfig);
-            invoke("shell_open", { path, reveal }).catch((e) => {
+            invoke("shell_open", { path, reveal }).catch(() => {
                 notifications.show({
                     title: "Error opening path",
                     message: path,

@@ -170,7 +170,7 @@ export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: Serv
 
     const modals = useRef<ModalCallbacks>(null);
 
-    const rpcVersion = session?.["rpc-version"] ?? 0;
+    const rpcVersion = session?.["rpc-version"] as number ?? 0;
 
     const overlayVisible = sessionIsError || sessionIsLoading || rpcVersion < 14;
 
@@ -215,7 +215,7 @@ export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: Serv
                 <MemoizedToolbar
                     setSearchTerms={setSearchTerms}
                     modals={modals}
-                    altSpeedMode={session?.["alt-speed-enabled"] ?? false}
+                    altSpeedMode={session?.["alt-speed-enabled"] as boolean ?? false}
                     extra={toolbarExtra}
                     toggleFiltersPanel={toggleFiltersPanel}
                     toggleDetailsPanel={toggleDetailsPanel}

@@ -63,6 +63,7 @@ pub async fn lookup(app: &AppHandle, ips: Vec<IpAddr>) -> Vec<LookupResult> {
             match reader
                 .lookup::<maxminddb::geoip2::Country>(ip)
                 .ok()
+                .flatten()
                 .and_then(|c| c.country)
             {
                 Some(country) => LookupResult {

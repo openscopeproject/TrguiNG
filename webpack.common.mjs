@@ -23,6 +23,7 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import CopyPlugin from "copy-webpack-plugin";
 import * as url from "url";
+import process from "process";
 
 export const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 

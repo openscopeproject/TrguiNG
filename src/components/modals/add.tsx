@@ -172,6 +172,7 @@ export function AddMagnet(props: AddCommonModalProps) {
     const common = useCommonProps();
     const { close } = props;
     const addMutation = useAddTorrent(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         useCallback((response: any) => {
             const duplicate = response.arguments["torrent-duplicate"];
             if (duplicate !== undefined) {
@@ -481,6 +482,7 @@ export function AddTorrent(props: AddCommonModalProps) {
     }, [fileTree, onCheckboxChange, refetch]);
 
     const addMutation = useAddTorrent(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         useCallback((response: any, vars: TorrentAddQueryParams) => {
             const duplicate = response.arguments["torrent-duplicate"];
             if (duplicate !== undefined) {

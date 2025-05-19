@@ -31,31 +31,29 @@ const RUST_BACKEND = "http://127.0.0.1:44321";
 
 class ApiError extends Error { }
 
-class ApiResponse {
-    result: string = "";
-    arguments?: any;
-    tag?: number;
+interface ApiResponse {
+    result: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    arguments?: any,
+    tag?: number,
 }
 
-export type SessionInfo = Partial<Record<SessionAllFieldsType, any>>;
+export type SessionInfo = Partial<Record<SessionAllFieldsType, unknown>>;
 
-function isApiResponse(response: any): response is ApiResponse {
+function isApiResponse(response: object): response is ApiResponse {
     return "result" in response && typeof response.result === "string";
 }
 
-const TorrentActionMethods = [
-    "torrent-start",
-    "torrent-start-now",
-    "torrent-stop",
-    "torrent-verify",
-    "torrent-reannounce",
-    "queue-move-top",
-    "queue-move-bottom",
-    "queue-move-up",
-    "queue-move-down",
-] as const;
-
-export type TorrentActionMethodsType = typeof TorrentActionMethods[number];
+export type TorrentActionMethodsType =
+    | "torrent-start"
+    | "torrent-start-now"
+    | "torrent-stop"
+    | "torrent-verify"
+    | "torrent-reannounce"
+    | "queue-move-top"
+    | "queue-move-bottom"
+    | "queue-move-up"
+    | "queue-move-down";
 
 export interface TorrentAddParams {
     url?: string,
@@ -124,7 +122,7 @@ export class TransmissionClient {
         return null;
     }
 
-    async _sendRpc(data: Record<string, any>) {
+    async _sendRpc(data: Record<string, unknown>) {
         const url = this.url === ""
             ? "../rpc"
             : `${RUST_BACKEND}/${data.method === "torrent-get" ? "torrentget" : "post"}?url=${this.url}`;
@@ -174,7 +172,7 @@ export class TransmissionClient {
             throw new ApiError("torrent-get response is not torrents");
         }
 
-        return response.arguments.torrents;
+        return response.arguments.torrents as TorrentBase[];
     }
 
     async getTorrentDetails(id: number): Promise<TorrentBase> {
@@ -229,7 +227,7 @@ export class TransmissionClient {
         return this.sessionInfo;
     }
 
-    async setSession(fields: Record<string, any>) {
+    async setSession(fields: Record<string, unknown>) {
         const request = {
             method: "session-set",
             arguments: fields,
@@ -248,7 +246,7 @@ export class TransmissionClient {
         return response.arguments;
     }
 
-    async setTorrents(torrentIds: number[], fields: Record<string, any>) {
+    async setTorrents(torrentIds: number[], fields: Record<string, unknown>) {
         const request = {
             method: "torrent-set",
             arguments: { ...fields, ids: torrentIds },

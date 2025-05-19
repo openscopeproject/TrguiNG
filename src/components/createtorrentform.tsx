@@ -37,7 +37,7 @@ interface FormValues {
     version: string,
 }
 
-const textAreaStyles: Styles<TextInputStylesNames, Record<string, any>> = {
+const textAreaStyles: Styles<TextInputStylesNames, Record<string, unknown>> = {
     root: {
         flexGrow: 1,
         display: "flex",

@@ -14,5 +14,5 @@
         "resolveJsonModule": true,
         "types": []
     },
-    "include": ["src/**/*"]
+    "include": ["src/**/*", "*.mjs"]
 }

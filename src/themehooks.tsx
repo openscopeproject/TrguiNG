@@ -27,7 +27,7 @@ interface FontsizeContextValue {
 }
 
 const FontsizeContext = React.createContext<FontsizeContextValue>(
-    { value: 0.9, toggle: (v?: React.SetStateAction<number>) => { } });
+    { value: 0.9, toggle: () => { } });
 
 export function FontsizeContextProvider(props: React.PropsWithChildren) {
     const config = useContext(ConfigContext);

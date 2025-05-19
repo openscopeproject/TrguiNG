@@ -47,7 +47,7 @@ interface StatusFilter extends NamedFilter {
 const statusFilters: StatusFilter[] = [
     {
         name: "All Torrents",
-        filter: (t: Torrent) => true,
+        filter: () => true,
         icon: StatusIcons.All,
         required: true,
     },

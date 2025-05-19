@@ -25,7 +25,7 @@ import ReactLogo from "svg/reactjs.svg";
 import TauriLogo from "svg/tauri.svg";
 import AppLogo from "svg/app.svg";
 import { Github } from "react-bootstrap-icons";
-import UserAgent from "ua-parser-js";
+import { UAParser } from "ua-parser-js";
 const { TAURI } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface AppVersion {
@@ -41,10 +41,7 @@ export function VersionModal({ opened, close }: ModalState) {
 
     useEffect(() => {
         if (opened && frontend === undefined) {
-            const ua = new UserAgent();
-            const browser = ua.getBrowser();
-            const engine = ua.getEngine();
-            const os = ua.getOS();
+            const { browser, engine, os } = UAParser();
             let frontend = `${browser.name ?? "unknown"} ${browser.version ?? ""} `;
             frontend += `(${engine.name ?? "unknown"} ${engine.version ?? ""}) `;
             frontend += `on ${os.name ?? "unknown"} ${os.version ?? ""}`;

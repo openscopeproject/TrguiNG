@@ -36,7 +36,9 @@ export function PiecesCanvas(props: { torrent: Torrent }) {
         const result = new Array<boolean>(props.torrent.pieceCount);
 
         const pieceSize = props.torrent.pieceSize;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const lengths = props.torrent.files.map((f: any) => f.length);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const wanted = props.torrent.fileStats.map((f: any) => f.wanted);
 
         let fileIndex = 0;

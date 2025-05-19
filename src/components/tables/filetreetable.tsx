@@ -195,7 +195,7 @@ function useSelected(data: FileDirEntryView[], fileTree: CachedFileTree, searchT
         return next;
     }, []);
 
-    const deriveNewSelection = useRef((_: boolean) => [] as string[]);
+    const deriveNewSelection = useRef<(s: boolean) => string[]>(() => []);
     deriveNewSelection.current = useCallback((selectAll: boolean) => {
         const result: string[] = [];
         const recurse = (entry: FileDirEntryView) => {
@@ -334,7 +334,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
             }
             path = path + rowPath;
             path = pathMapFromServer(path, serverConfig);
-            invoke("shell_open", { path, reveal }).catch((e) => {
+            invoke("shell_open", { path, reveal }).catch(() => {
                 notifications.show({
                     title: "Error opening path",
                     message: path,

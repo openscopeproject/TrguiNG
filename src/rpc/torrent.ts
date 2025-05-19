@@ -1,22 +1,24 @@
 /**
  * TrguiNG - next gen remote GUI for transmission torrent daemon
  * Copyright (C) 2023  qu1ck (mail at qu1ck.org)
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License as published
+* by the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Affero General Public License for more details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 
-import type { BandwidthGroupFieldType, PeerStatsFieldsType, TorrentAllFieldsType, TrackerStatsFieldsType } from "./transmission";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import type { BandwidthGroupFieldType, PeerStatsFieldsType, TorrentAllFieldsType, TorrentFileFieldsType, TrackerStatsFieldsType } from "./transmission";
 import { Status } from "./transmission";
 import React, { useContext } from "react";
 import type { TransmissionClient } from "./client";
@@ -24,6 +26,7 @@ import type { TransmissionClient } from "./client";
 export type TrackerStats = Partial<Record<TrackerStatsFieldsType, any>>;
 export type BandwidthGroup = Record<BandwidthGroupFieldType, any>;
 export type TorrentBase = Partial<Record<TorrentAllFieldsType, any>>;
+export type TorrentFile = Record<TorrentFileFieldsType, any>;
 
 export interface Torrent extends TorrentBase {
     cachedError: string,

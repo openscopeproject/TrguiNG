@@ -41,9 +41,7 @@ export const StatusStrings = [
     "Seeding",
 ] as const;
 
-const PriorityNumbers = [-1, 0, 1] as const;
-
-export type PriorityNumberType = typeof PriorityNumbers[number];
+export type PriorityNumberType = -1 | 0 | 1;
 
 export const BandwidthPriority = {
     low: -1,
@@ -188,6 +186,14 @@ export const TorrentMutableFields = [
 ] as const;
 
 export type TorrentMutableFieldsType = typeof TorrentMutableFields[number];
+
+export const TorrentFileFields = [
+    "bytesCompleted", // number tr_file_view
+    "length", // number tr_file_view
+    "name", // string tr_file_view
+] as const;
+
+export type TorrentFileFieldsType = typeof TorrentFileFields[number];
 
 // These fields are polled regularlly with torrent list
 export const SessionFields = [

@@ -28,7 +28,7 @@ import { SaveCancelModal } from "./common";
 import * as Icon from "react-bootstrap-icons";
 import type { UseFormReturnType } from "@mantine/form";
 import { useForm } from "@mantine/form";
-import UserAgent from "ua-parser-js";
+import { UAParser } from "ua-parser-js";
 import type { InterfaceFormValues } from "./interfacepanel";
 import { InterfaceSettigsPanel } from "./interfacepanel";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
@@ -183,10 +183,7 @@ function ServerPanel(props: ServerPanelProps) {
 const bigSwitchStyles = { track: { flexGrow: 1 } };
 
 function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
-    const platform = useMemo(() => {
-        const ua = new UserAgent();
-        return ua.getOS().name ?? "unknown";
-    }, []);
+    const platform = useMemo(() => UAParser().os.name ?? "unknown", []);
 
     const [autostart, setAutostart] = useState(false);
 

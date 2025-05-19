@@ -17,7 +17,7 @@
  */
 
 import { fileSystemSafeName, chainedIterables } from "trutil";
-import type { Torrent, TorrentBase } from "./rpc/torrent";
+import type { Torrent, TorrentBase, TorrentFile } from "./rpc/torrent";
 import type { PriorityNumberType } from "rpc/transmission";
 
 interface Entry {
@@ -132,9 +132,9 @@ export class CachedFileTree {
     }
 
     parse(torrent: TorrentBase, fromFile: boolean) {
-        this.torrenthash = torrent.hashString;
+        this.torrenthash = torrent.hashString as string;
 
-        this.files = torrent.files.map((entry: any, index: number): FileEntry => {
+        this.files = (torrent.files as TorrentFile[]).map((entry: TorrentFile, index: number): FileEntry => {
             const path = (entry.name as string).replace(/\\/g, "/");
 
             return {
@@ -212,8 +212,9 @@ export class CachedFileTree {
     }
 
     update(torrent: Torrent) {
+        const files = torrent.files as TorrentFile[];
         // update wanted, priority, done and percent fields in the tree
-        torrent.files.forEach((entry: any, index: number) => {
+        files.forEach((entry: TorrentFile, index: number) => {
             const path = (entry.name as string).replace(/\\/g, "/");
             if (this.files[index].fullpath !== path) {
                 this._reset();

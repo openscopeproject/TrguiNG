@@ -16,7 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { OpenDialogOptions, SaveDialogOptions } from "@tauri-apps/plugin-dialog";
 import type { EventCallback } from "@tauri-apps/api/event";
 import type { CloseRequestedEvent, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
 
@@ -71,17 +70,17 @@ export const appWindow = {
 
 export const invoke = TAURI
     ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/core")).invoke
-    : async <T>(c: string, a: unknown) =>
+    : async <T>() =>
         await Promise.reject<T>(new Error("Running outside of tauri app"));
 
 export const dialogOpen = TAURI
     ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/plugin-dialog")).open
-    : async (options?: OpenDialogOptions) =>
+    : async () =>
         await Promise.reject<string[] | string | null>(new Error("Running outside of tauri app"));
 
 export const dialogSave = TAURI
     ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/plugin-dialog")).save
-    : async (options?: SaveDialogOptions) =>
+    : async () =>
         await Promise.reject<string | null>(new Error("Running outside of tauri app"));
 
 export async function makeCreateTorrentView() {
