@@ -22,12 +22,12 @@ use std::{
 };
 
 use objc2::{
-    class, declare_class,
+    class, define_class,
     ffi::NSInteger,
-    msg_send, msg_send_id, mutability,
-    rc::Id,
+    msg_send,
+    rc::Retained,
     runtime::{AnyObject, NSObject},
-    sel, ClassType, DeclaredClass,
+    sel, ClassType,
 };
 use once_cell::sync::OnceCell;
 use tauri::{menu::{Menu, MenuItem, PredefinedMenuItem, Submenu}, AppHandle};
@@ -102,19 +102,13 @@ fn parse_event(event: *mut AnyObject) -> Vec<String> {
     }
 }
 
-declare_class!(
+define_class!(
+    #[unsafe(super(NSObject))]
+    #[name = "TauriPluginDeepLinkHandler"]
     struct Handler;
 
-    unsafe impl ClassType for Handler {
-        type Super = NSObject;
-        type Mutability = mutability::Immutable;
-        const NAME: &'static str = "TauriPluginDeepLinkHandler";
-    }
-
-    impl DeclaredClass for Handler {}
-
-    unsafe impl Handler {
-        #[method(handleEvent:withReplyEvent:)]
+    impl Handler {
+        #[unsafe(method(handleEvent:withReplyEvent:))]
         fn handle_event(&self, event: *mut AnyObject, _replace: *const AnyObject) {
             let s = parse_event(event);
             let mut cb = HANDLER.get().unwrap().lock().unwrap();
@@ -124,9 +118,9 @@ declare_class!(
 );
 
 impl Handler {
-    pub fn new() -> Id<Self> {
+    pub fn new() -> Retained<Self> {
         let cls = Self::class();
-        unsafe { msg_send_id![msg_send_id![cls, alloc], init] }
+        unsafe { msg_send![msg_send![cls, alloc], init] }
     }
 }
 
@@ -144,17 +138,17 @@ pub fn set_handler<F: FnMut(Vec<String>) + Send + 'static>(handler: F) -> Result
 
 fn listen_apple_event(event_class: u32, event_id: u32) {
     unsafe {
-        let event_manager: Id<AnyObject> =
-            msg_send_id![class!(NSAppleEventManager), sharedAppleEventManager];
+        let event_manager: Retained<AnyObject> =
+            msg_send![class!(NSAppleEventManager), sharedAppleEventManager];
 
         let handler = Handler::new();
         let handler_boxed = Box::into_raw(Box::new(handler));
 
         let _: () = msg_send![&event_manager,
-            setEventHandler: &**handler_boxed
-            andSelector: sel!(handleEvent:withReplyEvent:)
-            forEventClass:event_class
-            andEventID:event_id];
+            setEventHandler: &**handler_boxed,
+            andSelector: sel!(handleEvent:withReplyEvent:),
+            forEventClass: event_class,
+            andEventID: event_id];
     }
 }
 
