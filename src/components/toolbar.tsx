@@ -298,7 +298,7 @@ function Toolbar(props: ToolbarProps) {
                     <Icon.TagsFill size="1.5rem" color={theme.colors.blue[6]} />
                 </ToolbarButton>
 
-                <Menu shadow="md" width="10rem" withinPortal middlewares={{ shift: true, flip: false }}>
+                <Menu shadow="md" width="10rem" withinPortal returnFocus middlewares={{ shift: true, flip: false }}>
                     <Menu.Target>
                         <ToolbarButton title="Set priority">
                             <PriorityIcon width="1.5rem" height="1.5rem"
@@ -342,7 +342,7 @@ function Toolbar(props: ToolbarProps) {
                 autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false"
             />
 
-            <Menu shadow="md" width="12rem" withinPortal middlewares={{ shift: true, flip: true }}>
+            <Menu shadow="md" width="12rem" withinPortal returnFocus middlewares={{ shift: true, flip: true }}>
                 <Menu.Target>
                     <ToolbarButton title="Layout">
                         <Icon.Grid1x2Fill size="1.5rem" style={{ transform: "rotate(-90deg)" }} />

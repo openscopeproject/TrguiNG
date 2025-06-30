@@ -180,7 +180,7 @@ export function TorrentLocation(props: LocationData) {
                 styles={{ root: { flexGrow: 1 } }}
                 data-autofocus={props.focusPath}
                 rightSection={
-                    <Menu position="left-start" withinPortal
+                    <Menu position="left-start" withinPortal returnFocus
                         middlewares={{ shift: true, flip: false }} offset={{ mainAxis: -20, crossAxis: 30 }}>
                         <Menu.Target>
                             <ActionIcon py="md" disabled={props.disabled === true || props.lastPaths.length === 0}>

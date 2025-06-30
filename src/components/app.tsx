@@ -162,7 +162,8 @@ export default function TauriApp() {
                                         <Icon.GearFill size="1.5rem" />
                                     </ToolbarButton>
                                     {tabsRef.current?.getOpenTabs() !== undefined && tabsRef.current?.getOpenTabs()?.length > 1 &&
-                                        <Menu shadow="md" width="12rem" withinPortal middlewares={{ shift: true, flip: true }}>
+                                        <Menu shadow="md" width="12rem" withinPortal returnFocus
+                                            middlewares={{ shift: true, flip: true }}>
                                             <Menu.Target>
                                                 <ToolbarButton title="Switch server">
                                                     <Icon.Diagram2 size="1.5rem" />
