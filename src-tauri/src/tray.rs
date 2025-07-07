@@ -105,6 +105,7 @@ pub fn toggle_main_window(app: &AppHandle, window: Option<WebviewWindow>) {
             let window =
                 WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
                     .title("Transmission GUI")
+                    .inner_size(1024., 800.)
                     .build()
                     .unwrap();
             set_tray_showhide_text(app, "Hide");

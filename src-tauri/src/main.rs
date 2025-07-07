@@ -24,7 +24,7 @@ use std::{sync::Arc, time::Duration};
 use createtorrent::CreationRequestsHandle;
 use geoip::MmdbReaderHandle;
 use poller::PollerHandle;
-use tauri::{async_runtime, App, AppHandle, Emitter, Listener, Manager, State};
+use tauri::{async_runtime, App, AppHandle, Listener, Manager, State};
 use tauri_plugin_cli::CliExt;
 use tokio::sync::RwLock;
 use torrentcache::TorrentCacheHandle;
@@ -123,9 +123,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
                     listener.pause().await;
                 });
             });
-            let main_window = app.get_webview_window("main").unwrap();
-            main_window.show().ok();
-            main_window.emit("window-shown", "").ok();
+            tray::toggle_main_window(&app, None);
         }
         drop(listener);
 

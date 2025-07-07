@@ -6,6 +6,7 @@
       "app",
       "appimage",
       "deb",
+      "rpm",
       "nsis",
       "msi"
     ],
@@ -47,9 +48,19 @@
           "libasound2"
         ],
         "desktopTemplate": "app.desktop"
+      },
+      "rpm": {
+        "epoch": 0,
+        "files": {},
+        "release": "1",
+        "depends": [
+          "alsa-lib"
+        ],
+        "desktopTemplate": "app.desktop"
       }
     },
-    "licenseFile": "../LICENSE.txt"
+    "licenseFile": "../LICENSE.txt",
+    "license": "GNU-AGPL-3.0"
   },
   "build": {
     "beforeBuildCommand": "npm run webpack-prod",
@@ -77,16 +88,7 @@
   },
   "app": {
     "withGlobalTauri": true,
-    "windows": [
-      {
-        "title": "Transmission GUI",
-        "width": 1024,
-        "height": 800,
-        "resizable": true,
-        "fullscreen": false,
-        "visible": false
-      }
-    ],
+    "windows": [],
     "security": {
       "csp": null
     }
