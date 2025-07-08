@@ -142,6 +142,12 @@ async function run(config: Config) {
     const size = config.values.app.window.size;
     if (size.length === 2 && size[0] > 100 && size[1] > 100) {
         await appWindow.setSize(size);
+        const sz = await appWindow.getSize();
+        const delta = [sz.width - size[0], sz.height - size[1]];
+        if (delta[0] != 0 || delta[1] != 0) {
+            console.log("Window size delta", delta);
+            await appWindow.setSize([size[0] - delta[0], size[1] - delta[1]]);
+        }
     }
 
     const pos = config.values.app.window.position;

@@ -17,7 +17,7 @@
  */
 
 import type { EventCallback } from "@tauri-apps/api/event";
-import type { CloseRequestedEvent, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
+import { CloseRequestedEvent, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
 
 export const TAURI = Object.prototype.hasOwnProperty.call(window, "__TAURI__");
 const realAppWindow = TAURI ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/window")).getCurrentWindow() : undefined;
@@ -46,6 +46,10 @@ export const appWindow = {
     onMoved: async (handler: EventCallback<PhysicalPosition>) =>
         await realAppWindow?.onMoved(handler),
 
+    getSize: async () => {
+        const PhysicalSize = (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/window")).PhysicalSize;
+        return await realAppWindow?.innerSize() || new PhysicalSize(1024, 800);
+    },
     setSize: async (size: [number, number]) => {
         if (realAppWindow !== undefined) {
             const PhysicalSize = (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/window")).PhysicalSize;
