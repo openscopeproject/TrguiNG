@@ -22,8 +22,8 @@ import { Accordion, Box, Checkbox, Grid, HoverCard, MultiSelect, NativeSelect, N
 import type { UseFormReturnType } from "@mantine/form";
 import ColorChooser from "components/colorchooser";
 import { useGlobalStyleOverrides } from "themehooks";
-import { DeleteTorrentDataOptions } from "config";
-import type { ColorSetting, DeleteTorrentDataOption, StyleOverrides } from "config";
+import { AddTorrentPriorityOptions, AddTorrentStartOptions, DeleteTorrentDataOptions } from "config";
+import type { AddTorrentPriorityOption, AddTorrentStartOption, ColorSetting, DeleteTorrentDataOption, StyleOverrides } from "config";
 import { ColorSchemeToggle } from "components/miscbuttons";
 import { Label } from "./common";
 import * as Icon from "react-bootstrap-icons";
@@ -34,6 +34,8 @@ export interface InterfaceFormValues {
         theme?: ColorScheme,
         styleOverrides: StyleOverrides,
         skipAddDialog: boolean,
+        addTorrentStart: AddTorrentStartOption,
+        addTorrentPriority: AddTorrentPriorityOption,
         deleteTorrentData: DeleteTorrentDataOption,
         animatedProgressbars: boolean,
         colorfulProgressbars: boolean,
@@ -165,6 +167,22 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                                 {...props.form.getInputProps("interface.skipAddDialog", { type: "checkbox" })} />
                         </Grid.Col>
                         <Grid.Col span={6} />
+                        <Grid.Col span={3}>
+                            New torrent start
+                        </Grid.Col>
+                        <Grid.Col span={3}>
+                            <NativeSelect data={AddTorrentStartOptions as unknown as string[]}
+                                value={props.form.values.interface.addTorrentStart}
+                                onChange={(e) => { setFieldValue("interface.addTorrentStart", e.target.value); }} />
+                        </Grid.Col>
+                        <Grid.Col span={3}>
+                            New torrent priority
+                        </Grid.Col>
+                        <Grid.Col span={3}>
+                            <NativeSelect data={AddTorrentPriorityOptions as unknown as string[]}
+                                value={props.form.values.interface.addTorrentPriority}
+                                onChange={(e) => { setFieldValue("interface.addTorrentPriority", e.target.value); }} />
+                        </Grid.Col>
                         <Grid.Col span={6}>
                             <Checkbox label="Sort download directories list"
                                 {...props.form.getInputProps("interface.sortLastSaveDirs", { type: "checkbox" })} />
@@ -223,10 +241,10 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                 <Accordion.Control>Miscellaneous</Accordion.Control>
                 <Accordion.Panel>
                     <Grid align="center">
-                        <Grid.Col span={3}>
-                            Delete torrent data
+                        <Grid.Col span={8}>
+                            Remove torrent dialog delete data option
                         </Grid.Col>
-                        <Grid.Col span={3}>
+                        <Grid.Col span={4}>
                             <NativeSelect data={DeleteTorrentDataOptions as unknown as string[]}
                                 value={props.form.values.interface.deleteTorrentData}
                                 onChange={(e) => { setFieldValue("interface.deleteTorrentData", e.target.value); }} />

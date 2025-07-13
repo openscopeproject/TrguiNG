@@ -22,6 +22,7 @@ import type {
 } from "@tanstack/react-table";
 import type { ColorScheme, DefaultMantineColor } from "@mantine/core";
 import { deobfuscate, obfuscate } from "trutil";
+import type { PriorityNumberType } from "rpc/transmission";
 const { readConfigText, writeConfigText } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface ServerConnection {
@@ -93,9 +94,13 @@ export type SectionsVisibility<S extends string> = Array<{
 export const WindowMinimizeOptions = ["minimize", "hide"] as const;
 export const WindowCloseOptions = ["hide", "close", "quit"] as const;
 export const DeleteTorrentDataOptions = ["default off", "default on", "remember selection"] as const;
+export const AddTorrentStartOptions = DeleteTorrentDataOptions;
+export const AddTorrentPriorityOptions = ["default low", "default normal", "default high", "remember selection"] as const;
 export type WindowMinimizeOption = typeof WindowMinimizeOptions[number];
 export type WindowCloseOption = typeof WindowCloseOptions[number];
 export type DeleteTorrentDataOption = typeof DeleteTorrentDataOptions[number];
+export type AddTorrentStartOption = typeof AddTorrentStartOptions[number];
+export type AddTorrentPriorityOption = typeof AddTorrentPriorityOptions[number];
 
 export interface ColorSetting {
     color: DefaultMantineColor,
@@ -153,6 +158,10 @@ interface Settings {
         flatFileTree: boolean,
         mainSplit: SplitType,
         skipAddDialog: boolean,
+        addTorrentStart: AddTorrentStartOption,
+        addTorrentStartSelection: boolean,
+        addTorrentPriority: AddTorrentPriorityOption,
+        addTorrentPrioritySelection: PriorityNumberType, // normal priority
         deleteTorrentData: DeleteTorrentDataOption,
         deleteTorrentDataSelection: boolean,
         numLastSaveDirs: number,
@@ -279,6 +288,10 @@ const DefaultSettings: Settings = {
         flatFileTree: false,
         mainSplit: "vertical",
         skipAddDialog: false,
+        addTorrentStart: "default on",
+        addTorrentStartSelection: true,
+        addTorrentPriority: "default normal",
+        addTorrentPrioritySelection: 0, // normal priority
         deleteTorrentData: "default off",
         deleteTorrentDataSelection: false,
         numLastSaveDirs: 20,

@@ -29,7 +29,7 @@ import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable
 import { notifications } from "@mantine/notifications";
 import type { TorrentAddQueryParams } from "queries";
 import { useAddTorrent, useFileTree, useTorrentAddTrackers } from "queries";
-import { ConfigContext, ServerConfigContext } from "config";
+import { AddTorrentPriorityOptions, ConfigContext, ServerConfigContext } from "config";
 import type { ServerTabsRef } from "components/servertabs";
 import { bytesToHumanReadableStr, decodeMagnetLink } from "trutil";
 import { useToggle } from "@mantine/hooks";
@@ -38,6 +38,7 @@ import * as Icon from "react-bootstrap-icons";
 const { TAURI, dialogOpen, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface AddCommonProps extends React.PropsWithChildren {
+    opened: boolean,
     location: LocationData,
     labels: string[],
     setLabels: React.Dispatch<string[]>,
@@ -83,13 +84,31 @@ interface AddCommonModalProps extends ModalState {
     tabsRef: React.RefObject<ServerTabsRef>,
 }
 
-function useCommonProps() {
+function useCommonProps(opened: boolean) {
+    const config = useContext(ConfigContext);
     const location = useTorrentLocation();
     const [labels, setLabels] = useState<string[]>([]);
     const [start, setStart] = useState<boolean>(true);
     const [priority, setPriority] = useState<PriorityNumberType>(0);
 
+    useEffect(() => {
+        if (opened) {
+            if (config.values.interface.addTorrentStart === "remember selection") {
+                setStart(config.values.interface.addTorrentStartSelection);
+            } else {
+                setStart(config.values.interface.addTorrentStart === "default on");
+            }
+            if (config.values.interface.addTorrentPriority === "remember selection") {
+                setPriority(config.values.interface.addTorrentPrioritySelection);
+            } else {
+                setPriority((AddTorrentPriorityOptions.indexOf(
+                    config.values.interface.addTorrentPriority) - 1) as PriorityNumberType);
+            }
+        }
+    }, [config, opened]);
+
     const props = useMemo<AddCommonProps>(() => ({
+        opened,
         location,
         labels,
         setLabels,
@@ -97,14 +116,18 @@ function useCommonProps() {
         setStart,
         priority,
         setPriority,
-    }), [location, labels, start, priority]);
+    }), [opened, location, labels, start, priority]);
 
     return useMemo(() => ({
         location,
         start,
         priority,
         props,
-    }), [location, priority, props, start]);
+        onAdd: () => {
+            config.values.interface.addTorrentStartSelection = start;
+            config.values.interface.addTorrentPrioritySelection = priority;
+        },
+    }), [config, location, priority, props, start]);
 }
 
 function TabSwitchDropdown({ tabsRef }: { tabsRef: React.RefObject<ServerTabsRef> }) {
@@ -169,7 +192,7 @@ export function AddMagnet(props: AddCommonModalProps) {
         }
     }, [serverData, props.serverName, magnetData]);
 
-    const common = useCommonProps();
+    const common = useCommonProps(props.opened);
     const { close } = props;
     const addMutation = useAddTorrent(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -205,6 +228,7 @@ export function AddMagnet(props: AddCommonModalProps) {
     const onAdd = useCallback(() => {
         if (magnet === "") return;
 
+        common.onAdd();
         if (existingTorrent === undefined) {
             addMutation.mutate(
                 {
@@ -434,7 +458,7 @@ interface TorrentFileData {
 export function AddTorrent(props: AddCommonModalProps) {
     const config = useContext(ConfigContext);
     const serverData = useServerTorrentData();
-    const common = useCommonProps();
+    const common = useCommonProps(props.opened);
     const [torrentData, setTorrentData] = useState<TorrentFileData[]>();
 
     const existingTorrent = useMemo(() => {
@@ -517,6 +541,8 @@ export function AddTorrent(props: AddCommonModalProps) {
 
     const onAdd = useCallback(() => {
         if (torrentData === undefined) return;
+
+        common.onAdd();
 
         if (existingTorrent === undefined) {
             void Promise.all(torrentData.map(async (td) => {
