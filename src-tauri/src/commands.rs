@@ -55,7 +55,7 @@ pub struct TorrentReadResult {
 pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
     let metadata = std::fs::metadata(path.clone());
     match metadata {
-        Err(_) => return Err(format!("Failed to read file {:?}", path)),
+        Err(_) => return Err(format!("Failed to read file {path:?}")),
         Ok(metadata) => {
             if metadata.len() > 10 * 1024 * 1024 {
                 return Err("File is too large".to_string());
@@ -65,13 +65,13 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
 
     let read_result = tokio::fs::read(path.clone()).await;
     if read_result.is_err() {
-        return Err(format!("Failed to read file {:?}", path));
+        return Err(format!("Failed to read file {path:?}"));
     }
 
     match Torrent::read_from_bytes(&read_result.as_ref().unwrap()[..]) {
         Err(e) => {
             println!("Failed to parse torrent {:?}", e.to_string());
-            Err(format!("Failed to parse torrent {:?}", path))
+            Err(format!("Failed to parse torrent {path:?}"))
         }
         Ok(torrent) => {
             let b64 = b64engine.encode(read_result.unwrap());
@@ -111,7 +111,7 @@ pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
 #[tauri::command]
 pub async fn remove_file(path: String) {
     if path.to_lowercase().ends_with(".torrent") && std::fs::remove_file(path.clone()).is_err() {
-        println!("Unable to remove file {}", path);
+        println!("Unable to remove file {path}");
     }
 }
 
@@ -293,10 +293,10 @@ pub fn create_tray(app_handle: tauri::AppHandle) {
 
 #[tauri::command]
 pub async fn save_text_file(contents: String, path: String) -> Result<(), String> {
-    fs::write(path, contents).map_err(|e| format!("Unable to write file: {}", e))
+    fs::write(path, contents).map_err(|e| format!("Unable to write file: {e}"))
 }
 
 #[tauri::command]
 pub async fn load_text_file(path: String) -> Result<String, String> {
-    fs::read_to_string(path).map_err(|e| format!("Unable to read file: {}", e))
+    fs::read_to_string(path).map_err(|e| format!("Unable to read file: {e}"))
 }

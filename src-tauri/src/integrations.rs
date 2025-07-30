@@ -27,18 +27,17 @@ fn register_app_class() -> std::io::Result<()> {
             let exe = exe.to_str().unwrap_or_default();
             let hkcu = RegKey::predef(winreg::enums::HKEY_CURRENT_USER);
             let (key, _) =
-                hkcu.create_subkey(format!("SOFTWARE\\Classes\\{}\\DefaultIcon", APP_NAME))?;
-            let icon = format!("\"{}\",0", exe);
+                hkcu.create_subkey(format!("SOFTWARE\\Classes\\{APP_NAME}\\DefaultIcon"))?;
+            let icon = format!("\"{exe}\",0");
             key.set_value("", &icon)?;
 
             let (key, _) = hkcu.create_subkey(format!(
-                "SOFTWARE\\Classes\\{}\\shell\\open\\command",
-                APP_NAME
+                "SOFTWARE\\Classes\\{APP_NAME}\\shell\\open\\command"
             ))?;
-            let icon = format!("\"{}\" \"%1\"", exe);
+            let icon = format!("\"{exe}\" \"%1\"");
             key.set_value("", &icon)?;
         }
-        Err(e) => println!("Error getting exe path: {}", e),
+        Err(e) => println!("Error getting exe path: {e}"),
     }
     Ok(())
 }
@@ -64,17 +63,17 @@ fn register_magnet_class() -> std::io::Result<()> {
             key.set_value("URL Protocol", &"")?;
 
             let (key, _) = hkcu.create_subkey("SOFTWARE\\Classes\\Magnet\\DefaultIcon")?;
-            let icon = format!("\"{}\",0", exe);
+            let icon = format!("\"{exe}\",0");
             key.set_value("", &icon)?;
 
             let (key, _) = hkcu.create_subkey("SOFTWARE\\Classes\\Magnet\\shell")?;
             key.set_value("", &"open")?;
 
             let (key, _) = hkcu.create_subkey("SOFTWARE\\Classes\\Magnet\\shell\\open\\command")?;
-            let icon = format!("\"{}\" \"%1\"", exe);
+            let icon = format!("\"{exe}\" \"%1\"");
             key.set_value("", &icon)?;
         }
-        Err(e) => println!("Error getting exe path: {}", e),
+        Err(e) => println!("Error getting exe path: {e}"),
     }
     Ok(())
 }
@@ -93,7 +92,7 @@ fn register_autorun(run: bool) -> std::io::Result<()> {
                 key.delete_value(APP_NAME)?;
             }
         }
-        Err(e) => println!("Error getting exe path: {}", e),
+        Err(e) => println!("Error getting exe path: {e}"),
     }
     Ok(())
 }
@@ -112,7 +111,7 @@ fn check_autorun() -> bool {
                 }
             }
         }
-        Err(e) => println!("Error getting exe path: {}", e),
+        Err(e) => println!("Error getting exe path: {e}"),
     }
     false
 }
@@ -123,31 +122,31 @@ pub fn app_integration_impl(mode: String) -> bool {
         "torrent" => {
             println!("Associating .torrent files with the app");
             if let Err(e) = register_app_class() {
-                println!("Error writing to registry: {}", e);
+                println!("Error writing to registry: {e}");
             }
             if let Err(e) = register_torrent_class() {
-                println!("Error writing to registry: {}", e);
+                println!("Error writing to registry: {e}");
             }
         }
         "magnet" => {
             println!("Associating magnet links with the app");
             if let Err(e) = register_app_class() {
-                println!("Error writing to registry: {}", e);
+                println!("Error writing to registry: {e}");
             }
             if let Err(e) = register_magnet_class() {
-                println!("Error writing to registry: {}", e);
+                println!("Error writing to registry: {e}");
             }
         }
         "autostart" => {
             println!("Adding app to auto start");
             if let Err(e) = register_autorun(true) {
-                println!("Error writing to registry: {}", e);
+                println!("Error writing to registry: {e}");
             }
         }
         "noautostart" => {
             println!("Removing app from auto start");
             if let Err(e) = register_autorun(false) {
-                println!("Error writing to registry: {}", e);
+                println!("Error writing to registry: {e}");
             }
         }
         "getautostart" => {

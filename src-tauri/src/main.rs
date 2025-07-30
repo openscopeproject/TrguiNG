@@ -131,7 +131,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         async_runtime::spawn(async move {
             let listener = listener_lock.read().await;
             if let Err(e) = listener.send(&torrents, app_clone).await {
-                println!("Unable to send args to listener: {}", e);
+                println!("Unable to send args to listener: {e}");
             }
 
             #[cfg(target_os = "macos")]

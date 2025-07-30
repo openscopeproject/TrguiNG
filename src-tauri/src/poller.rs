@@ -204,7 +204,7 @@ async fn poll(
             }
         }
         Err(e) => {
-            println!("Error during polling: {:?}", e);
+            println!("Error during polling: {e:?}");
             Err(None)
         }
     }

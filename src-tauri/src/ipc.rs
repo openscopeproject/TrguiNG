@@ -79,7 +79,7 @@ fn invalid_request(
 ) -> Response<BoxBody<Bytes, hyper::Error>> {
     let mut response = Response::builder()
         .status(StatusCode::BAD_REQUEST)
-        .body(make_body(format!("INVALID REQUEST: {}", msg)))
+        .body(make_body(format!("INVALID REQUEST: {msg}")))
         .unwrap();
     cors(request_headers, &mut response, ALLOW_ORIGINS);
     response
@@ -199,7 +199,7 @@ async fn geoip_lookup(
         }
         Err(e) => Ok(invalid_request(
             &headers,
-            format!("Can not parse json: {}\n", e).as_str(),
+            format!("Can not parse json: {e}\n").as_str(),
         )),
     }
 }
@@ -334,7 +334,7 @@ async fn http_server(
                 let (stream, _) = match conn {
                     Ok(conn) => conn,
                     Err(e) => {
-                        eprintln!("tcp accept error: {}", e);
+                        eprintln!("tcp accept error: {e}");
                         continue;
                     }
                 };
@@ -345,7 +345,7 @@ async fn http_server(
 
                 tokio::spawn(async move {
                     if let Err(err) = conn.await {
-                        eprintln!("connection error: {}", err);
+                        eprintln!("connection error: {err}");
                     }
                 });
             },
@@ -435,7 +435,7 @@ impl Ipc {
         let client = app.state::<reqwest::Client>();
 
         let req = client
-            .post(format!("http://{}/args", ADDRESS))
+            .post(format!("http://{ADDRESS}/args"))
             .header(tauri::http::header::CONTENT_TYPE, "application/json")
             .body(reqwest::Body::from(serde_json::to_vec(args).unwrap()));
 

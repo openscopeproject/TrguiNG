@@ -72,7 +72,7 @@ pub async fn process_response(
                 None => println!("Server returned success but no arguments!"),
             }
         }
-        Err(e) => println!("Failed to parse server response {:?}", e),
+        Err(e) => println!("Failed to parse server response {e:?}"),
     };
 
     Ok(())
@@ -142,6 +142,6 @@ fn show_notification(app: &AppHandle, name: &str) {
         .body(name)
         .show()
     {
-        println!("Cannot show notification: {:?}", e);
+        println!("Cannot show notification: {e:?}");
     }
 }
