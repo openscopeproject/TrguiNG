@@ -142,7 +142,6 @@ export function useTorrentLocation(): LocationData {
 
     const browseHandler = useCallback(() => {
         const mappedLocation = pathMapFromServer(path, serverConfig);
-        console.log("Mapped location: ", mappedLocation);
         dialogOpen({
             title: "Select directory",
             defaultPath: mappedLocation === "" ? undefined : mappedLocation,

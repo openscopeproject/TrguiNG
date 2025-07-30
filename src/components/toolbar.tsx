@@ -184,13 +184,15 @@ function Toolbar(props: ToolbarProps) {
         if (props.altSpeedMode !== undefined) setAltSpeedMode(props.altSpeedMode);
     }, [props.altSpeedMode]);
 
-    const onSearchInput = useCallback((e: React.FormEvent) => {
+    const onSearchInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
         debouncedSetSearchTerms(
-            (e.target as HTMLInputElement).value
+            e.currentTarget.value
                 .split(" ")
                 .map((s) => s.trim().toLowerCase())
                 .filter((s) => s !== ""));
     }, [debouncedSetSearchTerms]);
+
+    const [searchPlaceholder, setSearchPlaceholder] = useState<string>(`search (${modKeyString()} + f)`);
 
     const searchRef = useRef<HTMLInputElement>(null);
 
@@ -333,11 +335,13 @@ function Toolbar(props: ToolbarProps) {
 
             <TextInput mx="sm" ref={searchRef}
                 icon={<Icon.Search size="1rem" />}
-                placeholder={`search (${modKeyString()} + f)`}
+                placeholder={searchPlaceholder}
                 rightSection={<ActionIcon onClick={onSearchClear} title="Clear">
                     <Icon.XLg size="1rem" color={theme.colors.red[6]} />
                 </ActionIcon>}
                 onInput={onSearchInput}
+                onFocus={() => setSearchPlaceholder("search by name or path:somepath or label:somelabel")}
+                onBlur={() => setSearchPlaceholder(`search (${modKeyString()} + f)`)}
                 styles={{ root: { flexGrow: 1 }, input: { height: "auto" } }}
                 autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false"
             />

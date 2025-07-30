@@ -117,8 +117,12 @@ export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: Serv
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
     const searchFilter = useCallback((t: Torrent) => {
         const name = t.name.toLowerCase() as string;
+        const path = t.downloadDir.toLowerCase() as string;
+        const labels = (t.labels.map((l: string) => l.toLowerCase()) as string[]).join(" ");
         for (const term of searchTerms) {
-            if (!name.includes(term)) return false;
+            if (term.startsWith("path:") || term.startsWith("path=")) { if (!path.includes(term.slice(5))) return false; }
+            else if (term.startsWith("label:") || term.startsWith("label=")) { if (!labels.includes(term.slice(6))) return false; }
+            else if (!name.includes(term)) return false;
         }
         return true;
     }, [searchTerms]);
