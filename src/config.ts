@@ -96,11 +96,22 @@ export const WindowCloseOptions = ["hide", "close", "quit"] as const;
 export const DeleteTorrentDataOptions = ["default off", "default on", "remember selection"] as const;
 export const AddTorrentStartOptions = DeleteTorrentDataOptions;
 export const AddTorrentPriorityOptions = ["default low", "default normal", "default high", "remember selection"] as const;
+export const DateFormatOptions = [
+    "dd-mm-yyyy",
+    "dd/mm/yyyy",
+    "mm-dd-yyyy",
+    "mm/dd/yyyy",
+    "yyyy-mm-dd",
+    "yyyy/mm/dd",
+] as const;
+export const TimeFormatOptions = ["12h", "24h"] as const;
 export type WindowMinimizeOption = typeof WindowMinimizeOptions[number];
 export type WindowCloseOption = typeof WindowCloseOptions[number];
 export type DeleteTorrentDataOption = typeof DeleteTorrentDataOptions[number];
 export type AddTorrentStartOption = typeof AddTorrentStartOptions[number];
 export type AddTorrentPriorityOption = typeof AddTorrentPriorityOptions[number];
+export type DateFormatOption = typeof DateFormatOptions[number];
+export type TimeFormatOption = typeof TimeFormatOptions[number];
 
 export interface ColorSetting {
     color: DefaultMantineColor,
@@ -174,6 +185,9 @@ interface Settings {
         progressbarStyle?: string, // deprecated
         animatedProgressbars: boolean,
         colorfulProgressbars: boolean,
+        useCustomDateTimeFormat: boolean,
+        dateFormat: DateFormatOption,
+        timeFormat: TimeFormatOption,
     },
     configVersion: number,
 }
@@ -306,6 +320,9 @@ const DefaultSettings: Settings = {
         },
         animatedProgressbars: true,
         colorfulProgressbars: false,
+        useCustomDateTimeFormat: false,
+        dateFormat: "dd-mm-yyyy",
+        timeFormat: "24h",
     },
     // This field is used to verify config struct compatibility when importing settings
     // Bump this only when incompatible changes are made that cannot be imported into older

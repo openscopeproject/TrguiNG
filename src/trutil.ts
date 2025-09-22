@@ -21,6 +21,7 @@ import { useReducer } from "react";
 import type { ProgressBarVariant } from "./components/progressbar";
 import { Status } from "rpc/transmission";
 import type { Torrent } from "rpc/torrent";
+import { formatDate } from "date-fns";
 
 const SIUnits = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"];
 
@@ -67,8 +68,16 @@ export function secondsToHumanReadableStr(value: number): string {
     return s;
 }
 
-export function timestampToDateString(value: number): string {
-    return value === 0 ? "-" : new Date(value * 1000).toLocaleString();
+export function timestampToDateString(value: number, config: Config): string {
+    if (value === 0) return "-";
+    const date = new Date(value * 1000);
+    if (config.values.interface.useCustomDateTimeFormat) {
+        const dateFormat = config.values.interface.dateFormat.replace("mm", "MM");
+        const timeFormat = config.values.interface.timeFormat === "12h" ? "hh:mm:ss a" : "HH:mm:ss";
+        return `${formatDate(date, dateFormat)} ${formatDate(date, timeFormat)}`;
+    } else {
+        return date.toLocaleString();
+    }
 }
 
 export function ensurePathDelimiter(path: string): string {

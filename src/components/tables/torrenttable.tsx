@@ -307,15 +307,17 @@ export function StatusField(props: TableFieldProps) {
 }
 
 export function DateField(props: TableFieldProps) {
+    const config = useContext(ConfigContext);
     const date = props.torrent[props.fieldName] > 0
-        ? timestampToDateString(props.torrent[props.fieldName])
+        ? timestampToDateString(props.torrent[props.fieldName], config)
         : "";
     return <div>{date}</div>;
 }
 
 export function DateDiffField(props: TableFieldProps) {
+    const config = useContext(ConfigContext);
     const date = props.torrent[props.fieldName] > 0
-        ? timestampToDateString(props.torrent[props.fieldName])
+        ? timestampToDateString(props.torrent[props.fieldName], config)
         : "";
     const seconds = Math.floor(Date.now() / 1000) - props.torrent[props.fieldName];
     return <div title={date} style={{ width: "100%", textAlign: "right" }}>
