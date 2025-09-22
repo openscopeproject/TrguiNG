@@ -22,8 +22,8 @@ import { Accordion, Box, Checkbox, Grid, HoverCard, MultiSelect, NativeSelect, N
 import type { UseFormReturnType } from "@mantine/form";
 import ColorChooser from "components/colorchooser";
 import { useGlobalStyleOverrides } from "themehooks";
-import { AddTorrentPriorityOptions, AddTorrentStartOptions, DeleteTorrentDataOptions } from "config";
-import type { AddTorrentPriorityOption, AddTorrentStartOption, ColorSetting, DeleteTorrentDataOption, StyleOverrides } from "config";
+import { AddTorrentPriorityOptions, AddTorrentStartOptions, DateFormatOptions, DeleteTorrentDataOptions, TimeFormatOptions } from "config";
+import type { AddTorrentPriorityOption, AddTorrentStartOption, ColorSetting, DateFormatOption, DeleteTorrentDataOption, StyleOverrides, TimeFormatOption } from "config";
 import { ColorSchemeToggle } from "components/miscbuttons";
 import { Label } from "./common";
 import * as Icon from "react-bootstrap-icons";
@@ -45,6 +45,9 @@ export interface InterfaceFormValues {
         preconfiguredDirs: string[],
         ignoredTrackerPrefixes: string[],
         defaultTrackers: string[],
+        useCustomDateTimeFormat: boolean,
+        dateFormat: DateFormatOption,
+        timeFormat: TimeFormatOption,
     },
 }
 
@@ -154,6 +157,21 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                                 {...props.form.getInputProps("interface.colorfulProgressbars", { type: "checkbox" })} />
                             <Checkbox label="Animated"
                                 {...props.form.getInputProps("interface.animatedProgressbars", { type: "checkbox" })} />
+                        </Grid.Col>
+                        <Grid.Col span={6} />
+                        <Grid.Col span={3}>
+                            <Checkbox label="Custom date/time format"
+                                {...props.form.getInputProps("interface.useCustomDateTimeFormat", { type: "checkbox" })} />
+                        </Grid.Col>
+                        <Grid.Col span={3}>
+                            <NativeSelect data={[...DateFormatOptions]} disabled={!props.form.values.interface.useCustomDateTimeFormat}
+                                value={props.form.values.interface.dateFormat}
+                                onChange={(e) => { setFieldValue("interface.dateFormat", e.target.value); }} />
+                        </Grid.Col>
+                        <Grid.Col span={3}>
+                            <NativeSelect data={[...TimeFormatOptions]} disabled={!props.form.values.interface.useCustomDateTimeFormat}
+                                value={props.form.values.interface.timeFormat}
+                                onChange={(e) => { setFieldValue("interface.timeFormat", e.target.value); }} />
                         </Grid.Col>
                     </Grid>
                 </Accordion.Panel>

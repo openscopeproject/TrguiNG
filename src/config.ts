@@ -21,7 +21,6 @@ import type {
     SortingState, ColumnSizingState, VisibilityState, ColumnOrderState,
 } from "@tanstack/react-table";
 import type { ColorScheme, DefaultMantineColor } from "@mantine/core";
-import { deobfuscate, obfuscate } from "trutil";
 import type { PriorityNumberType } from "rpc/transmission";
 const { readConfigText, writeConfigText } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -96,11 +95,22 @@ export const WindowCloseOptions = ["hide", "close", "quit"] as const;
 export const DeleteTorrentDataOptions = ["default off", "default on", "remember selection"] as const;
 export const AddTorrentStartOptions = DeleteTorrentDataOptions;
 export const AddTorrentPriorityOptions = ["default low", "default normal", "default high", "remember selection"] as const;
+export const DateFormatOptions = [
+    "dd-mm-yyyy",
+    "dd/mm/yyyy",
+    "mm-dd-yyyy",
+    "mm/dd/yyyy",
+    "yyyy-mm-dd",
+    "yyyy/mm/dd",
+] as const;
+export const TimeFormatOptions = ["12h", "24h"] as const;
 export type WindowMinimizeOption = typeof WindowMinimizeOptions[number];
 export type WindowCloseOption = typeof WindowCloseOptions[number];
 export type DeleteTorrentDataOption = typeof DeleteTorrentDataOptions[number];
 export type AddTorrentStartOption = typeof AddTorrentStartOptions[number];
 export type AddTorrentPriorityOption = typeof AddTorrentPriorityOptions[number];
+export type DateFormatOption = typeof DateFormatOptions[number];
+export type TimeFormatOption = typeof TimeFormatOptions[number];
 
 export interface ColorSetting {
     color: DefaultMantineColor,
@@ -174,6 +184,9 @@ interface Settings {
         progressbarStyle?: string, // deprecated
         animatedProgressbars: boolean,
         colorfulProgressbars: boolean,
+        useCustomDateTimeFormat: boolean,
+        dateFormat: DateFormatOption,
+        timeFormat: TimeFormatOption,
     },
     configVersion: number,
 }
@@ -306,6 +319,9 @@ const DefaultSettings: Settings = {
         },
         animatedProgressbars: true,
         colorfulProgressbars: false,
+        useCustomDateTimeFormat: false,
+        dateFormat: "dd-mm-yyyy",
+        timeFormat: "24h",
     },
     // This field is used to verify config struct compatibility when importing settings
     // Bump this only when incompatible changes are made that cannot be imported into older
@@ -511,3 +527,45 @@ export const ServerConfigContext = React.createContext<ServerConfig>({
     lastSaveDirs: [],
     intervals: { session: 0, torrents: 0, torrentsMinimized: 0, details: 0 },
 });
+
+// Following functions are moved from trutil.ts to minimize dependencies
+
+// Simple obfuscation to avoid storing passwords in plain text
+// Not meant to be secure, just to avoid casual snooping
+const base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+const rotation = "HfxgnvteJy86p0ZPDdIYmc5r[kOj9EowACSWG7is%VNBXMhKFa2UlL31bzu4RQTq:";
+
+function obfuscate(s: string) {
+    const b64 = b64EncodeUnicode("TrguiNG:" + s);
+    let result = "";
+    for (const c of b64) result += rotation[base64.indexOf(c)];
+    return result;
+}
+
+function deobfuscate(s: string) {
+    let b64 = "";
+    for (const c of s) {
+        const i = rotation.indexOf(c);
+        if (i >= 0) b64 += base64[i];
+        else return s;
+    }
+    try {
+        const d = b64DecodeUnicode(b64);
+        if (!d.startsWith("TrguiNG:")) return s;
+        return d.substring(8);
+    } catch {
+        return s;
+    }
+}
+
+function b64EncodeUnicode(str: string) {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function (match, p1) {
+        return String.fromCharCode(parseInt(p1, 16));
+    }));
+}
+
+function b64DecodeUnicode(str: string) {
+    return decodeURIComponent(Array.prototype.map.call(atob(str), function (c: string) {
+        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(""));
+}

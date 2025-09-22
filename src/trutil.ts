@@ -21,6 +21,7 @@ import { useReducer } from "react";
 import type { ProgressBarVariant } from "./components/progressbar";
 import { Status } from "rpc/transmission";
 import type { Torrent } from "rpc/torrent";
+import { formatDate } from "date-fns";
 
 const SIUnits = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"];
 
@@ -67,8 +68,16 @@ export function secondsToHumanReadableStr(value: number): string {
     return s;
 }
 
-export function timestampToDateString(value: number): string {
-    return value === 0 ? "-" : new Date(value * 1000).toLocaleString();
+export function timestampToDateString(value: number, config: Config): string {
+    if (value === 0) return "-";
+    const date = new Date(value * 1000);
+    if (config.values.interface.useCustomDateTimeFormat) {
+        const dateFormat = config.values.interface.dateFormat.replace("mm", "MM");
+        const timeFormat = config.values.interface.timeFormat === "12h" ? "hh:mm:ss a" : "HH:mm:ss";
+        return `${formatDate(date, dateFormat)} ${formatDate(date, timeFormat)}`;
+    } else {
+        return date.toLocaleString();
+    }
 }
 
 export function ensurePathDelimiter(path: string): string {
@@ -180,46 +189,6 @@ export function mergeTrackerLists(currentTrackers: string[][], newTrackers: stri
         }
     });
     return mergedTrackers;
-}
-
-const base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-const rotation = "HfxgnvteJy86p0ZPDdIYmc5r[kOj9EowACSWG7is%VNBXMhKFa2UlL31bzu4RQTq:";
-
-export function obfuscate(s: string) {
-    const b64 = b64EncodeUnicode("TrguiNG:" + s);
-    let result = "";
-    for (const c of b64) result += rotation[base64.indexOf(c)];
-    return result;
-}
-
-export function deobfuscate(s: string) {
-    let b64 = "";
-    for (const c of s) {
-        const i = rotation.indexOf(c);
-        if (i >= 0) b64 += base64[i];
-        else return s;
-    }
-    try {
-        const d = b64DecodeUnicode(b64);
-        if (!d.startsWith("TrguiNG:")) return s;
-        return d.substring(8);
-    } catch {
-        return s;
-    }
-}
-
-function b64EncodeUnicode(str: string) {
-    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function (match, p1) {
-        return String.fromCharCode(parseInt(p1, 16));
-    }));
-}
-
-// Decoding base64 ⇢ UTF-8
-
-function b64DecodeUnicode(str: string) {
-    return decodeURIComponent(Array.prototype.map.call(atob(str), function (c: string) {
-        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(""));
 }
 
 // This regex has some chars that are only invalid on windows but not linux/mac

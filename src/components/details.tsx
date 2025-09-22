@@ -140,10 +140,11 @@ function Peers(props: { torrent: Torrent }) {
 }
 
 function TrackerUpdate(props: { torrent: Torrent }) {
+    const config = useContext(ConfigContext);
     if (props.torrent.trackerStats.length === 0) return <></>;
     const tracker = props.torrent.trackerStats[0] as TrackerStats;
     const state = tracker.announceState;
-    return <>{(state === 2 || state === 3) ? "-" : timestampToDateString(tracker.nextAnnounceTime)}</>;
+    return <>{(state === 2 || state === 3) ? "-" : timestampToDateString(tracker.nextAnnounceTime, config)}</>;
 }
 
 function TransferTable(props: { torrent: Torrent }) {
@@ -225,6 +226,8 @@ const readonlyInputStyles = (theme: MantineTheme) => ({
 });
 
 function TorrentDetails(props: { torrent: Torrent }) {
+    const config = useContext(ConfigContext);
+
     const fullPath = ensurePathDelimiter(props.torrent.downloadDir) + fileSystemSafeName(props.torrent.name);
 
     const [ref, rect] = useResizeObserver();
@@ -239,7 +242,7 @@ function TorrentDetails(props: { torrent: Torrent }) {
                     <div>
                         <span>
                             {props.torrent.dateCreated > 0
-                                ? timestampToDateString(props.torrent.dateCreated)
+                                ? timestampToDateString(props.torrent.dateCreated, config)
                                 : ""}
                         </span>
                         <span>
