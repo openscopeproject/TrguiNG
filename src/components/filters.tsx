@@ -352,7 +352,7 @@ function squashSingleChildDirectory(root: Directory): Directory {
 
     if (root.subdirs.size === 1) {
         const [child] = root.subdirs.values();
-        if (root.count === child.count) {
+        if (root.recursiveCount === child.recursiveCount) {
             child.name = root.name + "/" + child.name;
             child.level = root.level;
             result = squashSingleChildDirectory(child);
