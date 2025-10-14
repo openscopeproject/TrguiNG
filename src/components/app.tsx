@@ -18,7 +18,7 @@
 
 import { ConfigContext, ServerConfigContext } from "../config";
 import type { ServerConfig } from "../config";
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Server } from "../components/server";
 import { ClientManager } from "../clientmanager";
 import { ActionIcon, Box, Button, Flex, Menu, Stack, useMantineColorScheme } from "@mantine/core";
@@ -108,9 +108,13 @@ export default function TauriApp() {
 
     const [showServerConfig, serverConfigHandlers] = useDisclosure(false);
 
+    const [serverKey, incServerKey] = useReducer((x => x + 1), 0);
+
     const onServerSave = useCallback((servers: ServerConfig[]) => {
         setServers(servers);
         config.setServers(servers);
+        // force remount of server component to make sure interface settings are applied
+        incServerKey();
         void config.save();
     }, [config]);
 
@@ -151,7 +155,7 @@ export default function TauriApp() {
                 {currentServer !== undefined
                     ? <ServerConfigContext.Provider value={currentServer}>
                         <ClientContext.Provider value={clientManager.getClient(currentServer.name)}>
-                            <Server
+                            <Server key={serverKey}
                                 hostname={clientManager.getHostname(currentServer.name)}
                                 tabsRef={tabsRef}
                                 toolbarExtra={!showTabStrip && <>

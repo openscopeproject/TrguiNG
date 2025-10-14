@@ -23,7 +23,7 @@ import { ConfigContext, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ModalState } from "./common";
 import { SaveCancelModal } from "./common";
-import { useMutateSession, useSessionFull, useTestPort, useUpdateBlocklist } from "queries";
+import { queryClient, useMutateSession, useSessionFull, useTestPort, useUpdateBlocklist } from "queries";
 import type { UseFormReturnType } from "@mantine/form";
 import { useForm } from "@mantine/form";
 import type { SessionInfo } from "rpc/client";
@@ -598,6 +598,7 @@ export function DaemonSettingsModal(props: ModalState) {
         serverConfig.intervals = { ...form.values.intervals };
         config.values.interface = { ...config.values.interface, ...form.values.interface };
         config.cleanup();
+        void config.save();
         if (form.values.session !== undefined) {
             mutation.mutate(form.values.session, {
                 onSuccess: () => {
@@ -606,6 +607,8 @@ export function DaemonSettingsModal(props: ModalState) {
                         color: "green",
                     });
                     props.close();
+                    // clear client cache to make sure new interface settings are applied
+                    queryClient.clear();
                 },
                 onError: (error) => {
                     notifications.show({
