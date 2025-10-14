@@ -17,7 +17,7 @@
  */
 
 import type { NumberInputProps } from "@mantine/core";
-import { Box, Button, Checkbox, Flex, Grid, Group, Loader, LoadingOverlay, NativeSelect, NumberInput, Tabs, Text, TextInput, Tooltip } from "@mantine/core";
+import { Box, Button, Checkbox, Flex, Grid, Group, HoverCard, Loader, LoadingOverlay, NativeSelect, NumberInput, Tabs, Text, TextInput, Tooltip } from "@mantine/core";
 import type { ServerConfig } from "config";
 import { ConfigContext, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -32,6 +32,7 @@ import type { BandwidthGroup } from "rpc/torrent";
 import { notifications } from "@mantine/notifications";
 import type { InterfaceFormValues } from "./interfacepanel";
 import { InterfaceSettigsPanel } from "./interfacepanel";
+import * as Icon from "react-bootstrap-icons";
 const { TAURI } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface FormValues extends InterfaceFormValues {
@@ -92,6 +93,26 @@ function DownloadPanel({ form, session }: { form: UseFormReturnType<FormValues>,
                     label="Default download folder (server setting)"
                     {...form.getInputProps("session.download-dir")}
                     autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
+            </Grid.Col>
+            <Grid.Col>
+                <Checkbox
+                    label={<Box>
+                        <span>Start added torrents</span>
+                        <HoverCard width={280} shadow="md">
+                            <HoverCard.Target>
+                                <Icon.Question />
+                            </HoverCard.Target>
+                            <HoverCard.Dropdown>
+                                <Text size="sm">
+                                    This setting only applies to torrents added via the
+                                    watch directory or by other clients that do not specify
+                                    the start parameter. TrguiNG sets the start parameter
+                                    based on your selection in the add torrent/magnet dialog.
+                                </Text>
+                            </HoverCard.Dropdown>
+                        </HoverCard>
+                    </Box>}
+                    {...form.getInputProps("session.start-added-torrents", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col>
                 <Checkbox
