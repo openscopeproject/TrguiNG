@@ -86,7 +86,7 @@ function getTrackerStatus(torrent: TorrentBase): string {
 function getTrackerDlCount(torrent: TorrentBase): number {
     const trackers = torrent.trackerStats as TrackerStats[];
     if (torrent.status === Status.stopped || trackers.length === 0) return -1;
-    return trackers.map((t) => t.downloadCount as number).reduce((total, current) => total + current, 0) as number;
+    return trackers.map((t) => t.downloadCount as number).reduce((total, current) => total + Math.max(current, 0), 0);
 }
 
 const portRe = /:\d+$/;
