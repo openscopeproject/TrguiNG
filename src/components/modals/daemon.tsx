@@ -607,8 +607,10 @@ export function DaemonSettingsModal(props: ModalState) {
                         color: "green",
                     });
                     props.close();
-                    // clear client cache to make sure new interface settings are applied
-                    queryClient.clear();
+                    if (!TAURI) {
+                        // clear client cache to make sure new interface settings are applied
+                        queryClient.clear();
+                    }
                 },
                 onError: (error) => {
                     notifications.show({

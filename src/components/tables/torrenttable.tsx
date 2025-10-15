@@ -138,6 +138,13 @@ const AllFields: readonly TableField[] = [
         accessorFn: (t) => t.cachedTrackerStatus,
     },
     {
+        name: "trackerStats",
+        label: "Tracker downloads",
+        component: TrackerDownloadsField,
+        columnId: "trackerDownloads",
+        accessorFn: (t) => t.cachedTrackerDlCount,
+    },
+    {
         name: "errorString",
         label: "Error",
         component: ErrorField,
@@ -277,6 +284,12 @@ export function TrackerField(props: TableFieldProps) {
 
 function TrackerStatusField(props: TableFieldProps) {
     return <div>{props.torrent.cachedTrackerStatus}</div>;
+}
+
+function TrackerDownloadsField(props: TableFieldProps) {
+    return <div style={{ width: "100%", textAlign: "right" }}>
+        {props.torrent.cachedTrackerDlCount >= 0 ? props.torrent.cachedTrackerDlCount : ""}
+    </div>;
 }
 
 function ErrorField(props: TableFieldProps) {

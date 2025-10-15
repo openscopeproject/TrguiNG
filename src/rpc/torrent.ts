@@ -31,6 +31,7 @@ export type TorrentFile = Record<TorrentFileFieldsType, any>;
 export interface Torrent extends TorrentBase {
     cachedError: string,
     cachedTrackerStatus: string,
+    cachedTrackerDlCount: number,
     cachedMainTracker: string,
     cachedPeersTotal: number,
     cachedSeedsTotal: number,
@@ -82,6 +83,12 @@ function getTrackerStatus(torrent: TorrentBase): string {
     return getTrackerAnnounceState(trackers[0]);
 }
 
+function getTrackerDlCount(torrent: TorrentBase): number {
+    const trackers = torrent.trackerStats as TrackerStats[];
+    if (torrent.status === Status.stopped || trackers.length === 0) return -1;
+    return trackers.map((t) => t.downloadCount as number).reduce((total, current) => total + current, 0) as number;
+}
+
 const portRe = /:\d+$/;
 const httpRe = /^https?:\/\//;
 
@@ -121,6 +128,7 @@ export async function processTorrent(t: TorrentBase, lookupIps: boolean, ignored
         downloadDir: (t.downloadDir as string).replaceAll("\\", "/"),
         cachedError: getTorrentError(t),
         cachedTrackerStatus: getTrackerStatus(t),
+        cachedTrackerDlCount: getTrackerDlCount(t),
         cachedMainTracker: getTorrentMainTracker(t, ignoredPrefixesRe),
         cachedSeedsTotal: getSeedsTotal(t),
         cachedPeersTotal: getPeersTotal(t),
