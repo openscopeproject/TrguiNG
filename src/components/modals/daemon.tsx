@@ -44,7 +44,7 @@ interface FormValues extends InterfaceFormValues {
 function PollingPanel({ form }: { form: UseFormReturnType<FormValues> }) {
     return (
         <Grid align="center">
-            <Grid.Col span={12}><Text>Update intervals (sec)</Text></Grid.Col>
+            <Grid.Col><Text>Update intervals (sec)</Text></Grid.Col>
             <Grid.Col span={8}>Session</Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
@@ -95,7 +95,7 @@ function DownloadPanel({ form, session }: { form: UseFormReturnType<FormValues>,
                     autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
             </Grid.Col>
             <Grid.Col>
-                <Checkbox
+                <Checkbox mt="lg"
                     label={<Box>
                         <span>Start added torrents</span>
                         <HoverCard width={280} shadow="md">
@@ -115,12 +115,12 @@ function DownloadPanel({ form, session }: { form: UseFormReturnType<FormValues>,
                     {...form.getInputProps("session.start-added-torrents", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col>
-                <Checkbox
+                <Checkbox mt="lg"
                     label="Add .part extension to incomplete files"
                     {...form.getInputProps("session.rename-partial-files", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col>
-                <Checkbox
+                <Checkbox mt="lg"
                     label="Use separate directory for incomplete files"
                     {...form.getInputProps("session.incomplete-dir-enabled", { type: "checkbox" })} />
             </Grid.Col>
@@ -275,13 +275,13 @@ function NetworkPanel(
                     : <Text key="pt" color={testPortResult.color}>{testPortResult.label}</Text>
                 }
             </Grid.Col>
-            <Grid.Col span={6}>
-                <Checkbox
+            <Grid.Col>
+                <Checkbox mt="lg"
                     label="Let daemon pick a random port"
                     {...form.getInputProps("session.peer-port-random-on-start", { type: "checkbox" })} />
             </Grid.Col>
-            <Grid.Col span={6}>
-                <Checkbox
+            <Grid.Col>
+                <Checkbox mt="lg"
                     label="Enable UPnP port forwarding"
                     {...form.getInputProps("session.port-forwarding-enabled", { type: "checkbox" })} />
             </Grid.Col>
@@ -313,22 +313,22 @@ function NetworkPanel(
                 />
             </Grid.Col>
             <Grid.Col span={6}>
-                <Checkbox
+                <Checkbox mt="lg"
                     label="Enable peer exchange"
                     {...form.getInputProps("session.pex-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={6}>
-                <Checkbox
+                <Checkbox mt="lg"
                     label="Enable DHT"
                     {...form.getInputProps("session.dht-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={6}>
-                <Checkbox
+                <Checkbox my="lg"
                     label="Enable local discovery"
                     {...form.getInputProps("session.lpd-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={6}>
-                <Checkbox
+                <Checkbox my="lg"
                     label="Enable uTP"
                     {...form.getInputProps("session.utp-enabled", { type: "checkbox" })} />
             </Grid.Col>
@@ -391,7 +391,7 @@ function TimeInput(props: NumberInputProps) {
 const DaysOfTheWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
 function DayOfWeekCheckbox({ form, day, session }: { form: UseFormReturnType<FormValues>, day: number, session: SessionInfo }) {
-    return <Checkbox
+    return <Checkbox my="lg"
         label={DaysOfTheWeek[day]}
         checked={((session["alt-speed-time-day"] as number) & (1 << day)) > 0}
         onChange={(event) => {
@@ -442,12 +442,12 @@ function BandwidthPanel({ form, session }: { form: UseFormReturnType<FormValues>
                     {...form.getInputProps("session.alt-speed-up")} />
             </Grid.Col>
             <Grid.Col>
-                <Checkbox
+                <Checkbox mt="lg"
                     label="Use alternate bandwidth settings"
                     {...form.getInputProps("session.alt-speed-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col>
-                <Checkbox
+                <Checkbox my="lg"
                     label="Apply alternate bandwidth settings automatically"
                     {...form.getInputProps("session.alt-speed-time-enabled", { type: "checkbox" })} />
             </Grid.Col>
@@ -651,31 +651,31 @@ export function DaemonSettingsModal(props: ModalState) {
                     </Tabs.List>
                     {form.values.session !== undefined
                         ? <>
-                            <Tabs.Panel value="polling" pt="md">
+                            <Tabs.Panel value="polling" p="lg">
                                 <PollingPanel form={form} />
                             </Tabs.Panel>
 
-                            <Tabs.Panel value="download" pt="md">
+                            <Tabs.Panel value="download" p="lg">
                                 <DownloadPanel form={form} session={form.values.session} />
                             </Tabs.Panel>
 
-                            <Tabs.Panel value="network" pt="md">
+                            <Tabs.Panel value="network" p="lg">
                                 <NetworkPanel opened={props.opened} form={form} session={form.values.session} />
                             </Tabs.Panel>
 
-                            <Tabs.Panel value="bandwidth" pt="md">
+                            <Tabs.Panel value="bandwidth" p="lg">
                                 <BandwidthPanel form={form} session={form.values.session} />
                             </Tabs.Panel>
 
-                            <Tabs.Panel value="queue" pt="md">
+                            <Tabs.Panel value="queue" p="lg">
                                 <QueuePanel form={form} session={form.values.session} />
                             </Tabs.Panel>
 
                             {!TAURI && <>
-                                <Tabs.Panel value="interface" pt="md">
+                                <Tabs.Panel value="interface" p="lg">
                                     <InterfaceSettigsPanel form={form} />
                                 </Tabs.Panel>
-                                <Tabs.Panel value="magnethandler" pt="md">
+                                <Tabs.Panel value="magnethandler" p="lg">
                                     <MagnetHandlerPanel />
                                 </Tabs.Panel>
                             </>}
