@@ -134,29 +134,49 @@ async function run(config: Config) {
 
     if (TAURI) {
         setupTauriEvents(config, app);
+
         if (config.values.app.showTrayIcon) {
             void invoke("create_tray");
         }
+
+        const positionWindow = async function () {
+            const pos = config.values.app.window.position;
+            if (pos?.length === 2 && pos?.[0] > -32000 && pos?.[1] > -32000) {
+                await appWindow.setPosition(pos);
+            } else {
+                await appWindow.center();
+            }
+        };
+
+        const sizeCheck = async function () {
+            const sz = await appWindow.getSize();
+            const delta = [sz.width - size[0], sz.height - size[1]];
+            if (delta[0] != 0 || delta[1] != 0) {
+                console.log("Window size delta", delta);
+                await appWindow.setSize([size[0] - delta[0], size[1] - delta[1]]);
+            }
+        };
+
+        const sleep20ms = async function () {
+            await new Promise<void>((r) => setTimeout(r, 20));
+        };
+
+        const size = config.values.app.window.size;
+
+        if (size.length === 2 && size[0] > 100 && size[1] > 100) {
+            await appWindow.setSize(size);
+
+            // Run the size verification a bit later to allow the window system to apply the size
+            // (on some platforms the immediate getSize() after setSize() returns the old value).
+            void sleep20ms()
+                .then(sizeCheck)
+                .then(sleep20ms)
+                .then(positionWindow);
+        } else {
+            void positionWindow();
+        }
     } else {
         setupWebEvents(config);
-    }
-
-    const size = config.values.app.window.size;
-    if (size.length === 2 && size[0] > 100 && size[1] > 100) {
-        await appWindow.setSize(size);
-        const sz = await appWindow.getSize();
-        const delta = [sz.width - size[0], sz.height - size[1]];
-        if (delta[0] != 0 || delta[1] != 0) {
-            console.log("Window size delta", delta);
-            await appWindow.setSize([size[0] - delta[0], size[1] - delta[1]]);
-        }
-    }
-
-    const pos = config.values.app.window.position;
-    if (pos?.length === 2 && pos?.[0] > -32000 && pos?.[1] > -32000) {
-        await appWindow.setPosition(pos);
-    } else {
-        await appWindow.center();
     }
 
     app.render(
