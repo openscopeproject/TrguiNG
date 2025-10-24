@@ -26,13 +26,13 @@ http-body-util = "*"
 hyper-util = { version = "^0.1", features = ["server-auto", "server-graceful"] }
 tokio = { version = "^1.28", features = ["net", "macros"] }
 serde = { version = "^1.0", features = ["derive"] }
-tauri = { version = "2", features = [ "devtools", "tray-icon"] }
-tauri-utils = "2"
+tauri = { version = "2.9.1", features = [ "devtools", "tray-icon"] }
+tauri-utils = "2.8.0"
 opener = { version = "0.7", features = ["reveal"], default-features = false }
 rodio = { version = "^0.20", features = ["mp3"], default-features = false }
 maxminddb = "^0.26"
 font-loader = "0.11.0"
-tauri-plugin-clipboard-manager = "2.0.0-beta.0"
+tauri-plugin-clipboard-manager = "2.3.0"
 tauri-plugin-fs = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-shell = "2"
