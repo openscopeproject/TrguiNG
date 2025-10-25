@@ -31,30 +31,37 @@ pub const TRAY_ID: &str = "tray";
 pub fn create_tray(app: AppHandle) {
     let menu = create_menu(&app, "Hide");
 
-    #[allow(clippy::single_match)]
-    TrayIconBuilder::with_id(TRAY_ID)
+    let builder = TrayIconBuilder::with_id(TRAY_ID)
         .icon(app.default_window_icon().unwrap().clone())
         .menu(&menu)
         .show_menu_on_left_click(false)
-        .on_tray_icon_event(|tray, event| {
-            match event {
-                TrayIconEvent::Click {
-                    button: MouseButton::Left,
-                    button_state: MouseButtonState::Up,
-                    ..
-                } => {
-                    #[cfg(not(target_os = "macos"))]
-                    toggle_main_window(
-                        tray.app_handle(),
-                        tray.app_handle().get_webview_window("main"),
-                    );
-                }
-                _ => {}
-            };
-        })
-        .on_menu_event(on_menu_event)
-        .build(&app)
-        .ok();
+        .on_menu_event(on_menu_event);
+
+    #[allow(clippy::single_match)]
+    let builder = builder.on_tray_icon_event(|tray, event| {
+        match event {
+            TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } => {
+                #[cfg(not(target_os = "macos"))]
+                toggle_main_window(
+                    tray.app_handle(),
+                    tray.app_handle().get_webview_window("main"),
+                );
+            }
+            _ => {}
+        };
+    });
+
+    #[cfg(target_os = "linux")]
+    let builder = builder.temp_dir_path(dirs::runtime_dir()
+            .unwrap_or_else(std::env::temp_dir)
+            .join("tray-icon")
+            .join(&app.config().identifier));
+
+    builder.build(&app).ok();
 }
 
 fn create_menu<R>(app: &AppHandle<R>, showhide_text: &str) -> tauri::menu::Menu<R>

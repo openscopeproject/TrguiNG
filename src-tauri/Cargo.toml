@@ -37,6 +37,7 @@ tauri-plugin-fs = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-shell = "2"
 tauri-plugin-notification = "2"
+dirs = "6.0.0"
 
 [dependencies.reqwest]
 version = "*"
