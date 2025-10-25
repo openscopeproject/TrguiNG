@@ -70,7 +70,7 @@
   },
   "productName": "TrguiNG",
   "mainBinaryName": "TrguiNG",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "identifier": "org.openscopeproject.trguing",
   "plugins": {
     "cli": {

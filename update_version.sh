@@ -20,7 +20,7 @@ jq ".version = \"$VERSION\" | .packages.\"\".version = \"$VERSION\"" package-loc
 cd src-tauri
 
 backup_file tauri.conf.json
-jq ".package.version = \"$VERSION\"" tauri.conf.json.bkp > tauri.conf.json
+jq ".version = \"$VERSION\"" tauri.conf.json.bkp > tauri.conf.json
 
 backup_file Cargo.toml
 sed -i -E "s/^version = \"[0-9]+\\.[0-9]+\\.[0-9]+\"\$/version = \"$VERSION\"/g" Cargo.toml
