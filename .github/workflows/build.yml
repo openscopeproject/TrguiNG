@@ -80,30 +80,40 @@ jobs:
       - name: install npm packages
         run: npm ci
 
-      - uses: tauri-apps/tauri-action@v0
+      - uses: tauri-apps/tauri-action@v0.5.23
         id: tauri_build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: --target ${{ matrix.platform.rust_target }}
 
-      # - uses: JonasKruckenberg/tauri-build@v1
-      #   id: tauri_build
-      #   with:
-      #     projectPath: '.'
-      #     runner: npm run
-      #     args: --
-      #     target: ${{ matrix.platform.rust_target }}
+      - name: Prepare artifact paths
+        if: matrix.platform.os == 'macos-latest'
+        id: prepare_outputs
+        run: |
+          # join the tauri action output into a newline-separated string
+          ARTIFACTS_RAW="${{ join(fromJSON(steps.tauri_build.outputs.artifactPaths), '\n') }}"
+          # append .tar.gz to each non-empty line and produce a JSON array
+          ARTIFACT_JSON=$(printf '%s' "$ARTIFACTS_RAW" | jq -R -s -c 'split("\n") | map(select(length > 0) | . + ".tar.gz")')
+          echo Outputs:
+          echo "$ARTIFACT_JSON"
+          echo "ARTIFACT_PATHS=${ARTIFACT_JSON}" >> $GITHUB_OUTPUT
 
       - name: Git status and version
         run: |
           git status
           git describe --tags --dirty --always
           git diff
-          echo ${{ steps.tauri_build.outputs.artifactPaths }}
 
       # The artifacts output can now be used to upload the artifacts
       - uses: actions/upload-artifact@v4
+        if: matrix.platform.os == 'macos-latest'
+        with:
+          name: ${{ matrix.platform.rust_target }}
+          path: "${{ join(fromJSON(steps.prepare_outputs.outputs.ARTIFACT_PATHS), '\n') }}"
+
+      - uses: actions/upload-artifact@v4
+        if: matrix.platform.os != 'macos-latest'
         with:
           name: ${{ matrix.platform.rust_target }}
           path: "${{ join(fromJSON(steps.tauri_build.outputs.artifactPaths), '\n') }}"
