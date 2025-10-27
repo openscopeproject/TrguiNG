@@ -53,6 +53,7 @@ pub fn create_tray(app: AppHandle) {
             }
             _ => {}
         };
+        let _ = tray;
     });
 
     #[cfg(target_os = "linux")]
@@ -129,7 +130,6 @@ pub fn exit(app: AppHandle) {
 
         let listener_state: State<ListenerHandle> = app.state();
         let mut listener = listener_state.0.write().await;
-        println!("Stopping");
         listener.stop();
         let appc = app.clone();
         let _ = app.run_on_main_thread(move || {

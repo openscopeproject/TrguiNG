@@ -176,7 +176,7 @@ where
     Menu::with_items(app, &[
         &Submenu::with_items(app, app_name.as_str(), true, &[
             &PredefinedMenuItem::close_window(app, "Close".into())?,
-            &MenuItem::with_id(app, "quit", "Quit", true, "Cmd+q".into())?,
+            &MenuItem::with_id(app, "appquit", "Quit", true, "Cmd+q".into())?,
         ])?,
         &Submenu::with_items(app, "Edit", true, &[
             &PredefinedMenuItem::select_all(app, "Select All".into())?,

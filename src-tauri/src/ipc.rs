@@ -420,7 +420,9 @@ impl Ipc {
     }
 
     pub async fn pause(&mut self) {
-        self.args_lock = self.args_sem.clone().acquire_owned().await.ok();
+        if self.args_lock.is_none() {
+            self.args_lock = self.args_sem.clone().acquire_owned().await.ok();
+        }
     }
 
     pub fn stop(&mut self) {
