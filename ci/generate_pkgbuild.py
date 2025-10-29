@@ -63,12 +63,12 @@ package() {
     install -dm755 "$pkgdir/usr/lib/trgui-ng"
     install -dm755 "$pkgdir/usr/share/icons/hicolor/32x32/apps"
     install -dm755 "$pkgdir/usr/share/icons/hicolor/128x128/apps"
-    install -Dm755 "$srcdir/TrguiNG/src-tauri/target/release/TrguiNG" "$pkgdir/usr/bin/trgui-ng"
+    install -Dm755 "$srcdir/TrguiNG/src-tauri/target/release/TrguiNG" "$pkgdir/usr/bin/TrguiNG"
     install -Dm644 "$srcdir/TrguiNG/src-tauri/dbip.mmdb" "$pkgdir/usr/lib/trgui-ng/dbip.mmdb"
     install -Dm755 "$srcdir/TrguiNG.desktop" "$pkgdir/usr/share/applications/TrguiNG.desktop"
-    install -Dm644 "$srcdir/TrguiNG/src-tauri/icons/32x32.png" "$pkgdir/usr/share/icons/hicolor/32x32/apps/trgui-ng.png"
-    install -Dm644 "$srcdir/TrguiNG/src-tauri/icons/128x128.png" "$pkgdir/usr/share/icons/hicolor/128x128/apps/trgui-ng.png"
-    install -Dm644 "$srcdir/TrguiNG/src-tauri/icons/app.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/trgui-ng.svg"
+    install -Dm644 "$srcdir/TrguiNG/src-tauri/icons/32x32.png" "$pkgdir/usr/share/icons/hicolor/32x32/apps/TrguiNG.png"
+    install -Dm644 "$srcdir/TrguiNG/src-tauri/icons/128x128.png" "$pkgdir/usr/share/icons/hicolor/128x128/apps/TrguiNG.png"
+    install -Dm644 "$srcdir/TrguiNG/src-tauri/icons/app.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/TrguiNG.svg"
 }
 '''
 
