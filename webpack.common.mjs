@@ -43,6 +43,10 @@ await writeFile(path.resolve(path.join(__dirname, "src/build/version.json")), ve
 
 export default (mode) => ({
     mode,
+    cache: {
+        type: "filesystem",
+        allowCollectingMemory: true,
+    },
     entry: {
         main: "./src/index.tsx",
         createtorrent: "./src/createtorrent.tsx",
