@@ -19,7 +19,7 @@ use std::fs;
 use base64::{engine::general_purpose::STANDARD as b64engine, Engine as _};
 use font_loader::system_fonts;
 use lava_torrent::torrent::v1::Torrent;
-use tauri::{Emitter, Manager, State};
+use tauri::{Emitter, EventTarget, State};
 
 use crate::{
     createtorrent::{CreateCheckResult, CreationRequestsHandle, TorrentCreateInfo},
@@ -268,15 +268,14 @@ pub async fn pass_to_window(
     to: String,
     payload: String,
 ) {
-    if let Some(dest) = app_handle.get_webview_window(to.as_str()) {
-        let _ = dest.emit(
-            "pass-from-window",
-            PassEventData {
-                from: window.label().to_string(),
-                payload,
-            },
-        );
-    }
+    let _ = app_handle.emit_to(
+        EventTarget::window(to.as_str()),
+        "pass-from-window",
+        PassEventData {
+            from: window.label().to_string(),
+            payload,
+        },
+    );
 }
 
 #[tauri::command]

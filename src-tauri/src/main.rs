@@ -120,9 +120,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
                 let listener_lock = listener_lock2.clone();
                 async_runtime::spawn(async move {
                     let mut listener = listener_lock.write().await;
-                    println!("Grabbed listener lock to pause");
                     listener.pause().await;
-                    println!("Listener lock to pause released");
                 });
             });
             tray::toggle_main_window(&app, None);
