@@ -81,7 +81,7 @@ export function MoveModal(props: ModalState) {
                     onChange={(e) => { setMoveData(e.currentTarget.checked); }}
                     my="xl" />
                 <Divider my="sm" />
-                <Group position="center" spacing="md">
+                <Group justify="center" gap="md">
                     <Button onClick={onMove} variant="filled">Move</Button>
                     <Button onClick={props.close} variant="light">Cancel</Button>
                 </Group>

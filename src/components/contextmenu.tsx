@@ -16,9 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { MenuProps, PortalProps } from "@mantine/core";
+import type { MenuProps } from "@mantine/core";
 import { Button, Menu, Portal, ScrollArea } from "@mantine/core";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
+import classes from "./contextmenu.module.css";
 
 export interface ContextMenuInfo {
     x: number,
@@ -40,61 +41,55 @@ export function useContextMenu(): [ContextMenuInfo, React.Dispatch<ContextMenuIn
 
 export interface ContextMenuProps extends MenuProps {
     contextMenuInfo: ContextMenuInfo,
-    containerRef?: PortalProps["innerRef"],
     closeOnClickOutside?: boolean,
+    autosize?: boolean,
     setContextMenuInfo: (i: ContextMenuInfo) => void,
 }
 
 export function ContextMenu({
     contextMenuInfo,
-    containerRef,
     closeOnClickOutside = true,
+    autosize,
     setContextMenuInfo,
     children,
     ...other
 }: ContextMenuProps) {
     const onClose = useCallback(
-        () => { setContextMenuInfo({ ...contextMenuInfo, opened: false }); },
-        [contextMenuInfo, setContextMenuInfo]);
-
-    const [opened, setOpened] = useState<boolean>(false);
-
-    useEffect(() => { setOpened(contextMenuInfo.opened); }, [contextMenuInfo.opened]);
+        () => {
+            setContextMenuInfo({ ...contextMenuInfo, opened: false });
+        }, [contextMenuInfo, setContextMenuInfo]);
 
     return (
         <Menu {...other}
-            opened={opened}
+            opened={contextMenuInfo.opened}
             onClose={onClose}
             offset={0}
             middlewares={{ shift: true, flip: true }}
             position="right-start"
+            transitionProps={{ duration: 0 }}
             closeOnClickOutside={closeOnClickOutside}
             zIndex={500}
         >
-            <Portal innerRef={containerRef}>
+            <Portal>
                 <Menu.Target>
                     <Button unstyled
-                        sx={{
-                            position: "absolute",
-                            width: 0,
-                            height: 0,
-                            padding: 0,
-                            border: 0,
-                        }}
+                        className={classes.contextMenuButton}
                         style={{
                             left: contextMenuInfo.x,
                             top: contextMenuInfo.y,
                         }} />
                 </Menu.Target>
                 <Menu.Dropdown>
-                    <ScrollArea.Autosize
-                        type="auto"
-                        mah="calc(100vh - 0.5rem)"
-                        offsetScrollbars
-                        styles={{ viewport: { paddingBottom: 0 } }}
-                    >
-                        {children}
-                    </ScrollArea.Autosize>
+                    {autosize === true
+                        ? <ScrollArea.Autosize
+                            type="auto"
+                            mah="calc(100vh - 0.5rem)"
+                            offsetScrollbars
+                            styles={{ viewport: { paddingBottom: 0 } }}
+                        >
+                            {children}
+                        </ScrollArea.Autosize>
+                        : children}
                 </Menu.Dropdown>
             </Portal>
         </Menu>

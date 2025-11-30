@@ -175,7 +175,8 @@ export function EditTorrent(props: ModalState) {
                     <NumberInput
                         min={0}
                         step={0.05}
-                        precision={2}
+                        decimalScale={2}
+                        fixedDecimalScale
                         {...form.getInputProps("seedRatioLimit")}
                         disabled={form.values.seedRatioMode !== 1} />
                 </Grid.Col>

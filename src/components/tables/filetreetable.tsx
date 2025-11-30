@@ -28,7 +28,7 @@ import { ProgressBar } from "../progressbar";
 import * as Icon from "react-bootstrap-icons";
 import type { TrguiTableRef } from "./common";
 import { EditableNameField, TrguiTable } from "./common";
-import { ActionIcon, Badge, Box, Checkbox, Flex, Loader, Menu, Text, TextInput, useMantineTheme } from "@mantine/core";
+import { ActionIcon, Badge, Box, Checkbox, Flex, Loader, Menu, Text, TextInput, useComputedColorScheme } from "@mantine/core";
 import { refreshFileTree, useMutateTorrent, useMutateTorrentPath } from "queries";
 import { notifications } from "@mantine/notifications";
 import type { ContextMenuInfo } from "components/contextmenu";
@@ -37,6 +37,7 @@ import { useHotkeysContext } from "hotkeys";
 import debounce from "lodash-es/debounce";
 import { useServerRpcVersion } from "rpc/torrent";
 import { FileIcon } from "components/fileicon";
+import classes from "./filetreetable.module.css";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 type FileDirEntryKey = keyof FileDirEntryView;
@@ -75,7 +76,7 @@ function NameField(props: TableFieldProps) {
         props.row.toggleExpanded();
     }, [props]);
 
-    const theme = useMantineTheme();
+    const colorScheme = useComputedColorScheme();
 
     const mutation = useMutateTorrentPath();
 
@@ -114,10 +115,10 @@ function NameField(props: TableFieldProps) {
             onArrowLeftRight={onArrowLeftRight}
             extensionLength={extensionLength}
             onUpdate={(props.treeName === "filetree" && rpcVersion >= 15) ? updatePath : undefined}>
-            <Box sx={{ width: `${props.entry.level * 1.6}rem`, flexShrink: 0 }} />
-            <Box w="1.4rem" mx="auto" sx={{ flexShrink: 0 }}>
+            <Box style={{ width: `${props.entry.level * 1.6}rem`, flexShrink: 0 }} />
+            <Box w="1.4rem" mx="auto" style={{ flexShrink: 0 }}>
                 {props.entry.wantedUpdating
-                    ? <Loader size="1.2rem" color={theme.colorScheme === "dark" ? theme.colors.cyan[4] : theme.colors.cyan[9]} />
+                    ? <Loader size="1.2rem" color={colorScheme === "dark" ? "cyan.4" : "cyan.9"} />
                     : <Checkbox
                         checked={props.entry.want === true || props.entry.want === undefined}
                         indeterminate={props.entry.want === undefined}
@@ -253,8 +254,6 @@ function useSelected(data: FileDirEntryView[], fileTree: CachedFileTree, searchT
 function SearchBox({ setSearchTerms }: {
     setSearchTerms: (terms: string[]) => void,
 }) {
-    const theme = useMantineTheme();
-
     const debouncedSetSearchTerms = useMemo(
         () => debounce(setSearchTerms, 500, { trailing: true, leading: false }),
         [setSearchTerms]);
@@ -277,21 +276,15 @@ function SearchBox({ setSearchTerms }: {
     return (
         <Box>
             <TextInput ref={searchRef}
-                icon={<Icon.Search size="1rem" />}
-                rightSection={<ActionIcon onClick={onSearchClear} title="Clear">
-                    <Icon.XLg size="1rem" color={theme.colors.red[6]} />
+                leftSection={<Icon.Search size="1rem" />}
+                rightSection={<ActionIcon variant="subtle" onClick={onSearchClear} title="Clear">
+                    <Icon.XLg size="1rem" color="var(--mantine-color-red-6)" />
                 </ActionIcon>}
                 placeholder="search files"
                 onInput={onSearchInput}
-                styles={{
-                    root: {
-                        height: "1.5rem",
-                    },
-                    input: {
-                        minHeight: "1.5rem",
-                        height: "1.5rem",
-                        lineHeight: "1rem",
-                    },
+                classNames={{
+                    root: classes.searchRoot,
+                    input: classes.searchInput,
                 }}
                 autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
         </Box>
@@ -523,13 +516,13 @@ function FiletreeContextMenu(props: {
             {TAURI && <>
                 <Menu.Item
                     onClick={() => { onOpen(false); }}
-                    icon={<Icon.BoxArrowUpRight size="1.1rem" />}
+                    leftSection={<Icon.BoxArrowUpRight size="1.1rem" />}
                     disabled={props.currentRow === ""}>
-                    <Text weight="bold">Open</Text>
+                    <Text fw="bold">Open</Text>
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => { onOpen(true); }}
-                    icon={<Icon.Folder2Open size="1.1rem" />}
+                    leftSection={<Icon.Folder2Open size="1.1rem" />}
                     disabled={props.currentRow === ""}>
                     <Text>Open folder</Text>
                 </Menu.Item>
@@ -537,55 +530,55 @@ function FiletreeContextMenu(props: {
             </>}
             <Menu.Item
                 onClick={() => { setPriority("priority-high"); }}
-                icon={<Icon.CircleFill color="tomato" size="1.1rem" />}
+                leftSection={<Icon.CircleFill color="tomato" size="1.1rem" />}
                 disabled={props.selected.length === 0}>
                 High priority
             </Menu.Item>
             <Menu.Item
                 onClick={() => { setPriority("priority-normal"); }}
-                icon={<Icon.CircleFill color="seagreen" size="1.1rem" />}
+                leftSection={<Icon.CircleFill color="seagreen" size="1.1rem" />}
                 disabled={props.selected.length === 0}>
                 Normal priority
             </Menu.Item>
             <Menu.Item
                 onClick={() => { setPriority("priority-low"); }}
-                icon={<Icon.CircleFill color="gold" size="1.1rem" />}
+                leftSection={<Icon.CircleFill color="gold" size="1.1rem" />}
                 disabled={props.selected.length === 0}>
                 Low priority
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item
                 onClick={() => { setWanted(true); }}
-                icon={<Checkbox checked readOnly />}
+                leftSection={<Checkbox checked readOnly />}
                 disabled={props.selected.length === 0}>
                 Set wanted
             </Menu.Item>
             <Menu.Item
                 onClick={() => { setWanted(false); }}
-                icon={<Checkbox readOnly />}
+                leftSection={<Checkbox readOnly />}
                 disabled={props.selected.length === 0}>
                 Set unwanted
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item
                 onClick={() => { props.setExpanded?.(true); }}
-                icon={<Icon.PlusSquare size="1.1rem" />}>
+                leftSection={<Icon.PlusSquare size="1.1rem" />}>
                 Expand all
             </Menu.Item>
             <Menu.Item
                 onClick={() => { props.setExpanded?.(false); }}
-                icon={<Icon.DashSquare size="1.1rem" />}>
+                leftSection={<Icon.DashSquare size="1.1rem" />}>
                 Collapse all
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item
                 onClick={props.toggleFileSearchBox}
-                icon={<Icon.Search size="1.1rem" />}>
+                leftSection={<Icon.Search size="1.1rem" />}>
                 Toggle search
             </Menu.Item>
             <Menu.Item
                 onClick={toggleFlatFileTree}
-                icon={<Checkbox checked={!flatFileTree} readOnly />}>
+                leftSection={<Checkbox checked={!flatFileTree} readOnly />}>
                 Show as tree
             </Menu.Item>
         </ContextMenu >

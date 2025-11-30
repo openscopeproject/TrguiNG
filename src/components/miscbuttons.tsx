@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { MantineNumberSize } from "@mantine/core";
+import type { MantineSize } from "@mantine/core";
 import { ActionIcon, useMantineColorScheme } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
 import FontSizeIcon from "svg/icons/fontsize.svg";
@@ -26,7 +26,7 @@ import { useDisclosure, useHotkeys } from "@mantine/hooks";
 import { modKeyString } from "trutil";
 import { useFontSize } from "themehooks";
 
-export function ColorSchemeToggle(props: { sz?: string, btn?: MantineNumberSize }) {
+export function ColorSchemeToggle(props: { sz?: string, btn?: MantineSize }) {
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
     const dark = colorScheme === "dark";
 
@@ -49,13 +49,14 @@ export function ColorSchemeToggle(props: { sz?: string, btn?: MantineNumberSize 
     );
 }
 
-export function ShowVersion(props: { sz?: string, btn?: MantineNumberSize }) {
+export function ShowVersion(props: { sz?: string, btn?: MantineSize }) {
     const [showVersionModal, { open: openVersionModal, close: closeVersionModal }] = useDisclosure(false);
 
     return (
         <>
             <VersionModal opened={showVersionModal} close={closeVersionModal} />
             <ActionIcon
+                variant="subtle"
                 size={props.btn}
                 onClick={openVersionModal}
                 title="Show version information"

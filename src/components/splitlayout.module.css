@@ -1,0 +1,6 @@
+.splitLayoutContainer {
+    flex-grow: 1;
+    & :global(.gutter) {
+        background-color: light-dark(var(--mantine-color-gray-3), var(--mantine-color-gray-7));
+    }
+}

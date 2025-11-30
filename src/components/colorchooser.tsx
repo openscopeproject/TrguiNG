@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ActionIcon, ColorSwatch, Grid, Popover, useMantineTheme } from "@mantine/core";
+import { ActionIcon, ColorSwatch, Popover, useMantineTheme, Group, Button } from "@mantine/core";
 import type { ColorSetting } from "config";
 import React, { useState } from "react";
 
@@ -30,36 +30,32 @@ const shades = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 export default function ColorChooser(props: ColorChooserProps) {
     const theme = useMantineTheme();
     const [opened, setOpened] = useState(false);
-    const swatchOutline = theme.colorScheme === "dark" ? theme.colors.gray[7] : theme.colors.dark[6];
 
     return (
-        <Popover width="20rem" position="right-start" withArrow withinPortal shadow="md" opened={opened} onChange={setOpened} >
+        <Popover width="20rem" position="right-start" withArrow transitionProps={{ duration: 0 }} shadow="md" opened={opened} onChange={setOpened} >
             <Popover.Target>
-                <ActionIcon onClick={() => { setOpened((o) => !o); }}>
+                <ActionIcon variant="subtle" onClick={() => { setOpened((o) => !o); }}>
                     <ColorSwatch
-                        color={theme.colors[props.value.color][props.value.shade]}
-                        sx={{ border: `1px solid ${swatchOutline}` }} />
+                        color={theme.colors[props.value.color][props.value.shade]} />
                 </ActionIcon>
             </Popover.Target>
             <Popover.Dropdown>
-                <ActionIcon p="lg" onClick={() => {
+                <Button variant="subtle" p="lg" onClick={() => {
                     props.onChange(undefined);
                     setOpened(false);
                 }}>
                     Reset
-                </ActionIcon>
-                <Grid columns={10}>
-                    {Object.keys(theme.colors).map((color) => shades.map((shade) => (
-                        <Grid.Col key={`${color}:${shade}`} span={1} p="0.1rem">
-                            <ActionIcon onClick={() => {
+                </Button>
+                {Object.keys(theme.colors).map((color) =>
+                    <Group key={color} wrap="nowrap" gap="0">
+                        {shades.map((shade) =>
+                            <ActionIcon key={shade} m="0.1rem" variant="subtle" onClick={() => {
                                 props.onChange({ color, shade, computed: theme.colors[color][shade] });
                                 setOpened(false);
                             }}>
                                 <ColorSwatch color={theme.colors[color][shade]} />
-                            </ActionIcon>
-                        </Grid.Col>
-                    )))}
-                </Grid>
+                            </ActionIcon>)}
+                    </Group>)}
             </Popover.Dropdown>
         </Popover>
     );

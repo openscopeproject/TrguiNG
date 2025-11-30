@@ -1,0 +1,15 @@
+.toolbarButton {
+    background-color: light-dark(
+        var(--mantine-color-gray-1),
+        var(--mantine-color-gray-9)
+    );
+    color: light-dark(var(--mantine-color-gray-8), var(--mantine-color-gray-3));
+}
+
+.toolbarButtonDepressed {
+    background-color: light-dark(
+        var(--mantine-color-gray-3),
+        var(--mantine-color-gray-8)
+    );
+    transform: scale(-1, 1);
+}

@@ -78,7 +78,7 @@ export function RemoveModal(props: ModalState) {
                 onChange={onDeleteDataChanged}
                 my="xl" />
             <Divider my="sm" />
-            <Group position="center" spacing="md">
+            <Group justify="center" gap="md">
                 <Button onClick={onDelete} variant="filled" color="red" data-autofocus>
                     {deleteData ? "Delete" : "Remove"}
                 </Button>

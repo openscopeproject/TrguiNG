@@ -18,6 +18,7 @@
 
 import { ActionIcon, Box, Group, Menu, TextInput } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
+import classes from "./common.module.css";
 import type {
     Table, ColumnDef, ColumnSizingState,
     SortingState, VisibilityState, Row, Column, RowSelectionState,
@@ -434,6 +435,7 @@ function HeaderRow<TData>(
                 contextMenuInfo={info}
                 setContextMenuInfo={setInfo}
                 closeOnItemClick={false}
+                autosize
             >
                 <DragDropContext onDragEnd={onDragEnd}>
                     <StrictModeDroppable droppableId="tableheadercontextmenu">
@@ -444,9 +446,9 @@ function HeaderRow<TData>(
                                     return (
                                         <Draggable draggableId={column.id} index={index} key={column.id}>
                                             {(provided) => (
-                                                <Group ref={provided.innerRef} {...provided.draggableProps} noWrap>
+                                                <Group ref={provided.innerRef} {...provided.draggableProps} wrap="nowrap">
                                                     <Menu.Item
-                                                        icon={column.id === "name"
+                                                        leftSection={column.id === "name"
                                                             ? <Icon.Lock size="1rem" />
                                                             : visible ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
                                                         onClick={() => {
@@ -559,13 +561,11 @@ export function TrguiTable<TData>(props: {
         <div className="torrent-table-container">
             <Box
                 ref={headerRefProxy}
-                sx={(theme) => ({
+                className={classes.tableHeaderContainer}
+                style={{
                     height: `${rowHeight}px`,
                     width: `${width}px`,
-                    backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
-                    flexShrink: 0,
-                    position: "relative",
-                })}>
+                }}>
                 {table.getHeaderGroups().map(headerGroup => (
                     <MemoizedHeaderRow key={headerGroup.id} {...{
                         headerGroup,
@@ -686,16 +686,13 @@ export function EditableNameField(props: EditableNameFieldProps) {
     return (
         <Box ref={ref} onKeyDown={onKeyDown} tabIndex={-1}
             onMouseEnter={() => { setHover(true); }} onMouseLeave={() => { setHover(false); }}
-            sx={{ display: "flex", alignItems: "center", width: "100%", height: "100%" }}>
+            className={classes.editableNameContainer}>
             {props.children}
             {isRenaming
-                ? <TextInput ref={textRef} value={newName} sx={{ flexGrow: 1, height: "100%" }}
-                    styles={{
-                        input: {
-                            height: "1.5rem",
-                            minHeight: "1.5rem",
-                            lineHeight: "1.3rem",
-                        },
+                ? <TextInput ref={textRef} value={newName}
+                    classNames={{
+                        root: classes.editableNameRoot,
+                        input: classes.editableNameInput,
                     }}
                     onChange={(e) => { setNewName(e.target.value); }}
                     onBlur={() => { setRenaming(false); }}
@@ -704,25 +701,13 @@ export function EditableNameField(props: EditableNameFieldProps) {
                     onDoubleClick={(e) => { e.stopPropagation(); }}
                     autoCorrect="off" autoCapitalize="off" spellCheck="false" />
                 : <Box ref={innerRef}
-                    pl="xs" sx={{ flexGrow: 1, textOverflow: "ellipsis", overflow: "hidden" }}
+                    pl="xs" style={{ flexGrow: 1, textOverflow: "ellipsis", overflow: "hidden" }}
                     title={showNameTooltip ? props.currentName : undefined}>
                     {props.currentName}
                 </Box>}
             {isHover && !isRenaming && props.onUpdate !== undefined
-                ? <ActionIcon onClick={renameHandler} title="Rename (F2)"
-                    sx={(theme) => ({
-                        flexShrink: 0,
-                        ".selected &": { color: theme.colors.gray[2] },
-                        "@media (hover: hover)": {
-                            "&:hover": {
-                                color: theme.colorScheme === "dark"
-                                    ? theme.white
-                                    : theme.colors.dark[8],
-                                backgroundColor: "rgba(127, 127, 127, 0.15)",
-                            },
-                            ".selected &:hover": { color: theme.white },
-                        },
-                    })} >
+                ? <ActionIcon variant="subtle" onClick={renameHandler} title="Rename (F2)"
+                    className={classes.actionIcon} >
                     <Icon.InputCursorText size="1rem" />
                 </ActionIcon>
                 : <></>}

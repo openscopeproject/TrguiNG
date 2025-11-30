@@ -1,9 +1,9 @@
-import type { Tuple, DefaultMantineColor } from "@mantine/core";
+import type { DefaultMantineColor, MantineColorsTuple } from "@mantine/core";
 
 type ExtendedCustomColors = "primaryColorName" | "turquoise" | DefaultMantineColor;
 
 declare module "@mantine/core" {
     export interface MantineThemeColorsOverride {
-        colors: Record<ExtendedCustomColors, Tuple<string, 10>>,
+        colors: Record<ExtendedCustomColors, MantineColorsTuple>,
     }
 }

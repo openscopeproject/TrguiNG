@@ -7,7 +7,7 @@
     overflow: hidden;
 }
 
-.progressbar>:first-child {
+.progressbar > :first-child {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -17,27 +17,27 @@
     color: white;
 }
 
-.progressbar.yellow>:first-child {
+.progressbar.yellow > :first-child {
     background: #fab007;
 }
 
-.progressbar.red>:first-child {
+.progressbar.red > :first-child {
     background: #d84d4d;
 }
 
-.progressbar.green>:first-child {
+.progressbar.green > :first-child {
     background: #36a049;
 }
 
-.progressbar.dark-green>:first-child {
+.progressbar.dark-green > :first-child {
     background: #0f6d20;
 }
 
-.progressbar.grey>:first-child {
+.progressbar.grey > :first-child {
     background: #677274;
 }
 
-.progressbar>:last-child {
+.progressbar > :last-child {
     position: absolute;
     display: flex;
     justify-content: center;
@@ -53,8 +53,17 @@
     transition: clip-path 0.5s ease;
 }
 
-.progressbar.animate>:first-child {
-    background-image: linear-gradient(45deg, rgba(255, 255, 255, .15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%, transparent 75%, transparent);
+.progressbar.animate > :first-child {
+    background-image: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.15) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.15) 75%,
+        transparent 75%,
+        transparent
+    );
     background-size: 1rem 1rem;
     animation: 1s steps(20) infinite barberpole;
 }

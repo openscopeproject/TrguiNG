@@ -103,13 +103,13 @@ export function Statusbar({ session, torrents, filteredTorrents, selectedTorrent
     const [info, setInfo, handler] = useContextMenu();
 
     return (
-        <Flex className="statusbar" sx={{ flexWrap: "nowrap" }} onContextMenu={handler} gap="md">
+        <Flex className="statusbar" wrap="nowrap" onContextMenu={handler} gap="md">
             <MemoSectionsContextMenu
                 sections={sections} setSections={setSections}
                 contextMenuInfo={info} setContextMenuInfo={setInfo}>
                 <Menu.Divider/>
                 <Menu.Item
-                    icon={showGlobalSpeeds ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                    leftSection={showGlobalSpeeds ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
                     onMouseDown={(e) => {
                         e.stopPropagation();
                         setShowGlobalSpeeds(!showGlobalSpeeds);

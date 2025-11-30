@@ -140,7 +140,7 @@ function Loader() {
     const interfaceConfig = config.values.interface;
     const theme = interfaceConfig.theme;
     const backgroundColorOverride =
-        interfaceConfig.styleOverrides[theme ?? "light"]?.backgroundColor;
+        interfaceConfig.styleOverrides[theme === "auto" ? "light" : theme].backgroundColor;
     const spinnerStyle: CSSProperties = {
         borderTopColor: `hsla(222, 100%, ${theme === "dark" ? "50%" : "36%"}, 0.376)`,
     };

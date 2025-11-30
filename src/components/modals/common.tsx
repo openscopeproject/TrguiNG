@@ -16,11 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { ModalProps, MultiSelectValueProps } from "@mantine/core";
+import type { ModalProps } from "@mantine/core";
 import {
-    Badge, Button, CloseButton, Divider, Group, Loader, Modal, MultiSelect,
+    Button, Divider, Group, Loader, Modal, TagsInput,
     Text, TextInput, ActionIcon, Menu, ScrollArea,
 } from "@mantine/core";
+import classes from "./common.module.css";
 import { ConfigContext, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { pathMapFromServer, pathMapToServer } from "trutil";
@@ -58,7 +59,7 @@ export function SaveCancelModal({ onSave, onClose, children, saveLoading, ...oth
             <Divider my="sm" />
             {children}
             <Divider my="sm" />
-            <Group position="center" spacing="md">
+            <Group justify="center" gap="md">
                 <Button onClick={onSave} variant="filled" data-autofocus>
                     {saveLoading === true ? <Loader size="1rem" /> : "Save"}
                 </Button>
@@ -73,12 +74,7 @@ export function LimitedNamesList({ names, limit }: { names: string[], limit?: nu
     const t = names.slice(0, limit);
 
     return <>
-        {t.map((s, i) => <Text key={i} mx="md" my="xs" px="sm" sx={{
-            whiteSpace: "pre",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            boxShadow: "inset 0 0 0 9999px rgba(133, 133, 133, 0.1)",
-        }}>
+        {t.map((s, i) => <Text key={i} mx="md" my="xs" px="sm" className={classes.limitedNamesText}>
             {s}
         </Text>)}
         {names.length > limit && <Text mx="xl" mb="md">{`... and ${names.length - limit} more`}</Text>}
@@ -176,13 +172,14 @@ export function TorrentLocation(props: LocationData) {
                 label={props.inputLabel}
                 disabled={props.disabled}
                 onChange={(e) => { props.setPath(e.currentTarget.value); }}
-                styles={{ root: { flexGrow: 1 } }}
+                style={{ flexGrow: 1 }}
                 data-autofocus={props.focusPath}
                 rightSection={
                     <Menu position="left-start" withinPortal returnFocus
                         middlewares={{ shift: true, flip: false }} offset={{ mainAxis: -20, crossAxis: 30 }}>
                         <Menu.Target>
                             <ActionIcon
+                                variant="subtle"
                                 py="md"
                                 disabled={
                                     props.disabled === true ||
@@ -197,7 +194,7 @@ export function TorrentLocation(props: LocationData) {
                             <ScrollArea.Autosize
                                 type="auto"
                                 mah="calc(100vh - 0.5rem)"
-                                miw="30rem"
+                                miw="35rem"
                                 offsetScrollbars
                                 styles={{ viewport: { paddingBottom: 0 } }}
                             >
@@ -213,6 +210,7 @@ export function TorrentLocation(props: LocationData) {
                                         onClick={() => { props.setPath(path); }}
                                         rightSection={
                                             <ActionIcon
+                                                variant="subtle"
                                                 component="div"
                                                 title="Remove path"
                                                 onClick={(e) => {
@@ -236,33 +234,6 @@ export function TorrentLocation(props: LocationData) {
     );
 }
 
-export function Label({
-    label,
-    onRemove,
-    ...others
-}: MultiSelectValueProps) {
-    return (
-        <div {...others}>
-            <Badge radius="md" variant="filled"
-                rightSection={
-                    <CloseButton
-                        onMouseDown={onRemove}
-                        title="Remove"
-                        color="gray.0"
-                        variant="transparent"
-                        size={22}
-                        iconSize={14}
-                        tabIndex={-1}
-                        mr="-0.25rem"
-                    />
-                }
-            >
-                {label}
-            </Badge>
-        </div>
-    );
-}
-
 interface TorrentLabelsProps {
     labels: string[],
     setLabels: React.Dispatch<string[]>,
@@ -282,25 +253,15 @@ export function TorrentLabels(props: TorrentLabelsProps) {
         return Array.from(labels).sort();
     }, [config, serverData.torrents]);
 
-    const [data, setData] = useState<string[]>(initialLabelset);
-
     return (
-        <MultiSelect
-            data={data}
+        <TagsInput
+            data={initialLabelset}
             value={props.labels}
             onChange={props.setLabels}
             label={props.inputLabel}
-            withinPortal
-            searchable
-            creatable
-            initiallyOpened={props.initiallyOpened}
+            defaultDropdownOpened={props.initiallyOpened}
             disabled={props.disabled}
-            getCreateLabel={(query) => `+ Add ${query}`}
-            onCreate={(query) => {
-                setData((current) => [...current, query]);
-                return query;
-            }}
-            valueComponent={Label}
+            acceptValueOnBlur
         />
     );
 }

@@ -17,6 +17,7 @@
  */
 
 import React, { lazy, Suspense } from "react";
+import "@mantine/core/styles.css";
 import { createRoot } from "react-dom/client";
 
 const CreateTorrentForm = lazy(async () => await import(/* webpackChunkName: "createtorrentform" */ "components/createtorrentform"));

@@ -18,7 +18,7 @@
 
 import * as Icon from "react-bootstrap-icons";
 import React from "react";
-import { useMantineTheme, type DefaultMantineColor } from "@mantine/core";
+import { useComputedColorScheme, useMantineTheme, type DefaultMantineColor } from "@mantine/core";
 import { useRowSelected } from "./tables/common";
 
 interface FileType {
@@ -83,11 +83,12 @@ const extensions = fileTypes.reduce<Record<string, FileType>>((v, c) => {
 
 export function FileIcon({ name }: { name: string }) {
     const theme = useMantineTheme();
+    const colorScheme = useComputedColorScheme();
     const selected = useRowSelected();
     const ext = name.substring(name.lastIndexOf(".") + 1).toLowerCase();
     const FileIcon = Object.prototype.hasOwnProperty.call(extensions, ext) ? extensions[ext].icon : Icon.FileEarmark;
     const color = Object.prototype.hasOwnProperty.call(extensions, ext) ? extensions[ext].color : "gray";
-    const shade = (theme.colorScheme === "dark" || selected) ? 3 : 9;
+    const shade = (colorScheme === "dark" || selected) ? 3 : 9;
 
     return <FileIcon size="1.1rem" color={theme.colors[color][shade]} />;
 }

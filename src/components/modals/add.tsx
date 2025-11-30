@@ -34,6 +34,7 @@ import type { ServerTabsRef } from "components/servertabs";
 import { bytesToHumanReadableStr, decodeMagnetLink } from "trutil";
 import { useToggle } from "@mantine/hooks";
 import * as Icon from "react-bootstrap-icons";
+import classes from "./add.module.css";
 
 const { TAURI, dialogOpen, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -278,7 +279,7 @@ export function AddMagnet(props: AddCommonModalProps) {
     }, [onAdd, props.opened, shouldOpen]);
 
     return <>{props.opened && shouldOpen &&
-        <HkModal opened={true} onClose={close} centered size="lg"
+        <HkModal opened={true} onClose={close} centered size="xl"
             styles={{ title: { flexGrow: 1 } }}
             title={<Flex w="100%" align="center" justify="space-between">
                 <span>Add torrent by magnet link or URL</span>
@@ -295,7 +296,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                 autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
             <AddCommon {...common.props} disabled={existingTorrent !== undefined} />
             <Divider my="sm" />
-            <Group position="center" spacing="md">
+            <Group justify="center" gap="md">
                 <Button onClick={onAdd} variant="filled" data-autofocus
                     disabled={existingTorrent !== undefined && (magnetData?.trackers.length ?? 0) === 0}>
                     {existingTorrent === undefined ? "Add" : "Add trackers"}
@@ -630,10 +631,10 @@ export function AddTorrent(props: AddCommonModalProps) {
                 }}
                 title={<Flex w="100%" align="center">
                     <span>Add torrent</span>
-                    <Box sx={{ flexGrow: 1 }} />
+                    <Box className={classes.flexGrow} />
                     {TAURI && <>
                         <TabSwitchDropdown tabsRef={props.tabsRef} />
-                        <ActionIcon onClick={() => { toggleFullScreen(); }}>
+                        <ActionIcon variant="subtle" onClick={() => { toggleFullScreen(); }}>
                             {fullScreen ? <Icon.FullscreenExit /> : <Icon.ArrowsFullscreen />}
                         </ActionIcon>
                     </>}
@@ -660,7 +661,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 </AddCommon>
                 {(torrentData.length > 1 || torrentData[0].files == null)
                     ? <></>
-                    : <Box w="100%" h="15rem" sx={{ position: "relative", flexGrow: 1 }}>
+                    : <Box w="100%" h="15rem" className={classes.fileTreeContainer}>
                         <FileTreeTable
                             fileTree={fileTree}
                             data={data}
@@ -669,7 +670,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                     </Box>
                 }
                 <Divider my="sm" />
-                <Group position="center" spacing="md">
+                <Group justify="center" gap="md">
                     <Button onClick={onAdd} variant="filled" data-autofocus
                         disabled={torrentExists && torrentData[0].trackers.length === 0}>
                         {!torrentExists ? "Add" : "Add trackers"}

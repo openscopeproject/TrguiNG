@@ -21,7 +21,7 @@ import type { ServerConfig } from "../config";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Server } from "../components/server";
 import { ClientManager } from "../clientmanager";
-import { ActionIcon, Box, Button, Flex, Menu, Stack, useMantineColorScheme } from "@mantine/core";
+import { ActionIcon, Box, Button, Flex, Menu, Stack, useComputedColorScheme } from "@mantine/core";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { queryClient } from "queries";
@@ -35,6 +35,9 @@ import { modKeyString } from "trutil";
 import { ColorSchemeToggle, FontSizeToggle, ShowVersion } from "./miscbuttons";
 import { AppSettingsModal } from "./modals/settings";
 import { ToolbarButton } from "./toolbar";
+import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
+import "css/custom.css";
 
 const { appWindow, invoke, makeCreateTorrentView } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -45,7 +48,7 @@ interface PassEventData {
 
 function CreateTorrentButton() {
     const config = useContext(ConfigContext);
-    const { colorScheme } = useMantineColorScheme();
+    const colorScheme = useComputedColorScheme();
 
     useEffect(() => {
         const unlisten = appWindow.listen<PassEventData>("pass-from-window", ({ payload: data }) => {
@@ -83,7 +86,7 @@ function CreateTorrentButton() {
 export function App(props: React.PropsWithChildren) {
     return (
         <QueryClientProvider client={queryClient}>
-            <Notifications limit={5} style={{ bottom: "2.5rem" }} />
+            <Notifications limit={5}/>
             {props.children}
             <ReactQueryDevtools toggleButtonProps={{ style: { marginBottom: "2rem" } }} />
         </QueryClientProvider>
@@ -192,7 +195,7 @@ export default function TauriApp() {
                                     onClick={() => tabsRef.current?.openTab(s.name)}>{s.name}
                                 </Button>;
                             })}
-                            <Box sx={{ flexGrow: 1 }} />
+                            <Box style={{ flexGrow: 1 }} />
                             <Button onClick={serverConfigHandlers.open}>
                                 Configure servers
                             </Button>

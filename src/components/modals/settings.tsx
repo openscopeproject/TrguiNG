@@ -20,6 +20,8 @@ import {
     ActionIcon, Box, Button, Checkbox, Flex, Grid, Group, PasswordInput, SegmentedControl,
     Stack, Switch, Tabs, Text, Textarea, TextInput,
 } from "@mantine/core";
+import classes from "./settings.module.css";
+import clsx from "clsx";
 import type { ServerConfig, WindowCloseOption, WindowMinimizeOption } from "config";
 import { ConfigContext, WindowCloseOptions, WindowMinimizeOptions } from "config";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -54,8 +56,7 @@ interface ServerListPanelProps {
 function ServerListPanel({ form, current, setCurrent }: ServerListPanelProps) {
     return (
         <Stack>
-            <Box sx={(theme) => ({ border: "1px solid", borderColor: theme.colors.dark[3], flexGrow: 1 })}
-                mb="md" className="scrollable">
+            <Box mb="md" className={clsx("scrollable", classes.serverListContainer)}>
                 <div>
                     {form.values.servers.map((s, i) => {
                         let isDuplicate = false;
@@ -68,7 +69,7 @@ function ServerListPanel({ form, current, setCurrent }: ServerListPanelProps) {
                     })}
                 </div>
             </Box>
-            <Group position="apart" noWrap>
+            <Group justify="space-between" wrap="nowrap">
                 <ActionIcon variant="light"
                     onClick={() => {
                         form.insertListItem("servers", {
@@ -178,7 +179,9 @@ function ServerPanel(props: ServerPanelProps) {
                             setMappingsString(e.target.value);
                         }}
                         value={mappingsString}
-                        minRows={7}
+                        autosize
+                        minRows={8}
+                        maxRows={8}
                     />
                 </Grid.Col>
             </Grid>

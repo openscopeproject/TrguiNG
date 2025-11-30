@@ -145,7 +145,8 @@ function DownloadPanel({ form, session }: { form: UseFormReturnType<FormValues>,
             <Grid.Col span={2}>
                 <NumberInput
                     min={0}
-                    precision={2}
+                    decimalScale={2}
+                    fixedDecimalScale
                     step={0.05}
                     {...form.getInputProps("session.seedRatioLimit")}
                     disabled={session.seedRatioLimited !== true}
@@ -372,26 +373,41 @@ function NetworkPanel(
     );
 }
 
-function toTimeStr(time: string) {
-    const t = parseInt(time);
-    return String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0");
-}
+function TimeInput({ value, onChange, ...rest }: NumberInputProps) {
+    const [hours, minutes] = useMemo(() => {
+        const intVal = Number(value);
+        return [Math.floor(intVal / 60), intVal % 60];
+    }, [value]);
 
-function fromTimeStr(time: string) {
-    const parts = time.split(":");
-    if (parts.length !== 2) return "";
-    const h = parseInt(parts[0]);
-    const m = parseInt(parts[1]);
-    if (isNaN(h) || isNaN(m)) return "";
-    return `${h * 60 + m}`;
-}
+    const onHoursChange = useCallback((v: number | string) => {
+        const h = Number(v);
+        onChange?.(60 * h + minutes);
+    }, [minutes, onChange]);
+    const onMinutesChange = useCallback((v: number | string) => {
+        const m = Number(v);
+        onChange?.(60 * hours + m);
+    }, [hours, onChange]);
 
-function TimeInput(props: NumberInputProps) {
-    return <NumberInput
-        {...props}
-        parser={fromTimeStr}
-        formatter={toTimeStr}
-    />;
+    return (
+        <div style={{ display: "flex" }}>
+            <NumberInput
+                min={0}
+                max={23}
+                step={1}
+                value={hours}
+                onChange={onHoursChange}
+                {...rest}
+            />
+            <NumberInput
+                min={0}
+                max={59}
+                step={1}
+                value={minutes}
+                onChange={onMinutesChange}
+                {...rest}
+            />
+        </div>
+    );
 }
 
 const DaysOfTheWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
@@ -460,20 +476,16 @@ function BandwidthPanel({ form, session }: { form: UseFormReturnType<FormValues>
             <Grid.Col span={2}>From:</Grid.Col>
             <Grid.Col span={3}>
                 <TimeInput
-                    min={0}
-                    max={24 * 60 - 1}
                     {...form.getInputProps("session.alt-speed-time-begin")}
                     disabled={session["alt-speed-time-enabled"] !== true} />
             </Grid.Col>
-            <Grid.Col span={2}>to:</Grid.Col>
+            <Grid.Col span={1}>to:</Grid.Col>
             <Grid.Col span={3}>
                 <TimeInput
-                    min={0}
-                    max={24 * 60 - 1}
                     {...form.getInputProps("session.alt-speed-time-end")}
                     disabled={session["alt-speed-time-enabled"] !== true} />
             </Grid.Col>
-            <Grid.Col span={2}></Grid.Col>
+            <Grid.Col span={3}></Grid.Col>
             <Grid.Col span={2}>Days:</Grid.Col>
             <Grid.Col span={10}>
                 <Group>
@@ -642,7 +654,7 @@ export function DaemonSettingsModal(props: ModalState) {
             title="Server Settings"
         >
             <Box pos="relative">
-                <LoadingOverlay visible={fetchStatus === "fetching"} overlayBlur={2} />
+                <LoadingOverlay visible={fetchStatus === "fetching"} overlayProps={{ blur: 2 }} />
                 <Tabs defaultValue="polling" mih="33rem">
                     <Tabs.List>
                         <Tabs.Tab value="polling" p="lg">Polling</Tabs.Tab>
