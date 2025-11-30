@@ -18,7 +18,7 @@
 
 import type { SectionsVisibility } from "config";
 import React, { useCallback } from "react";
-import type { ContextMenuInfo, ContextMenuProps } from "./contextmenu";
+import type { ContextMenuInfo } from "./contextmenu";
 import { ContextMenu } from "./contextmenu";
 import type { DropResult } from "react-beautiful-dnd";
 import { DragDropContext, Draggable } from "react-beautiful-dnd";
@@ -36,7 +36,6 @@ function SectionsContextMenu<S extends string>(props: React.PropsWithChildren<{
     setSections: React.Dispatch<SectionsVisibility<S>>,
     contextMenuInfo: ContextMenuInfo,
     setContextMenuInfo: (i: ContextMenuInfo) => void,
-    contextMenuContainerRef?: ContextMenuProps["containerRef"],
     onSectionItemMouseEnter?: React.MouseEventHandler<HTMLDivElement>,
     closeOnClickOutside?: boolean,
 }>) {
@@ -60,7 +59,6 @@ function SectionsContextMenu<S extends string>(props: React.PropsWithChildren<{
             contextMenuInfo={props.contextMenuInfo}
             setContextMenuInfo={props.setContextMenuInfo}
             closeOnItemClick={false}
-            containerRef={props.contextMenuContainerRef}
             closeOnClickOutside={props.closeOnClickOutside}
         >
             <DragDropContext onDragEnd={onDragEnd}>
@@ -75,10 +73,10 @@ function SectionsContextMenu<S extends string>(props: React.PropsWithChildren<{
                                                 ref={provided.innerRef}
                                                 onMouseEnter={props.onSectionItemMouseEnter}
                                                 {...provided.draggableProps}
-                                                noWrap
+                                                wrap="nowrap"
                                             >
                                                 <Menu.Item
-                                                    icon={section.visible ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                                                    leftSection={section.visible ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
                                                     onClick={() => { onSectionMenuItemClick(index); }}
                                                 >
                                                     {section.section}

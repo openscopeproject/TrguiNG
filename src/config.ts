@@ -20,7 +20,7 @@ import React from "react";
 import type {
     SortingState, ColumnSizingState, VisibilityState, ColumnOrderState,
 } from "@tanstack/react-table";
-import type { ColorScheme, DefaultMantineColor } from "@mantine/core";
+import type { MantineColorScheme, DefaultMantineColor } from "@mantine/core";
 import type { PriorityNumberType } from "rpc/transmission";
 const { readConfigText, writeConfigText } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -153,7 +153,7 @@ interface Settings {
         fontSize: number,
     },
     interface: {
-        theme: ColorScheme | undefined,
+        theme: MantineColorScheme,
         tables: Record<TableName, TableSettings>,
         sashSizes: Record<SplitType, [number, number]>,
         filterSections: SectionsVisibility<FilterSectionName>,
@@ -264,7 +264,7 @@ const DefaultSettings: Settings = {
         fontSize: 0.9,
     },
     interface: {
-        theme: undefined,
+        theme: "auto",
         tables: Object.fromEntries(TableNames.map((table) => [table, {
             columns: [],
             columnVisibility: DefaultColumnVisibility[table] ?? {},
@@ -342,12 +342,13 @@ export class Config {
             const text = await readConfigText();
             merge(this.values, JSON.parse(text));
             const overrides = this.values.interface.styleOverrides;
+            const activeTheme = this.values.interface.theme === "auto" ? "light" : this.values.interface.theme;
             if (overrides.color !== undefined) {
-                overrides[this.values.interface.theme ?? "light"].color = overrides.color;
+                overrides[activeTheme].color = overrides.color;
                 overrides.color = undefined;
             }
             if (overrides.backgroundColor !== undefined) {
-                overrides[this.values.interface.theme ?? "light"].backgroundColor = overrides.backgroundColor;
+                overrides[activeTheme].backgroundColor = overrides.backgroundColor;
                 overrides.backgroundColor = undefined;
             }
             if (this.values.openTabs !== undefined) {
@@ -390,7 +391,7 @@ export class Config {
         return this.values.interface.theme;
     }
 
-    setTheme(value: ColorScheme) {
+    setTheme(value: MantineColorScheme) {
         this.values.interface.theme = value;
     }
 

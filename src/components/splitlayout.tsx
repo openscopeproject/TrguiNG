@@ -21,6 +21,7 @@ import type { SplitType } from "config";
 import { ConfigContext } from "config";
 import React, { useCallback, useContext } from "react";
 import Split from "react-split";
+import classes from "./splitlayout.module.css";
 
 interface SplitLayoutProps {
     mainSplit: SplitType,
@@ -56,12 +57,7 @@ export function SplitLayout({ mainSplit, left, right, bottom }: SplitLayoutProps
         </Split>;
 
     return (
-        <Box sx={(theme) => ({
-            flexGrow: 1,
-            "& .gutter": {
-                backgroundColor: theme.colorScheme === "dark" ? theme.colors.gray[7] : theme.colors.gray[3],
-            },
-        })} >
+        <Box className={classes.splitLayoutContainer}>
             {bottom === undefined
                 ? top
                 : <Split

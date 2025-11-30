@@ -1,0 +1,6 @@
+.limitedNamesText {
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background-color: rgba(133, 133, 133, 0.1);
+}

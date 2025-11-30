@@ -17,21 +17,20 @@
  */
 
 import React, { useCallback, useEffect, useState } from "react";
-import type { ColorScheme } from "@mantine/core";
-import { Box, Checkbox, Grid, HoverCard, MultiSelect, NativeSelect, NumberInput, Tabs, Text, Textarea, useMantineTheme } from "@mantine/core";
+import type { MantineColorScheme } from "@mantine/core";
+import { Box, Checkbox, Grid, HoverCard, NativeSelect, NumberInput, Tabs, TagsInput, Text, Textarea, useComputedColorScheme, useMantineTheme } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import ColorChooser from "components/colorchooser";
 import { useGlobalStyleOverrides } from "themehooks";
 import { AddTorrentPriorityOptions, AddTorrentStartOptions, DateFormatOptions, DeleteTorrentDataOptions, TimeFormatOptions } from "config";
 import type { AddTorrentPriorityOption, AddTorrentStartOption, ColorSetting, DateFormatOption, DeleteTorrentDataOption, StyleOverrides, TimeFormatOption } from "config";
 import { ColorSchemeToggle } from "components/miscbuttons";
-import { Label } from "./common";
 import * as Icon from "react-bootstrap-icons";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface InterfaceFormValues {
     interface: {
-        theme?: ColorScheme,
+        theme?: MantineColorScheme,
         styleOverrides: StyleOverrides,
         skipAddDialog: boolean,
         addTorrentStart: AddTorrentStartOption,
@@ -53,6 +52,7 @@ export interface InterfaceFormValues {
 
 export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { form: UseFormReturnType<V> }) {
     const theme = useMantineTheme();
+    const colorScheme = useComputedColorScheme();
     const { style, setStyle } = useGlobalStyleOverrides();
     const [systemFonts, setSystemFonts] = useState<string[]>(["Default"]);
 
@@ -70,22 +70,22 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
     const { setFieldValue, setFieldError, clearFieldError } = props.form as unknown as UseFormReturnType<InterfaceFormValues>;
 
     useEffect(() => {
-        setFieldValue("interface.theme", theme.colorScheme);
-    }, [setFieldValue, theme]);
+        setFieldValue("interface.theme", colorScheme);
+    }, [setFieldValue, colorScheme]);
 
     const setTextColor = useCallback((color: ColorSetting | undefined) => {
         const newStyle = { dark: { ...style.dark }, light: { ...style.light }, font: style.font };
-        newStyle[theme.colorScheme].color = color;
+        newStyle[colorScheme].color = color;
         setStyle(newStyle);
         setFieldValue("interface.styleOverrides", newStyle);
-    }, [style, theme.colorScheme, setStyle, setFieldValue]);
+    }, [style, colorScheme, setStyle, setFieldValue]);
 
     const setBgColor = useCallback((backgroundColor: ColorSetting | undefined) => {
         const newStyle = { dark: { ...style.dark }, light: { ...style.light }, font: style.font };
-        newStyle[theme.colorScheme].backgroundColor = backgroundColor;
+        newStyle[colorScheme].backgroundColor = backgroundColor;
         setStyle(newStyle);
         setFieldValue("interface.styleOverrides", newStyle);
-    }, [style, theme.colorScheme, setStyle, setFieldValue]);
+    }, [style, colorScheme, setStyle, setFieldValue]);
 
     const setFont = useCallback((font: string) => {
         const newStyle = {
@@ -97,11 +97,11 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
         setFieldValue("interface.styleOverrides", newStyle);
     }, [style, setStyle, setFieldValue]);
 
-    const defaultColor = theme.colorScheme === "dark"
+    const defaultColor = colorScheme === "dark"
         ? { color: "dark", shade: 0, computed: theme.colors.dark[0] }
         : { color: "dark", shade: 9, computed: theme.colors.dark[9] };
 
-    const defaultBg = theme.colorScheme === "dark"
+    const defaultBg = colorScheme === "dark"
         ? { color: "dark", shade: 7, computed: theme.colors.dark[7] }
         : { color: "gray", shade: 0, computed: theme.colors.gray[0] };
 
@@ -145,13 +145,13 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                         Text color
                     </Grid.Col>
                     <Grid.Col span={6}>
-                        <ColorChooser value={style[theme.colorScheme].color ?? defaultColor} onChange={setTextColor} />
+                        <ColorChooser value={style[colorScheme].color ?? defaultColor} onChange={setTextColor} />
                     </Grid.Col>
                     <Grid.Col span={6}>
                         Background
                     </Grid.Col>
                     <Grid.Col span={6}>
-                        <ColorChooser value={style[theme.colorScheme].backgroundColor ?? defaultBg} onChange={setBgColor} />
+                        <ColorChooser value={style[colorScheme].backgroundColor ?? defaultBg} onChange={setBgColor} />
                     </Grid.Col>
                     <Grid.Col span={6}>Progress bars</Grid.Col>
                     <Grid.Col span={3}>
@@ -169,12 +169,12 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                     <Grid.Col span={6}>
                         <NativeSelect data={[...DateFormatOptions]} disabled={!props.form.values.interface.useCustomDateTimeFormat}
                             value={props.form.values.interface.dateFormat}
-                            onChange={(e) => { setFieldValue("interface.dateFormat", e.target.value); }} />
+                            onChange={(e) => { setFieldValue("interface.dateFormat", e.target.value as DateFormatOption); }} />
                     </Grid.Col>
                     <Grid.Col span={6}>
                         <NativeSelect data={[...TimeFormatOptions]} disabled={!props.form.values.interface.useCustomDateTimeFormat}
                             value={props.form.values.interface.timeFormat}
-                            onChange={(e) => { setFieldValue("interface.timeFormat", e.target.value); }} />
+                            onChange={(e) => { setFieldValue("interface.timeFormat", e.target.value as TimeFormatOption); }} />
                     </Grid.Col>
                 </Grid>
             </Tabs.Panel>
@@ -188,17 +188,17 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                         New torrent start
                     </Grid.Col>
                     <Grid.Col span={6}>
-                        <NativeSelect data={AddTorrentStartOptions as unknown as string[]}
+                        <NativeSelect data={AddTorrentStartOptions}
                             value={props.form.values.interface.addTorrentStart}
-                            onChange={(e) => { setFieldValue("interface.addTorrentStart", e.target.value); }} />
+                            onChange={(e) => { setFieldValue("interface.addTorrentStart", e.target.value as AddTorrentStartOption); }} />
                     </Grid.Col>
                     <Grid.Col span={6}>
                         New torrent priority
                     </Grid.Col>
                     <Grid.Col span={6}>
-                        <NativeSelect data={AddTorrentPriorityOptions as unknown as string[]}
+                        <NativeSelect data={AddTorrentPriorityOptions}
                             value={props.form.values.interface.addTorrentPriority}
-                            onChange={(e) => { setFieldValue("interface.addTorrentPriority", e.target.value); }} />
+                            onChange={(e) => { setFieldValue("interface.addTorrentPriority", e.target.value as AddTorrentPriorityOption); }} />
                     </Grid.Col>
                     <Grid.Col>
                         <Checkbox label="Sort download directories history alphabetically" my="lg"
@@ -212,7 +212,7 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                             {...props.form.getInputProps("interface.numLastSaveDirs")} />
                     </Grid.Col>
                     <Grid.Col>
-                        <Textarea minRows={6}
+                        <Textarea minRows={6} maxRows={6} autosize
                             label="Preconfigured directories (one per line)"
                             value={props.form.values.interface.preconfiguredDirs.join("\n")}
                             onChange={(e) => {
@@ -222,7 +222,7 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                             }} />
                     </Grid.Col>
                     <Grid.Col>
-                        <MultiSelect
+                        <TagsInput
                             data={props.form.values.interface.preconfiguredLabels}
                             value={props.form.values.interface.preconfiguredLabels}
                             onChange={setPreconfiguredLabels}
@@ -240,15 +240,6 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                                     </HoverCard.Dropdown>
                                 </HoverCard>
                             </Box>}
-                            withinPortal
-                            searchable
-                            creatable
-                            getCreateLabel={(query) => `+ Add ${query}`}
-                            onCreate={(query) => {
-                                setPreconfiguredLabels([...props.form.values.interface.preconfiguredLabels, query]);
-                                return query;
-                            }}
-                            valueComponent={Label}
                         />
                     </Grid.Col>
                 </Grid>
@@ -259,12 +250,12 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                         Remove torrent dialog delete data option
                     </Grid.Col>
                     <Grid.Col span={4}>
-                        <NativeSelect data={DeleteTorrentDataOptions as unknown as string[]}
+                        <NativeSelect data={DeleteTorrentDataOptions}
                             value={props.form.values.interface.deleteTorrentData}
-                            onChange={(e) => { setFieldValue("interface.deleteTorrentData", e.target.value); }} />
+                            onChange={(e) => { setFieldValue("interface.deleteTorrentData", e.target.value as DeleteTorrentDataOption); }} />
                     </Grid.Col>
                     <Grid.Col>
-                        <MultiSelect
+                        <TagsInput
                             data={props.form.values.interface.ignoredTrackerPrefixes}
                             value={props.form.values.interface.ignoredTrackerPrefixes}
                             onChange={setIgnoredTrackerPrefixes}
@@ -284,20 +275,11 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                                     </HoverCard.Dropdown>
                                 </HoverCard>
                             </Box>}
-                            withinPortal
-                            searchable
-                            creatable
                             error={props.form.errors["interface.ignoredTrackerPrefixes"]}
-                            getCreateLabel={(query) => `+ Add ${query}`}
-                            onCreate={(query) => {
-                                setIgnoredTrackerPrefixes([...props.form.values.interface.ignoredTrackerPrefixes, query]);
-                                return query;
-                            }}
-                            valueComponent={Label}
                         />
                     </Grid.Col>
                     <Grid.Col>
-                        <Textarea minRows={6}
+                        <Textarea minRows={10} maxRows={10} autosize
                             label="Default tracker list"
                             value={props.form.values.interface.defaultTrackers.join("\n")}
                             onChange={(e) => {

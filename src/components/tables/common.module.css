@@ -1,0 +1,48 @@
+.actionIcon {
+    flex-shrink: 0;
+}
+
+:global(.selected) .actionIcon {
+    color: var(--mantine-color-gray-2);
+}
+
+@media (hover: hover) {
+    .actionIcon:hover {
+        color: light-dark(
+            var(--mantine-color-dark-8),
+            var(--mantine-color-white)
+        );
+        background-color: rgba(127, 127, 127, 0.15);
+    }
+
+    :global(.selected) .actionIcon:hover {
+        color: var(--mantine-color-white);
+    }
+}
+
+.tableHeaderContainer {
+    background-color: light-dark(
+        var(--mantine-color-gray-2),
+        var(--mantine-color-dark-5)
+    );
+    flex-shrink: 0;
+    position: 'relative';
+}
+
+.editableNameContainer {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.editableNameRoot {
+    flex-grow: 1;
+    height: 100%;
+}
+
+.editableNameInput {
+    height: 1.5rem;
+    min-height: 1.5rem;
+    line-height: 1.3rem;
+}

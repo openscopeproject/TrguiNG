@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { Styles, TextInputStylesNames } from "@mantine/core";
 import { Box, Button, Checkbox, Flex, Group, Slider, Text, TextInput, Textarea, useMantineColorScheme } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { appVersion } from "./modals/version";
 import { ProgressBar } from "./progressbar";
 import { bytesToHumanReadableStr } from "trutil";
+import classes from "./createtorrentform.module.css";
 const { appWindow, invoke, dialogOpen, dialogSave } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface FormValues {
@@ -37,18 +37,10 @@ interface FormValues {
     version: string,
 }
 
-const textAreaStyles: Styles<TextInputStylesNames, Record<string, unknown>> = {
-    root: {
-        flexGrow: 1,
-        display: "flex",
-        flexDirection: "column",
-    },
-    wrapper: {
-        flexGrow: 1,
-    },
-    input: {
-        height: "100%",
-    },
+const textAreaClassNames = {
+    root: classes.textAreaRoot,
+    wrapper: classes.textAreaWrapper,
+    input: classes.textAreaInput,
 };
 
 const byteLabel = (b: number) => {
@@ -85,7 +77,7 @@ interface InfobarState {
 }
 
 export default function CreateTorrentForm() {
-    const { toggleColorScheme } = useMantineColorScheme();
+    const { setColorScheme } = useMantineColorScheme();
     const [defaultTrackers, setDefaultTrackers] = useState<string[]>([]);
     const [pieces, setPieces] = useState({
         done: 0,
@@ -114,11 +106,11 @@ export default function CreateTorrentForm() {
     useEffect(() => {
         void appWindow.once<PassEventData>("pass-from-window", ({ payload: data }) => {
             const { colorScheme, defaultTrackers } = JSON.parse(data.payload);
-            toggleColorScheme(colorScheme);
+            setColorScheme(colorScheme);
             setDefaultTrackers(defaultTrackers);
         });
         void invoke("pass_to_window", { to: "main", payload: "ready" });
-    }, [toggleColorScheme]);
+    }, [setColorScheme]);
 
     const { setFieldValue } = form;
 
@@ -245,12 +237,12 @@ export default function CreateTorrentForm() {
     const browseDisabled = ["calculating", "generating"].includes(state.state);
 
     return (
-        <Flex direction="column" h="100%" w="100%" p="lg" gap="lg">
+        <Flex direction="column" h="100%" w="100%" p="lg" gap="md">
             <Group align="flex-end">
                 <TextInput
                     label={"Select file or directory"}
                     {...form.getInputProps("path")}
-                    styles={{ root: { flexGrow: 1 } }}
+                    style={{ flexGrow: 1 }}
                     readOnly
                     autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
                 <Button onClick={onBrowseFile} disabled={browseDisabled}>File</Button>
@@ -263,6 +255,7 @@ export default function CreateTorrentForm() {
             <Text fz="sm">Piece size</Text>
             <Slider
                 pt="2.5rem"
+                mt="-0.5rem"
                 pb="0.5rem"
                 px="1rem"
                 scale={(v) => 2 ** v}
@@ -284,21 +277,21 @@ export default function CreateTorrentForm() {
                 label="Private torrent"
                 {...form.getInputProps("private", { type: "checkbox" })} />
             <Group align="flex-end">
-                <Box sx={{ flexGrow: 1 }}>Tracker list, one per line, empty line between tiers</Box>
+                <Box style={{ flexGrow: 1 }}>Tracker list, one per line, empty line between tiers</Box>
                 <Button onClick={addDefaultTrackers}>Add default list</Button>
             </Group>
             <Textarea
-                styles={textAreaStyles}
+                classNames={textAreaClassNames}
                 value={form.values.announceList.join("\n")}
                 onChange={(e) => { form.setFieldValue("announceList", e.target.value.split("\n")); }} />
             <Textarea
-                styles={textAreaStyles}
+                classNames={textAreaClassNames}
                 label="Web seed URLs, one per line"
                 value={form.values.urlList.join("\n")}
                 onChange={(e) => { form.setFieldValue("urlList", e.target.value.split("\n")); }} />
             <Box h="1.5rem">
                 {state.state === "error" &&
-                    <Text color="red">{state.error}</Text>}
+                    <Text c="red">{state.error}</Text>}
                 {state.state === "calculating" &&
                     <Text>Calculating sizes...</Text>}
                 {state.state === "sizes" &&
@@ -316,7 +309,7 @@ export default function CreateTorrentForm() {
                 {state.state === "done" &&
                     <Text>{`Torrent infohash: ${state.hash}`}</Text>}
             </Box>
-            <Group position="center">
+            <Group justify="center">
                 {(["idle", "error", "calculating", "sizes"].includes(state.state)) &&
                     <Button miw="10rem" onClick={onGenerate} disabled={state.state === "calculating"}>Generate</Button>}
                 {state.state === "generating" &&

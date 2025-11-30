@@ -1,0 +1,32 @@
+.selected .mantine-Checkbox-input {
+    box-shadow: inset 0 0 3px 0 white;
+}
+
+.mantine-Modal-header {
+    padding-right: 0.5rem;
+}
+
+.mantine-Table-table td {
+    padding: 0 0.5rem;
+}
+
+.mantine-Notifications-root {
+    &[data-position='bottom-right'] {
+        bottom: 2.5rem;
+    }
+}
+
+.mantine-TagsInput-pill {
+    background-color: var(--mantine-color-blue-7);
+    color: var(--mantine-color-white);
+    --pill-fz: var(--pill-fz-md) !important;
+}
+
+.mantine-ColorSwatch-root {
+    border: 1px solid
+        light-dark(var(--mantine-color-dark-6), var(--mantine-color-gray-7));
+}
+
+.mantine-Modal-root {
+    --modal-size-xl: calc(44rem * var(--mantine-scale)) !important;
+}

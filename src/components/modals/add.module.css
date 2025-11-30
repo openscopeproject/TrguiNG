@@ -1,0 +1,8 @@
+.flexGrow {
+    flex-grow: 1;
+}
+
+.fileTreeContainer {
+    position: relative;
+    flex-grow: 1;
+}

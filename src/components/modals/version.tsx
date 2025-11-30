@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Anchor, Box, Divider, Flex, Grid, Text, Title } from "@mantine/core";
+import { Anchor, Box, Divider, Flex, Grid, Text } from "@mantine/core";
 import type { ModalState } from "./common";
 import { HkModal } from "./common";
 import appVersionJson from "build/version.json";
@@ -50,8 +50,9 @@ export function VersionModal({ opened, close }: ModalState) {
     }, [opened, frontend]);
 
     return (
-        <HkModal opened={opened} onClose={close} size="lg" centered p="lg">
-            <Title order={2} mb="lg">TrguiNG</Title>
+        <HkModal opened={opened} onClose={close} size="lg" centered p="lg"
+            styles={{ header: { padding: "1em", alignItems: "start" } }}
+            title={<Text size="2em" fw="bold">TrguiNG</Text>}>
             <Text>
                 Remote interface for&nbsp;
                 <Anchor href="https://transmissionbt.com/" target="_blank" rel="noreferrer">Transmission</Anchor>
@@ -73,7 +74,7 @@ export function VersionModal({ opened, close }: ModalState) {
                 </Grid>
             </Flex>
             <Divider px="sm" my="xl" />
-            <Text align="center">
+            <Text ta="center">
                 powered by
             </Text>
             <Flex justify="center">

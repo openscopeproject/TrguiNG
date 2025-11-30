@@ -23,7 +23,7 @@ import * as Icon from "react-bootstrap-icons";
 import * as StatusIcons from "./statusicons";
 import type { FilterSectionName, SectionsVisibility, StatusFilterName } from "../config";
 import { ConfigContext, ServerConfigContext } from "../config";
-import { Box, Button, Divider, Flex, Menu, Portal } from "@mantine/core";
+import { Box, Divider, Flex, Menu } from "@mantine/core";
 import { eventHasModKey, useForceRender } from "trutil";
 import { useContextMenu } from "./contextmenu";
 import { MemoSectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
@@ -441,23 +441,6 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
     const [info, setInfo, handler] = useContextMenu();
 
     const statusFiltersItemRef = useRef<HTMLButtonElement>(null);
-    const contextMenuContainerRef = useRef<HTMLDivElement | null>(null) as React.MutableRefObject<HTMLDivElement>;
-    const [statusFiltersSubmenuOpened, setStatusFiltersSubmenuOpened] = useState(false);
-    const [statusFiltersItemRect, setStatusFiltersItemRect] = useState<DOMRect>(() => new DOMRect(0, -1000, 0, 0));
-
-    const openStatusFiltersSubmenu = useCallback(() => {
-        if (contextMenuContainerRef.current == null || statusFiltersItemRef.current == null) return;
-        const dropdownRect = contextMenuContainerRef.current.querySelector(".mantine-Menu-dropdown")?.getBoundingClientRect();
-        if (dropdownRect == null) return;
-        const itemRect = statusFiltersItemRef.current.getBoundingClientRect();
-        setStatusFiltersItemRect(new DOMRect(dropdownRect.x, itemRect.y, dropdownRect.width, itemRect.height));
-        setStatusFiltersSubmenuOpened(true);
-    }, []);
-
-    const closeStatusFiltersSubmenu = useCallback(() => {
-        setStatusFiltersSubmenuOpened(false);
-        setStatusFiltersItemRect(new DOMRect(0, -1000, 0, 0));
-    }, []);
 
     const onStatusFiltersSubmenuItemClick = useCallback((index: number) => {
         const filterName = statusFilters[index].name;
@@ -482,59 +465,9 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         setCurrentFilters({ verb: "set", filter: { id: "", filter: DefaultFilter } });
     }, [recursiveDirectories, setCurrentFilters]);
 
-    return (<>
-        <Menu
-            openDelay={100}
-            closeDelay={400}
-            opened={statusFiltersSubmenuOpened}
-            onChange={setStatusFiltersSubmenuOpened}
-            middlewares={{ shift: true, flip: true }}
-            position="right-start"
-            zIndex={301}
-            offset={0}
-            closeOnItemClick={false}
-        >
-            <Portal>
-                <Box
-                    onMouseDown={closeStatusFiltersSubmenu}
-                    sx={{
-                        position: "absolute",
-                        left: 0,
-                        top: 0,
-                        height: "100vh",
-                        width: "100vw",
-                        zIndex: statusFiltersSubmenuOpened ? 100 : -1,
-                    }} />
-                <Menu.Target>
-                    <Button unstyled
-                        sx={{
-                            position: "absolute",
-                            border: 0,
-                            padding: 0,
-                            background: "transparent",
-                        }}
-                        style={{
-                            left: statusFiltersItemRect.x,
-                            top: statusFiltersItemRect.y,
-                            width: statusFiltersItemRect.width,
-                            height: statusFiltersItemRect.height,
-                        }} />
-                </Menu.Target>
-                <Menu.Dropdown miw="10rem">
-                    {statusFilters.map((f, index) =>
-                        f.required !== true &&
-                        <Menu.Item
-                            key={f.name}
-                            onClick={() => { onStatusFiltersSubmenuItemClick(index); }}
-                            icon={statusFiltersVisibility[f.name] ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
-                        >
-                            {f.name}
-                        </Menu.Item>)}
-                </Menu.Dropdown>
-            </Portal>
-        </Menu>
+    return (
         <Flex direction="column" onContextMenu={handler}
-            sx={{
+            style={{
                 width: "100%",
                 minHeight: "100%",
                 whiteSpace: "nowrap",
@@ -544,32 +477,44 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
             <MemoSectionsContextMenu
                 sections={sections} setSections={setSections}
                 contextMenuInfo={info} setContextMenuInfo={setInfo}
-                contextMenuContainerRef={contextMenuContainerRef}
-                onSectionItemMouseEnter={closeStatusFiltersSubmenu}
-                closeOnClickOutside={!statusFiltersSubmenuOpened}
+                closeOnClickOutside
             >
                 <Menu.Divider />
-                <Menu.Item
-                    ref={statusFiltersItemRef}
-                    icon={<Box miw="1rem" />}
-                    rightSection={<Icon.ChevronRight size="12" style={{ marginRight: "-0.4rem" }} />}
-                    onMouseEnter={openStatusFiltersSubmenu}
-                    onMouseDown={(e) => { e.stopPropagation(); }}
-                >
-                    Status filters
-                </Menu.Item>
+                <Menu.Sub openDelay={120} closeDelay={150}>
+                    <Menu.Sub.Target>
+                        <Menu.Sub.Item
+                            ref={statusFiltersItemRef}
+                            leftSection={<Box miw="1rem" />}
+                            rightSection={<Icon.ChevronRight size="12" style={{ marginRight: "-0.4rem" }} />}
+                            onMouseDown={(e) => { e.stopPropagation(); }}
+                        >
+                            Status filters
+                        </Menu.Sub.Item>
+                    </Menu.Sub.Target>
+
+                    <Menu.Sub.Dropdown>
+                        {statusFilters.map((f, index) =>
+                            f.required !== true &&
+                            <Menu.Item
+                                key={f.name}
+                                onClick={() => { onStatusFiltersSubmenuItemClick(index); }}
+                                leftSection={statusFiltersVisibility[f.name] ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                            >
+                                {f.name}
+                            </Menu.Item>)}
+                    </Menu.Sub.Dropdown>
+                </Menu.Sub>
+
                 <Menu.Divider />
                 <Menu.Item
-                    icon={compactDirectories ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
-                    onMouseEnter={closeStatusFiltersSubmenu}
-                    onMouseDown={onCompactDirectoriesClick}
+                    leftSection={compactDirectories ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                    onClick={onCompactDirectoriesClick}
                 >
                     Compact Directories
                 </Menu.Item>
                 <Menu.Item
-                    icon={recursiveDirectories ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
-                    onMouseEnter={closeStatusFiltersSubmenu}
-                    onMouseDown={onRecursiveDirectoriesClick}
+                    leftSection={recursiveDirectories ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                    onClick={onRecursiveDirectoriesClick}
                 >
                     Recursive Directories
                 </Menu.Item>
@@ -607,5 +552,5 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                         currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} />)}
             </div>}
         </Flex>
-    </>);
+    );
 });

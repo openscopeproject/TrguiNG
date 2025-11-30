@@ -16,9 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { MantineTheme } from "@mantine/core";
-import { ActionIcon, Button, Flex, Kbd, Menu, TextInput, useMantineTheme } from "@mantine/core";
+import { ActionIcon, Button, Flex, Kbd, Menu, TextInput, useComputedColorScheme } from "@mantine/core";
 import debounce from "lodash-es/debounce";
+import classes from "./toolbar.module.css";
+import clsx from "clsx";
 import React, { forwardRef, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import * as Icon from "react-bootstrap-icons";
 import PriorityIcon from "svg/icons/priority.svg";
@@ -45,18 +46,8 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(f
     { children, depressed, ...other }: ToolbarButtonProps, ref,
 ) {
     return (
-        <Button variant="light" compact h="2.5rem" {...other} ref={ref}
-            styles={(theme: MantineTheme) => ({
-                root: {
-                    backgroundColor: theme.colorScheme === "dark"
-                        ? theme.colors.gray[depressed === true ? 8 : 9]
-                        : theme.colors.gray[depressed === true ? 3 : 1],
-                    transform: depressed === true ? "scale(-1, 1)" : "none",
-                    color: theme.colorScheme === "dark"
-                        ? theme.colors.gray[3]
-                        : theme.colors.gray[8],
-                },
-            })}
+        <Button variant="light" size="compact-sm" h="2.5rem" {...other} ref={ref}
+            className={clsx(classes.toolbarButton, { [classes.toolbarButtonDepressed]: depressed })}
         >
             {children}
         </Button>
@@ -201,7 +192,6 @@ function Toolbar(props: ToolbarProps) {
         props.setSearchTerms([]);
     }, [props]);
 
-    const theme = useMantineTheme();
     const handlers = useButtonHandlers(props, altSpeedMode, setAltSpeedMode);
 
     const hk = useHotkeysContext();
@@ -242,18 +232,20 @@ function Toolbar(props: ToolbarProps) {
         }
     }, [config]);
 
+    const colorScheme = useComputedColorScheme();
+
     return (
         <Flex w="100%" align="stretch">
             <Button.Group mx="sm">
                 <ToolbarButton
                     title="Add torrent file"
                     onClick={() => { props.modals.current?.addTorrent(); }}>
-                    <Icon.FileArrowDownFill size="1.5rem" color={theme.colors.green[8]} />
+                    <Icon.FileArrowDownFill size="1.5rem" color="var(--mantine-color-green-8)" />
                 </ToolbarButton>
                 <ToolbarButton
                     title="Add magnet link"
                     onClick={() => { props.modals.current?.addMagnet(); }}>
-                    <Icon.MagnetFill size="1.5rem" color={theme.colors.green[8]} />
+                    <Icon.MagnetFill size="1.5rem" color="var(--mantine-color-green-8)" />
                 </ToolbarButton>
             </Button.Group>
 
@@ -261,17 +253,17 @@ function Toolbar(props: ToolbarProps) {
                 <ToolbarButton
                     title="Start torrent (F3)"
                     onClick={handlers.start} >
-                    <Icon.PlayCircleFill size="1.5rem" color={theme.colors.blue[6]} />
+                    <Icon.PlayCircleFill size="1.5rem" color="var(--mantine-color-blue-6)" />
                 </ToolbarButton>
                 <ToolbarButton
                     title="Pause torrent (F4)"
                     onClick={handlers.pause} >
-                    <Icon.PauseCircleFill size="1.5rem" color={theme.colors.blue[6]} />
+                    <Icon.PauseCircleFill size="1.5rem" color="var(--mantine-color-blue-6)" />
                 </ToolbarButton>
                 <ToolbarButton
                     title="Remove torrent (del)"
                     onClick={handlers.remove}>
-                    <Icon.XCircleFill size="1.5rem" color={theme.colors.red[6]} />
+                    <Icon.XCircleFill size="1.5rem" color="var(--mantine-color-red-6)" />
                 </ToolbarButton>
             </Button.Group>
 
@@ -279,12 +271,12 @@ function Toolbar(props: ToolbarProps) {
                 <ToolbarButton
                     title="Move up in queue"
                     onClick={handlers.queueUp} >
-                    <Icon.ArrowUpCircleFill size="1.5rem" color={theme.colors.green[8]} />
+                    <Icon.ArrowUpCircleFill size="1.5rem" color="var(--mantine-color-green-8)" />
                 </ToolbarButton>
                 <ToolbarButton
                     title="Move down in queue"
                     onClick={handlers.queueDown} >
-                    <Icon.ArrowDownCircleFill size="1.5rem" color={theme.colors.green[8]} />
+                    <Icon.ArrowDownCircleFill size="1.5rem" color="var(--mantine-color-green-8)" />
                 </ToolbarButton>
             </Button.Group>
 
@@ -292,32 +284,34 @@ function Toolbar(props: ToolbarProps) {
                 <ToolbarButton
                     title="Move torrent (F6)"
                     onClick={handlers.move}>
-                    <Icon.FolderFill size="1.5rem" color={theme.colors.yellow[4]} stroke={theme.colors.yellow[5]} />
+                    <Icon.FolderFill size="1.5rem" color="var(--mantine-color-yellow-4)" stroke="var(--mantine-color-yellow-5)" />
                 </ToolbarButton>
                 <ToolbarButton
                     title="Set labels (F7)"
                     onClick={handlers.setLabels} >
-                    <Icon.TagsFill size="1.5rem" color={theme.colors.blue[6]} />
+                    <Icon.TagsFill size="1.5rem" color="var(--mantine-color-blue-6)" />
                 </ToolbarButton>
 
                 <Menu shadow="md" width="10rem" withinPortal returnFocus middlewares={{ shift: true, flip: false }}>
                     <Menu.Target>
                         <ToolbarButton title="Set priority">
                             <PriorityIcon width="1.5rem" height="1.5rem"
-                                fill={theme.colors.yellow[theme.colorScheme === "dark" ? 4 : 6]} />
+                                fill={colorScheme === "light"
+                                    ? "var(--mantine-color-yellow-6)"
+                                    : "var(--mantine-color-yellow-4)"} />
                         </ToolbarButton>
                     </Menu.Target>
 
                     <Menu.Dropdown>
-                        <Menu.Item icon={<Icon.CircleFill color={theme.colors.orange[7]} />}
+                        <Menu.Item leftSection={<Icon.CircleFill color="var(--mantine-color-orange-7)" />}
                             onClick={handlers.setPriorityHigh} rightSection={<Kbd>{`${modKeyString()} H`}</Kbd>}>
                             High
                         </Menu.Item>
-                        <Menu.Item icon={<Icon.CircleFill color={theme.colors.teal[9]} />}
+                        <Menu.Item leftSection={<Icon.CircleFill color="var(--mantine-color-teal-9)" />}
                             onClick={handlers.setPriorityNormal} rightSection={<Kbd>{`${modKeyString()} N`}</Kbd>}>
                             Normal
                         </Menu.Item>
-                        <Menu.Item icon={<Icon.CircleFill color={theme.colors.yellow[6]} />}
+                        <Menu.Item leftSection={<Icon.CircleFill color="var(--mantine-color-yellow-6)" />}
                             onClick={handlers.setPriorityLow} rightSection={<Kbd>{`${modKeyString()} L`}</Kbd>}>
                             Low
                         </Menu.Item>
@@ -334,10 +328,10 @@ function Toolbar(props: ToolbarProps) {
             </ToolbarButton>
 
             <TextInput mx="sm" ref={searchRef}
-                icon={<Icon.Search size="1rem" />}
+                leftSection={<Icon.Search size="1rem" />}
                 placeholder={searchPlaceholder}
-                rightSection={<ActionIcon onClick={onSearchClear} title="Clear">
-                    <Icon.XLg size="1rem" color={theme.colors.red[6]} />
+                rightSection={<ActionIcon variant="subtle" onClick={onSearchClear} title="Clear">
+                    <Icon.XLg size="1rem" color="var(--mantine-color-red-6)" />
                 </ActionIcon>}
                 onInput={onSearchInput}
                 onFocus={() => setSearchPlaceholder("search by name or path:somepath or label:somelabel")}

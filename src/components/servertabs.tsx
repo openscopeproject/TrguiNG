@@ -23,6 +23,7 @@ import * as Icon from "react-bootstrap-icons";
 import type { ClientManager } from "../clientmanager";
 import { ActionIcon, Menu, Tabs } from "@mantine/core";
 import { useHotkeys } from "@mantine/hooks";
+import classes from "./servertabs.module.css";
 
 const { appWindow, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -157,31 +158,11 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
             variant="outline"
             radius="lg"
             value={String(tabs.currentTab)}
-            onTabChange={(value) => { switchTab(Number(value)); }}
-            styles={(theme) => ({
-                tab: {
-                    flexBasis: "12rem",
-                    flexShrink: 1,
-                    borderColor: theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
-                    "&[data-active]": {
-                        borderColor: theme.colorScheme === "dark" ? theme.colors.dark[3] : theme.colors.gray[5],
-                    },
-                },
-                tabLabel: {
-                    marginInline: "auto",
-                    color: theme.colors.gray[6],
-                    "[data-active] &": {
-                        color: theme.colorScheme === "dark" ? theme.colors.gray[3] : theme.colors.dark[8],
-                    },
-                },
-                tabRightSection: {
-                    padding: "0.2rem",
-                },
-                tabsList: {
-                    flexWrap: "nowrap",
-                    display: props.visible ? undefined : "none",
-                },
-            })}
+            onChange={(value) => { switchTab(Number(value)); }}
+            classNames={classes}
+            style={ props.visible ? undefined : {
+                display: "none",
+            }}
         >
             <Tabs.List px="sm">
                 {tabs.openTabs.map((name, index) =>

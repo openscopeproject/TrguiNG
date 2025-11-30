@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import "../css/custom.css";
 import { Box, Flex, Loader, Overlay, Title } from "@mantine/core";
+import classes from "./server.module.css";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { SplitType } from "../config";
 import { ConfigContext, ServerConfigContext } from "../config";
@@ -199,23 +199,23 @@ export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: Serv
     }, [config, showFiltersPanel, showDetailsPanel, mainSplit]);
 
     return <ServerContext data={serverData} selected={selectedTorrents} rpc={rpcVersion}>
-        <Flex direction="column" w="100%" h="100%" sx={{ position: "relative" }}>
+        <Flex direction="column" className={classes.serverContainer}>
             <MemoizedServerModals ref={modals} {...{ runUpdates, tabsRef }} serverName={serverConfig.name} />
             {overlayVisible && <Overlay blur={10}>
                 <Flex align="center" justify="center" h="100%" direction="column" gap="xl">
                     {sessionIsLoading
                         ? <Loader size="xl" />
                         : sessionIsError
-                            ? <><Title color="red" order={1}>Failed to load session</Title>
-                                <Title color="red" order={3}>{(sessionError as Error).message}</Title></>
+                            ? <><Title c="red" order={1}>Failed to load session</Title>
+                                <Title c="red" order={3}>{(sessionError as Error).message}</Title></>
                             : session?.["rpc-version"] === undefined
-                                ? <Title color="red" order={1}>Server does not appear to be transmission daemon</Title>
+                                ? <Title c="red" order={1}>Server does not appear to be transmission daemon</Title>
                                 : rpcVersion < 14
-                                    ? <Title color="red" order={1}>Transmission version 2.40 or higher is required.</Title>
+                                    ? <Title c="red" order={1}>Transmission version 2.40 or higher is required.</Title>
                                     : <></>}
                 </Flex>
             </Overlay>}
-            <Box p="sm" sx={(theme) => ({ borderBottom: "1px solid", borderColor: theme.colors.dark[3] })}>
+            <Box p="sm" className={classes.toolbarContainer}>
                 <MemoizedToolbar
                     setSearchTerms={setSearchTerms}
                     modals={modals}
@@ -251,7 +251,7 @@ export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: Serv
                     ? <MemoizedDetails torrentId={currentTorrent} updates={updates} />
                     : undefined}
             />
-            <Box px="xs" sx={(theme) => ({ borderTop: "1px solid", borderColor: theme.colors.dark[3] })}>
+            <Box px="xs" className={classes.statusbarContainer}>
                 <Statusbar {...{
                     session,
                     filteredTorrents,

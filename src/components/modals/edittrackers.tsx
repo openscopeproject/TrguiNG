@@ -135,7 +135,7 @@ export function EditTrackers(props: ModalState) {
                     <Button onClick={addDefaultTrackers}>Add default list</Button>
                 </Grid.Col>
                 <Grid.Col>
-                    <Textarea minRows={10}
+                    <Textarea minRows={10} maxRows={10} autosize
                         {...form.getInputProps("trackerList")} />
                 </Grid.Col>
             </Grid>

@@ -1,0 +1,48 @@
+.tab {
+    flex-basis: 12rem;
+    flex-shrink: 1;
+
+    border-color: light-dark(
+        var(--mantine-color-gray-2),
+        var(--mantine-color-dark-5)
+    );
+    border-style: solid solid none;
+
+    &[data-active] {
+        border-color: light-dark(
+            var(--mantine-color-gray-5),
+            var(--mantine-color-dark-3)
+        );
+        margin-bottom: -1px;
+        background-color: var(--body-bg-color);
+    }
+}
+
+.tabLabel {
+    margin-inline: auto;
+    color: var(--mantine-color-gray-6);
+
+    [data-active] & {
+        color: light-dark(
+            var(--mantine-color-dark-8),
+            var(--mantine-color-gray-3)
+        );
+    }
+}
+
+.tabSection {
+    padding: 0.2rem;
+}
+
+.list {
+    flex-wrap: nowrap;
+    border-color: light-dark(
+        var(--mantine-color-gray-2),
+        var(--mantine-color-dark-5)
+    );
+    border-style: none none solid;
+    border-width: 1px;
+    &::before {
+        border: none;
+    }
+}

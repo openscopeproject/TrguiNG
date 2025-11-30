@@ -26,9 +26,9 @@ import { DateField, LabelsField, StatusField, TrackerField } from "./tables/torr
 import { TrackersTable } from "./tables/trackertable";
 import { PeersTable } from "./tables/peerstable";
 import { Status, type SessionStatEntry } from "rpc/transmission";
-import type { MantineTheme } from "@mantine/core";
-import { Anchor, Box, Flex, Container, Group, Table, Tabs, TextInput, LoadingOverlay, Grid, useMantineTheme } from "@mantine/core";
+import { Anchor, Box, Flex, Container, Group, Table, Tabs, TextInput, LoadingOverlay, Grid } from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
+import classes from "./details.module.css";
 import { CachedFileTree } from "cachedfiletree";
 import { useFileTree, useMutateTorrent, useSessionStats, useTorrentDetails } from "queries";
 import { ConfigContext } from "config";
@@ -79,17 +79,10 @@ interface DetailItemProps extends React.PropsWithChildren {
 }
 
 function DetailItem({ name, children }: DetailItemProps) {
-    const theme = useMantineTheme();
-
     return (
-        <Grid.Col span={1} sx={{
-            borderBottom: "1px solid",
-            borderColor: theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[3],
-            padding: "1px 0.4em 0 0.4em",
-            lineHeight: 1.4,
-        }}>
+        <Grid.Col span={1} className={classes.detailItemCol}>
             <Flex>
-                <Box sx={{ flex: "0 0 10em" }}>{name}</Box>
+                <Box className={classes.detailItemLabel}>{name}</Box>
                 {children}
             </Flex>
         </Grid.Col>
@@ -155,7 +148,7 @@ function TransferTable(props: { torrent: Torrent }) {
 
     return (
         <Container fluid>
-            <Grid ref={ref} my="sm" sx={{ maxWidth: "100em" }} columns={rect.width > 850 ? 3 : 1}>
+            <Grid ref={ref} my="sm" className={classes.grid} columns={rect.width > 850 ? 3 : 1}>
                 <DetailItem name="Status:"><StatusField {...props} fieldName="status" /></DetailItem>
                 <DetailItem name="Error:">{props.torrent.cachedError}</DetailItem>
                 <DetailItem name="Remaining:">{`${secondsToHumanReadableStr(props.torrent.eta)} (${bytesToHumanReadableStr(props.torrent.leftUntilDone)})`}</DetailItem>
@@ -211,19 +204,10 @@ function Urlize(props: { text: string }) {
     })}</>;
 }
 
-const readonlyInputStyles = (theme: MantineTheme) => ({
-    root: {
-        backgroundColor: (theme.colorScheme === "dark" ? theme.colors.dark[4] : theme.colors.gray[2]),
-        height: "1.25rem",
-        flexGrow: 1,
-    },
-    input: {
-        minHeight: "1.25rem",
-        height: "1.25rem",
-        lineHeight: "1rem",
-        cursor: "text",
-    },
-});
+const readonlyInputStyles = {
+    root: classes.readonlyInputRoot,
+    input: classes.readonlyInputInput,
+};
 
 function TorrentDetails(props: { torrent: Torrent }) {
     const config = useContext(ConfigContext);
@@ -234,9 +218,9 @@ function TorrentDetails(props: { torrent: Torrent }) {
 
     return (
         <Container fluid>
-            <Grid ref={ref} my="sm" sx={{ maxWidth: "100em" }} columns={rect.width > 850 ? 2 : 1}>
+            <Grid ref={ref} my="sm" className={classes.grid} columns={rect.width > 850 ? 2 : 1}>
                 <DetailItem name="Full path:">
-                    <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={fullPath} />
+                    <TextInput classNames={readonlyInputStyles} variant="unstyled" readOnly value={fullPath} />
                 </DetailItem>
                 <DetailItem name="Created:">
                     <div>
@@ -255,13 +239,13 @@ function TorrentDetails(props: { torrent: Torrent }) {
                 <DetailItem name="Total size:"><TotalSize {...props} /></DetailItem>
                 <DetailItem name="Pieces:"><Pieces {...props} /></DetailItem>
                 <DetailItem name="Hash:">
-                    <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.hashString} />
+                    <TextInput classNames={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.hashString} />
                 </DetailItem>
                 <DetailItem name="Comment:"><Urlize text={props.torrent.comment} /></DetailItem>
                 <DetailItem name="Added on:"><DateField {...props} fieldName="addedDate" /></DetailItem>
                 <DetailItem name="Completed on:"><DateField {...props} fieldName="doneDate" /></DetailItem>
                 <DetailItem name="Magnet link:">
-                    <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.magnetLink} />
+                    <TextInput classNames={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.magnetLink} />
                 </DetailItem>
                 <DetailItem name="Labels:"><LabelsField {...props} fieldName="labels" /></DetailItem>
             </Grid>
@@ -272,11 +256,7 @@ function TorrentDetails(props: { torrent: Torrent }) {
 function TableNameRow(props: { children: React.ReactNode }) {
     return (
         <Group grow>
-            <Box px="md" sx={(theme) => ({
-                backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[4] : theme.colors.gray[3],
-                fontSize: "1.25rem",
-                fontWeight: "bolder",
-            })}>
+            <Box px="md" className={classes.tableNameRowBox}>
                 {props.children}
             </Box>
         </Group>
@@ -340,7 +320,7 @@ function FileTreePane(props: { torrent: Torrent }) {
 }
 
 function Stats(props: { stats: SessionStatEntry }) {
-    return <Table mb="sm" sx={{ maxWidth: "25em" }}>
+    return <Table mb="sm" className={classes.statsTable}>
         <tbody>
             <tr>
                 <td style={{ width: "10em" }}>Downloaded</td>
@@ -459,18 +439,11 @@ function Details(props: DetailsProps) {
     return (
         <Tabs variant="outline" defaultValue={defaultTab} keepMounted={false}
             h="100%" w="100%"
-            styles={((theme) => ({
-                root: {
-                    display: "flex",
-                    flexDirection: "column",
-                },
-                tab: {
-                    borderColor: theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[2],
-                    "&[data-active]": {
-                        borderColor: theme.colorScheme === "dark" ? theme.colors.dark[3] : theme.colors.gray[5],
-                    },
-                },
-            }))}>
+            classNames={{
+                root: classes.tabsRoot,
+                tab: classes.tabsTab,
+                list: classes.tabsList,
+            }}>
             <Tabs.List px="sm" pt="xs" onContextMenu={handler}>
                 <MemoSectionsContextMenu
                     sections={tabs} setSections={setTabs}
@@ -524,9 +497,9 @@ function Details(props: DetailsProps) {
                 <LoadingOverlay
                     visible={props.torrentId !== undefined && isLoading}
                     zIndex={400}
-                    transitionDuration={500}
+                    transitionProps={{ duration: 500 }}
                     loaderProps={{ size: "xl" }}
-                    overlayOpacity={0.35} />
+                    overlayProps={{ opacity: 0.35 }} />
                 <DetailsPanels torrent={torrent} />
             </div>
         </Tabs>

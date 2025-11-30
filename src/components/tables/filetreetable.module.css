@@ -1,0 +1,9 @@
+.searchRoot {
+    height: 1.5rem;
+}
+
+.searchInput {
+    min-height: 1.5rem;
+    height: 1.5rem;
+    line-height: 1rem;
+}

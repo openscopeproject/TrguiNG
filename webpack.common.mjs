@@ -19,6 +19,7 @@
 import { execaSync } from "execa";
 import path from "path";
 import { readFile, writeFile, mkdir } from "fs/promises";
+import CssMinimizerPlugin from "css-minimizer-webpack-plugin";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import CopyPlugin from "copy-webpack-plugin";
@@ -91,7 +92,20 @@ export default (mode) => ({
         rules: [
             {
                 test: /\.css$/i,
-                use: [MiniCssExtractPlugin.loader, "css-loader"],
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    {
+                        loader: "css-loader",
+                        options: {
+                            modules: {
+                                auto: true, // Enable CSS modules for .module.css files
+                                namedExport: false, // Use default export instead of named exports
+                                exportLocalsConvention: "camelCase",
+                            },
+                        },
+                    },
+                    "postcss-loader",
+                ],
             },
             {
                 test: /\.tsx?$/,
@@ -177,5 +191,9 @@ export default (mode) => ({
         },
         runtimeChunk: "single",
         moduleIds: "deterministic",
+        minimizer: [
+            "...", // Keeps existing minimizers
+            mode === "production" ? new CssMinimizerPlugin() : null,
+        ],
     },
 });
