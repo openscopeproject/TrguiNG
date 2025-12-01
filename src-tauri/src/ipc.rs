@@ -434,7 +434,13 @@ impl Ipc {
     }
 
     pub async fn send(&self, args: &Vec<String>, app: AppHandle) -> Result<(), String> {
-        let client = app.state::<reqwest::Client>();
+        let client = reqwest::Client::builder()
+            .connect_timeout(Duration::from_secs(3))
+            .read_timeout(Duration::from_secs(10))
+            .timeout(Duration::from_secs(10))
+            .no_proxy()
+            .build()
+            .expect("Failed to initialize http client");
 
         let req = client
             .post(format!("http://{ADDRESS}/args"))
