@@ -61,7 +61,7 @@ export interface TorrentAddParams {
     downloadDir: string,
     labels: string[],
     paused: boolean,
-    priority: PriorityNumberType,
+    bandwidthPriority: PriorityNumberType,
     unwanted?: number[],
 }
 

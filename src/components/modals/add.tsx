@@ -236,7 +236,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                     downloadDir: common.location.path,
                     labels: common.props.labels,
                     paused: !common.start,
-                    priority: common.priority,
+                    bandwidthPriority: common.priority,
                 },
             );
             common.location.addPath(common.location.path);
@@ -552,7 +552,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                         downloadDir: common.location.path,
                         labels: common.props.labels,
                         paused: !common.start,
-                        priority: common.priority,
+                        bandwidthPriority: common.priority,
                         unwanted: (td.files == null || torrentData.length > 1) ? undefined : fileTree.getUnwanted(),
                         filePath: td.torrentPath,
                     },
