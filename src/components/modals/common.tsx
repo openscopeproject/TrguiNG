@@ -182,7 +182,14 @@ export function TorrentLocation(props: LocationData) {
                     <Menu position="left-start" withinPortal returnFocus
                         middlewares={{ shift: true, flip: false }} offset={{ mainAxis: -20, crossAxis: 30 }}>
                         <Menu.Target>
-                            <ActionIcon py="md" disabled={props.disabled === true || props.lastPaths.length === 0}>
+                            <ActionIcon
+                                py="md"
+                                disabled={
+                                    props.disabled === true ||
+                                    (props.lastPaths.length === 0 &&
+                                        config.values.interface.preconfiguredDirs.length === 0)
+                                }
+                            >
                                 <Icon.ClockHistory size="16" />
                             </ActionIcon>
                         </Menu.Target>
