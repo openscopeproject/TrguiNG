@@ -293,7 +293,7 @@ fn convert_response(response: &reqwest::Response) -> tauri::http::response::Buil
         .version(response.version());
     if let Some(headers) = hyper_response.headers_mut() {
         response.headers().iter().for_each(|(name, value)| {
-            headers.insert(
+            headers.append(
                 HeaderName::from_bytes(name.as_str().as_bytes()).unwrap(),
                 HeaderValue::from_str(
                     value
