@@ -103,8 +103,16 @@ function NameField(props: TableFieldProps) {
         if (key === "ArrowRight" && !props.row.getIsExpanded()) props.row.toggleExpanded();
     }, [props.row]);
 
+    let extensionLength = 0;
+    if (props.entry.subrows.length == 0 && props.entry.name.includes(".")) {
+        extensionLength = 1 + (props.entry.name.split(".").pop()?.length ?? 0);
+    }
+
     return (
-        <EditableNameField currentName={props.entry.name} onArrowLeftRight={onArrowLeftRight}
+        <EditableNameField
+            currentName={props.entry.name}
+            onArrowLeftRight={onArrowLeftRight}
+            extensionLength={extensionLength}
             onUpdate={(props.treeName === "filetree" && rpcVersion >= 15) ? updatePath : undefined}>
             <Box sx={{ width: `${props.entry.level * 1.6}rem`, flexShrink: 0 }} />
             <Box w="1.4rem" mx="auto" sx={{ flexShrink: 0 }}>

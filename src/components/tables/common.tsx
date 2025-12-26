@@ -615,6 +615,7 @@ interface EditableNameFieldProps extends React.PropsWithChildren {
     currentName: string,
     onUpdate?: (newName: string, onStart: () => void, onEnd: () => void) => void,
     onArrowLeftRight?: (key: string) => void,
+    extensionLength?: number,
 }
 
 export function EditableNameField(props: EditableNameFieldProps) {
@@ -658,9 +659,9 @@ export function EditableNameField(props: EditableNameFieldProps) {
     useEffect(() => {
         if (isRenaming && textRef.current != null) {
             textRef.current.focus();
-            textRef.current.select();
+            textRef.current.setSelectionRange(0, props.currentName.length - (props.extensionLength ?? 0));
         }
-    }, [isRenaming]);
+    }, [isRenaming, props]);
 
     useEffect(() => {
         if (ref.current != null) {
