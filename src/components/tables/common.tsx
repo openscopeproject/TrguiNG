@@ -661,7 +661,7 @@ export function EditableNameField(props: EditableNameFieldProps) {
             textRef.current.focus();
             textRef.current.setSelectionRange(0, props.currentName.length - (props.extensionLength ?? 0));
         }
-    }, [isRenaming, props]);
+    }, [isRenaming, props.currentName, props.extensionLength]);
 
     useEffect(() => {
         if (ref.current != null) {
