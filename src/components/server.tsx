@@ -19,6 +19,7 @@
 import "../css/custom.css";
 import { Box, Flex, Loader, Overlay, Title } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useTranslation } from "i18n";
 import type { SplitType } from "../config";
 import { ConfigContext, ServerConfigContext } from "../config";
 import type { ServerTorrentData, Torrent } from "../rpc/torrent";
@@ -110,6 +111,7 @@ interface ServerProps {
 }
 
 export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: ServerProps) {
+    const { t } = useTranslation();
     useAppHotkeys();
 
     const [currentFilters, setCurrentFilters] = useReducer(currentFiltersReducer, [{ id: "", filter: DefaultFilter }]);
@@ -206,12 +208,12 @@ export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: Serv
                     {sessionIsLoading
                         ? <Loader size="xl" />
                         : sessionIsError
-                            ? <><Title color="red" order={1}>Failed to load session</Title>
+                            ? <><Title color="red" order={1}>{t("app.connectionError")}</Title>
                                 <Title color="red" order={3}>{(sessionError as Error).message}</Title></>
                             : session?.["rpc-version"] === undefined
-                                ? <Title color="red" order={1}>Server does not appear to be transmission daemon</Title>
+                                ? <Title color="red" order={1}>{t("app.connectionError")}</Title>
                                 : rpcVersion < 14
-                                    ? <Title color="red" order={1}>Transmission version 2.40 or higher is required.</Title>
+                                    ? <Title color="red" order={1}>{t("app.versionTooLow")}</Title>
                                     : <></>}
                 </Flex>
             </Overlay>}

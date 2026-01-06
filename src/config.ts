@@ -150,6 +150,7 @@ interface Settings {
         onClose: WindowCloseOption,
         fontSizeBase: number,
         fontSize: number,
+        language?: string, // i18n: user preferred language (undefined = auto-detect)
     },
     interface: {
         theme: ColorScheme | undefined,
@@ -260,6 +261,7 @@ const DefaultSettings: Settings = {
         onClose: "quit",
         fontSizeBase: 0.9,
         fontSize: 0.9,
+        language: undefined, // i18n: undefined means auto-detect
     },
     interface: {
         theme: undefined,

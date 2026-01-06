@@ -1,5 +1,6 @@
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
+import i18nextPlugin from "eslint-plugin-i18next";
 import { fixupPluginRules } from "@eslint/compat";
 import globals from "globals";
 import eslint from "@eslint/js";
@@ -21,6 +22,7 @@ export default tseslint.config(
             react,
             "react-hooks": fixupPluginRules(reactHooks),
             "@stylistic": stylistic,
+            i18next: i18nextPlugin,
         },
 
         languageOptions: {
@@ -50,6 +52,28 @@ export default tseslint.config(
             "@stylistic/quotes": ["error", "double"],
             "@stylistic/comma-dangle": ["error", "always-multiline"],
             "@stylistic/space-before-function-paren": "off",
+
+            // Warn on hardcoded strings in JSX markup to encourage translation
+            "i18next/no-literal-string": ["warn", {
+                markupOnly: true,
+                ignoreAttribute: [
+                    "id",
+                    "key",
+                    "className",
+                    "data-testid",
+                    "role",
+                    "viewBox",
+                    "xmlns",
+                    "fill",
+                    "stroke",
+                    "strokeWidth",
+                    "strokeLinecap",
+                    "strokeLinejoin",
+                    "d",
+                    "aria-hidden",
+                    "aria-label",
+                ],
+            }],
 
             "@stylistic/member-delimiter-style": ["error", {
                 multiline: {

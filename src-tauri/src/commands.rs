@@ -299,3 +299,10 @@ pub async fn save_text_file(contents: String, path: String) -> Result<(), String
 pub async fn load_text_file(path: String) -> Result<String, String> {
     fs::read_to_string(path).map_err(|e| format!("Unable to read file: {e}"))
 }
+
+/// Get the system locale/language code
+/// Returns a BCP 47 language tag (e.g., "en-US", "zh-CN", "ja-JP")
+#[tauri::command]
+pub fn get_system_locale() -> String {
+    sys_locale::get_locale().unwrap_or_else(|| "en".to_string())
+}

@@ -87,10 +87,11 @@ export const dialogSave = TAURI
     : async () =>
         await Promise.reject<string | null>(new Error("Running outside of tauri app"));
 
-export async function makeCreateTorrentView() {
+export async function makeCreateTorrentView(language?: string) {
     if (WebviewWindow !== undefined) {
+        const url = language ? `createtorrent.html?lang=${language}` : "createtorrent.html";
         const webview = new WebviewWindow(`createtorrent-${Math.floor(Math.random() * 2 ** 30)}`, {
-            url: "createtorrent.html",
+            url,
             width: 550,
             height: 700,
             visible: true,

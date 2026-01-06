@@ -26,6 +26,7 @@ import { ColorSchemeToggle, ShowVersion } from "components/miscbuttons";
 import { ConfigContext, ServerConfigContext } from "config";
 import { useContextMenu } from "./contextmenu";
 import { MemoSectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
+import { useTranslation } from "i18n";
 
 const { TAURI, appWindow } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -41,6 +42,7 @@ export interface StatusbarProps {
 export function Statusbar({ session, torrents, filteredTorrents, selectedTorrents, hostname, showMisc }: StatusbarProps) {
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
+    const { t } = useTranslation();
 
     const serverFields = useMemo(() => ({
         downRateLimit: session !== undefined
@@ -115,13 +117,13 @@ export function Statusbar({ session, torrents, filteredTorrents, selectedTorrent
                         setShowGlobalSpeeds(!showGlobalSpeeds);
                     }}
                 >
-                    Show global speeds
+                    {t("statusbar.showGlobalSpeeds")}
                 </Menu.Item>
             </MemoSectionsContextMenu>
             {sections[sectionsMap.Connection].visible &&
                 <div style={{ flex: "1 1 23%", order: sectionsMap.Connection }}>
                     <Box component="span" my="auto" mr="xs"><Icon.Diagram2 /></Box>
-                    <span>{`${session?.version as string ?? "<not connected>"} at ${hostname}`}</span>
+                    <span>{`${session?.version as string ?? t("statusbar.notConnected")} ${t("statusbar.at")} ${hostname}`}</span>
                 </div>}
             {sections[sectionsMap["Download speed "]].visible &&
                 <div style={{ flex: "1 1 15%", order: sectionsMap["Download speed "] }}>
@@ -136,15 +138,15 @@ export function Statusbar({ session, torrents, filteredTorrents, selectedTorrent
             {sections[sectionsMap["Free space"]].visible &&
                 <div style={{ flex: "1 1 12%", order: sectionsMap["Free space"] }}>
                     <Box component="span" my="auto" mr="xs"><Icon.Hdd /></Box>
-                    <span>{`Free: ${bytesToHumanReadableStr(serverFields.free)}`}</span>
+                    <span>{`${t("statusbar.free")}: ${bytesToHumanReadableStr(serverFields.free)}`}</span>
                 </div>}
             {sections[sectionsMap.Total].visible &&
                 <div style={{ flex: "1 1 12%", order: sectionsMap.Total }}>
-                    {`Total: ${sizeTotal}`}
+                    {`${t("statusbar.total")}: ${sizeTotal}`}
                 </div>}
             {sections[sectionsMap.Selected].visible &&
                 <div style={{ flex: "1 1 23%", order: sectionsMap.Selected }}>
-                    {`Selected: ${sizeSelected}, done ${sizeDone}, left ${sizeLeft}`}
+                    {`${t("statusbar.selected")}: ${sizeSelected}, ${t("statusbar.done")} ${sizeDone}, ${t("statusbar.left")} ${sizeLeft}`}
                 </div>}
             {(!TAURI || showMisc) &&
                 <div style={{ flexShrink: 0, display: "flex", order: 100 }}>
