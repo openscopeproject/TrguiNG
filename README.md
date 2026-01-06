@@ -2,6 +2,8 @@
 
 **Remote GUI for Transmission torrent daemon**
 
+English | [简体中文](README.zh-CN.md)
+
 ![GitHub release](https://img.shields.io/github/v/release/OpenScopeProject/TrguiNG)
 ![Downloads](https://img.shields.io/github/downloads/OpenScopeProject/TrguiNG/total)
 ![Lint status](https://img.shields.io/github/actions/workflow/status/OpenScopeProject/TrguiNG/lint.yml?label=Lint&event=push)
