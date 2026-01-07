@@ -7,40 +7,55 @@
  * @module i18n/languages
  */
 
-import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "./index";
+import type { Resource, ResourceLanguage } from "i18next";
+import en from "./locales/en.json";
+import zhHans from "./locales/zh-Hans.json";
+import zhHant from "./locales/zh-Hant.json";
+
+export const SUPPORTED_LANGUAGES = {
+    "en": { name: "English", nativeName: "English", translation: en },
+    "zh-Hans": { name: "Chinese (Simplified)", nativeName: "简体中文", translation: zhHans },
+    "zh-Hant": { name: "Chinese (Traditional)", nativeName: "繁體中文", translation: zhHant },
+} as const;
+
+export type SupportedLanguage = keyof typeof SUPPORTED_LANGUAGES;
+
+/** Default fallback language code */
+export const DEFAULT_LANGUAGE: SupportedLanguage = "en";
+
+export const resources: Resource = (
+    Object.keys(SUPPORTED_LANGUAGES) as SupportedLanguage[]
+).reduce((acc, code) => {
+    acc[code] = { translation: SUPPORTED_LANGUAGES[code].translation as ResourceLanguage };
+    return acc;
+}, {} as Resource);
 
 /**
  * Language information with display properties
  */
 export interface LanguageInfo {
     /** Language code (e.g., "en", "zh-CN") */
-    code: SupportedLanguage;
+    code: SupportedLanguage,
     /** English name of the language */
-    name: string;
+    name: string,
     /** Native name of the language (displayed in language selector) */
-    nativeName: string;
+    nativeName: string,
     /** Whether this is the default fallback language */
-    isDefault: boolean;
+    isDefault: boolean,
 }
 
 /**
  * List of available languages with their display information
  * This is used to populate language selection UI components
  */
-export const availableLanguages: readonly LanguageInfo[] = [
-    {
-        code: "en",
-        name: "English",
-        nativeName: "English",
-        isDefault: true,
-    },
-    {
-        code: "zh-CN",
-        name: "Chinese (Simplified)",
-        nativeName: "简体中文",
-        isDefault: false,
-    },
-] as const;
+export const availableLanguages: readonly LanguageInfo[] = (
+    Object.keys(SUPPORTED_LANGUAGES) as SupportedLanguage[]
+).map((code) => ({
+    code,
+    name: SUPPORTED_LANGUAGES[code].name,
+    nativeName: SUPPORTED_LANGUAGES[code].nativeName,
+    isDefault: code === DEFAULT_LANGUAGE,
+}));
 
 /**
  * Gets language information by code
@@ -56,14 +71,17 @@ export function getLanguageInfo(code: string): LanguageInfo | undefined {
  * @returns The default language information
  */
 export function getDefaultLanguage(): LanguageInfo {
-    return availableLanguages.find((lang) => lang.isDefault) ?? availableLanguages[0];
+    return (
+        availableLanguages.find((lang) => lang.code === DEFAULT_LANGUAGE) ??
+        availableLanguages[0]
+    );
 }
 
 /**
  * Converts available languages to a format suitable for Mantine Select component
  * @returns Array of {value, label} objects for Select component
  */
-export function getLanguageSelectData(): Array<{ value: string; label: string }> {
+export function getLanguageSelectData(): Array<{ value: SupportedLanguage; label: string }> {
     return availableLanguages.map((lang) => ({
         value: lang.code,
         label: lang.nativeName,

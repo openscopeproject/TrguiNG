@@ -585,6 +585,7 @@ export function DaemonSettingsModal(props: ModalState) {
             intervals: serverConfig.intervals,
             session,
             interface: config.values.interface,
+            app: config.values.app, // Add this line to provide the required 'app' property
         },
     });
 

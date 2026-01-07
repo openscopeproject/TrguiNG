@@ -36,7 +36,7 @@ const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"tauri
 
 interface FormValues extends InterfaceFormValues {
     servers: ServerConfig[],
-    app: {
+    app: InterfaceFormValues["app"] & {
         deleteAdded: boolean,
         toastNotifications: boolean,
         toastNotificationSound: boolean,

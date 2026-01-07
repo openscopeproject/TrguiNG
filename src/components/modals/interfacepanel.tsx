@@ -27,13 +27,15 @@ import type { AddTorrentPriorityOption, AddTorrentStartOption, ColorSetting, Dat
 import { ColorSchemeToggle } from "components/miscbuttons";
 import { Label } from "./common";
 import * as Icon from "react-bootstrap-icons";
-import { changeLanguage, getCurrentLanguage, InvalidLanguageError, useTranslation } from "i18n";
+import { changeLanguage, getCurrentLanguage, InvalidLanguageError, isLanguageSupported, useTranslation, type SupportedLanguage } from "i18n";
 import { getLanguageSelectData } from "i18n/languages";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface InterfaceFormValues {
+    app: {
+        language?: SupportedLanguage,
+    },
     interface: {
-        language?: string,
         theme?: ColorScheme,
         styleOverrides: StyleOverrides,
         skipAddDialog: boolean,
@@ -59,7 +61,7 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
     const theme = useMantineTheme();
     const { style, setStyle } = useGlobalStyleOverrides();
     const [systemFonts, setSystemFonts] = useState<string[]>(["Default"]);
-    const [currentLanguage, setCurrentLanguage] = useState<string>(getCurrentLanguage());
+    const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>(getCurrentLanguage());
     const [languageError, setLanguageError] = useState<string | null>(null);
 
     // Language selector data
@@ -80,13 +82,13 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
 
     // Handle language change
     const handleLanguageChange = useCallback(async (value: string | null) => {
-        if (!value) return;
+        if (!value || !isLanguageSupported(value)) return;
 
         setLanguageError(null);
         try {
             await changeLanguage(value);
             setCurrentLanguage(value);
-            setFieldValue("interface.language", value);
+            setFieldValue("app.language", value);
         } catch (error) {
             if (error instanceof InvalidLanguageError) {
                 setLanguageError(error.message);

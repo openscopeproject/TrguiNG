@@ -667,8 +667,8 @@
     "requestNotFound": "Torrent create request not found on backend",
     "hashingProgress": "Hashing, done {{done}} of {{total}}",
     "torrentInfohash": "Torrent infohash: {{hash}}",
-    "fileSummary": "{{count}} file, {{size}}, {{pieces}} pieces",
-    "fileSummary_plural": "{{count}} files, {{size}}, {{pieces}} pieces",
+    "fileSummary_one": "{{count}} file, {{size}}, {{pieces}} pieces",
+    "fileSummary_other": "{{count}} files, {{size}}, {{pieces}} pieces",
     "saveTorrentFile": "Save torrent file",
     "torrentFilter": "Torrent"
   },

@@ -19,7 +19,7 @@
 import { ConfigContext, ServerConfigContext } from "../config";
 import type { ServerConfig } from "../config";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { useTranslation } from "i18n";
+import { useTranslation, initializeI18n, i18n as i18nextInstance } from "i18n";
 import { Server } from "../components/server";
 import { ClientManager } from "../clientmanager";
 import { ActionIcon, Box, Button, Flex, Menu, Stack, useMantineColorScheme } from "@mantine/core";
@@ -83,16 +83,38 @@ function CreateTorrentButton() {
 }
 
 export function App(props: React.PropsWithChildren) {
+    const config = useContext(ConfigContext);
+    const [i18nReady, setI18nReady] = useState(false);
+
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                const desired = config.values.app.language as any;
+                if (i18nextInstance.isInitialized && (!desired || i18nextInstance.language === desired)) {
+                    if (mounted) setI18nReady(true);
+                    return;
+                }
+                await initializeI18n(desired, desired !== undefined);
+            } catch (error) {
+                console.error("Failed to initialize i18n", error);
+            } finally {
+                if (mounted) setI18nReady(true);
+            }
+        })();
+        return () => { mounted = false; };
+    }, [config.values.app.language]);
+
     return (
         <QueryClientProvider client={queryClient}>
             <Notifications limit={5} style={{ bottom: "2.5rem" }} />
-            {props.children}
+            {i18nReady ? props.children : null}
             <ReactQueryDevtools toggleButtonProps={{ style: { marginBottom: "2rem" } }} />
         </QueryClientProvider>
     );
 }
 
-export default function TauriApp() {
+function TauriAppInner() {
     const { t } = useTranslation();
     const config = useContext(ConfigContext);
     const clientManager = useMemo(() => {
@@ -133,7 +155,7 @@ export default function TauriApp() {
     }, []);
 
     return (
-        <App>
+        <>
             <AppSettingsModal
                 onSave={onServerSave}
                 opened={showServerConfig} close={serverConfigHandlers.close} />
@@ -203,6 +225,15 @@ export default function TauriApp() {
                     </Flex>
                 }
             </Flex>
+        </>
+    );
+}
+
+export default function TauriApp() {
+    // Do not call useTranslation here; it's too early. Let App gate i18n readiness.
+    return (
+        <App>
+            <TauriAppInner />
         </App>
     );
 }

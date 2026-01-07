@@ -10,8 +10,10 @@
 
 import i18n from "i18next";
 import { initReactI18next, useTranslation } from "react-i18next";
+import { SUPPORTED_LANGUAGES, type SupportedLanguage, resources } from "./languages";
+export { SUPPORTED_LANGUAGES } from "./languages";
+export type { SupportedLanguage } from "./languages";
 
-import en from "./locales/en.json";
 
 /**
  * Custom error class for invalid language codes
@@ -22,20 +24,8 @@ export class InvalidLanguageError extends Error {
         this.name = "InvalidLanguageError";
     }
 }
-import zhCN from "./locales/zh-CN.json";
-
-// Supported languages configuration
-export const SUPPORTED_LANGUAGES = {
-    en: { name: "English", nativeName: "English" },
-    "zh-CN": { name: "Chinese (Simplified)", nativeName: "简体中文" },
-} as const;
-
-export type SupportedLanguage = keyof typeof SUPPORTED_LANGUAGES;
 
 export const DEFAULT_LANGUAGE: SupportedLanguage = "en";
-
-// LocalStorage key for Web mode language persistence
-const LANGUAGE_STORAGE_KEY = "trguiNG-language";
 
 /**
  * Detects whether the application is running in Tauri (native) mode
@@ -116,71 +106,6 @@ async function detectSystemLanguage(): Promise<SupportedLanguage> {
 }
 
 /**
- * Gets the stored language preference (Web mode only)
- */
-function getStoredLanguage(): SupportedLanguage | null {
-    if (typeof localStorage === "undefined") {
-        return null;
-    }
-
-    try {
-        const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-        if (stored && stored in SUPPORTED_LANGUAGES) {
-            return stored as SupportedLanguage;
-        }
-    } catch {
-        // localStorage may be unavailable (e.g., in private mode)
-    }
-
-    return null;
-}
-
-/**
- * Stores the language preference (Web mode only)
- */
-function storeLanguage(language: SupportedLanguage): void {
-    if (typeof localStorage === "undefined") {
-        return;
-    }
-
-    try {
-        localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
-    } catch {
-        // localStorage may be unavailable
-    }
-}
-
-/**
- * Gets the initial language for the application
- *
- * Priority:
- * 1. Stored preference (localStorage in Web mode, Config in Tauri mode)
- * 2. Browser/system language detection
- * 3. Default language (English)
- *
- * Note: For Tauri mode, the config-based language preference should be
- * passed to initializeI18n() after loading the config.
- */
-function getInitialLanguage(): SupportedLanguage {
-    // Check stored preference first (Web mode)
-    const stored = getStoredLanguage();
-    if (stored) {
-        return stored;
-    }
-
-    // Detect from browser
-    return detectBrowserLanguage();
-}
-
-/**
- * Translation resources organized by language
- */
-const resources = {
-    en: { translation: en },
-    "zh-CN": { translation: zhCN },
-};
-
-/**
  * Initializes the i18n instance
  *
  * @param configLanguage - Optional language from Tauri config (native mode)
@@ -199,41 +124,48 @@ export async function initializeI18n(configLanguage?: SupportedLanguage, languag
         initialLanguage = await detectSystemLanguage();
     } else {
         // Fallback: use browser detection (Web mode)
-        initialLanguage = getInitialLanguage();
+        initialLanguage = detectBrowserLanguage();
     }
 
-    await i18n
-        .use(initReactI18next)
-        .init({
-            resources,
-            lng: initialLanguage,
-            fallbackLng: DEFAULT_LANGUAGE,
-            supportedLngs: Object.keys(SUPPORTED_LANGUAGES),
+    // If already initialized, avoid re-init to prevent React hook issues; just change language if needed
+    if (i18n.isInitialized) {
+        if (initialLanguage && i18n.language !== initialLanguage) {
+            await i18n.changeLanguage(initialLanguage);
+        }
+        return i18n;
+    }
 
-            interpolation: {
-                escapeValue: false, // React already escapes values
-            },
+    await i18n.use(initReactI18next).init({
+        resources,
+        lng: initialLanguage,
+        fallbackLng: DEFAULT_LANGUAGE,
+        supportedLngs: Object.keys(SUPPORTED_LANGUAGES),
+        compatibilityJSON: "v4",
 
-            // Namespace configuration
-            ns: ["translation"],
-            defaultNS: "translation",
+        interpolation: {
+            escapeValue: false, // React already escapes values
+        },
 
-            // React specific options
-            react: {
-                useSuspense: true,
-            },
+        // Namespace configuration
+        ns: ["translation"],
+        defaultNS: "translation",
 
-            // Development helpers
-            debug: process.env.NODE_ENV === "development",
+        // React specific options
+        react: {
+            useSuspense: false,
+        },
 
-            // Missing key handling
-            saveMissing: false,
-            missingKeyHandler: (lngs, ns, key) => {
-                if (process.env.NODE_ENV === "development") {
-                    console.warn(`[i18n] Missing translation key: ${key} (${lngs.join(", ")})`);
-                }
-            },
-        });
+        // Development helpers
+        debug: process.env.NODE_ENV === "development",
+
+        // Missing key handling
+        saveMissing: false,
+        missingKeyHandler: (lngs, ns, key) => {
+            if (process.env.NODE_ENV === "development") {
+                console.warn(`[i18n] Missing translation key: ${key} (${lngs.join(", ")})`);
+            }
+        },
+    });
 
     return i18n;
 }
@@ -245,22 +177,16 @@ export async function initializeI18n(configLanguage?: SupportedLanguage, languag
  * @throws {InvalidLanguageError} When an unsupported language code is provided
  * @returns Promise that resolves when the language is changed
  */
-export async function changeLanguage(language: string): Promise<void> {
-    if (!(language in SUPPORTED_LANGUAGES)) {
+export async function changeLanguage(language: SupportedLanguage): Promise<void> {
+    if (!isLanguageSupported(language)) {
         throw new InvalidLanguageError(language);
     }
 
-    const validLanguage = language as SupportedLanguage;
-    await i18n.changeLanguage(validLanguage);
-
-    // Store preference in Web mode
-    if (!isTauriMode()) {
-        storeLanguage(validLanguage);
-    }
+    await i18n.changeLanguage(language);
 
     // Update document lang attribute for accessibility
     if (typeof document !== "undefined") {
-        document.documentElement.lang = validLanguage;
+        document.documentElement.lang = language;
     }
 }
 

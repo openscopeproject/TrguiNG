@@ -22,7 +22,6 @@ import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import React, { lazy, Suspense, useContext } from "react";
 import type { CSSProperties } from "react";
-import { initializeI18n } from "i18n";
 const { TAURI, appWindow, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 const TauriApp = lazy(async () => await import("components/app"));
@@ -166,10 +165,6 @@ function Loader() {
 }
 
 async function run(config: Config) {
-    // Initialize i18n with config language (if set) or auto-detect
-    const configLanguage = config.values.app.language as import("i18n").SupportedLanguage | undefined;
-    await initializeI18n(configLanguage, configLanguage !== undefined);
-
     const appnode = document.getElementById("app") as HTMLElement;
     const app = createRoot(appnode);
 

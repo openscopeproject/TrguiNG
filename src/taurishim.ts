@@ -18,6 +18,7 @@
 
 import type { EventCallback } from "@tauri-apps/api/event";
 import type { CloseRequestedEvent, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
+import type { SupportedLanguage } from "i18n";
 
 export const TAURI = Object.prototype.hasOwnProperty.call(window, "__TAURI__");
 const realAppWindow = TAURI ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/window")).getCurrentWindow() : undefined;
@@ -87,7 +88,7 @@ export const dialogSave = TAURI
     : async () =>
         await Promise.reject<string | null>(new Error("Running outside of tauri app"));
 
-export async function makeCreateTorrentView(language?: string) {
+export async function makeCreateTorrentView(language?: SupportedLanguage) {
     if (WebviewWindow !== undefined) {
         const url = language ? `createtorrent.html?lang=${language}` : "createtorrent.html";
         const webview = new WebviewWindow(`createtorrent-${Math.floor(Math.random() * 2 ** 30)}`, {
