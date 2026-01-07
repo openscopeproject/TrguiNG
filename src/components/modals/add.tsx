@@ -21,7 +21,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import type { ModalState, LocationData } from "./common";
 import { HkModal, LimitedNamesList, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
 import type { PriorityNumberType } from "rpc/transmission";
-import { PriorityColors, PriorityStrings } from "rpc/transmission";
+import { PriorityColors, PriorityOrder, PriorityTranslationKeys } from "rpc/transmission";
 import type { Torrent } from "rpc/torrent";
 import { useServerTorrentData, useServerRpcVersion } from "rpc/torrent";
 import { CachedFileTree } from "cachedfiletree";
@@ -34,6 +34,7 @@ import type { ServerTabsRef } from "components/servertabs";
 import { bytesToHumanReadableStr, decodeMagnetLink } from "trutil";
 import { useToggle } from "@mantine/hooks";
 import * as Icon from "react-bootstrap-icons";
+import { useTranslation } from "i18n";
 
 const { TAURI, dialogOpen, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -50,15 +51,16 @@ interface AddCommonProps extends React.PropsWithChildren {
 }
 
 function AddCommon(props: AddCommonProps) {
+    const { t } = useTranslation();
     const rpcVersion = useServerRpcVersion();
 
     return <>
-        <TorrentLocation {...props.location} inputLabel="Download directory" disabled={props.disabled} />
+        <TorrentLocation {...props.location} inputLabel={t("modals.add.downloadDirLabel")} disabled={props.disabled} />
         {rpcVersion >= 17 &&
-            <TorrentLabels labels={props.labels} setLabels={props.setLabels} inputLabel="Labels" disabled={props.disabled} />}
+            <TorrentLabels labels={props.labels} setLabels={props.setLabels} inputLabel={t("modals.add.labelsLabel")} disabled={props.disabled} />}
         <Group>
             <Checkbox
-                label="Start torrent"
+                label={t("modals.add.startTorrentLabel")}
                 checked={props.start}
                 disabled={props.disabled}
                 onChange={(e) => { props.setStart(e.currentTarget.checked); }}
@@ -70,9 +72,9 @@ function AddCommon(props: AddCommonProps) {
                 value={String(props.priority)}
                 onChange={(value) => { props.setPriority(+value as PriorityNumberType); }}
                 disabled={props.disabled}
-                data={Array.from(PriorityStrings.entries()).map(([k, v]) => ({
-                    value: String(k),
-                    label: v,
+                data={PriorityOrder.map((p) => ({
+                    value: String(p),
+                    label: t(PriorityTranslationKeys[p]),
                 }))} />
         </Group>
     </>;
@@ -131,6 +133,7 @@ function useCommonProps(opened: boolean) {
 }
 
 function TabSwitchDropdown({ tabsRef }: { tabsRef: React.RefObject<ServerTabsRef> }) {
+    const { t } = useTranslation();
     const serverConfig = useContext(ServerConfigContext);
 
     const [value, setValue] = useState(serverConfig.name);
@@ -150,7 +153,7 @@ function TabSwitchDropdown({ tabsRef }: { tabsRef: React.RefObject<ServerTabsRef
             ? <></>
             : <Menu shadow="md" width={200} position="bottom-start">
                 <Menu.Target>
-                    <Button variant="subtle" title="Switch server">
+                    <Button variant="subtle" title={t("modals.add.switchServer")}>
                         {value}
                     </Button>
                 </Menu.Target>
@@ -165,6 +168,7 @@ function TabSwitchDropdown({ tabsRef }: { tabsRef: React.RefObject<ServerTabsRef
 }
 
 export function AddMagnet(props: AddCommonModalProps) {
+    const { t } = useTranslation();
     const serverData = useServerTorrentData();
     const [magnet, setMagnet] = useState<string>("");
 
@@ -185,7 +189,7 @@ export function AddMagnet(props: AddCommonModalProps) {
 
     useEffect(() => {
         if (magnetData !== undefined && magnetData.hash !== "") {
-            const torrent = serverData.torrents.find((t) => t.hashString === magnetData.hash);
+            const torrent = serverData.torrents.find((t_torrent) => t_torrent.hashString === magnetData.hash);
             setExistingTorrent(torrent);
         } else {
             setExistingTorrent(undefined);
@@ -200,7 +204,7 @@ export function AddMagnet(props: AddCommonModalProps) {
             const duplicate = response.arguments["torrent-duplicate"];
             if (duplicate !== undefined) {
                 notifications.show({
-                    title: "Torrent already exists",
+                    title: t("modals.add.torrentExists"),
                     message: duplicate.name,
                     color: "green",
                 });
@@ -208,20 +212,20 @@ export function AddMagnet(props: AddCommonModalProps) {
             const added = response.arguments["torrent-added"];
             if (added !== undefined) {
                 notifications.show({
-                    title: "Torrent added",
+                    title: t("modals.add.title"),
                     message: added.name,
                     color: "green",
                 });
             }
-        }, []),
+        }, [t]),
         useCallback((e) => {
             console.error("Failed to add torrent:", e);
             notifications.show({
-                title: "Error adding torrent",
+                title: t("errors.torrentAddFailed"),
                 message: String(e),
                 color: "red",
             });
-        }, []),
+        }, [t]),
     );
     const mutateAddTrackers = useTorrentAddTrackers();
 
@@ -246,7 +250,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                 {
                     onSuccess: () => {
                         notifications.show({
-                            message: "Trackers updated",
+                            message: t("modals.add.trackersUpdated"),
                             color: "green",
                         });
                     },
@@ -255,7 +259,7 @@ export function AddMagnet(props: AddCommonModalProps) {
         }
         setMagnet("");
         close();
-    }, [existingTorrent, close, addMutation, magnet, common, mutateAddTrackers, magnetData]);
+    }, [existingTorrent, close, addMutation, magnet, common, mutateAddTrackers, magnetData, t]);
 
     const config = useContext(ConfigContext);
     const shouldOpen = !config.values.interface.skipAddDialog || typeof props.uri !== "string";
@@ -269,26 +273,26 @@ export function AddMagnet(props: AddCommonModalProps) {
         <HkModal opened={true} onClose={close} centered size="lg"
             styles={{ title: { flexGrow: 1 } }}
             title={<Flex w="100%" align="center" justify="space-between">
-                <span>Add torrent by magnet link or URL</span>
+                <span>{t("modals.add.titleMagnet")}</span>
                 {TAURI && <TabSwitchDropdown tabsRef={props.tabsRef} />}
             </Flex>} >
             <Divider my="sm" />
             <TextInput
-                label="Link" w="100%"
+                label={t("modals.add.linkLabel")} w="100%"
                 value={magnet}
                 onChange={(e) => { setMagnet(e.currentTarget.value); }}
                 error={existingTorrent === undefined
                     ? undefined
-                    : "Torrent already exists"}
+                    : t("modals.add.torrentExists")}
                 autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
             <AddCommon {...common.props} disabled={existingTorrent !== undefined} />
             <Divider my="sm" />
             <Group position="center" spacing="md">
                 <Button onClick={onAdd} variant="filled" data-autofocus
                     disabled={existingTorrent !== undefined && (magnetData?.trackers.length ?? 0) === 0}>
-                    {existingTorrent === undefined ? "Add" : "Add trackers"}
+                    {existingTorrent === undefined ? t("common.add") : t("modals.add.addTrackers")}
                 </Button>
-                <Button onClick={props.close} variant="light">Cancel</Button>
+                <Button onClick={props.close} variant="light">{t("common.cancel")}</Button>
             </Group>
         </HkModal>}
     </>;
@@ -456,6 +460,7 @@ interface TorrentFileData {
 }
 
 export function AddTorrent(props: AddCommonModalProps) {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
     const serverData = useServerTorrentData();
     const common = useCommonProps(props.opened);
@@ -463,7 +468,7 @@ export function AddTorrent(props: AddCommonModalProps) {
 
     const existingTorrent = useMemo(() => {
         if (torrentData !== undefined && torrentData.length === 1) {
-            return serverData.torrents.find((t) => t.hashString === torrentData[0].hash);
+            return serverData.torrents.find((t_torrent) => t_torrent.hashString === torrentData[0].hash);
         }
         return undefined;
     }, [serverData.torrents, torrentData]);
@@ -511,7 +516,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             const duplicate = response.arguments["torrent-duplicate"];
             if (duplicate !== undefined) {
                 notifications.show({
-                    title: "Torrent already exists",
+                    title: t("modals.add.torrentExists"),
                     message: duplicate.name,
                     color: "green",
                 });
@@ -519,7 +524,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             const added = response.arguments["torrent-added"];
             if (added !== undefined) {
                 notifications.show({
-                    title: "Torrent added",
+                    title: t("modals.add.title"),
                     message: added.name,
                     color: "green",
                 });
@@ -527,15 +532,15 @@ export function AddTorrent(props: AddCommonModalProps) {
             if (TAURI && config.values.app.deleteAdded && vars.filePath !== undefined) {
                 void invoke("remove_file", { path: vars.filePath });
             }
-        }, [config.values.app.deleteAdded]),
+        }, [config.values.app.deleteAdded, t]),
         useCallback((e) => {
             console.error("Failed to add torrent:", e);
             notifications.show({
-                title: "Error adding torrent",
+                title: t("errors.torrentAddFailed"),
                 message: String(e),
                 color: "red",
             });
-        }, []),
+        }, [t]),
     );
     const mutateAddTrackers = useTorrentAddTrackers();
 
@@ -566,7 +571,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 {
                     onSuccess: () => {
                         notifications.show({
-                            message: "Trackers updated",
+                            message: t("modals.add.trackersUpdated"),
                             color: "green",
                         });
                     },
@@ -580,7 +585,7 @@ export function AddTorrent(props: AddCommonModalProps) {
         }
         setTorrentData(undefined);
         close();
-    }, [torrentData, existingTorrent, close, common, addMutation, fileTree, mutateAddTrackers, config]);
+    }, [torrentData, existingTorrent, close, common, addMutation, fileTree, mutateAddTrackers, config, t]);
 
     const shouldOpen = !config.values.interface.skipAddDialog && torrentData !== undefined;
     useEffect(() => {
@@ -616,7 +621,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                     body: { display: fullScreen ? "flex" : "block", flexDirection: "column", flexGrow: 1 },
                 }}
                 title={<Flex w="100%" align="center">
-                    <span>Add torrent</span>
+                    <span>{t("modals.add.title")}</span>
                     <Box sx={{ flexGrow: 1 }} />
                     {TAURI && <>
                         <TabSwitchDropdown tabsRef={props.tabsRef} />
@@ -627,7 +632,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 </Flex>} >
                 <Divider my="sm" />
                 {torrentExists
-                    ? <Text color="red" fw="bold" fz="lg">Torrent already exists</Text>
+                    ? <Text color="red" fw="bold" fz="lg">{t("modals.add.torrentExists")}</Text>
                     : <LimitedNamesList names={names} limit={1} />}
                 <AddCommon {...common.props} disabled={torrentExists}>
                     {(wantedSize > 0 || torrentData[0].files != null) &&
@@ -636,12 +641,12 @@ export function AddTorrent(props: AddCommonModalProps) {
                         ? <></>
                         : <>
                             <Button variant="subtle" disabled={torrentExists}
-                                onClick={() => { setAllWanted(true); }} title="Mark all files wanted">
-                                All
+                                onClick={() => { setAllWanted(true); }} title={t("modals.add.markAllWanted")}>
+                                {t("modals.add.all")}
                             </Button>
                             <Button variant="subtle" disabled={torrentExists}
-                                onClick={() => { setAllWanted(false); }} title="Mark all files unwanted">
-                                None
+                                onClick={() => { setAllWanted(false); }} title={t("modals.add.markAllUnwanted")}>
+                                {t("modals.add.none")}
                             </Button>
                         </>}
                 </AddCommon>
@@ -659,9 +664,9 @@ export function AddTorrent(props: AddCommonModalProps) {
                 <Group position="center" spacing="md">
                     <Button onClick={onAdd} variant="filled" data-autofocus
                         disabled={torrentExists && torrentData[0].trackers.length === 0}>
-                        {!torrentExists ? "Add" : "Add trackers"}
+                        {!torrentExists ? t("common.add") : t("modals.add.addTrackers")}
                     </Button>
-                    <Button onClick={modalClose} variant="light">Cancel</Button>
+                    <Button onClick={modalClose} variant="light">{t("common.cancel")}</Button>
                 </Group>
             </HkModal >}
     </>);

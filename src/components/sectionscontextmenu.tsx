@@ -39,6 +39,7 @@ function SectionsContextMenu<S extends string>(props: React.PropsWithChildren<{
     contextMenuContainerRef?: ContextMenuProps["containerRef"],
     onSectionItemMouseEnter?: React.MouseEventHandler<HTMLDivElement>,
     closeOnClickOutside?: boolean,
+    labelRenderer?: (section: S) => string,
 }>) {
     const { setSections } = props;
 
@@ -81,7 +82,7 @@ function SectionsContextMenu<S extends string>(props: React.PropsWithChildren<{
                                                     icon={section.visible ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
                                                     onClick={() => { onSectionMenuItemClick(index); }}
                                                 >
-                                                    {section.section}
+                                                    {props.labelRenderer ? props.labelRenderer(section.section) : section.section}
                                                 </Menu.Item>
                                                 <div {...provided.dragHandleProps}>
                                                     <Icon.GripVertical size="12" />

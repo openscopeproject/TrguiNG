@@ -21,6 +21,7 @@ import type {
     SortingState, ColumnSizingState, VisibilityState, ColumnOrderState,
 } from "@tanstack/react-table";
 import type { ColorScheme, DefaultMantineColor } from "@mantine/core";
+import { isLanguageSupported, type SupportedLanguage } from "i18n";
 import type { PriorityNumberType } from "rpc/transmission";
 const { readConfigText, writeConfigText } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -150,6 +151,7 @@ interface Settings {
         onClose: WindowCloseOption,
         fontSizeBase: number,
         fontSize: number,
+        language?: SupportedLanguage, // i18n: user preferred language (undefined = auto-detect)
     },
     interface: {
         theme: ColorScheme | undefined,
@@ -260,6 +262,7 @@ const DefaultSettings: Settings = {
         onClose: "quit",
         fontSizeBase: 0.9,
         fontSize: 0.9,
+        language: undefined, // i18n: undefined means auto-detect
     },
     interface: {
         theme: undefined,
@@ -358,6 +361,11 @@ export class Config {
             }
         } catch (e) {
             console.log(e);
+        }
+
+        if (this.values.app.language !== undefined &&
+            !isLanguageSupported(this.values.app.language)) {
+            this.values.app.language = undefined;
         }
 
         // sanitize data

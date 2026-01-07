@@ -31,11 +31,12 @@ import { useForm } from "@mantine/form";
 import { UAParser } from "ua-parser-js";
 import type { InterfaceFormValues } from "./interfacepanel";
 import { InterfaceSettigsPanel } from "./interfacepanel";
+import { useTranslation } from "i18n";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface FormValues extends InterfaceFormValues {
     servers: ServerConfig[],
-    app: {
+    app: InterfaceFormValues["app"] & {
         deleteAdded: boolean,
         toastNotifications: boolean,
         toastNotificationSound: boolean,
@@ -122,6 +123,7 @@ interface ServerPanelProps {
 }
 
 function ServerPanel(props: ServerPanelProps) {
+    const { t } = useTranslation();
     const [mappingsString, setMappingsString] = useState("");
     const server = props.form.values.servers[props.current];
 
@@ -132,32 +134,32 @@ function ServerPanel(props: ServerPanelProps) {
     return (
         <div style={{ flexGrow: 1 }}>
             <TextInput
-                label="Name"
+                label={t("settings.server.name")}
                 {...props.form.getInputProps(`servers.${props.current}.name`)}
                 autoCorrect="off" autoCapitalize="off" />
 
             <TextInput
-                label="Server rpc url"
+                label={t("settings.server.rpcUrl")}
                 {...props.form.getInputProps(`servers.${props.current}.connection.url`)}
-                placeholder="http://1.2.3.4:9091/transmission/rpc"
+                placeholder={t("settings.server.rpcUrlPlaceholder")}
                 autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
 
             <Grid>
                 <Grid.Col span={6}>
                     <TextInput
-                        label="User name"
+                        label={t("settings.server.username")}
                         {...props.form.getInputProps(`servers.${props.current}.connection.username`)}
                         autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
                 </Grid.Col>
                 <Grid.Col span={6}>
                     <PasswordInput
-                        label="Password"
+                        label={t("settings.server.password")}
                         {...props.form.getInputProps(`servers.${props.current}.connection.password`)} />
                 </Grid.Col>
 
                 <Grid.Col span={12}>
                     <Textarea
-                        label={"Path mappings in \"remote=local\" format, one per line"}
+                        label={t("settings.server.pathMappings")}
                         onChange={(e) => {
                             // TODO fix
                             const mappings = e.target.value.split("\n")
@@ -183,6 +185,7 @@ function ServerPanel(props: ServerPanelProps) {
 const bigSwitchStyles = { track: { flexGrow: 1 } };
 
 function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
+    const { t } = useTranslation();
     const platform = useMemo(() => UAParser().os.name ?? "unknown", []);
 
     const [autostart, setAutostart] = useState(false);
@@ -210,36 +213,36 @@ function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
 
     return (
         <Grid align="center" gutter="md">
-            <Grid.Col span={6}>Delete successfully added torrent files</Grid.Col>
+            <Grid.Col span={6}>{t("settings.integrations.deleteSuccessfullyAdded")}</Grid.Col>
             <Grid.Col span={2}>
-                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                <Switch onLabel={t("common.on")} offLabel={t("common.off")} size="xl" styles={bigSwitchStyles}
                     {...form.getInputProps("app.deleteAdded", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={4}></Grid.Col>
-            <Grid.Col span={6}>Show notifications for completed torrents</Grid.Col>
+            <Grid.Col span={6}>{t("settings.integrations.showNotifications")}</Grid.Col>
             <Grid.Col span={2}>
-                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                <Switch onLabel={t("common.on")} offLabel={t("common.off")} size="xl" styles={bigSwitchStyles}
                     {...form.getInputProps("app.toastNotifications", { type: "checkbox" })} />
             </Grid.Col>
-            <Grid.Col span={2}>Play sound</Grid.Col>
+            <Grid.Col span={2}>{t("settings.integrations.playSound")}</Grid.Col>
             <Grid.Col span={2}>
-                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                <Switch onLabel={t("common.on")} offLabel={t("common.off")} size="xl" styles={bigSwitchStyles}
                     {...form.getInputProps("app.toastNotificationSound", { type: "checkbox" })} />
             </Grid.Col>
             {platform === "Windows" && <>
-                <Grid.Col span={6}>Launch on startup</Grid.Col>
+                <Grid.Col span={6}>{t("settings.integrations.launchOnStartup")}</Grid.Col>
                 <Grid.Col span={2}>
-                    <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                    <Switch onLabel={t("common.on")} offLabel={t("common.off")} size="xl" styles={bigSwitchStyles}
                         checked={autostart} onChange={onChangeAutostart} />
                 </Grid.Col>
                 <Grid.Col span={4}></Grid.Col>
-                <Grid.Col span={6}>Associate application</Grid.Col>
-                <Grid.Col span={3}><Button onClick={associateTorrent}>.torrent files</Button></Grid.Col>
-                <Grid.Col span={3}><Button onClick={associateMagnet}>magnet links</Button></Grid.Col>
+                <Grid.Col span={6}>{t("settings.integrations.associateApplication")}</Grid.Col>
+                <Grid.Col span={3}><Button onClick={associateTorrent}>{t("settings.integrations.torrentFiles")}</Button></Grid.Col>
+                <Grid.Col span={3}><Button onClick={associateMagnet}>{t("settings.integrations.magnetLinks")}</Button></Grid.Col>
             </>}
-            <Grid.Col span={6}>Show tray icon</Grid.Col>
+            <Grid.Col span={6}>{t("settings.integrations.showTrayIcon")}</Grid.Col>
             <Grid.Col span={2}>
-                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                <Switch onLabel={t("common.on")} offLabel={t("common.off")} size="xl" styles={bigSwitchStyles}
                     checked={form.values.app.showTrayIcon}
                     onChange={(e) => {
                         form.setFieldValue("app.showTrayIcon", e.currentTarget.checked);
@@ -249,24 +252,22 @@ function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                         }
                     }} />
             </Grid.Col>
-            <Grid.Col span={4}>(takes effect after restart)</Grid.Col>
-            <Grid.Col span={6}>When minimized</Grid.Col>
+            <Grid.Col span={4}>{t("settings.integrations.takesEffectAfterRestart")}</Grid.Col>
+            <Grid.Col span={6}>{t("settings.integrations.whenMinimized")}</Grid.Col>
             <Grid.Col span={6}>
-                <SegmentedControl data={WindowMinimizeOptions as unknown as string[]}
+                <SegmentedControl data={WindowMinimizeOptions.map(opt => ({ value: opt, label: t(`settings.integrations.windowOptions.${opt}`) }))}
                     disabled={!form.values.app.showTrayIcon}
                     {...form.getInputProps("app.onMinimize")} />
             </Grid.Col>
-            <Grid.Col span={6}>When closed</Grid.Col>
+            <Grid.Col span={6}>{t("settings.integrations.whenClosed")}</Grid.Col>
             <Grid.Col span={6}>
-                <SegmentedControl data={WindowCloseOptions as unknown as string[]}
+                <SegmentedControl data={WindowCloseOptions.map(opt => ({ value: opt, label: t(`settings.integrations.windowOptions.${opt}`) }))}
                     disabled={!form.values.app.showTrayIcon}
                     {...form.getInputProps("app.onClose")} />
             </Grid.Col>
             <Grid.Col>
                 <Text fz="sm" fs="italic">
-                    Hiding the window keeps frontend running, this uses more RAM but reopening the window is nearly instant.
-                    Closing the window shuts down the webview, in this mode reopening the window is slower.
-                    You can always access the window through the system tray icon.
+                    {t("settings.integrations.windowBehaviorDescription")}
                 </Text>
             </Grid.Col>
         </Grid>
@@ -278,6 +279,7 @@ interface AppSettingsModalProps extends ModalState {
 }
 
 export function AppSettingsModal(props: AppSettingsModalProps) {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
     const form = useForm<FormValues>({
         initialValues: {
@@ -294,17 +296,17 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
                             found = true;
                         }
                     });
-                    return found ? "Server names must be unique" : null;
+                    return found ? t("settings.server.serverNamesMustBeUnique") : null;
                 },
                 connection: {
                     url: (value) => {
                         try {
                             const url = new URL(value);
                             if (!["http:", "https:"].includes(url.protocol)) {
-                                return "Only http/https URLs are supported";
+                                return t("settings.server.onlyHttpHttpsSupported");
                             }
                         } catch {
-                            return "Invalid URL";
+                            return t("settings.server.invalidUrl");
                         }
                         return null;
                     },
@@ -347,14 +349,14 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
             onClose={props.close}
             onSave={onSave}
             centered
-            title="Application Settings"
+            title={t("settings.title")}
         >
             <form>
                 <Tabs mih="33rem" defaultValue="servers">
                     <Tabs.List>
-                        <Tabs.Tab value="servers" p="lg">Servers</Tabs.Tab>
-                        <Tabs.Tab value="integrations" p="lg">Integrations</Tabs.Tab>
-                        {TAURI && <Tabs.Tab value="interface" p="lg">Interface</Tabs.Tab>}
+                        <Tabs.Tab value="servers" p="lg">{t("settings.tabs.servers")}</Tabs.Tab>
+                        <Tabs.Tab value="integrations" p="lg">{t("settings.tabs.integrations")}</Tabs.Tab>
+                        {TAURI && <Tabs.Tab value="interface" p="lg">{t("settings.tabs.interface")}</Tabs.Tab>}
                     </Tabs.List>
 
                     <Tabs.Panel value="servers" pt="md">

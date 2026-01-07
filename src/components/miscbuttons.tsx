@@ -25,8 +25,10 @@ import { VersionModal } from "components/modals/version";
 import { useDisclosure, useHotkeys } from "@mantine/hooks";
 import { modKeyString } from "trutil";
 import { useFontSize } from "themehooks";
+import { useTranslation } from "i18n";
 
 export function ColorSchemeToggle(props: { sz?: string, btn?: MantineNumberSize }) {
+    const { t } = useTranslation();
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
     const dark = colorScheme === "dark";
 
@@ -39,7 +41,7 @@ export function ColorSchemeToggle(props: { sz?: string, btn?: MantineNumberSize 
             variant="default"
             size={props.btn}
             onClick={() => { toggleColorScheme(); }}
-            title={`Toggle color scheme (${modKeyString()} + U)`}
+            title={`${t("toolbar.toggleColorScheme")} (${modKeyString()} + U)`}
             my="auto"
         >
             {dark
@@ -50,6 +52,7 @@ export function ColorSchemeToggle(props: { sz?: string, btn?: MantineNumberSize 
 }
 
 export function ShowVersion(props: { sz?: string, btn?: MantineNumberSize }) {
+    const { t } = useTranslation();
     const [showVersionModal, { open: openVersionModal, close: closeVersionModal }] = useDisclosure(false);
 
     return (
@@ -58,7 +61,7 @@ export function ShowVersion(props: { sz?: string, btn?: MantineNumberSize }) {
             <ActionIcon
                 size={props.btn}
                 onClick={openVersionModal}
-                title="Show version information"
+                title={t("toolbar.showVersionInfo")}
                 ml="auto" my="auto"
             >
                 <Icon.InfoCircle size={props.sz} />
@@ -68,6 +71,7 @@ export function ShowVersion(props: { sz?: string, btn?: MantineNumberSize }) {
 }
 
 export function FontSizeToggle() {
+    const { t } = useTranslation();
     const { toggle } = useFontSize();
 
     useHotkeys([
@@ -79,7 +83,7 @@ export function FontSizeToggle() {
             variant="default"
             size="lg"
             onClick={() => { toggle(); }}
-            title={`Toggle font size (${modKeyString()} + =)`}
+            title={`${t("toolbar.toggleFontSize")} (${modKeyString()} + =)`}
             my="auto"
         >
             <FontSizeIcon width="1.1rem" height="1.1rem" fill="currentColor" />

@@ -19,6 +19,7 @@
 import { ConfigContext, ServerConfigContext } from "../config";
 import type { ServerConfig } from "../config";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useTranslation, initializeI18n, i18n as i18nextInstance } from "i18n";
 import { Server } from "../components/server";
 import { ClientManager } from "../clientmanager";
 import { ActionIcon, Box, Button, Flex, Menu, Stack, useMantineColorScheme } from "@mantine/core";
@@ -44,6 +45,7 @@ interface PassEventData {
 }
 
 function CreateTorrentButton() {
+    const { t, i18n } = useTranslation();
     const config = useContext(ConfigContext);
     const { colorScheme } = useMantineColorScheme();
 
@@ -52,7 +54,7 @@ function CreateTorrentButton() {
             if (data.payload === "ready") {
                 void invoke("pass_to_window", {
                     to: data.from,
-                    payload: JSON.stringify({ colorScheme, defaultTrackers: config.values.interface.defaultTrackers }),
+                    payload: JSON.stringify({ colorScheme, defaultTrackers: config.values.interface.defaultTrackers, language: i18n.language }),
                 });
             }
         });
@@ -72,7 +74,7 @@ function CreateTorrentButton() {
             variant="default"
             size="lg"
             onClick={onClick}
-            title={`Create new torrent file (${modKeyString()} + T)`}
+            title={t("app.createTorrentTooltip", { key: modKeyString() })}
             my="auto"
         >
             <Icon.Stars size="1.1rem" />
@@ -81,16 +83,39 @@ function CreateTorrentButton() {
 }
 
 export function App(props: React.PropsWithChildren) {
+    const config = useContext(ConfigContext);
+    const [i18nReady, setI18nReady] = useState(false);
+
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                const desired = config.values.app.language as any;
+                if (i18nextInstance.isInitialized && (!desired || i18nextInstance.language === desired)) {
+                    if (mounted) setI18nReady(true);
+                    return;
+                }
+                await initializeI18n(desired, desired !== undefined);
+            } catch (error) {
+                console.error("Failed to initialize i18n", error);
+            } finally {
+                if (mounted) setI18nReady(true);
+            }
+        })();
+        return () => { mounted = false; };
+    }, [config.values.app.language]);
+
     return (
         <QueryClientProvider client={queryClient}>
             <Notifications limit={5} style={{ bottom: "2.5rem" }} />
-            {props.children}
+            {i18nReady ? props.children : null}
             <ReactQueryDevtools toggleButtonProps={{ style: { marginBottom: "2rem" } }} />
         </QueryClientProvider>
     );
 }
 
-export default function TauriApp() {
+function TauriAppInner() {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
     const clientManager = useMemo(() => {
         const cm = new ClientManager(config);
@@ -130,7 +155,7 @@ export default function TauriApp() {
     }, []);
 
     return (
-        <App>
+        <>
             <AppSettingsModal
                 onSave={onServerSave}
                 opened={showServerConfig} close={serverConfigHandlers.close} />
@@ -147,7 +172,7 @@ export default function TauriApp() {
                     <CreateTorrentButton />
                     <ActionIcon
                         size="lg" variant="default" my="auto"
-                        title="Configure servers"
+                        title={t("settings.connection.servers")}
                         onClick={serverConfigHandlers.open}>
                         <Icon.GearFill size="1.1rem" />
                     </ActionIcon>
@@ -159,17 +184,17 @@ export default function TauriApp() {
                                 hostname={clientManager.getHostname(currentServer.name)}
                                 tabsRef={tabsRef}
                                 toolbarExtra={!showTabStrip && <>
-                                    <ToolbarButton title={`Create torrent (${modKeyString()} + T)`} onClick={onCreateTorrent}>
+                                    <ToolbarButton title={t("app.createTorrentTooltip", { key: modKeyString() })} onClick={onCreateTorrent}>
                                         <Icon.Stars size="1.5rem" />
                                     </ToolbarButton>
-                                    <ToolbarButton title="Configure servers" onClick={serverConfigHandlers.open}>
+                                    <ToolbarButton title={t("settings.connection.servers")} onClick={serverConfigHandlers.open}>
                                         <Icon.GearFill size="1.5rem" />
                                     </ToolbarButton>
                                     {tabsRef.current?.getOpenTabs() !== undefined && tabsRef.current?.getOpenTabs()?.length > 1 &&
                                         <Menu shadow="md" width="12rem" withinPortal returnFocus
                                             middlewares={{ shift: true, flip: true }}>
                                             <Menu.Target>
-                                                <ToolbarButton title="Switch server">
+                                                <ToolbarButton title={t("app.switchServer")}>
                                                     <Icon.Diagram2 size="1.5rem" />
                                                 </ToolbarButton>
                                             </Menu.Target>
@@ -194,12 +219,21 @@ export default function TauriApp() {
                             })}
                             <Box sx={{ flexGrow: 1 }} />
                             <Button onClick={serverConfigHandlers.open}>
-                                Configure servers
+                                {t("settings.connection.servers")}
                             </Button>
                         </Stack>
                     </Flex>
                 }
             </Flex>
+        </>
+    );
+}
+
+export default function TauriApp() {
+    // Do not call useTranslation here; it's too early. Let App gate i18n readiness.
+    return (
+        <App>
+            <TauriAppInner />
         </App>
     );
 }

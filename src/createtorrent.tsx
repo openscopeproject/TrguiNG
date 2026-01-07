@@ -18,12 +18,16 @@
 
 import React, { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
+import { initializeI18n } from "i18n";
 
 const CreateTorrentForm = lazy(async () => await import(/* webpackChunkName: "createtorrentform" */ "components/createtorrentform"));
 const CustomMantineProvider = lazy(
     async () => await import("components/mantinetheme"));
 
 async function run() {
+    // Initialize i18n with auto-detect, will be updated when receiving language from main window
+    await initializeI18n();
+
     const appnode = document.getElementById("app") as HTMLElement;
     const app = createRoot(appnode);
 

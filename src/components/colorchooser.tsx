@@ -17,6 +17,7 @@
  */
 
 import { ActionIcon, ColorSwatch, Grid, Popover, useMantineTheme } from "@mantine/core";
+import { useTranslation } from "i18n";
 import type { ColorSetting } from "config";
 import React, { useState } from "react";
 
@@ -28,6 +29,7 @@ interface ColorChooserProps {
 const shades = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export default function ColorChooser(props: ColorChooserProps) {
+    const { t } = useTranslation();
     const theme = useMantineTheme();
     const [opened, setOpened] = useState(false);
     const swatchOutline = theme.colorScheme === "dark" ? theme.colors.gray[7] : theme.colors.dark[6];
@@ -46,7 +48,7 @@ export default function ColorChooser(props: ColorChooserProps) {
                     props.onChange(undefined);
                     setOpened(false);
                 }}>
-                    Reset
+                    {t("common.reset")}
                 </ActionIcon>
                 <Grid columns={10}>
                     {Object.keys(theme.colors).map((color) => shades.map((shade) => (

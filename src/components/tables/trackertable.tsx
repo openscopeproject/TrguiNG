@@ -17,12 +17,13 @@
  */
 
 import type { AccessorFn, CellContext, ColumnDef } from "@tanstack/react-table";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import type { Torrent, TrackerStats } from "rpc/torrent";
 import { getTrackerAnnounceState } from "rpc/torrent";
 import type { TrackerStatsFieldsType } from "rpc/transmission";
 import { secondsToHumanReadableStr } from "trutil";
 import { TrguiTable, useStandardSelect } from "./common";
+import { useTranslation } from "i18n";
 
 interface TableFieldProps {
     entry: TrackerStats,
@@ -38,29 +39,36 @@ interface TableField {
 }
 
 const AllFields: readonly TableField[] = [
-    { name: "announce", label: "Announce URL" },
-    { name: "announceState", label: "Status", columnId: "status", accessorFn: getTrackerAnnounceState },
-    { name: "nextAnnounceTime", label: "Next update", component: NextUpdateField },
-    { name: "seederCount", label: "Seeds", component: NumberField },
-    { name: "leecherCount", label: "Peers", component: NumberField },
-    { name: "downloadCount", label: "Downloads", component: NumberField },
+    { name: "announce", label: "torrent.trackersTable.announceUrl" },
+    { name: "announceState", label: "torrent.trackersTable.status", columnId: "status", accessorFn: getTrackerAnnounceState },
+    { name: "nextAnnounceTime", label: "torrent.trackersTable.nextUpdate", component: NextUpdateField },
+    { name: "seederCount", label: "torrent.trackersTable.seeds", component: NumberField },
+    { name: "leecherCount", label: "torrent.trackersTable.peers", component: NumberField },
+    { name: "downloadCount", label: "torrent.trackersTable.downloads", component: NumberField },
 ] as const;
 
-const Columns = AllFields.map((field): ColumnDef<TrackerStats> => {
-    const cell = (props: CellContext<TrackerStats, unknown>) => {
-        if (field.component !== undefined) {
-            return <field.component entry={props.row.original} fieldName={field.name} />;
-        } else {
-            return <div>{props.getValue() as string}</div>;
-        }
-    };
-    return {
-        header: field.label,
-        accessorKey: field.name,
-        accessorFn: field.accessorFn,
-        cell,
-    };
-});
+function createTrackerColumns(t: (key: string) => string): Array<ColumnDef<TrackerStats>> {
+    return AllFields.map((field): ColumnDef<TrackerStats> => {
+        const cell = (props: CellContext<TrackerStats, unknown>) => {
+            if (field.component !== undefined) {
+                return <field.component entry={props.row.original} fieldName={field.name} />;
+            } else {
+                return <div>{props.getValue() as string}</div>;
+            }
+        };
+        return {
+            header: t(field.label),
+            accessorKey: field.name,
+            accessorFn: field.accessorFn,
+            cell,
+        };
+    });
+}
+
+function useTranslatedTrackerColumns() {
+    const { t } = useTranslation();
+    return useMemo(() => createTrackerColumns((key) => t(key as any)), [t]);
+}
 
 function NextUpdateField(props: TableFieldProps) {
     if (props.entry.announceState !== 1) return <div>-</div>;
@@ -78,11 +86,12 @@ function NumberField(props: TableFieldProps) {
 export function TrackersTable(props: { torrent: Torrent }) {
     const getRowId = useCallback((t: TrackerStats) => String(t.id), []);
 
+    const columns = useTranslatedTrackerColumns();
     const [selected, selectedReducer] = useStandardSelect();
 
     return <TrguiTable<TrackerStats> {...{
         tablename: "trackers",
-        columns: Columns,
+        columns,
         data: props.torrent.trackerStats,
         selected,
         getRowId,

@@ -22,6 +22,7 @@ import type { BandwidthGroupFieldType, PeerStatsFieldsType, TorrentAllFieldsType
 import { Status } from "./transmission";
 import React, { useContext } from "react";
 import type { TransmissionClient } from "./client";
+import { t } from "i18next";
 
 export type TrackerStats = Partial<Record<TrackerStatsFieldsType, any>>;
 export type BandwidthGroup = Record<BandwidthGroupFieldType, any>;
@@ -37,12 +38,12 @@ export interface Torrent extends TorrentBase {
     cachedSeedsTotal: number,
 }
 
-function getTorrentError(t: TorrentBase): string {
-    let torrentError = t.errorString;
+function getTorrentError(Torrent: TorrentBase): string {
+    let torrentError = Torrent.errorString;
     let trackerError = "";
     let noTrackerError = false;
 
-    for (const trackerStat of t.trackerStats) {
+    for (const trackerStat of Torrent.trackerStats) {
         if (trackerStat.isBackup as boolean) {
             continue;
         }
@@ -60,7 +61,7 @@ function getTorrentError(t: TorrentBase): string {
         }
     }
 
-    if (noTrackerError || t.status === Status.stopped) {
+    if (noTrackerError || Torrent.status === Status.stopped) {
         return torrentError;
     } else {
         return trackerError;
@@ -68,10 +69,10 @@ function getTorrentError(t: TorrentBase): string {
 }
 
 export function getTrackerAnnounceState(tracker: TrackerStats) {
-    if (tracker.announceState === 3) return "Updating";
+    if (tracker.announceState === 3) return t("torrent.trackerAnnounceState.updating");
     if (tracker.hasAnnounced as boolean) {
-        if (tracker.lastAnnounceSucceeded as boolean) return "Working";
-        if (tracker.lastAnnounceResult === "Success") return "Working";
+        if (tracker.lastAnnounceSucceeded as boolean) return t("torrent.trackerAnnounceState.working");
+        if (tracker.lastAnnounceResult === "Success") return t("torrent.trackerAnnounceState.working");
         return tracker.lastAnnounceResult;
     }
     return "";
@@ -94,9 +95,9 @@ function getTrackerDlCount(torrent: TorrentBase): number {
 const portRe = /:\d+$/;
 const httpRe = /^https?:\/\//;
 
-function getTorrentMainTracker(t: TorrentBase, ignoredPrefixesRe: RegExp): string {
-    if (t.trackerStats.length === 0) return "<No trackers>";
-    let host = t.trackerStats[0].host as string;
+function getTorrentMainTracker(Torrent: TorrentBase, ignoredPrefixesRe: RegExp): string {
+    if (Torrent.trackerStats.length === 0) return "<No trackers>";
+    let host = Torrent.trackerStats[0].host as string;
     const portMatch = portRe.exec(host);
     if (portMatch != null) host = host.substring(0, portMatch.index);
     const prefixMatch = ignoredPrefixesRe.exec(host);
@@ -106,34 +107,34 @@ function getTorrentMainTracker(t: TorrentBase, ignoredPrefixesRe: RegExp): strin
     return host;
 }
 
-function getSeedsTotal(t: TorrentBase) {
-    let seeds = t.trackerStats.length > 0 ? 0 : -1;
-    t.trackerStats.forEach(
+function getSeedsTotal(Torrent: TorrentBase) {
+    let seeds = Torrent.trackerStats.length > 0 ? 0 : -1;
+    Torrent.trackerStats.forEach(
         (tracker: TrackerStats) => { seeds = Math.max(seeds, tracker.seederCount as number); });
     return seeds;
 }
 
-function getPeersTotal(t: TorrentBase) {
-    let peers = t.trackerStats.length > 0 ? 0 : -1;
-    t.trackerStats.forEach(
+function getPeersTotal(Torrent: TorrentBase) {
+    let peers = Torrent.trackerStats.length > 0 ? 0 : -1;
+    Torrent.trackerStats.forEach(
         (tracker: TrackerStats) => { peers = Math.max(peers, tracker.leecherCount as number); });
     return peers;
 }
 
-export async function processTorrent(t: TorrentBase, lookupIps: boolean, ignoredPrefixesRe: RegExp, client: TransmissionClient): Promise<Torrent> {
-    const peers = t.peers === undefined
+export async function processTorrent(Torrent: TorrentBase, lookupIps: boolean, ignoredPrefixesRe: RegExp, client: TransmissionClient): Promise<Torrent> {
+    const peers = Torrent.peers === undefined
         ? undefined
-        : await Promise.all(t.peers.map(async (p: PeerStatsBase) => await processPeerStats(p, lookupIps, client)));
+        : await Promise.all(Torrent.peers.map(async (p: PeerStatsBase) => await processPeerStats(p, lookupIps, client)));
 
     return {
-        ...t,
-        downloadDir: (t.downloadDir as string).replaceAll("\\", "/"),
-        cachedError: getTorrentError(t),
-        cachedTrackerStatus: getTrackerStatus(t),
-        cachedTrackerDlCount: getTrackerDlCount(t),
-        cachedMainTracker: getTorrentMainTracker(t, ignoredPrefixesRe),
-        cachedSeedsTotal: getSeedsTotal(t),
-        cachedPeersTotal: getPeersTotal(t),
+        ...Torrent,
+        downloadDir: (Torrent.downloadDir as string).replaceAll("\\", "/"),
+        cachedError: getTorrentError(Torrent),
+        cachedTrackerStatus: getTrackerStatus(Torrent),
+        cachedTrackerDlCount: getTrackerDlCount(Torrent),
+        cachedMainTracker: getTorrentMainTracker(Torrent, ignoredPrefixesRe),
+        cachedSeedsTotal: getSeedsTotal(Torrent),
+        cachedPeersTotal: getPeersTotal(Torrent),
         peers,
     };
 }
@@ -179,13 +180,13 @@ export interface PeerStats extends PeerStatsBase {
 // Flag meanings: https://github.com/transmission/transmission/blob/main/docs/Peer-Status-Text.md
 
 const statusFlagStrings = {
-    O: "optimistic",
-    D: "downloading",
-    d: "can download from",
-    U: "uploading",
-    u: "can upload to",
-    K: "not interested",
-    "?": "peer not interested",
+    O: () => t("torrent.peersTable.statusOptimistic"),
+    D: () => t("torrent.peersTable.statusDownloading"),
+    d: () => t("torrent.peersTable.statusCanDownloadFrom"),
+    U: () => t("torrent.peersTable.statusUploading"),
+    u: () => t("torrent.peersTable.statusCanUploadTo"),
+    K: () => t("torrent.peersTable.statusNotInterested"),
+    "?": () => t("torrent.peersTable.statusPeerNotInterested"),
 } as const;
 
 async function processPeerStats(peer: PeerStatsBase, lookupIps: boolean, client: TransmissionClient): Promise<PeerStats> {
@@ -198,7 +199,7 @@ async function processPeerStats(peer: PeerStatsBase, lookupIps: boolean, client:
             : "Tracker";
 
     const status = [...flags.matchAll(/[ODdUuK?]/g)].map(
-        (s) => statusFlagStrings[s[0] as keyof (typeof statusFlagStrings)]);
+        (s) => statusFlagStrings[s[0] as keyof (typeof statusFlagStrings)]());
 
     const country = lookupIps
         ? await client.ipsBatcher.fetch(peer.address)
@@ -206,9 +207,9 @@ async function processPeerStats(peer: PeerStatsBase, lookupIps: boolean, client:
 
     return {
         ...peer,
-        cachedEncrypted: flags.includes("E") ? "yes" : "no",
+        cachedEncrypted: flags.includes("E") ? t("torrent.peersTable.encryptedYes") : t("torrent.peersTable.encryptedNo"),
         cachedFrom,
-        cachedConnection: flags.includes("I") ? "incoming" : "outgoing",
+        cachedConnection: flags.includes("I") ? t("torrent.peersTable.connectionIncoming") : t("torrent.peersTable.connectionOutgoing"),
         cachedProtocol: flags.includes("T") ? "µTP" : "TCP",
         cachedStatus: (status ?? []).join(", "),
         cachedCountryIso: country?.isoCode,
