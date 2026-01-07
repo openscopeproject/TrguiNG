@@ -21,7 +21,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import type { ModalState, LocationData } from "./common";
 import { HkModal, LimitedNamesList, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
 import type { PriorityNumberType } from "rpc/transmission";
-import { PriorityColors, PriorityStrings } from "rpc/transmission";
+import { PriorityColors, PriorityOrder, PriorityTranslationKeys } from "rpc/transmission";
 import type { Torrent } from "rpc/torrent";
 import { useServerTorrentData, useServerRpcVersion } from "rpc/torrent";
 import { CachedFileTree } from "cachedfiletree";
@@ -72,9 +72,9 @@ function AddCommon(props: AddCommonProps) {
                 value={String(props.priority)}
                 onChange={(value) => { props.setPriority(+value as PriorityNumberType); }}
                 disabled={props.disabled}
-                data={Array.from(PriorityStrings.entries()).map(([k, v]) => ({
-                    value: String(k),
-                    label: v,
+                data={PriorityOrder.map((p) => ({
+                    value: String(p),
+                    label: t(PriorityTranslationKeys[p]),
                 }))} />
         </Group>
     </>;

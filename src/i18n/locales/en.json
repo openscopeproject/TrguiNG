@@ -206,6 +206,7 @@
       "percent": "Percent",
       "priority": "Priority",
       "searchFiles": "search files",
+      "mixed": "Mixed",
       "failedToUpdatePath": "Failed to update file path"
     },
     "peersTable": {
@@ -217,11 +218,22 @@
       "upSpeed": "Up speed",
       "downSpeed": "Down speed",
       "encrypted": "Encrypted",
+      "encryptedYes": "yes",
+      "encryptedNo": "no",
       "from": "From",
       "connection": "Connection",
+      "connectionIncoming": "incoming",
+      "connectionOutgoing": "outgoing",
       "protocol": "Protocol",
       "status": "Status",
-      "country": "Country"
+      "country": "Country",
+      "statusOptimistic": "optimistic",
+      "statusDownloading": "downloading",
+      "statusCanDownloadFrom": "can download from",
+      "statusUploading": "uploading",
+      "statusCanUploadTo": "can upload to",
+      "statusNotInterested": "not interested",
+      "statusPeerNotInterested": "peer not interested"
     },
     "trackersTable": {
       "announceUrl": "Announce URL",
@@ -230,6 +242,10 @@
       "seeds": "Seeds",
       "peers": "Peers",
       "downloads": "Downloads"
+    },
+    "trackerAnnounceState": {
+      "updating": "Updating",
+      "working": "Working"
     },
     "status": {
       "downloading": "Downloading",
@@ -242,7 +258,8 @@
       "queuedDownload": "Queued for Download",
       "queuedSeed": "Queued for Seeding",
       "magnetizing": "Magnetizing",
-      "verifying": "Verifying"
+      "verifying": "Verifying",
+      "sequential": "sequentially"
     },
     "actions": {
       "start": "Start",
@@ -260,7 +277,7 @@
       "queueMoveTop": "Move to Top of Queue",
       "queueMoveBottom": "Move to Bottom of Queue",
       "openFolder": "Open Folder",
-      "copyMagnetLink": "Copy Magnet Link"
+      "copyMagnet": "Copy Magnet Link"
     },
     "details": {
       "general": "General",
@@ -328,7 +345,9 @@
         "piecesWithCount": "Pieces ({{count}})",
         "peers": "Peers",
         "trackers": "Trackers",
-        "serverStats": "Server statistics"
+        "serverStats": "Server statistics",
+        "spacer": "<spacer>"
+
       }
     },
     "filters": {
@@ -574,8 +593,8 @@
     "pause": "Pause",
     "verify": "Verify",
     "reannounce": "Reannounce",
-    "copyMagnet": "Copy magnet link",
-    "copyMagnetLinks": "Copy magnet links",
+    "copyMagnet_one": "Copy magnet link",
+    "copyMagnet_other": "Copy magnet links",
     "queue": "Queue",
     "queueMoveTop": "Move to top",
     "queueMoveUp": "Move up",

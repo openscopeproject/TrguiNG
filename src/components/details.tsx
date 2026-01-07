@@ -446,6 +446,19 @@ function Details(props: DetailsProps) {
     const peersTableVisibility = config.getTableColumnVisibility("peers");
     const countryVisible = peersTableVisibility.country ?? true;
 
+    const detailsTabLabels = useCallback((section: string): string => {
+        const labelMap: Record<string, string> = {
+            "General": t("torrent.details.tabs.general"),
+            "Files": t("torrent.details.tabs.files"),
+            "Pieces": t("torrent.details.tabs.pieces"),
+            "Peers": t("torrent.details.tabs.peers"),
+            "Trackers": t("torrent.details.tabs.trackers"),
+            "Server statistics": t("torrent.details.tabs.serverStats"),
+            "<spacer>": t("torrent.details.tabs.spacer"),
+        };
+        return labelMap[section] ?? section;
+    }, [t]);
+
     const { data: fetchedTorrent, isLoading } = useTorrentDetails(
         props.torrentId ?? -1, props.torrentId !== undefined && props.updates, countryVisible);
 
@@ -488,7 +501,8 @@ function Details(props: DetailsProps) {
             <Tabs.List px="sm" pt="xs" onContextMenu={handler}>
                 <MemoSectionsContextMenu
                     sections={tabs} setSections={setTabs}
-                    contextMenuInfo={info} setContextMenuInfo={setInfo} />
+                    contextMenuInfo={info} setContextMenuInfo={setInfo}
+                    labelRenderer={detailsTabLabels} />
                 {tabs[tabsMap.General].visible &&
                     <Tabs.Tab value="General" disabled={torrent === undefined} style={{ order: tabsMap.General }}>
                         <Group>

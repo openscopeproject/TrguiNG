@@ -8,7 +8,7 @@ This document defines standardized terminology translations used in the TrguiNG 
 
 ## BitTorrent 核心术语 / Core BitTorrent Terms
 
-| English     | 简体中文     | Notes / 备注              |
+| English     | 简体中文 | Notes / 备注              |
 | ----------- | -------- | ------------------------- |
 | torrent     | 种子     | BitTorrent 文件或任务     |
 | magnet link | 磁力链接 | 以 `magnet:` 开头的链接 |
@@ -23,7 +23,7 @@ This document defines standardized terminology translations used in the TrguiNG 
 
 ## 传输状态 / Transfer States
 
-| English     | 简体中文           | Notes / 备注               |
+| English     | 简体中文       | Notes / 备注               |
 | ----------- | -------------- | -------------------------- |
 | downloading | 下载中         | 正在接收数据               |
 | seeding     | 做种中         | 正在上传数据（已完成下载） |
@@ -36,7 +36,7 @@ This document defines standardized terminology translations used in the TrguiNG 
 
 ## 速度与数据量 / Speed & Data
 
-| English        | 简体中文     | Notes / 备注              |
+| English        | 简体中文 | Notes / 备注              |
 | -------------- | -------- | ------------------------- |
 | download speed | 下载速度 |                           |
 | upload speed   | 上传速度 |                           |
@@ -45,19 +45,19 @@ This document defines standardized terminology translations used in the TrguiNG 
 
 ## 界面元素 / UI Elements
 
-| English    | 简体中文   | Notes / 备注    |
-| ---------- | ------ | --------------- |
-| settings   | 设置   |                 |
-| toolbar    | 工具栏 |                 |
-| status bar | 状态栏 |                 |
-| filter     | 筛选   | 作为名词/功能时 |
-| label      | 标签   | 用户自定义分类  |
-| queue      | 队列   |                 |
-| priority   | 优先级 |                 |
+| English    | 简体中文 | Notes / 备注    |
+| ---------- | -------- | --------------- |
+| settings   | 设置     |                 |
+| toolbar    | 工具栏   |                 |
+| status bar | 状态栏   |                 |
+| filter     | 筛选     | 作为名词/功能时 |
+| label      | 标签     | 用户自定义分类  |
+| queue      | 队列     |                 |
+| priority   | 优先级   |                 |
 
 ## 操作动作 / Actions
 
-| English    | 简体中文     | Notes / 备注     |
+| English    | 简体中文 | Notes / 备注     |
 | ---------- | -------- | ---------------- |
 | start      | 开始     | 开始下载/做种    |
 | stop       | 停止     | 完全停止任务     |
@@ -69,16 +69,16 @@ This document defines standardized terminology translations used in the TrguiNG 
 
 ## 服务器相关 / Server Related
 
-| English        | 简体中文   | Notes / 备注          |
-| -------------- | ------ | --------------------- |
-| server         | 服务器 | Transmission 守护进程 |
-| connection     | 连接   |                       |
-| authentication | 认证   |                       |
-| session        | 会话   |                       |
+| English        | 简体中文 | Notes / 备注          |
+| -------------- | -------- | --------------------- |
+| server         | 服务器   | Transmission 守护进程 |
+| connection     | 连接     |                       |
+| authentication | 认证     |                       |
+| session        | 会话     |                       |
 
 ## 文件系统 / File System
 
-| English            | 简体中文     | Notes / 备注 |
+| English            | 简体中文 | Notes / 备注 |
 | ------------------ | -------- | ------------ |
 | download directory | 下载目录 |              |
 | location           | 位置     | 文件存储位置 |
@@ -86,6 +86,23 @@ This document defines standardized terminology translations used in the TrguiNG 
 | folder             | 文件夹   |              |
 
 ---
+
+## 节点状态 / Peer Status
+
+| English             | 简体中文     | Notes / 备注                           |
+| ------------------- | ------------ | -------------------------------------- |
+| optimistic          | 乐观解阻     | 乐观解阻塞，尝试与节点建立连接         |
+| downloading         | 下载中       | 正在从该节点下载数据                   |
+| can download from   | 可下载       | 该节点有我们需要的数据                 |
+| uploading           | 上传中       | 正在向该节点上传数据                   |
+| can upload to       | 可上传       | 该节点需要我们拥有的数据               |
+| not interested      | 不感兴趣     | 我们对该节点的数据不感兴趣             |
+| peer not interested | 对方不感兴趣 | 该节点对我们的数据不感兴趣             |
+| incoming            | 传入         | 连接方向：对方主动连接我们             |
+| outgoing            | 传出         | 连接方向：我们主动连接对方             |
+| encrypted           | 加密         | 连接是否加密                           |
+| PEX                 | PEX          | Peer Exchange，节点交换协议发现        |
+| DHT                 | DHT          | Distributed Hash Table，分布式哈希表发现 |
 
 ## 翻译原则 / Translation Principles
 
@@ -98,6 +115,6 @@ This document defines standardized terminology translations used in the TrguiNG 
 
 - **torrent** 统一翻译为「种子」，不使用「Torrent」或「BT种子」
 - **peer** 翻译为「节点」，区别于 seeder（做种者）和 leecher（下载者）
-- **tracker** 保持英文不翻译
+- **tracker**  翻译为「索引服务器」
 - 单位符号（B, KB, MB, GB, TB）保持英文不翻译
 - 技术性专有名词（如 URL, ETA）可保持英文

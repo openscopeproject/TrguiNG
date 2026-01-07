@@ -21,7 +21,7 @@ import type { Row, ColumnDef, CellContext } from "@tanstack/react-table";
 import type { CachedFileTree, FileDirEntryView } from "../../cachedfiletree";
 import { isDirEntry } from "../../cachedfiletree";
 import { ConfigContext, ServerConfigContext } from "../../config";
-import { PriorityColors, PriorityStrings } from "../../rpc/transmission";
+import { PriorityColors, PriorityTranslationKeys } from "../../rpc/transmission";
 import { bytesToHumanReadableStr, fileSystemSafeName, pathMapFromServer } from "../../trutil";
 import type { ProgressBarVariant } from "../progressbar";
 import { ProgressBar } from "../progressbar";
@@ -164,12 +164,20 @@ function PercentBarField(props: TableFieldProps) {
 }
 
 function PriorityField(props: TableFieldProps) {
+    const { t } = useTranslation();
     const priority = props.entry.priority;
+    const translationKey = priority === undefined ? undefined : PriorityTranslationKeys[priority];
+    const label = priority === undefined
+        ? t("torrent.files.mixed")
+        : translationKey !== undefined
+            ? t(translationKey)
+            : t("common.unknown");
+
     return <Badge
         radius="md"
         variant="filled"
         bg={priority === undefined ? "gray" : PriorityColors.get(priority)}>
-        {priority === undefined ? "mixed" : PriorityStrings.get(priority)}
+        {label}
     </Badge>;
 }
 

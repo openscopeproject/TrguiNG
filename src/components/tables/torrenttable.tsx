@@ -21,7 +21,7 @@ import React, { memo, useCallback, useContext, useEffect, useMemo, useRef, useSt
 import type { Torrent } from "rpc/torrent";
 import { useServerTorrentData, useServerRpcVersion, useServerSelectedTorrents } from "rpc/torrent";
 import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
-import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
+import { PriorityColors, PriorityTranslationKeys, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { bytesToHumanReadableStr, fileSystemSafeName, modKeyString, pathMapFromServer, secondsToHumanReadableStr, timestampToDateString, torrentProgressbarStyle } from "trutil";
 import { ProgressBar } from "../progressbar";
@@ -167,6 +167,16 @@ const AllFields: readonly TableField[] = [
     { name: "metadataPercentComplete", label: "torrent.table.metadata", component: PercentBarField },
 ] as const;
 
+const StatusTranslationKeys: Record<number, string> = {
+    [Status.stopped]: "stopped",
+    [Status.queuedToVerify]: "queued",
+    [Status.verifying]: "verifying",
+    [Status.queuedToDownload]: "queuedDownload",
+    [Status.downloading]: "downloading",
+    [Status.queuedToSeed]: "queuedSeed",
+    [Status.seeding]: "seeding",
+};
+
 function NameField(props: TableFieldProps) {
     const { t } = useTranslation();
     let StatusIcon = StatusIconMap[props.torrent.status];
@@ -299,8 +309,12 @@ function ErrorField(props: TableFieldProps) {
 }
 
 function PriorityField(props: TableFieldProps) {
-    const priority = props.torrent[props.fieldName];
-    return <Badge radius="md" variant="filled" bg={PriorityColors.get(priority)}>{PriorityStrings.get(priority)}</Badge>;
+    const { t } = useTranslation();
+    const priority = props.torrent[props.fieldName] as import("rpc/transmission").PriorityNumberType;
+    const translationKey = PriorityTranslationKeys[priority];
+    const label = translationKey !== undefined ? t(translationKey) : t("common.unknown");
+
+    return <Badge radius="md" variant="filled" bg={PriorityColors.get(priority)}>{label}</Badge>;
 }
 
 export function LabelsField(props: TableFieldProps) {
@@ -314,10 +328,19 @@ export function LabelsField(props: TableFieldProps) {
 }
 
 export function StatusField(props: TableFieldProps) {
-    let status: string = StatusStrings[props.torrent.status];
-    if (props.torrent.status === Status.downloading && props.torrent.pieceCount === 0) status = "Magnetizing";
+    const { t } = useTranslation();
+    const baseKey = (props.torrent.status === Status.downloading && props.torrent.pieceCount === 0)
+        ? "magnetizing"
+        : StatusTranslationKeys[props.torrent.status];
 
-    const sequential = (props.torrent.status === Status.downloading && props.torrent.sequentialDownload === true) ? " sequentially" : "";
+    const status = baseKey !== undefined
+        ? t(`torrent.status.${baseKey}`)
+        : StatusStrings[props.torrent.status] ?? t("common.unknown");
+
+    const sequential = (props.torrent.status === Status.downloading && props.torrent.sequentialDownload === true)
+        ? ` ${t("torrent.status.sequential")}`
+        : "";
+
     return <div>{status + sequential}</div>;
 }
 
@@ -699,7 +722,7 @@ function TorrentContextMenu(props: {
                     icon={<Icon.MagnetFill size="1.1rem" />}
                     disabled={serverSelected.size === 0}
                     rightSection={<Kbd>{`${modKeyString()} C`}</Kbd>}>
-                    {serverSelected.size > 1 ? t("contextmenu.copyMagnetLinks") : t("contextmenu.copyMagnet")}
+                    {serverSelected.size > 1 ? t("contextmenu.copyMagnet_other") : t("contextmenu.copyMagnet_one")}
                 </Menu.Item>
                 <Menu.Item ref={queueRef}
                     icon={<Icon.ThreeDots size="1.1rem" />}

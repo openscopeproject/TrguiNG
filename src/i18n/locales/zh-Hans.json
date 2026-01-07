@@ -138,10 +138,10 @@
             "preconfiguredLabelsHelp": "这些标签将始终显示在建议列表和筛选器中，即使没有现有种子使用它们。",
             "addLabel": "+ 添加 {{query}}",
             "removeTorrentDeleteOption": "移除种子对话框删除数据选项",
-            "ignoredTrackerPrefixes": "忽略的 Tracker 前缀",
-            "ignoredTrackerPrefixesHelp": "当 Tracker 的子域名看起来像这些字符串加上（可选的）数字时，它将被省略。这会影响筛选器中的分组和表格列中的显示。您可以在此使用正则表达式进行更高级的筛选，列表将使用\"|\"组合。",
+            "ignoredTrackerPrefixes": "忽略的索引服务器前缀",
+            "ignoredTrackerPrefixesHelp": "当索引服务器的子域名看起来像这些字符串加上（可选的）数字时，它将被省略。这会影响筛选器中的分组和表格列中的显示。您可以在此使用正则表达式进行更高级的筛选，列表将使用\"|\"组合。",
             "invalidRegex": "无效的正则表达式",
-            "defaultTrackerList": "默认 Tracker 列表",
+            "defaultTrackerList": "默认索引服务器列表",
             "failedToChangeLanguage": "更改语言失败"
         }
     },
@@ -149,8 +149,8 @@
         "table": {
             "name": "名称",
             "size": "大小",
-            "sizeToDownload": "待下载大小",
-            "sizeLeft": "剩余大小",
+            "sizeToDownload": "占用空间",
+            "sizeLeft": "待下载",
             "have": "有效",
             "downloaded": "已下载",
             "uploaded": "已上传",
@@ -164,9 +164,9 @@
             "peers": "活跃/下载",
             "eta": "剩余时间",
             "ratio": "分享率",
-            "tracker": "Tracker",
-            "trackerStatus": "Tracker 状态",
-            "trackerDownloads": "Tracker 下载数",
+            "tracker": "索引服务器",
+            "trackerStatus": "索引服务器状态",
+            "trackerDownloads": "索引服务器下载数",
             "error": "错误",
             "completedOn": "完成于",
             "lastActive": "最后活动",
@@ -197,6 +197,7 @@
             "percent": "进度",
             "priority": "优先级",
             "searchFiles": "搜索文件",
+            "mixed": "混合",
             "failedToUpdatePath": "更新文件路径失败"
         },
         "peersTable": {
@@ -208,11 +209,22 @@
             "upSpeed": "上传速度",
             "downSpeed": "下载速度",
             "encrypted": "加密",
+            "encryptedYes": "是",
+            "encryptedNo": "否",
             "from": "来源",
             "connection": "连接",
+            "connectionIncoming": "传入",
+            "connectionOutgoing": "传出",
             "protocol": "协议",
             "status": "状态",
-            "country": "国家"
+            "country": "国家",
+            "statusOptimistic": "解阻塞",
+            "statusDownloading": "下载中",
+            "statusCanDownloadFrom": "可下载",
+            "statusUploading": "上传中",
+            "statusCanUploadTo": "可上传",
+            "statusNotInterested": "不感兴趣",
+            "statusPeerNotInterested": "对方不感兴趣"
         },
         "trackersTable": {
             "announceUrl": "Announce 地址",
@@ -221,6 +233,10 @@
             "seeds": "做种数",
             "peers": "节点数",
             "downloads": "下载数"
+        },
+        "trackerAnnounceState": {
+            "updating": "更新中",
+            "working": "工作中"
         },
         "status": {
             "downloading": "下载中",
@@ -233,7 +249,8 @@
             "queuedDownload": "等待下载",
             "queuedSeed": "等待做种",
             "magnetizing": "解析磁力链接中",
-            "verifying": "验证中"
+            "verifying": "验证中",
+            "sequential": "顺序下载"
         },
         "actions": {
             "start": "开始",
@@ -251,14 +268,14 @@
             "queueMoveTop": "移到队首",
             "queueMoveBottom": "移到队尾",
             "openFolder": "打开文件夹",
-            "copyMagnetLink": "复制磁力链接"
+            "copyMagnet": "复制磁力链接"
         },
         "details": {
             "general": "常规",
             "files": "文件",
             "pieces": "分片",
             "peers": "节点",
-            "trackers": "Tracker",
+            "trackers": "索引服务器",
             "statistics": "服务器统计",
             "transfer": "传输",
             "torrent": "种子",
@@ -294,7 +311,7 @@
             "seeds": "做种数：",
             "peersLabel": "节点数：",
             "maxPeers": "最大节点数：",
-            "tracker": "Tracker：",
+            "tracker": "索引服务器：",
             "trackerUpdateOn": "下次更新于：",
             "lastActive": "最后活动：",
             "verified": "已验证",
@@ -318,8 +335,10 @@
                 "pieces": "分片",
                 "piecesWithCount": "分片 ({{count}})",
                 "peers": "节点",
-                "trackers": "Tracker",
-                "serverStats": "服务器统计"
+                "trackers": "索引服务器",
+                "serverStats": "服务器统计",
+                "spacer": "服务器统计靠右"
+
             }
         },
         "filters": {
@@ -327,7 +346,7 @@
             "status": "状态",
             "directories": "目录",
             "labels": "标签",
-            "trackers": "Tracker",
+            "trackers": "索引服务器",
             "all": "全部种子",
             "downloading": "下载中",
             "completed": "已完成",
@@ -362,12 +381,12 @@
             "priorityHigh": "高",
             "switchServer": "切换服务器",
             "torrentExists": "种子已存在",
-            "addTrackers": "添加 Tracker",
+            "addTrackers": "添加索引服务器",
             "markAllWanted": "标记所有文件为需要",
             "markAllUnwanted": "标记所有文件为不需要",
             "all": "全部",
             "none": "无",
-            "trackersUpdated": "Tracker 已更新"
+            "trackersUpdated": "索引服务器已更新"
         },
         "remove": {
             "title": "移除种子",
@@ -397,10 +416,10 @@
             "cannotSetLabels": "无法设置标签"
         },
         "trackers": {
-            "title": "编辑种子 Tracker",
-            "addTracker": "添加 Tracker",
-            "removeTracker": "移除 Tracker",
-            "trackerListHelp": "Tracker 列表，每行一个，空行分隔不同层级",
+            "title": "编辑种子索引服务器",
+            "addTracker": "添加索引服务器",
+            "removeTracker": "移除索引服务器",
+            "trackerListHelp": "索引服务器列表，每行一个，空行分隔不同层级",
             "addDefaultList": "添加默认列表",
             "errorUpdating": "更新种子时出错"
         },
@@ -563,11 +582,11 @@
         "forceStart": "强制开始",
         "start": "开始",
         "pause": "暂停",
-        "pieceSize": "分片大小",
+        "verify": "校验",
         "reannounce": "重新汇报",
-        "source": "来源（除非私有 Tracker 要求，否则留空）",
-        "copyMagnetLinks": "复制磁力链接",
-        "trackerList": "Tracker 列表，每行一个，空行分隔层级",
+        "copyMagnet_one": "复制磁力链接",
+        "copyMagnet_other": "复制磁力链接",
+        "queue": "队列",
         "queueMoveTop": "移到顶部",
         "queueMoveUp": "上移",
         "queueMoveDown": "下移",
@@ -575,11 +594,11 @@
         "move": "移动...",
         "setLabels": "设置标签...",
         "remove": "移除...",
-        "trackers": "Tracker...",
+        "trackers": "索引服务器...",
         "properties": "属性...",
         "highPriority": "高优先级",
-        "fileSummary_one": "{{count}} 个文件，{{size}}，{{pieces}} 个分片",
-        "fileSummary_other": "{{count}} 个文件，{{size}}，{{pieces}} 个分片",
+        "normalPriority": "普通优先级",
+        "lowPriority": "低优先级",
         "setWanted": "设为需要",
         "setUnwanted": "设为不需要",
         "expandAll": "全部展开",
@@ -645,9 +664,9 @@
         "torrentName": "种子名称",
         "pieceSize": "分片大小",
         "comment": "备注",
-        "source": "来源（除非私有 Tracker 要求，否则留空）",
+        "source": "来源（除非私有索引服务器要求，否则留空）",
         "privateTorrent": "私有种子",
-        "trackerList": "Tracker 列表，每行一个，空行分隔层级",
+        "trackerList": "索引服务器列表，每行一个，空行分隔层级",
         "addDefaultList": "添加默认列表",
         "webSeedUrls": "Web 种子地址，每行一个",
         "file": "文件",

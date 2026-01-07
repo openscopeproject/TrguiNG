@@ -59,10 +59,22 @@ const AllFields: TableField[] = [
 if (TAURI) AllFields.splice(1, 0, { name: "cachedCountryName", label: "torrent.peersTable.country", columnId: "country", component: CountryField });
 
 function CountryField(props: TableFieldProps) {
+    const { i18n } = useTranslation();
     const iso = props.entry.cachedCountryIso;
+
+    const translatedName = useMemo(() => {
+        if (iso === undefined) return props.entry.cachedCountryName;
+        try {
+            const displayNames = new Intl.DisplayNames([i18n.language], { type: "region" });
+            return displayNames.of(iso.toUpperCase()) ?? props.entry.cachedCountryName;
+        } catch {
+            return props.entry.cachedCountryName;
+        }
+    }, [iso, i18n.language, props.entry.cachedCountryName]);
+
     return <Flex gap="sm" style={{ width: "100%" }}>
         {iso !== undefined && <span className={`fi fi-${iso.toLowerCase()}`} style={{ flexShrink: 0 }} />}
-        <span>{props.entry.cachedCountryName}</span>
+        <span>{translatedName}</span>
     </Flex>;
 }
 
