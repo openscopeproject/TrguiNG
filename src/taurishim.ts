@@ -18,6 +18,7 @@
 
 import type { EventCallback } from "@tauri-apps/api/event";
 import type { CloseRequestedEvent, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
+import {DragDropEvent} from "@tauri-apps/api/webview";
 
 export const TAURI = Object.prototype.hasOwnProperty.call(window, "__TAURI__");
 const realAppWindow = TAURI ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/window")).getCurrentWindow() : undefined;
@@ -36,7 +37,8 @@ export const appWindow = {
     listen: async <T>(event: string, handler: EventCallback<T>) =>
         await realAppWindow?.listen(event, handler) ?? (() => { }),
     once: async <T>(event: string, handler: EventCallback<T>) => await realAppWindow?.once(event, handler),
-
+    onDragDropEvent: async (handler: EventCallback<DragDropEvent>) =>
+        await realAppWindow?.onDragDropEvent(handler) ?? (() => { }),
     onCloseRequested: async (handler: (event: CloseRequestedEvent) => void | Promise<void>) =>
         await realAppWindow?.onCloseRequested(handler),
     onFocusChanged: async (handler: EventCallback<boolean>) =>
