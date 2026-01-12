@@ -106,7 +106,7 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
     useEffect(() => {
         if (TAURI) {
             const dropResult = appWindow.onDragDropEvent((event) => {
-                if (event.payload.type === 'drop') {
+                if (event.payload.type === "drop") {
                     const files = event.payload.paths.filter((path) => path.toLowerCase().endsWith(".torrent"));
                     if (files.length > 0) enqueue(files);
                 }
