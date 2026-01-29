@@ -311,6 +311,7 @@ export const PeerStatsFields = [
     "progress", // double
     "rateToClient", // (B/s) number
     "rateToPeer", // (B/s) number
+    "peer_id", // string, available since 4.1.0
 ] as const;
 
 export type PeerStatsFieldsType = typeof PeerStatsFields[number];

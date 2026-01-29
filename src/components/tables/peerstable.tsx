@@ -17,7 +17,7 @@
  */
 
 import type { AccessorFn, CellContext, ColumnDef } from "@tanstack/react-table";
-import React, { useMemo, useCallback, useContext } from "react";
+import React, { useMemo, useContext } from "react";
 import type { Torrent, PeerStats } from "rpc/torrent";
 import { bytesToHumanReadableStr } from "trutil";
 import { TrguiTable, useStandardSelect } from "./common";
@@ -105,9 +105,11 @@ const Columns = AllFields.map((field): ColumnDef<PeerStats> => {
     return column;
 });
 
-export function PeersTable(props: { torrent: Torrent }) {
-    const getRowId = useCallback((t: PeerStats) => `${t.address as string}:${t.port as number}`, []);
+function getRowId(peer: PeerStats) {
+    return peer.peer_id !== undefined ? peer.peer_id : `${peer.address as string}:${peer.port as number}`;
+}
 
+export function PeersTable(props: { torrent: Torrent }) {
     const [selected, selectedReducer] = useStandardSelect();
 
     return <TrguiTable<PeerStats> {...{
