@@ -23,8 +23,10 @@ import { HkModal, TorrentLocation, TorrentsNames, useTorrentLocation } from "./c
 import { useTorrentChangeDirectory } from "queries";
 import { notifications } from "@mantine/notifications";
 import { useServerSelectedTorrents, useServerTorrentData } from "rpc/torrent";
+import { useTranslation } from "i18n";
 
 export function MoveModal(props: ModalState) {
+    const { t } = useTranslation();
     const serverData = useServerTorrentData();
     const serverSelected = useServerSelectedTorrents();
     const [moveData, setMoveData] = useState<boolean>(true);
@@ -48,7 +50,7 @@ export function MoveModal(props: ModalState) {
                 onError: (e) => {
                     console.error("Error moving torrents", e);
                     notifications.show({
-                        message: "Error moving torrents",
+                        message: t("modals.move.errorMoving"),
                         color: "red",
                     });
                 },
@@ -56,11 +58,11 @@ export function MoveModal(props: ModalState) {
         );
 
         props.close();
-    }, [changeDirectory, serverSelected, location.path, moveData, props, addPath]);
+    }, [changeDirectory, serverSelected, location.path, moveData, props, addPath, t]);
 
     const calculateInitialLocation = useCallback(() => {
         const [id] = [...serverSelected];
-        const torrent = serverData.torrents.find((t) => t.id === id);
+        const torrent = serverData.torrents.find((t_torrent) => t_torrent.id === id);
         return torrent?.downloadDir ?? "";
     }, [serverData.torrents, serverSelected]);
 
@@ -70,20 +72,20 @@ export function MoveModal(props: ModalState) {
 
     return <>
         {props.opened &&
-            <HkModal opened={props.opened} onClose={props.close} title="Move torrents" centered size="lg">
+            <HkModal opened={props.opened} onClose={props.close} title={t("modals.move.title")} centered size="lg">
                 <Divider my="sm" />
-                <Text mb="md">Enter new location for</Text>
+                <Text mb="md">{t("modals.move.enterNewLocation")}</Text>
                 <TorrentsNames />
                 <TorrentLocation {...location} focusPath/>
                 <Checkbox
-                    label="Move torrent data to new location"
+                    label={t("modals.move.moveData")}
                     checked={moveData}
                     onChange={(e) => { setMoveData(e.currentTarget.checked); }}
                     my="xl" />
                 <Divider my="sm" />
                 <Group position="center" spacing="md">
-                    <Button onClick={onMove} variant="filled">Move</Button>
-                    <Button onClick={props.close} variant="light">Cancel</Button>
+                    <Button onClick={onMove} variant="filled">{t("modals.move.move")}</Button>
+                    <Button onClick={props.close} variant="light">{t("common.cancel")}</Button>
                 </Group>
             </HkModal>}
     </>;

@@ -17,6 +17,7 @@
  */
 
 import { Anchor, Box, Divider, Flex, Grid, Text, Title } from "@mantine/core";
+import { useTranslation } from "i18n";
 import type { ModalState } from "./common";
 import { HkModal } from "./common";
 import appVersionJson from "build/version.json";
@@ -37,6 +38,7 @@ interface AppVersion {
 export const appVersion: AppVersion = appVersionJson;
 
 export function VersionModal({ opened, close }: ModalState) {
+    const { t } = useTranslation();
     const [frontend, setFrontend] = useState<string>();
 
     useEffect(() => {
@@ -53,28 +55,28 @@ export function VersionModal({ opened, close }: ModalState) {
         <HkModal opened={opened} onClose={close} size="lg" centered p="lg">
             <Title order={2} mb="lg">TrguiNG</Title>
             <Text>
-                Remote interface for&nbsp;
+                {t("version.description")}&nbsp;
                 <Anchor href="https://transmissionbt.com/" target="_blank" rel="noreferrer">Transmission</Anchor>
-                &nbsp;torrent daemon
+                &nbsp;{t("version.daemon")}
             </Text>
             <Divider px="sm" my="xl" />
             <Flex gap="md" align="center">
                 <AppLogo style={{ flexShrink: 0 }} />
                 <Grid>
-                    <Grid.Col span={4}>Version</Grid.Col>
+                    <Grid.Col span={4}>{t("version.version")}</Grid.Col>
                     <Grid.Col span={8}>{appVersion.gitVersion}</Grid.Col>
-                    <Grid.Col span={4}>Frontend</Grid.Col>
+                    <Grid.Col span={4}>{t("version.frontend")}</Grid.Col>
                     <Grid.Col span={8}>{frontend}</Grid.Col>
-                    <Grid.Col span={4}>Build date</Grid.Col>
+                    <Grid.Col span={4}>{t("version.buildDate")}</Grid.Col>
                     <Grid.Col span={8}>{new Date(appVersion.buildDate).toLocaleString()}</Grid.Col>
-                    <Grid.Col span={4}>Source code</Grid.Col>
-                    <Grid.Col span={8}><Box component="span" mr="sm"><Github /></Box><Anchor href="https://github.com/openscopeproject/trguing/" target="_blank" rel="noreferrer">github</Anchor></Grid.Col>
-                    <Grid.Col mt="xl">{TAURI && <Anchor href="https://db-ip.com" target="_blank" rel="noreferrer">IP Geolocation by DB-IP</Anchor>}</Grid.Col>
+                    <Grid.Col span={4}>{t("version.sourceCode")}</Grid.Col>
+                    <Grid.Col span={8}><Box component="span" mr="sm"><Github /></Box><Anchor href="https://github.com/openscopeproject/trguing/" target="_blank" rel="noreferrer">{t("version.github")}</Anchor></Grid.Col>
+                    <Grid.Col mt="xl">{TAURI && <Anchor href="https://db-ip.com" target="_blank" rel="noreferrer">{t("version.ipGeolocation")}</Anchor>}</Grid.Col>
                 </Grid>
             </Flex>
             <Divider px="sm" my="xl" />
             <Text align="center">
-                powered by
+                {t("version.poweredBy")}
             </Text>
             <Flex justify="center">
                 <Anchor href="https://react.dev/" target="_blank" rel="noreferrer"><ReactLogo /></Anchor>

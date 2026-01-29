@@ -32,6 +32,7 @@ import { ContextMenu, useContextMenu } from "components/contextmenu";
 import type { TableName } from "config";
 import { ConfigContext } from "config";
 import React, { memo, useReducer, useCallback, useContext, useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
+import { useTranslation } from "i18n";
 import type { DropResult } from "react-beautiful-dnd";
 import { DragDropContext, Draggable } from "react-beautiful-dnd";
 import { StrictModeDroppable } from "components/strictmodedroppable";
@@ -619,6 +620,7 @@ interface EditableNameFieldProps extends React.PropsWithChildren {
 }
 
 export function EditableNameField(props: EditableNameFieldProps) {
+    const { t } = useTranslation();
     const textRef = useRef<HTMLInputElement>(null);
 
     const [newName, setNewName] = useState("");
@@ -709,7 +711,7 @@ export function EditableNameField(props: EditableNameFieldProps) {
                     {props.currentName}
                 </Box>}
             {isHover && !isRenaming && props.onUpdate !== undefined
-                ? <ActionIcon onClick={renameHandler} title="Rename (F2)"
+                ? <ActionIcon onClick={renameHandler} title={t("table.rename")}
                     sx={(theme) => ({
                         flexShrink: 0,
                         ".selected &": { color: theme.colors.gray[2] },

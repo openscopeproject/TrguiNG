@@ -26,12 +26,14 @@ import { Button, Grid, LoadingOverlay, Text, Textarea } from "@mantine/core";
 import { ConfigContext } from "config";
 import type { TrackerStats } from "rpc/torrent";
 import { useServerRpcVersion, useServerSelectedTorrents, useServerTorrentData } from "rpc/torrent";
+import { useTranslation } from "i18n";
 
 interface FormValues {
     trackerList: string,
 }
 
 export function EditTrackers(props: ModalState) {
+    const { t } = useTranslation();
     const rpcVersion = useServerRpcVersion();
     const config = useContext(ConfigContext);
     const serverData = useServerTorrentData();
@@ -97,14 +99,14 @@ export function EditTrackers(props: ModalState) {
                 onError: (e) => {
                     console.error("Failed to update torrent properties", e);
                     notifications.show({
-                        message: "Error updating torrent",
+                        message: t("modals.trackers.errorUpdating"),
                         color: "red",
                     });
                 },
             },
         );
         props.close();
-    }, [torrentId, torrent, rpcVersion, mutate, selected, form.values, props]);
+    }, [torrentId, torrent, rpcVersion, mutate, selected, form.values, props, t]);
 
     const addDefaultTrackers = useCallback(() => {
         let list = form.values.trackerList;
@@ -120,7 +122,7 @@ export function EditTrackers(props: ModalState) {
             onClose={props.close}
             onSave={onSave}
             centered
-            title="Edit torrent trackers"
+            title={t("modals.trackers.title")}
             mih="25rem"
         >
             <LoadingOverlay visible={isLoading} />
@@ -129,10 +131,10 @@ export function EditTrackers(props: ModalState) {
                     <TorrentsNames />
                 </Grid.Col>
                 <Grid.Col span={8}>
-                    <Text>Tracker list, one per line, empty line between tiers</Text>
+                    <Text>{t("modals.trackers.trackerListHelp")}</Text>
                 </Grid.Col>
                 <Grid.Col span={4}>
-                    <Button onClick={addDefaultTrackers}>Add default list</Button>
+                    <Button onClick={addDefaultTrackers}>{t("modals.trackers.addDefaultList")}</Button>
                 </Grid.Col>
                 <Grid.Col>
                     <Textarea minRows={10}

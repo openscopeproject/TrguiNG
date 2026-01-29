@@ -23,8 +23,10 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useMutateTorrent } from "queries";
 import { notifications } from "@mantine/notifications";
 import { useServerRpcVersion, useServerSelectedTorrents, useServerTorrentData } from "rpc/torrent";
+import { useTranslation } from "i18n";
 
 export function EditLabelsModal(props: ModalState) {
+    const { t } = useTranslation();
     const { opened, close } = props;
     const serverData = useServerTorrentData();
     const serverSelected = useServerSelectedTorrents();
@@ -33,12 +35,12 @@ export function EditLabelsModal(props: ModalState) {
 
     const calculateInitialLabels = useCallback(() => {
         const selected = serverData.torrents.filter(
-            (t) => serverSelected.has(t.id)) ?? [];
-        const labels: string[] = [];
-        selected.forEach((t) => t.labels?.forEach((l: string) => {
-            if (!labels.includes(l)) labels.push(l);
+            (t_torrent) => serverSelected.has(t_torrent.id)) ?? [];
+        const labelsArr: string[] = [];
+        selected.forEach((t_torrent) => t_torrent.labels?.forEach((l: string) => {
+            if (!labelsArr.includes(l)) labelsArr.push(l);
         }));
-        return labels;
+        return labelsArr;
     }, [serverData.torrents, serverSelected]);
 
     useEffect(() => {
@@ -50,8 +52,8 @@ export function EditLabelsModal(props: ModalState) {
     const onSave = useCallback(() => {
         if (rpcVersion < 16) {
             notifications.show({
-                title: "Can not set labels",
-                message: "Labels feature requires transmission 3.0 or later",
+                title: t("modals.labels.cannotSetLabels"),
+                message: t("modals.labels.requiresTransmission3"),
                 color: "red",
             });
             close();
@@ -65,13 +67,13 @@ export function EditLabelsModal(props: ModalState) {
             {
                 onSuccess: () => {
                     notifications.show({
-                        message: "Labels are updated",
+                        message: t("modals.labels.labelsUpdated"),
                         color: "green",
                     });
                 },
                 onError: (error) => {
                     notifications.show({
-                        title: "Failed to update labels",
+                        title: t("modals.labels.failedToUpdate"),
                         message: String(error),
                         color: "red",
                     });
@@ -79,7 +81,7 @@ export function EditLabelsModal(props: ModalState) {
             },
         );
         close();
-    }, [rpcVersion, mutate, serverSelected, labels, close]);
+    }, [rpcVersion, mutate, serverSelected, labels, close, t]);
 
     return <>
         {props.opened &&
@@ -89,12 +91,12 @@ export function EditLabelsModal(props: ModalState) {
                 onClose={props.close}
                 onSave={onSave}
                 centered
-                title="Edit torrent labels"
+                title={t("modals.labels.title")}
             >
                 {rpcVersion < 16
-                    ? <Text color="red" fz="lg">Labels feature requires transmission 3.0 or later</Text>
+                    ? <Text color="red" fz="lg">{t("modals.labels.requiresTransmission3")}</Text>
                     : <>
-                        <Text mb="md">Enter new labels for</Text>
+                        <Text mb="md">{t("modals.labels.enterNewLabels")}</Text>
                         <TorrentsNames />
                     </>}
                 <Box mih="17rem">

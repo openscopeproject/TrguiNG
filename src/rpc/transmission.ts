@@ -49,11 +49,17 @@ export const BandwidthPriority = {
     high: 1,
 } as const;
 
-export const PriorityStrings = new Map<PriorityNumberType, string>([
-    [-1, "Low"],
-    [0, "Normal"],
-    [1, "High"],
-]);
+export const PriorityOrder = [
+    BandwidthPriority.low,
+    BandwidthPriority.normal,
+    BandwidthPriority.high,
+] as const satisfies readonly PriorityNumberType[];
+
+export const PriorityTranslationKeys: Record<PriorityNumberType, string> = {
+    [-1]: "modals.add.priorityLow",
+    [0]: "modals.add.priorityNormal",
+    [1]: "modals.add.priorityHigh",
+};
 
 export const PriorityColors = new Map<PriorityNumberType, ExtendedCustomColors>([
     [-1, "yellow.6"],

@@ -23,6 +23,7 @@ import {
 } from "@mantine/core";
 import { ConfigContext, ServerConfigContext } from "config";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "i18n";
 import { pathMapFromServer, pathMapToServer } from "trutil";
 import * as Icon from "react-bootstrap-icons";
 import { useServerSelectedTorrents, useServerTorrentData } from "rpc/torrent";
@@ -53,6 +54,7 @@ interface SaveCancelModalProps extends ModalProps {
 }
 
 export function SaveCancelModal({ onSave, onClose, children, saveLoading, ...other }: SaveCancelModalProps) {
+    const { t } = useTranslation();
     return (
         <HkModal onClose={onClose} {...other}>
             <Divider my="sm" />
@@ -60,20 +62,21 @@ export function SaveCancelModal({ onSave, onClose, children, saveLoading, ...oth
             <Divider my="sm" />
             <Group position="center" spacing="md">
                 <Button onClick={onSave} variant="filled" data-autofocus>
-                    {saveLoading === true ? <Loader size="1rem" /> : "Save"}
+                    {saveLoading === true ? <Loader size="1rem" /> : t("common.save")}
                 </Button>
-                <Button onClick={onClose} variant="light">Cancel</Button>
+                <Button onClick={onClose} variant="light">{t("common.cancel")}</Button>
             </Group>
         </HkModal>
     );
 }
 
 export function LimitedNamesList({ names, limit }: { names: string[], limit?: number }) {
+    const { t } = useTranslation();
     limit = limit ?? 5;
-    const t = names.slice(0, limit);
+    const namesList = names.slice(0, limit);
 
     return <>
-        {t.map((s, i) => <Text key={i} mx="md" my="xs" px="sm" sx={{
+        {namesList.map((s, i) => <Text key={i} mx="md" my="xs" px="sm" sx={{
             whiteSpace: "pre",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -81,7 +84,7 @@ export function LimitedNamesList({ names, limit }: { names: string[], limit?: nu
         }}>
             {s}
         </Text>)}
-        {names.length > limit && <Text mx="xl" mb="md">{`... and ${names.length - limit} more`}</Text>}
+        {names.length > limit && <Text mx="xl" mb="md">{t("table.andMore", { count: names.length - limit })}</Text>}
     </>;
 }
 
@@ -113,6 +116,7 @@ export interface LocationData {
 }
 
 export function useTorrentLocation(): LocationData {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
     const [lastPaths, setLastPaths] = useState([] as string[]);
@@ -143,7 +147,7 @@ export function useTorrentLocation(): LocationData {
     const browseHandler = useCallback(() => {
         const mappedLocation = pathMapFromServer(path, serverConfig);
         dialogOpen({
-            title: "Select directory",
+            title: t("createTorrent.selectDirectory"),
             defaultPath: mappedLocation === "" ? undefined : mappedLocation,
             directory: true,
         }).then((directory) => {
@@ -151,7 +155,7 @@ export function useTorrentLocation(): LocationData {
             const mappedPath = pathMapToServer((directory as string).replace(/\\/g, "/"), serverConfig);
             setPath(mappedPath.replace(/\\/g, "/"));
         }).catch(console.error);
-    }, [serverConfig, path, setPath]);
+    }, [serverConfig, path, setPath, t]);
 
     const addPath = useCallback((dir: string) => {
         config.addSaveDir(serverConfig.name, dir);
@@ -167,6 +171,7 @@ export function useTorrentLocation(): LocationData {
 }
 
 export function TorrentLocation(props: LocationData) {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
 
     return (
@@ -214,7 +219,7 @@ export function TorrentLocation(props: LocationData) {
                                         rightSection={
                                             <ActionIcon
                                                 component="div"
-                                                title="Remove path"
+                                                title={t("common.remove")}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     props.removePath(path);
@@ -223,7 +228,7 @@ export function TorrentLocation(props: LocationData) {
                                                 <Icon.Trash size="12" />
                                             </ActionIcon>}
                                     >
-                                        {path.length > 0 ? path : "<empty>"}
+                                        {path.length > 0 ? path : t("table.empty")}
                                     </Menu.Item>
                                 ))}
                             </ScrollArea.Autosize>
@@ -231,7 +236,7 @@ export function TorrentLocation(props: LocationData) {
                     </Menu>
                 }
                 autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
-            {TAURI && <Button onClick={props.browseHandler} disabled={props.disabled}>Browse</Button>}
+            {TAURI && <Button onClick={props.browseHandler} disabled={props.disabled}>{t("table.browse")}</Button>}
         </Group>
     );
 }
@@ -272,6 +277,7 @@ interface TorrentLabelsProps {
 }
 
 export function TorrentLabels(props: TorrentLabelsProps) {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
     const serverData = useServerTorrentData();
 
@@ -295,7 +301,7 @@ export function TorrentLabels(props: TorrentLabelsProps) {
             creatable
             initiallyOpened={props.initiallyOpened}
             disabled={props.disabled}
-            getCreateLabel={(query) => `+ Add ${query}`}
+            getCreateLabel={(query) => t("table.createNewLabel", { label: query })}
             onCreate={(query) => {
                 setData((current) => [...current, query]);
                 return query;

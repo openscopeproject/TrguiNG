@@ -19,6 +19,7 @@
 import { ConfigContext } from "../config";
 import type { ServerConfig } from "../config";
 import React, { useCallback, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { useTranslation } from "i18n";
 import * as Icon from "react-bootstrap-icons";
 import type { ClientManager } from "../clientmanager";
 import { ActionIcon, Menu, Tabs } from "@mantine/core";
@@ -40,6 +41,7 @@ export interface ServerTabsRef {
 }
 
 export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function ServerTabs(props, ref) {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
 
     const [tabs, setTabs] = useState({
@@ -50,7 +52,7 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
     useEffect(() => {
         config.setOpenTabs(tabs.openTabs, tabs.currentTab);
         if (tabs.currentTab < 0) {
-            void appWindow.setTitle("Transmission GUI");
+            void appWindow.setTitle(t("app.transmissionGui"));
         }
     }, [config, tabs]);
 
@@ -207,7 +209,7 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
                         </Menu.Target>
 
                         <Menu.Dropdown>
-                            <Menu.Label>Connect</Menu.Label>
+                            <Menu.Label>{t("app.connect")}</Menu.Label>
                             {unopenedTabs.map((tab) =>
                                 <Menu.Item key={tab} onClick={() => { openTab(tab); }}>{tab}</Menu.Item>)
                             }

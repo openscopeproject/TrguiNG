@@ -21,7 +21,7 @@ import type { Row, ColumnDef, CellContext } from "@tanstack/react-table";
 import type { CachedFileTree, FileDirEntryView } from "../../cachedfiletree";
 import { isDirEntry } from "../../cachedfiletree";
 import { ConfigContext, ServerConfigContext } from "../../config";
-import { PriorityColors, PriorityStrings } from "../../rpc/transmission";
+import { PriorityColors, PriorityTranslationKeys } from "../../rpc/transmission";
 import { bytesToHumanReadableStr, fileSystemSafeName, pathMapFromServer } from "../../trutil";
 import type { ProgressBarVariant } from "../progressbar";
 import { ProgressBar } from "../progressbar";
@@ -37,6 +37,7 @@ import { useHotkeysContext } from "hotkeys";
 import debounce from "lodash-es/debounce";
 import { useServerRpcVersion } from "rpc/torrent";
 import { FileIcon } from "components/fileicon";
+import { useTranslation } from "i18n";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 type FileDirEntryKey = keyof FileDirEntryView;
@@ -59,14 +60,15 @@ interface TableField {
 }
 
 const AllFields: readonly TableField[] = [
-    { name: "name", label: "Name", component: NameField, briefField: true },
-    { name: "size", label: "Size", component: ByteSizeField, briefField: true },
-    { name: "done", label: "Done", component: ByteSizeField },
-    { name: "percent", label: "Percent", component: PercentBarField },
-    { name: "priority", label: "Priority", component: PriorityField },
+    { name: "name", label: "torrent.files.name", component: NameField, briefField: true },
+    { name: "size", label: "torrent.files.size", component: ByteSizeField, briefField: true },
+    { name: "done", label: "torrent.files.done", component: ByteSizeField },
+    { name: "percent", label: "torrent.files.percent", component: PercentBarField },
+    { name: "priority", label: "torrent.files.priority", component: PriorityField },
 ] as const;
 
 function NameField(props: TableFieldProps) {
+    const { t } = useTranslation();
     const { entry, fileTree } = props;
     const isDir = entry.subrows.length > 0;
 
@@ -87,13 +89,13 @@ function NameField(props: TableFieldProps) {
             { torrentId: fileTree.torrentId, path: props.entry.fullpath, name },
             {
                 onSettled: onEnd,
-                onError: () => { notifications.show({ color: "red", message: "Failed to update file path" }); },
+                onError: () => { notifications.show({ color: "red", message: t("torrent.files.failedToUpdatePath") }); },
                 onSuccess: () => {
                     fileTree.updatePath(props.entry.fullpath, name);
                     refreshFileTree(props.treeName);
                 },
             });
-    }, [mutation, fileTree, props.entry.fullpath, props.treeName]);
+    }, [mutation, fileTree, props.entry.fullpath, props.treeName, t]);
 
     const rpcVersion = useServerRpcVersion();
 
@@ -162,12 +164,20 @@ function PercentBarField(props: TableFieldProps) {
 }
 
 function PriorityField(props: TableFieldProps) {
+    const { t } = useTranslation();
     const priority = props.entry.priority;
+    const translationKey = priority === undefined ? undefined : PriorityTranslationKeys[priority];
+    const label = priority === undefined
+        ? t("torrent.files.mixed")
+        : translationKey !== undefined
+            ? t(translationKey)
+            : t("common.unknown");
+
     return <Badge
         radius="md"
         variant="filled"
         bg={priority === undefined ? "gray" : PriorityColors.get(priority)}>
-        {priority === undefined ? "mixed" : PriorityStrings.get(priority)}
+        {label}
     </Badge>;
 }
 
@@ -253,6 +263,7 @@ function useSelected(data: FileDirEntryView[], fileTree: CachedFileTree, searchT
 function SearchBox({ setSearchTerms }: {
     setSearchTerms: (terms: string[]) => void,
 }) {
+    const { t } = useTranslation();
     const theme = useMantineTheme();
 
     const debouncedSetSearchTerms = useMemo(
@@ -278,10 +289,10 @@ function SearchBox({ setSearchTerms }: {
         <Box>
             <TextInput ref={searchRef}
                 icon={<Icon.Search size="1rem" />}
-                rightSection={<ActionIcon onClick={onSearchClear} title="Clear">
+                rightSection={<ActionIcon onClick={onSearchClear} title={t("common.clear")}>
                     <Icon.XLg size="1rem" color={theme.colors.red[6]} />
                 </ActionIcon>}
-                placeholder="search files"
+                placeholder={t("torrent.files.searchFiles")}
                 onInput={onSearchInput}
                 styles={{
                     root: {
@@ -299,6 +310,7 @@ function SearchBox({ setSearchTerms }: {
 }
 
 export function FileTreeTable(props: FileTreeTableProps) {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
     const onCheckboxChange = props.onCheckboxChange;
@@ -322,13 +334,13 @@ export function FileTreeTable(props: FileTreeTableProps) {
                     onCheckboxChange={onCheckboxChange} />;
             };
             const column: ColumnDef<FileDirEntryView> = {
-                header: field.label,
+                header: t(field.label as any),
                 accessorKey: field.name,
                 cell,
             };
             if (field.name === "name") column.sortingFn = nameSortFunc;
             return column;
-        }), [props.brief, props.fileTree, nameSortFunc, onCheckboxChange]);
+        }), [props.brief, props.fileTree, nameSortFunc, onCheckboxChange, t]);
 
     const getRowId = useCallback((row: FileDirEntryView) => row.fullpath, []);
     const getSubRows = useCallback((row: FileDirEntryView) => row.subrows, []);
@@ -344,13 +356,13 @@ export function FileTreeTable(props: FileTreeTableProps) {
             path = pathMapFromServer(path, serverConfig);
             invoke("shell_open", { path, reveal }).catch(() => {
                 notifications.show({
-                    title: "Error opening path",
+                    title: t("errors.openingPath"),
                     message: path,
                     color: "red",
                 });
             });
         }
-    }, [props.downloadDir, serverConfig]);
+    }, [props.downloadDir, serverConfig, t]);
 
     const onRowDoubleClick = useCallback((row: FileDirEntryView) => {
         const rowPath = row.fullpath + (row.subrows.length > 0 ? "/" : "");
@@ -447,6 +459,7 @@ function FiletreeContextMenu(props: {
     setExpanded?: (state: boolean) => void,
     toggleFileSearchBox: () => void,
 }) {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
 
     const { onEntryOpen } = props;
@@ -477,13 +490,13 @@ function FiletreeContextMenu(props: {
             {
                 onSuccess: () => {
                     notifications.show({
-                        message: "Priority updated",
+                        message: t("contextmenu.priorityUpdated"),
                         color: "green",
                     });
                 },
             },
         );
-    }, [mutate, props.fileTree, props.selected]);
+    }, [mutate, props.fileTree, props.selected, t]);
 
     const setWanted = useCallback((wanted: boolean) => {
         const fileIds = Array.from(props.selected
@@ -503,13 +516,13 @@ function FiletreeContextMenu(props: {
             {
                 onSuccess: () => {
                     notifications.show({
-                        message: "Files updated",
+                        message: t("contextmenu.filesUpdated"),
                         color: "green",
                     });
                 },
             },
         );
-    }, [mutate, props.fileTree, props.selected]);
+    }, [mutate, props.fileTree, props.selected, t]);
 
     const [flatFileTree, toggleFlatFileTree] = useReducer((value: boolean) => {
         value = !value;
@@ -525,13 +538,13 @@ function FiletreeContextMenu(props: {
                     onClick={() => { onOpen(false); }}
                     icon={<Icon.BoxArrowUpRight size="1.1rem" />}
                     disabled={props.currentRow === ""}>
-                    <Text weight="bold">Open</Text>
+                    <Text weight="bold">{t("contextmenu.open")}</Text>
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => { onOpen(true); }}
                     icon={<Icon.Folder2Open size="1.1rem" />}
                     disabled={props.currentRow === ""}>
-                    <Text>Open folder</Text>
+                    <Text>{t("contextmenu.openFolder")}</Text>
                 </Menu.Item>
                 <Menu.Divider />
             </>}
@@ -539,54 +552,54 @@ function FiletreeContextMenu(props: {
                 onClick={() => { setPriority("priority-high"); }}
                 icon={<Icon.CircleFill color="tomato" size="1.1rem" />}
                 disabled={props.selected.length === 0}>
-                High priority
+                {t("contextmenu.highPriority")}
             </Menu.Item>
             <Menu.Item
                 onClick={() => { setPriority("priority-normal"); }}
                 icon={<Icon.CircleFill color="seagreen" size="1.1rem" />}
                 disabled={props.selected.length === 0}>
-                Normal priority
+                {t("contextmenu.normalPriority")}
             </Menu.Item>
             <Menu.Item
                 onClick={() => { setPriority("priority-low"); }}
                 icon={<Icon.CircleFill color="gold" size="1.1rem" />}
                 disabled={props.selected.length === 0}>
-                Low priority
+                {t("contextmenu.lowPriority")}
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item
                 onClick={() => { setWanted(true); }}
                 icon={<Checkbox checked readOnly />}
                 disabled={props.selected.length === 0}>
-                Set wanted
+                {t("contextmenu.setWanted")}
             </Menu.Item>
             <Menu.Item
                 onClick={() => { setWanted(false); }}
                 icon={<Checkbox readOnly />}
                 disabled={props.selected.length === 0}>
-                Set unwanted
+                {t("contextmenu.setUnwanted")}
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item
                 onClick={() => { props.setExpanded?.(true); }}
                 icon={<Icon.PlusSquare size="1.1rem" />}>
-                Expand all
+                {t("contextmenu.expandAll")}
             </Menu.Item>
             <Menu.Item
                 onClick={() => { props.setExpanded?.(false); }}
                 icon={<Icon.DashSquare size="1.1rem" />}>
-                Collapse all
+                {t("contextmenu.collapseAll")}
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item
                 onClick={props.toggleFileSearchBox}
                 icon={<Icon.Search size="1.1rem" />}>
-                Toggle search
+                {t("contextmenu.toggleSearch")}
             </Menu.Item>
             <Menu.Item
                 onClick={toggleFlatFileTree}
                 icon={<Checkbox checked={!flatFileTree} readOnly />}>
-                Show as tree
+                {t("contextmenu.showAsTree")}
             </Menu.Item>
         </ContextMenu >
     );
