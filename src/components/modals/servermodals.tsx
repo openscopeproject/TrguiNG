@@ -105,12 +105,13 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
 
     useEffect(() => {
         if (TAURI) {
-            const listenResult = appWindow.listen<string[]>("tauri://file-drop", (event) => {
-                const files = event.payload.filter((path) => path.toLowerCase().endsWith(".torrent"));
-                if (files.length > 0) enqueue(files);
+            const dropResult = appWindow.onDragDropEvent((event) => {
+                if (event.payload.type === "drop") {
+                    const files = event.payload.paths.filter((path) => path.toLowerCase().endsWith(".torrent"));
+                    if (files.length > 0) enqueue(files);
+                }
             });
-
-            return () => { void listenResult.then((unlisten) => { unlisten(); }); };
+            return () => { void dropResult.then((unlisten) => { unlisten(); }); };
         } else {
             document.ondragover = (e) => { e.preventDefault(); };
             document.ondrop = (event) => {
