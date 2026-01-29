@@ -70,7 +70,7 @@ export function EditTorrent(props: ModalState) {
             seedIdleMode: torrent.seedIdleMode,
             seedIdleLimit: torrent.seedIdleLimit,
             honorsSessionLimits: torrent.honorsSessionLimits,
-            sequentialDownload: torrent.sequentialDownload,
+            sequentialDownload: torrent.sequential_download,
         });
     }, [setValues, torrent]);
 
@@ -85,6 +85,7 @@ export function EditTorrent(props: ModalState) {
                 fields: {
                     ...form.values,
                     "peer-limit": form.values.peerLimit,
+                    "sequential_download": form.values.sequentialDownload,
                 },
             },
             {

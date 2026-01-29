@@ -170,6 +170,7 @@ interface Settings {
         skipAddDialog: boolean,
         addTorrentStart: AddTorrentStartOption,
         addTorrentStartSelection: boolean,
+        addTorrentSequential: boolean,
         addTorrentPriority: AddTorrentPriorityOption,
         addTorrentPrioritySelection: PriorityNumberType, // normal priority
         deleteTorrentData: DeleteTorrentDataOption,
@@ -303,6 +304,7 @@ const DefaultSettings: Settings = {
         skipAddDialog: false,
         addTorrentStart: "default on",
         addTorrentStartSelection: true,
+        addTorrentSequential: false,
         addTorrentPriority: "default normal",
         addTorrentPrioritySelection: 0, // normal priority
         deleteTorrentData: "default off",

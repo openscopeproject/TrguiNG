@@ -124,7 +124,7 @@ export const TorrentFields = [
     "seedIdleMode", // number tr_inactvelimit
     "seedRatioLimit", // double tr_torrent
     "seedRatioMode", // number tr_ratiolimit
-    "sequentialDownload", // boolean download torrent pieces sequentially
+    "sequential_download", // boolean download torrent pieces sequentially
     "startDate", // number tr_stat
     "totalSize", // number tr_torrent_view
     "torrentFile", // string tr_info
@@ -176,7 +176,7 @@ export const TorrentMutableFields = [
     "seedIdleMode", // number which seeding inactivity to use. See tr_idlelimit
     "seedRatioLimit", // double torrent-level seeding ratio
     "seedRatioMode", // number which ratio to use. See tr_ratiolimit
-    "sequentialDownload", // boolean download torrent pieces sequentially
+    "sequential_download", // boolean download torrent pieces sequentially
     "trackerAdd", // array DEPRECATED use trackerList instead
     "trackerList", // string string of announce URLs, one per line, and a blank line between tiers.
     "trackerRemove", // array DEPRECATED use trackerList instead
@@ -254,6 +254,7 @@ export const SessionAllFields = [
     "seed-queue-size", // number: max number of torrents to uploaded at once (see seed-queue-enabled)
     "seedRatioLimit", // double: the default seed ratio for torrents to use
     "seedRatioLimited", // boolean: true if seedRatioLimit is honored by default
+    "sequential_download", // boolean download torrent pieces sequentially
     "start-added-torrents", // boolean: true means added torrents will be started right away
     "trash-original-torrent-files", // boolean: true means the .torrent file of added torrents will be deleted
     "units", // object: see below

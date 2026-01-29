@@ -315,7 +315,7 @@ export function StatusField(props: TableFieldProps) {
     let status: string = StatusStrings[props.torrent.status];
     if (props.torrent.status === Status.downloading && props.torrent.pieceCount === 0) status = "Magnetizing";
 
-    const sequential = (props.torrent.status === Status.downloading && props.torrent.sequentialDownload === true) ? " sequentially" : "";
+    const sequential = (props.torrent.status === Status.downloading && props.torrent.sequential_download === true) ? " sequentially" : "";
     return <div>{status + sequential}</div>;
 }
 

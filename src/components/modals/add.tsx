@@ -44,6 +44,8 @@ interface AddCommonProps extends React.PropsWithChildren {
     setLabels: React.Dispatch<string[]>,
     start: boolean,
     setStart: (b: boolean) => void,
+    sequential: boolean,
+    setSequential: (b: boolean) => void,
     priority: PriorityNumberType,
     setPriority: (p: PriorityNumberType) => void,
     disabled?: boolean,
@@ -64,6 +66,14 @@ function AddCommon(props: AddCommonProps) {
                 onChange={(e) => { props.setStart(e.currentTarget.checked); }}
                 my="xl"
                 styles={{ root: { flexGrow: 1 } }} />
+            {rpcVersion >= 18 &&
+                <Checkbox
+                    label="Sequential download"
+                    checked={props.sequential}
+                    disabled={props.disabled}
+                    onChange={(e) => { props.setSequential(e.currentTarget.checked); }}
+                    my="xl"
+                    styles={{ root: { flexGrow: 1 } }} />}
             {props.children}
             <SegmentedControl
                 color={PriorityColors.get(props.priority)}
@@ -89,6 +99,7 @@ function useCommonProps(opened: boolean) {
     const location = useTorrentLocation();
     const [labels, setLabels] = useState<string[]>([]);
     const [start, setStart] = useState<boolean>(true);
+    const [sequential, setSequential] = useState<boolean>(false);
     const [priority, setPriority] = useState<PriorityNumberType>(0);
 
     useEffect(() => {
@@ -104,6 +115,7 @@ function useCommonProps(opened: boolean) {
                 setPriority((AddTorrentPriorityOptions.indexOf(
                     config.values.interface.addTorrentPriority) - 1) as PriorityNumberType);
             }
+            setSequential(config.values.interface.addTorrentSequential);
         }
     }, [config, opened]);
 
@@ -114,20 +126,20 @@ function useCommonProps(opened: boolean) {
         setLabels,
         start,
         setStart,
+        sequential,
+        setSequential,
         priority,
         setPriority,
-    }), [opened, location, labels, start, priority]);
+    }), [opened, location, labels, start, sequential, priority]);
 
     return useMemo(() => ({
-        location,
-        start,
-        priority,
         props,
         onAdd: () => {
             config.values.interface.addTorrentStartSelection = start;
             config.values.interface.addTorrentPrioritySelection = priority;
+            config.values.interface.addTorrentSequential = sequential;
         },
-    }), [config, location, priority, props, start]);
+    }), [config, props, start, priority, sequential]);
 }
 
 function TabSwitchDropdown({ tabsRef }: { tabsRef: React.RefObject<ServerTabsRef> }) {
@@ -233,13 +245,14 @@ export function AddMagnet(props: AddCommonModalProps) {
             addMutation.mutate(
                 {
                     url: magnet,
-                    downloadDir: common.location.path,
+                    downloadDir: common.props.location.path,
                     labels: common.props.labels,
-                    paused: !common.start,
-                    bandwidthPriority: common.priority,
+                    paused: !common.props.start,
+                    sequential_download: common.props.sequential,
+                    bandwidthPriority: common.props.priority,
                 },
             );
-            common.location.addPath(common.location.path);
+            common.props.location.addPath(common.props.location.path);
         } else {
             mutateAddTrackers(
                 { torrentId: existingTorrent.id, trackers: magnetData?.trackers ?? [] },
@@ -549,17 +562,18 @@ export function AddTorrent(props: AddCommonModalProps) {
                 return await addMutation.mutateAsync(
                     {
                         metainfo: td.metadata,
-                        downloadDir: common.location.path,
+                        downloadDir: common.props.location.path,
                         labels: common.props.labels,
-                        paused: !common.start,
-                        bandwidthPriority: common.priority,
+                        paused: !common.props.start,
+                        sequential_download: common.props.sequential,
+                        bandwidthPriority: common.props.priority,
                         unwanted: (td.files == null || torrentData.length > 1) ? undefined : fileTree.getUnwanted(),
                         filePath: td.torrentPath,
                     },
                 );
             }));
 
-            common.location.addPath(common.location.path);
+            common.props.location.addPath(common.props.location.path);
         } else {
             mutateAddTrackers(
                 { torrentId: existingTorrent.id, trackers: torrentData[0].trackers },
