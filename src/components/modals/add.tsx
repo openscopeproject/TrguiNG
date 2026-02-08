@@ -64,16 +64,15 @@ function AddCommon(props: AddCommonProps) {
                 checked={props.start}
                 disabled={props.disabled}
                 onChange={(e) => { props.setStart(e.currentTarget.checked); }}
-                my="xl"
-                styles={{ root: { flexGrow: 1 } }} />
+                my="xl" />
             {rpcVersion >= 18 &&
                 <Checkbox
-                    label="Sequential download"
+                    label="Sequential"
                     checked={props.sequential}
                     disabled={props.disabled}
                     onChange={(e) => { props.setSequential(e.currentTarget.checked); }}
-                    my="xl"
-                    styles={{ root: { flexGrow: 1 } }} />}
+                    my="xl" />}
+            <div style={{ flexGrow: 1 }} />
             {props.children}
             <SegmentedControl
                 color={PriorityColors.get(props.priority)}
@@ -622,7 +621,7 @@ export function AddTorrent(props: AddCommonModalProps) {
         {!TAURI && <input ref={filesInputRef} type="file" accept=".torrent" multiple
             style={{ position: "absolute", top: "-20rem", zIndex: -1 }} />}
         {shouldOpen &&
-            <HkModal opened={true} onClose={modalClose} centered size="lg"
+            <HkModal opened={true} onClose={modalClose} centered size="xl"
                 fullScreen={fullScreen}
                 styles={{
                     title: { flexGrow: 1 },
