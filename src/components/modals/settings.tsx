@@ -143,8 +143,8 @@ function ServerPanel(props: ServerPanelProps) {
                 autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
 
             <Checkbox
-                mt="xs"
-                label="Accept invalid SSL certificates (e.g. self-signed)"
+                my="md"
+                label="Accept invalid SSL certificates"
                 {...props.form.getInputProps(`servers.${props.current}.connection.acceptInvalidCerts`, { type: "checkbox" })}
             />
 
