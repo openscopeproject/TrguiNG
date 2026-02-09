@@ -30,6 +30,8 @@ struct Connection {
     url: String,
     username: String,
     password: String,
+    #[serde(default)]
+    accept_invalid_certs: bool,
 }
 #[derive(Deserialize, Debug, Clone, PartialEq)]
 pub struct PollerConfig {
@@ -153,7 +155,8 @@ async fn poll(
     toast: bool,
     sound: bool,
 ) -> Result<String, Option<String>> {
-    let client = app.state::<reqwest::Client>();
+    let clients = app.state::<crate::HttpClients>();
+    let client = if connection.accept_invalid_certs { &clients.insecure } else { &clients.default };
 
     let mut req = client
         .post(connection.url.clone())
