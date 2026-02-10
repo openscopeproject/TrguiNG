@@ -17,7 +17,7 @@
  */
 
 import {
-    ActionIcon, Box, Button, Flex, Grid, Group, PasswordInput, SegmentedControl,
+    ActionIcon, Box, Button, Checkbox, Flex, Grid, Group, PasswordInput, SegmentedControl,
     Stack, Switch, Tabs, Text, Textarea, TextInput,
 } from "@mantine/core";
 import type { ServerConfig, WindowCloseOption, WindowMinimizeOption } from "config";
@@ -72,7 +72,7 @@ function ServerListPanel({ form, current, setCurrent }: ServerListPanelProps) {
                 <ActionIcon variant="light"
                     onClick={() => {
                         form.insertListItem("servers", {
-                            connection: { url: "", username: "", password: "" },
+                            connection: { url: "", username: "", password: "", acceptInvalidCerts: false },
                             name: "new",
                             pathMappings: [],
                             expandedDirFilters: [],
@@ -141,6 +141,12 @@ function ServerPanel(props: ServerPanelProps) {
                 {...props.form.getInputProps(`servers.${props.current}.connection.url`)}
                 placeholder="http://1.2.3.4:9091/transmission/rpc"
                 autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
+
+            <Checkbox
+                my="md"
+                label="Accept invalid SSL certificates"
+                {...props.form.getInputProps(`servers.${props.current}.connection.acceptInvalidCerts`, { type: "checkbox" })}
+            />
 
             <Grid>
                 <Grid.Col span={6}>

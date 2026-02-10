@@ -162,14 +162,30 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 
 static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
-fn http_client() -> reqwest::Client {
+pub struct HttpClients {
+    pub default: reqwest::Client,
+    pub insecure: reqwest::Client,
+}
+
+fn client_builder() -> reqwest::ClientBuilder {
     reqwest::Client::builder()
         .user_agent(APP_USER_AGENT)
         .connect_timeout(Duration::from_secs(10))
         .read_timeout(Duration::from_secs(40))
         .timeout(Duration::from_secs(60))
+}
+
+fn http_clients() -> HttpClients {
+    let default = client_builder()
         .build()
-        .expect("Failed to initialize http client")
+        .expect("Failed to initialize http client");
+
+    let insecure = client_builder()
+        .danger_accept_invalid_certs(true)
+        .build()
+        .expect("Failed to initialize insecure http client");
+
+    HttpClients { default, insecure }
 }
 
 fn main() {
@@ -204,7 +220,7 @@ fn main() {
         .manage(PollerHandle::default())
         .manage(MmdbReaderHandle::default())
         .manage(CreationRequestsHandle::default())
-        .manage(http_client())
+        .manage(http_clients())
         .setup(setup);
 
     #[cfg(target_os = "macos")]

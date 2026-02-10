@@ -78,6 +78,7 @@ export class TransmissionClient {
     headers: Record<string, string>;
     timeout: number;
     sessionInfo: SessionInfo;
+    insecure: boolean;
     ipsBatcher: Batcher<IpLookupResult, string>;
 
     constructor(connection: ServerConnection, toastNotifications: boolean, toastNotificationSound: boolean, timeout = 15) {
@@ -96,6 +97,7 @@ export class TransmissionClient {
             this.headers.Authorization = auth;
         }
         this.timeout = timeout;
+        this.insecure = connection.acceptInvalidCerts === true;
         this.sessionInfo = {};
         this.hostname = "unknown";
         try {
@@ -124,9 +126,10 @@ export class TransmissionClient {
     }
 
     async _sendRpc(data: Record<string, unknown>) {
+        const insecureParam = this.insecure ? "&insecure=true" : "";
         const url = this.url === ""
             ? "../rpc"
-            : `${RUST_BACKEND}/${data.method === "torrent-get" ? "torrentget" : "post"}?url=${this.url}`;
+            : `${RUST_BACKEND}/${data.method === "torrent-get" ? "torrentget" : "post"}?url=${this.url}${insecureParam}`;
         const body = JSON.stringify(data);
         let response = await fetch(
             url, { method: "POST", redirect: "manual", headers: this.headers, body });

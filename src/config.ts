@@ -28,6 +28,7 @@ export interface ServerConnection {
     url: string,
     username: string,
     password: string,
+    acceptInvalidCerts?: boolean,
 }
 
 export interface PathMapping {

@@ -214,15 +214,23 @@ async fn proxy_fetch(
     let sound = req_headers.get("X-TrguiNG-Sound").is_some();
 
     if let Some(query) = req.uri().query() {
-        if let Some(url) = query
+        let params: Vec<(&str, &str)> = query
             .split('&')
-            .map(|p| {
-                let parts: Vec<&str> = p.split('=').collect();
-                (parts[0], parts[1])
+            .filter_map(|p| {
+                let mut parts = p.splitn(2, '=');
+                match (parts.next(), parts.next()) {
+                    (Some(k), Some(v)) => Some((k, v)),
+                    _ => None,
+                }
             })
-            .find_map(|p| if p.0 == "url" { Some(p.1) } else { None })
+            .collect();
+
+        let insecure = params.iter().any(|p| p.0 == "insecure" && p.1 == "true");
+
+        if let Some(url) = params.iter().find_map(|p| if p.0 == "url" { Some(p.1) } else { None })
         {
-            let client = app.state::<reqwest::Client>();
+            let clients = app.state::<crate::HttpClients>();
+            let client = if insecure { &clients.insecure } else { &clients.default };
 
             let url = urlencoding::decode(url).ok().unwrap().into_owned();
             let headers = req.headers().clone();
