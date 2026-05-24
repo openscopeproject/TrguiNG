@@ -278,6 +278,8 @@ export function AddMagnet(props: AddCommonModalProps) {
         }
     }, [onAdd, props.opened, shouldOpen]);
 
+    const addDisabled = existingTorrent !== undefined && (magnetData?.trackers.length ?? 0) === 0;
+
     return <>{props.opened && shouldOpen &&
         <HkModal opened={true} onClose={close} centered size="xl"
             styles={{ title: { flexGrow: 1 } }}
@@ -290,15 +292,17 @@ export function AddMagnet(props: AddCommonModalProps) {
                 label="Link" w="100%"
                 value={magnet}
                 onChange={(e) => { setMagnet(e.currentTarget.value); }}
+                onKeyDown={(e) => { if (e.key === "Enter" && !addDisabled) onAdd(); }}
                 error={existingTorrent === undefined
                     ? undefined
                     : "Torrent already exists"}
+                data-autofocus
                 autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
             <AddCommon {...common.props} disabled={existingTorrent !== undefined} />
             <Divider my="sm" />
             <Group justify="center" gap="md">
-                <Button onClick={onAdd} variant="filled" data-autofocus
-                    disabled={existingTorrent !== undefined && (magnetData?.trackers.length ?? 0) === 0}>
+                <Button onClick={onAdd} variant="filled"
+                    disabled={addDisabled}>
                     {existingTorrent === undefined ? "Add" : "Add trackers"}
                 </Button>
                 <Button onClick={props.close} variant="light">Cancel</Button>

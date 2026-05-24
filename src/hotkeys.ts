@@ -20,6 +20,8 @@ import { useHotkeys } from "@mantine/hooks";
 import React, { useContext } from "react";
 
 export interface HotkeyHandlers {
+    addTorrent: () => void,
+    addMagnet: () => void,
     start: () => void,
     pause: () => void,
     remove: () => void,
@@ -42,6 +44,8 @@ const Hotkeys: {
 } = {
     active: true,
     handlers: {
+        addTorrent: () => { },
+        addMagnet: () => { },
         start: () => { },
         pause: () => { },
         remove: () => { },
@@ -70,6 +74,8 @@ export function useAppHotkeys() {
     const hk = useHotkeysContext();
 
     useHotkeys([
+        ["mod + O", () => { hk.run("addTorrent"); }],
+        ["mod + M", () => { hk.run("addMagnet"); }],
         ["F3", () => { hk.run("start"); }],
         ["F4", () => { hk.run("pause"); }],
         ["delete", () => { hk.run("remove"); }],

@@ -198,12 +198,14 @@ function Toolbar(props: ToolbarProps) {
 
     useEffect(() => {
         hk.handlers.focusSearch = () => searchRef.current?.focus();
+        hk.handlers.addTorrent = () => props.modals.current?.addTorrent();
+        hk.handlers.addMagnet = () => props.modals.current?.addMagnet();
         return () => { hk.handlers.focusSearch = () => { }; };
-    }, [hk]);
+    }, [hk, props.modals]);
 
     useHotkeys([
         ["mod + P", props.toggleMainSplit],
-        ["mod + O", props.toggleFiltersPanel],
+        ["mod + Y", props.toggleFiltersPanel],
         ["mod + I", props.toggleDetailsPanel],
         ["mod + [", props.toggleTabStrip],
     ]);
@@ -238,12 +240,12 @@ function Toolbar(props: ToolbarProps) {
         <Flex w="100%" align="stretch">
             <Button.Group mx="sm">
                 <ToolbarButton
-                    title="Add torrent file"
+                    title={`Add torrent file (${modKeyString()} O)`}
                     onClick={() => { props.modals.current?.addTorrent(); }}>
                     <Icon.FileArrowDownFill size="1.5rem" color="var(--mantine-color-green-8)" />
                 </ToolbarButton>
                 <ToolbarButton
-                    title="Add magnet link"
+                    title={`Add magnet link (${modKeyString()} M)`}
                     onClick={() => { props.modals.current?.addMagnet(); }}>
                     <Icon.MagnetFill size="1.5rem" color="var(--mantine-color-green-8)" />
                 </ToolbarButton>
