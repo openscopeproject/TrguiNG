@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ActionIcon, Box, Button, Checkbox, Divider, Flex, Group, Menu, SegmentedControl, Text, TextInput } from "@mantine/core";
+import { ActionIcon, Box, Button, Checkbox, Divider, Flex, Group, Menu, SegmentedControl, Text, Textarea } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ModalState, LocationData } from "./common";
 import { HkModal, LimitedNamesList, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
@@ -176,6 +176,15 @@ function TabSwitchDropdown({ tabsRef }: { tabsRef: React.RefObject<ServerTabsRef
     );
 }
 
+interface LinkData {
+    link: string,
+    magnetData: {
+        hash: string,
+        trackers: string[],
+    } | null,
+    existingTorrent: Torrent | undefined,
+}
+
 export function AddMagnet(props: AddCommonModalProps) {
     const serverData = useServerTorrentData();
     const [magnet, setMagnet] = useState<string>("");
@@ -190,7 +199,12 @@ export function AddMagnet(props: AddCommonModalProps) {
     const [magnetData, setMagnetData] = useState<{ hash: string, trackers: string[] }>();
 
     useEffect(() => {
-        setMagnetData(decodeMagnetLink(magnet));
+        const links = magnet.split(/\r?\n/).map((l) => l.trim()).filter((l) => l !== "");
+        if (links.length > 1) {
+            setMagnetData(undefined);
+        } else {
+            setMagnetData(decodeMagnetLink(magnet));
+        }
     }, [magnet]);
 
     const [existingTorrent, setExistingTorrent] = useState<Torrent>();
@@ -241,34 +255,116 @@ export function AddMagnet(props: AddCommonModalProps) {
         if (magnet === "") return;
 
         common.onAdd();
-        if (existingTorrent === undefined) {
-            addMutation.mutate(
-                {
-                    url: magnet,
-                    downloadDir: common.props.location.path,
-                    labels: common.props.labels,
-                    paused: !common.props.start,
-                    sequential_download: common.props.sequential,
-                    bandwidthPriority: common.props.priority,
-                },
-            );
-            common.props.location.addPath(common.props.location.path);
-        } else {
-            mutateAddTrackers(
-                { torrentId: existingTorrent.id, trackers: magnetData?.trackers ?? [] },
-                {
-                    onSuccess: () => {
-                        notifications.show({
-                            message: "Trackers updated",
-                            color: "green",
-                        });
-                    },
-                },
-            );
+        const links = magnet.split(/\r?\n/).map((l) => l.trim()).filter((l) => l !== "");
+        if (links.length === 0) return;
+
+        const queue: Array<LinkData> = [];
+
+        // Parse all links and determine if each is new or existing
+        for (const link of links) {
+            const parsed = decodeMagnetLink(link);
+            if (parsed === null) continue;
+
+            let existing: Torrent | undefined = undefined;
+            if (parsed.hash !== "") {
+                const torrent = serverData.torrents.find((t) => t.hashString === parsed.hash);
+                if (torrent !== undefined) {
+                    existing = torrent;
+                }
+            }
+
+            queue.push({ link, magnetData: parsed, existingTorrent: existing });
         }
-        setMagnet("");
+
+        if (queue.length === 0) return;
+
+        let currentIndex = 0;
+
+        const updateNotification = queue.length <= 1 ? "" : notifications.show({
+            message: `Processing magnet links (0/${queue.length})`,
+            color: "blue",
+            autoClose: false,
+        });
+
+        const processNextLink = () => {
+            if (currentIndex >= queue.length) {
+                // All links processed
+                setMagnet("");
+                if (updateNotification !== "") {
+                    notifications.update({
+                        id: updateNotification,
+                        message: `Processed ${queue.length} magnet links`,
+                        color: "blue",
+                        autoClose: true,
+                    });
+                }
+                return;
+            }
+
+            if (updateNotification !== "") {
+                notifications.update({
+                    id: updateNotification,
+                    message: `Processing magnet links (${currentIndex + 1}/${queue.length})`,
+                    color: "blue",
+                    autoClose: false,
+                });
+            }
+
+            const current = queue[currentIndex];
+            if (current.existingTorrent === undefined) {
+                // New torrent - add
+                addMutation.mutate(
+                    {
+                        url: current.link,
+                        downloadDir: common.props.location.path,
+                        labels: common.props.labels,
+                        paused: !common.props.start,
+                        sequential_download: common.props.sequential,
+                        bandwidthPriority: common.props.priority,
+                    },
+                    {
+                        onSuccess: () => {
+                            common.props.location.addPath(common.props.location.path);
+                            currentIndex++;
+                            processNextLink();
+                        },
+                        onError: () => {
+                            currentIndex++;
+                            processNextLink();
+                        },
+                    },
+                );
+            } else {
+                // Existing torrent - add trackers
+                mutateAddTrackers(
+                    { torrentId: current.existingTorrent.id, trackers: current.magnetData?.trackers ?? [] },
+                    {
+                        onSuccess: () => {
+                            notifications.show({
+                                message: "Trackers updated",
+                                color: "green",
+                            });
+                            currentIndex++;
+                            processNextLink();
+                        },
+                        onError: (error) => {
+                            console.error("Failed to add trackers:", error);
+                            notifications.show({
+                                title: "Error adding trackers",
+                                message: String(error),
+                                color: "red",
+                            });
+                            currentIndex++;
+                            processNextLink();
+                        },
+                    },
+                );
+            }
+        };
+
         close();
-    }, [existingTorrent, close, addMutation, magnet, common, mutateAddTrackers, magnetData]);
+        processNextLink();
+    }, [serverData, common, addMutation, mutateAddTrackers, close, magnet]);
 
     const config = useContext(ConfigContext);
     const shouldOpen = !config.values.interface.skipAddDialog || typeof props.uri !== "string";
@@ -288,16 +384,19 @@ export function AddMagnet(props: AddCommonModalProps) {
                 {TAURI && <TabSwitchDropdown tabsRef={props.tabsRef} />}
             </Flex>} >
             <Divider my="sm" />
-            <TextInput
-                label="Link" w="100%"
+            <Textarea
+                label="Magnet links, one per line" w="100%"
                 value={magnet}
-                onChange={(e) => { setMagnet(e.currentTarget.value); }}
-                onKeyDown={(e) => { if (e.key === "Enter" && !addDisabled) onAdd(); }}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => { setMagnet(e.currentTarget.value); }}
+                onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                    if (e.key === "Enter" && e.ctrlKey && !addDisabled) onAdd();
+                }}
                 error={existingTorrent === undefined
                     ? undefined
                     : "Torrent already exists"}
                 data-autofocus
-                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
+                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false"
+                minRows={6} />
             <AddCommon {...common.props} disabled={existingTorrent !== undefined} />
             <Divider my="sm" />
             <Group justify="center" gap="md">

@@ -14,6 +14,15 @@
     &[data-position='bottom-right'] {
         bottom: 2.5rem;
     }
+    & > div {
+        display: flex;
+        flex-direction: column-reverse; /* Forces oldest to stay at the very bottom */
+        justify-content: flex-end;
+    }
+}
+
+.mantine-Notifications-notification {
+    margin-top: var(--mantine-spacing-md);
 }
 
 .mantine-TagsInput-pill {

@@ -355,7 +355,7 @@ function Toolbar(props: ToolbarProps) {
                         Change layout
                     </Menu.Item>
                     <Menu.Item
-                        onClick={props.toggleFiltersPanel} rightSection={<Kbd>{`${modKeyString()} O`}</Kbd>}>
+                        onClick={props.toggleFiltersPanel} rightSection={<Kbd>{`${modKeyString()} Y`}</Kbd>}>
                         Toggle filters
                     </Menu.Item>
                     <Menu.Item
