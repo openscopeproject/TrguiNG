@@ -396,6 +396,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                     : "Torrent already exists"}
                 data-autofocus
                 autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false"
+                autosize
                 minRows={6} />
             <AddCommon {...common.props} disabled={existingTorrent !== undefined} />
             <Divider my="sm" />

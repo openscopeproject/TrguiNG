@@ -105,7 +105,12 @@ const AllFields: readonly TableField[] = [
     },
     { name: "rateDownload", label: "Down speed", component: ByteRateField },
     { name: "rateUpload", label: "Up speed", component: ByteRateField },
-    { name: "status", label: "Status", component: StatusField },
+    {
+        name: "status",
+        label: "Status",
+        component: StatusField,
+        requiredFields: ["status", "sequential_download"],
+    },
     { name: "addedDate", label: "Added on", component: DateField },
     {
         name: "peersSendingToUs",
