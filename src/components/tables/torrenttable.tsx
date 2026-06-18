@@ -31,7 +31,7 @@ import { EditableNameField, TrguiTable } from "./common";
 import { Badge, Box, Kbd, Menu, Text, useMantineTheme } from "@mantine/core";
 import { ConfigContext, ServerConfigContext } from "config";
 import { StatusIconMap, Error as StatusIconError, Magnetizing, CompletedStopped } from "components/statusicons";
-import { useMutateTorrentPath, useTorrentAction } from "queries";
+import { useMutateTorrentPath, useSession, useTorrentAction } from "queries";
 import { notifications } from "@mantine/notifications";
 import type { ContextMenuInfo } from "components/contextmenu";
 import { ContextMenu, useContextMenu } from "components/contextmenu";
@@ -128,6 +128,13 @@ const AllFields: readonly TableField[] = [
     },
     { name: "eta", label: "ETA", component: EtaField },
     { name: "uploadRatio", label: "Ratio", component: FixedDecimalField },
+    {
+        name: "uploadRatio",
+        label: "Ratio progress",
+        component: RatioProgressField,
+        columnId: "uploadRatioProgress",
+        accessorFn: (t) => t.uploadRatio,
+    },
     {
         name: "trackerStats",
         label: "Tracker",
@@ -242,6 +249,21 @@ function FixedDecimalField(props: TableFieldProps) {
             {num < 0 ? "" : Number(num).toFixed(2)}
         </div>
     );
+}
+
+function RatioProgressField(props: TableFieldProps) {
+    const { data: session } = useSession(false);
+    const ratio = props.torrent[props.fieldName];
+    const label = ratio < 0 ? "" : Number(ratio).toFixed(2);
+    let lim = Number(session?.seedRatioLimit ?? 2);
+    if (lim <= 0) lim = 2;
+    const now = Math.max(0, Math.min(1, ratio / lim)) * 100;
+    return <ProgressBar
+        now={now}
+        className="white-outline"
+        label={label}
+        variant={ratio >= lim ? "green" : "default"}
+    />;
 }
 
 function UploadRatioField(props: TableFieldProps) {

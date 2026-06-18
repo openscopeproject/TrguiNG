@@ -200,6 +200,7 @@ const DefaultColumnVisibility: Partial<Record<TableName, VisibilityState>> = {
         downloadedEver: false,
         uploadedEver: false,
         simpleRatio: false,
+        uploadRatioProgress: false,
         eta: false,
         tracker: false,
         trackerStatus: false,
