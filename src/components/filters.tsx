@@ -24,7 +24,7 @@ import * as StatusIcons from "./statusicons";
 import type { FilterSectionName, SectionsVisibility, StatusFilterName } from "../config";
 import { ConfigContext, ServerConfigContext } from "../config";
 import { Box, Divider, Flex, Menu } from "@mantine/core";
-import { eventHasModKey, useForceRender } from "trutil";
+import { bytesToHumanReadableStr, eventHasModKey } from "trutil";
 import { useContextMenu } from "./contextmenu";
 import { MemoSectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
 
@@ -131,7 +131,11 @@ interface FiltersProps extends WithCurrentFilters {
 interface FilterRowProps extends WithCurrentFilters {
     id: string,
     filter: NamedFilter,
-    count: number,
+    stats: {
+        count: number,
+        size: number,
+    },
+    showSizes: boolean,
 }
 
 function focusNextFilter(element: HTMLElement, next: boolean) {
@@ -191,7 +195,11 @@ const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
         onKeyDown={filterOnKeyDown}>
         <div className="icon-container"><props.filter.icon /></div>
         <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.filter.name}</div>
-        <div style={{ flexShrink: 0 }}>{`(${props.count})`}</div>
+        <div style={{ flexShrink: 0 }}>{`(${props.stats.count})`}</div>
+        {props.showSizes && <>
+            <div style={{ flexGrow: 1 }}></div>
+            <div style={{ flexShrink: 0 }}>{`[${bytesToHumanReadableStr(props.stats.size, 1)}]`}</div>
+        </>}
     </Flex>;
 });
 
@@ -215,6 +223,7 @@ interface DirFilterRowProps extends FiltersProps {
     id: string,
     dir: Directory,
     expandedReducer: ({ verb, value }: { verb: "add" | "remove", value: string }) => void,
+    showSizes: boolean,
 }
 
 function DirFilterRow(props: DirFilterRowProps) {
@@ -253,11 +262,17 @@ function DirFilterRow(props: DirFilterRowProps) {
         }
     }, [expandable, props]);
 
-    const count = useMemo(() => {
+    const [count, size] = useMemo(() => {
         if (config.values.interface.recursiveDirectories || props.dir.count === props.dir.recursiveCount) {
-            return `(${props.dir.recursiveCount})`;
+            return [
+                `(${props.dir.recursiveCount})`,
+                `[${bytesToHumanReadableStr(props.dir.size, 1)}]`,
+            ];
         }
-        return `(${props.dir.count}/${props.dir.recursiveCount})`;
+        return [
+            `(${props.dir.count}/${props.dir.recursiveCount})`,
+            `[${bytesToHumanReadableStr(props.dir.size, 1)}]`,
+        ];
     }, [config.values.interface.recursiveDirectories, props.dir]);
 
     return (
@@ -281,6 +296,10 @@ function DirFilterRow(props: DirFilterRowProps) {
             </div>
             <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.dir.name}</div>
             <div style={{ flexShrink: 0 }}>{count}</div>
+            {props.showSizes && <>
+                <div style={{ flexGrow: 1 }}></div>
+                <div style={{ flexShrink: 0 }}>{size}</div>
+            </>}
         </Flex>
     );
 }
@@ -292,6 +311,7 @@ interface Directory {
     expanded: boolean,
     count: number,
     recursiveCount: number,
+    size: number,
     level: number,
 }
 
@@ -302,13 +322,14 @@ const DefaultRoot: Directory = {
     expanded: true,
     count: 0,
     recursiveCount: 0,
+    size: 0,
     level: -1,
 };
 
-function buildDirTree(paths: string[], expanded: string[], compactDirectories: boolean): Directory {
+function buildDirTree(pathsAndSizes: Array<[string, number]>, expanded: string[], compactDirectories: boolean): Directory {
     const root: Directory = { ...DefaultRoot, subdirs: new Map() };
 
-    paths.forEach((path) => {
+    pathsAndSizes.forEach(([path, size]) => {
         const parts = path.split("/");
         let dir = root;
         let currentPath = "";
@@ -323,11 +344,13 @@ function buildDirTree(paths: string[], expanded: string[], compactDirectories: b
                     expanded: expanded.includes(currentPath),
                     count: 0,
                     recursiveCount: 0,
+                    size: 0,
                     level: dir.level + 1,
                 });
             }
             dir = dir.subdirs.get(part) as Directory;
             dir.recursiveCount++;
+            dir.size += size;
         }
         dir.count++;
     });
@@ -374,10 +397,16 @@ function flattenTree(root: Directory): Directory[] {
     return result;
 }
 
+function statCount(torrents: Torrent[]) {
+    const count = torrents.length;
+    const size = torrents.reduce((c, t) => c + t.sizeWhenDone, 0);
+    return { count, size };
+}
+
 export const Filters = React.memo(function Filters({ torrents, currentFilters, setCurrentFilters }: FiltersProps) {
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
-    const forceRender = useForceRender();
+    const [renderKey, forceRender] = useReducer((oldVal: number) => oldVal + 1, 0);
 
     const expandedReducer = useCallback(
         ({ verb, value }: { verb: "add" | "remove" | "set", value: string | string[] }) => {
@@ -393,28 +422,30 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
             forceRender();
         }, [forceRender, serverConfig]);
 
-    const paths = useMemo(
-        () => torrents.map((t) => t.downloadDir as string).sort(),
+    const pathsAndSizes = useMemo(
+        () => torrents.map((t) => [t.downloadDir, t.sizeWhenDone] as [string, number]).sort(),
         [torrents]);
 
     const dirs = useMemo<Directory[]>(() => {
-        const tree = buildDirTree(paths, serverConfig.expandedDirFilters, config.values.interface.compactDirectories);
+        const tree = buildDirTree(pathsAndSizes, serverConfig.expandedDirFilters, config.values.interface.compactDirectories);
         return flattenTree(tree);
-    }, [paths, serverConfig.expandedDirFilters, config.values.interface.compactDirectories]);
+    }, [pathsAndSizes, serverConfig.expandedDirFilters, config.values.interface.compactDirectories]);
 
     const [labels, trackers] = useMemo(() => {
-        const labels: Record<string, number> = {};
-        const trackers: Record<string, number> = {};
-        config.values.interface.preconfiguredLabels.forEach((label) => { labels[label] = 0; });
+        const labels: Record<string, { count: number, size: number }> = {};
+        const trackers: Record<string, { count: number, size: number }> = {};
+        config.values.interface.preconfiguredLabels.forEach((label) => { labels[label] = { count: 0, size: 0 }; });
 
         torrents.forEach((t) => t.labels?.forEach((l: string) => {
-            if (!(l in labels)) labels[l] = 0;
-            labels[l] = labels[l] + 1;
+            if (!(l in labels)) labels[l] = { count: 0, size: 0 };
+            labels[l].count += 1;
+            labels[l].size += t.sizeWhenDone;
         }));
 
         torrents.forEach((t) => {
-            if (!(t.cachedMainTracker in trackers)) trackers[t.cachedMainTracker] = 0;
-            trackers[t.cachedMainTracker] = trackers[t.cachedMainTracker] + 1;
+            if (!(t.cachedMainTracker in trackers)) trackers[t.cachedMainTracker] = { count: 0, size: 0 };
+            trackers[t.cachedMainTracker].count += 1;
+            trackers[t.cachedMainTracker].size += t.sizeWhenDone;
         });
 
         return [labels, trackers];
@@ -429,14 +460,16 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
     const [statusFiltersVisibility, setStatusFiltersVisibility] = useState(config.values.interface.statusFiltersVisibility);
     const [compactDirectories, setCompactDirectories] = useState(config.values.interface.compactDirectories);
     const [recursiveDirectories, setRecursiveDirectories] = useState(config.values.interface.recursiveDirectories);
+    const [showSizes, setShowSizes] = useState(config.values.interface.showSizesInFilters);
 
     useEffect(() => {
         config.values.interface.filterSections = sections;
         config.values.interface.statusFiltersVisibility = statusFiltersVisibility;
         config.values.interface.compactDirectories = compactDirectories;
         config.values.interface.recursiveDirectories = recursiveDirectories;
+        config.values.interface.showSizesInFilters = showSizes;
         setSectionsMap(getSectionsMap(sections));
-    }, [config, sections, statusFiltersVisibility, compactDirectories, recursiveDirectories]);
+    }, [config, sections, statusFiltersVisibility, compactDirectories, recursiveDirectories, showSizes]);
 
     const [info, setInfo, handler] = useContextMenu();
 
@@ -464,6 +497,12 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         setRecursiveDirectories(!recursiveDirectories);
         setCurrentFilters({ verb: "set", filter: { id: "", filter: DefaultFilter } });
     }, [recursiveDirectories, setCurrentFilters]);
+
+    const onShowSizesClick = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setShowSizes(!showSizes);
+        forceRender();
+    }, [showSizes, forceRender]);
 
     return (
         <Flex direction="column" onContextMenu={handler}
@@ -518,38 +557,51 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 >
                     Recursive Directories
                 </Menu.Item>
+                <Menu.Item
+                    leftSection={showSizes ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                    onClick={onShowSizesClick}
+                >
+                    Show sizes
+                </Menu.Item>
             </MemoSectionsContextMenu>
             {sections[sectionsMap.Status].visible && <div style={{ order: sectionsMap.Status }}>
                 <Divider mx="sm" label="Status" labelPosition="center" />
                 {statusFilters.map((f) =>
-                    (f.required === true || statusFiltersVisibility[f.name]) && <FilterRow key={`status-${f.name}`}
+                    (f.required === true || statusFiltersVisibility[f.name])
+                    && <FilterRow key={`status-${f.name}`}
                         id={`status-${f.name}`} filter={f}
-                        count={torrents.filter(f.filter).length}
-                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} />)}
+                        stats={statCount(torrents.filter(f.filter))}
+                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters}
+                        showSizes={showSizes} />)}
             </div>}
             {sections[sectionsMap.Directories].visible && <div style={{ order: sectionsMap.Directories }}>
                 <Divider mx="sm" mt="md" label="Directories" labelPosition="center" />
                 {dirs.map((d) =>
                     <DirFilterRow key={`dir-${d.path}`} id={`dir-${d.path}`}
-                        dir={d} expandedReducer={expandedReducer} {...{ torrents, currentFilters, setCurrentFilters }} />)}
+                        dir={d} expandedReducer={expandedReducer}
+                        {...{ torrents, currentFilters, setCurrentFilters }}
+                        showSizes={showSizes} />)}
             </div>}
             {sections[sectionsMap.Labels].visible && <div style={{ order: sectionsMap.Labels }}>
                 <Divider mx="sm" mt="md" label="Labels" labelPosition="center" />
                 <FilterRow
                     id="nolabels" filter={noLabelsFilter}
-                    count={torrents.filter(noLabelsFilter.filter).length}
-                    currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} />
+                    stats={statCount(torrents.filter(noLabelsFilter.filter))}
+                    currentFilters={currentFilters} setCurrentFilters={setCurrentFilters}
+                    showSizes={showSizes} />
                 {Object.keys(labels).sort().map((label) =>
                     <LabelFilterRow key={`labels-${label}`} label={label}
-                        count={labels[label]}
-                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} />)}
+                        stats={labels[label]}
+                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters}
+                        showSizes={showSizes} />)}
             </div>}
             {sections[sectionsMap.Trackers].visible && <div style={{ order: sectionsMap.Trackers }}>
                 <Divider mx="sm" mt="md" label="Trackers" labelPosition="center" />
                 {Object.keys(trackers).sort().map((tracker) =>
-                    <TrackerFilterRow key={`trackers-${tracker}`} tracker={tracker}
-                        count={trackers[tracker]}
-                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} />)}
+                    <TrackerFilterRow key={`trackers-${tracker}-${renderKey}`} tracker={tracker}
+                        stats={trackers[tracker]}
+                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters}
+                        showSizes={showSizes} />)}
             </div>}
         </Flex>
     );

@@ -160,6 +160,7 @@ interface Settings {
         statusFiltersVisibility: StatusFiltersVisibility,
         compactDirectories: boolean,
         recursiveDirectories: boolean,
+        showSizesInFilters: boolean,
         statusBarSections: SectionsVisibility<StatusbarSectionName>,
         statusBarGlobalSpeeds: boolean,
         showFiltersPanel: boolean,
@@ -289,6 +290,7 @@ const DefaultSettings: Settings = {
         ) as Record<StatusFilterName, boolean>,
         compactDirectories: false,
         recursiveDirectories: true,
+        showSizesInFilters: true,
         statusBarSections: StatusbarSections.map((section) => ({
             section,
             visible: true,

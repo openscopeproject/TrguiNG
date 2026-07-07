@@ -25,7 +25,7 @@ import { formatDate } from "date-fns";
 
 const SIUnits = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"];
 
-export function bytesToHumanReadableStr(value: number): string {
+export function bytesToHumanReadableStr(value: number, maxPrecision: number = 2): string {
     let unit = "";
     let divisor = 1.0;
 
@@ -35,13 +35,14 @@ export function bytesToHumanReadableStr(value: number): string {
     }
 
     const tmp = value / divisor;
+    let precision = maxPrecision;
 
-    let fp = 2;
-    if (tmp >= 100) fp = 1;
-    if (tmp >= 1000) fp = 0;
-    if (unit === "B") fp = 0;
+    if (tmp >= 100) precision -= 1;
+    if (tmp >= 1000) precision -= 0;
+    if (unit === "B") precision = 0;
+    if (precision < 0) precision = 0;
 
-    return `${tmp.toFixed(fp)} ${unit}`;
+    return `${tmp.toFixed(precision)} ${unit}`;
 }
 
 export function byteRateToHumanReadableStr(value: number): string {
