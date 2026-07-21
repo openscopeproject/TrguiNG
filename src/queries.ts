@@ -214,6 +214,7 @@ function useInvalidatingTorrentAction<ActionParams>(mutationFn: (params: ActionP
 }
 
 export interface TorrentAddQueryParams extends TorrentAddParams {
+    name?: string,
     filePath?: string,
 }
 

@@ -198,6 +198,7 @@ export function mergeTrackerLists(currentTrackers: string[][], newTrackers: stri
 const badChars = /[<>:"\\/|?*]/g;
 
 export function fileSystemSafeName(name: string) {
+    if (name === "") return "_";
     return name.replace(badChars, "_");
 }
 

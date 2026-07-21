@@ -16,10 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ActionIcon, Box, Button, Checkbox, Divider, Flex, Group, Menu, SegmentedControl, Text, Textarea } from "@mantine/core";
+import { ActionIcon, Box, Button, Checkbox, Divider, Flex, Group, Menu, SegmentedControl, Text, Textarea, TextInput } from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ModalState, LocationData } from "./common";
-import { HkModal, LimitedNamesList, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
+import { HkModal, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
 import type { PriorityNumberType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings } from "rpc/transmission";
 import type { Torrent } from "rpc/torrent";
@@ -28,10 +28,10 @@ import { CachedFileTree } from "cachedfiletree";
 import { FileTreeTable, useUnwantedFiles } from "components/tables/filetreetable";
 import { notifications } from "@mantine/notifications";
 import type { TorrentAddQueryParams } from "queries";
-import { useAddTorrent, useFileTree, useTorrentAddTrackers } from "queries";
+import { useAddTorrent, useFileTree, useMutateTorrentPath, useTorrentAddTrackers } from "queries";
 import { AddTorrentPriorityOptions, ConfigContext, ServerConfigContext } from "config";
 import type { ServerTabsRef } from "components/servertabs";
-import { bytesToHumanReadableStr, decodeMagnetLink } from "trutil";
+import { bytesToHumanReadableStr, decodeMagnetLink, fileSystemSafeName } from "trutil";
 import { useToggle } from "@mantine/hooks";
 import * as Icon from "react-bootstrap-icons";
 import classes from "./add.module.css";
@@ -577,6 +577,7 @@ export function AddTorrent(props: AddCommonModalProps) {
     const serverData = useServerTorrentData();
     const common = useCommonProps(props.opened);
     const [torrentData, setTorrentData] = useState<TorrentFileData[]>();
+    const [torrentName, setTorrentName] = useState("");
 
     const existingTorrent = useMemo(() => {
         if (torrentData !== undefined && torrentData.length === 1) {
@@ -622,6 +623,8 @@ export function AddTorrent(props: AddCommonModalProps) {
         void refetch();
     }, [fileTree, onCheckboxChange, refetch]);
 
+    const pathMutation = useMutateTorrentPath();
+
     const addMutation = useAddTorrent(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         useCallback((response: any, vars: TorrentAddQueryParams) => {
@@ -640,11 +643,31 @@ export function AddTorrent(props: AddCommonModalProps) {
                     message: added.name,
                     color: "green",
                 });
+
+                const safeName = fileSystemSafeName(vars.name ?? "_");
+
+                if (TAURI && added.name != safeName) {
+                    pathMutation.mutate(
+                        {
+                            torrentId: added.id,
+                            path: added.name,
+                            name: safeName,
+                        },
+                        {
+                            onError: (e) => {
+                                notifications.show({
+                                    title: "Error renaming torrent",
+                                    message: String(e),
+                                    color: "red",
+                                });
+                            },
+                        });
+                }
             }
             if (TAURI && config.values.app.deleteAdded && vars.filePath !== undefined) {
                 void invoke("remove_file", { path: vars.filePath });
             }
-        }, [config.values.app.deleteAdded]),
+        }, [config.values.app.deleteAdded, pathMutation]),
         useCallback((e) => {
             console.error("Failed to add torrent:", e);
             notifications.show({
@@ -672,6 +695,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                         sequential_download: common.props.sequential,
                         bandwidthPriority: common.props.priority,
                         unwanted: (td.files == null || torrentData.length > 1) ? undefined : fileTree.getUnwanted(),
+                        name: torrentName,
                         filePath: td.torrentPath,
                     },
                 );
@@ -698,7 +722,7 @@ export function AddTorrent(props: AddCommonModalProps) {
         }
         setTorrentData(undefined);
         close();
-    }, [torrentData, existingTorrent, close, common, addMutation, fileTree, mutateAddTrackers, config]);
+    }, [torrentData, torrentName, existingTorrent, close, common, addMutation, fileTree, mutateAddTrackers, config]);
 
     const shouldOpen = !config.values.interface.skipAddDialog && torrentData !== undefined;
     useEffect(() => {
@@ -712,10 +736,9 @@ export function AddTorrent(props: AddCommonModalProps) {
         close();
     }, [close]);
 
-    const names = useMemo(() => {
-        if (torrentData === undefined) return [];
-
-        return torrentData.map((td) => td.name);
+    useEffect(() => {
+        if (torrentData === undefined || torrentData.length < 1) setTorrentName("");
+        else setTorrentName(fileSystemSafeName(torrentData[0].name.replace(/\.torrent$/i, "")));
     }, [torrentData]);
 
     const torrentExists = existingTorrent !== undefined;
@@ -745,8 +768,11 @@ export function AddTorrent(props: AddCommonModalProps) {
                 </Flex>} >
                 <Divider my="sm" />
                 {torrentExists
-                    ? <Text color="red" fw="bold" fz="lg">Torrent already exists</Text>
-                    : <LimitedNamesList names={names} limit={1} />}
+                    ? <Text c="red" fw="bold" fz="lg">Torrent already exists</Text>
+                    : <TextInput
+                        disabled={!TAURI}
+                        value={torrentName}
+                        onChange={(e) => setTorrentName(e.target.value)} />}
                 <AddCommon {...common.props} disabled={torrentExists}>
                     {(wantedSize > 0 || torrentData[0].files != null) &&
                         <Text>{bytesToHumanReadableStr(wantedSize)}</Text>}
