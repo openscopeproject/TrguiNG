@@ -109,8 +109,8 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
             currentTab: tabs.currentTab,
         };
 
-        if (tabs.currentTab > tab ||
-            (tabs.currentTab === tab && newTabs.currentTab === tabs.openTabs.length - 1)) {
+        if (tabs.currentTab > tab
+            || (tabs.currentTab === tab && newTabs.currentTab === tabs.openTabs.length - 1)) {
             newTabs.currentTab -= 1;
         }
 
@@ -160,9 +160,7 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
             value={String(tabs.currentTab)}
             onChange={(value) => { switchTab(Number(value)); }}
             classNames={classes}
-            style={ props.visible ? undefined : {
-                display: "none",
-            }}
+            style={props.visible ? undefined : { display: "none" }}
         >
             <Tabs.List px="sm">
                 {tabs.openTabs.map((name, index) =>
@@ -170,11 +168,14 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
                         key={index}
                         value={String(index)}
                         rightSection={
-                            <Icon.XLg size="1.1rem" onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                closeTab(index);
-                            }} />
+                            <Icon.XLg
+                                size="1.1rem"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    closeTab(index);
+                                }}
+                            />
                         }
                     >
                         {name}
@@ -190,8 +191,7 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
                         <Menu.Dropdown>
                             <Menu.Label>Connect</Menu.Label>
                             {unopenedTabs.map((tab) =>
-                                <Menu.Item key={tab} onClick={() => { openTab(tab); }}>{tab}</Menu.Item>)
-                            }
+                                <Menu.Item key={tab} onClick={() => { openTab(tab); }}>{tab}</Menu.Item>)}
                         </Menu.Dropdown>
                     </Menu>
                     : <></>}

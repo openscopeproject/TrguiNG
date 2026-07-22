@@ -34,10 +34,10 @@ export function ProgressBar(props: ProgressBarProps) {
     const max = props.max ?? 100;
     const percent = Math.floor(1000 * props.now / max) / 10;
     const label = props.label ?? `${percent}%`;
-    const className = "progressbar " +
-        `${props.animate === true ? "animate" : ""} ` +
-        `${props.variant !== undefined && props.variant !== "default" ? props.variant : ""} ` +
-        `${props.className ?? ""}`;
+    const className = "progressbar "
+        + `${props.animate === true ? "animate" : ""} `
+        + `${props.variant !== undefined && props.variant !== "default" ? props.variant : ""} `
+        + `${props.className ?? ""}`;
     return (
         <div className={className}>
             <div>{label}</div>

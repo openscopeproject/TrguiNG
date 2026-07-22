@@ -119,5 +119,6 @@ export function PeersTable(props: { torrent: Torrent }) {
         selected,
         getRowId,
         selectedReducer,
-    }} />;
+    }}
+    />;
 }

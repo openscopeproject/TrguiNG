@@ -60,7 +60,8 @@ export function ContextMenu({
         }, [contextMenuInfo, setContextMenuInfo]);
 
     return (
-        <Menu {...other}
+        <Menu
+            {...other}
             opened={contextMenuInfo.opened}
             onClose={onClose}
             offset={0}
@@ -72,12 +73,14 @@ export function ContextMenu({
         >
             <Portal>
                 <Menu.Target>
-                    <Button unstyled
+                    <Button
+                        unstyled
                         className={classes.contextMenuButton}
                         style={{
                             left: contextMenuInfo.x,
                             top: contextMenuInfo.y,
-                        }} />
+                        }}
+                    />
                 </Menu.Target>
                 <Menu.Dropdown>
                     {autosize === true

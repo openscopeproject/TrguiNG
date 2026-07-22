@@ -46,7 +46,12 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(f
     { children, depressed, ...other }: ToolbarButtonProps, ref,
 ) {
     return (
-        <Button variant="light" size="compact-sm" h="2.5rem" {...other} ref={ref}
+        <Button
+            variant="light"
+            size="compact-sm"
+            h="2.5rem"
+            {...other}
+            ref={ref}
             className={clsx(classes.toolbarButton, { [classes.toolbarButtonDepressed]: depressed })}
         >
             {children}
@@ -152,7 +157,9 @@ function useButtonHandlers(
     useEffect(() => {
         hk.handlers = { ...hk.handlers, ...handlers };
         return () => {
-            Object.keys(handlers).forEach((k) => { hk.handlers[k as keyof HotkeyHandlers] = () => { }; });
+            Object.keys(handlers).forEach((k) => {
+                hk.handlers[k as keyof HotkeyHandlers] = () => { };
+            });
         };
     }, [hk, handlers]);
 
@@ -200,7 +207,9 @@ function Toolbar(props: ToolbarProps) {
         hk.handlers.focusSearch = () => searchRef.current?.focus();
         hk.handlers.addTorrent = () => props.modals.current?.addTorrent();
         hk.handlers.addMagnet = () => props.modals.current?.addMagnet();
-        return () => { hk.handlers.focusSearch = () => { }; };
+        return () => {
+            hk.handlers.focusSearch = () => { };
+        };
     }, [hk, props.modals]);
 
     useHotkeys([
@@ -241,12 +250,14 @@ function Toolbar(props: ToolbarProps) {
             <Button.Group mx="sm">
                 <ToolbarButton
                     title={`Add torrent file (${modKeyString()} O)`}
-                    onClick={() => { props.modals.current?.addTorrent(); }}>
+                    onClick={() => { props.modals.current?.addTorrent(); }}
+                >
                     <Icon.FileArrowDownFill size="1.5rem" color="var(--mantine-color-green-8)" />
                 </ToolbarButton>
                 <ToolbarButton
                     title={`Add magnet link (${modKeyString()} M)`}
-                    onClick={() => { props.modals.current?.addMagnet(); }}>
+                    onClick={() => { props.modals.current?.addMagnet(); }}
+                >
                     <Icon.MagnetFill size="1.5rem" color="var(--mantine-color-green-8)" />
                 </ToolbarButton>
             </Button.Group>
@@ -254,17 +265,20 @@ function Toolbar(props: ToolbarProps) {
             <Button.Group mx="sm">
                 <ToolbarButton
                     title="Start torrent (F3)"
-                    onClick={handlers.start} >
+                    onClick={handlers.start}
+                >
                     <Icon.PlayCircleFill size="1.5rem" color="var(--mantine-color-blue-6)" />
                 </ToolbarButton>
                 <ToolbarButton
                     title="Pause torrent (F4)"
-                    onClick={handlers.pause} >
+                    onClick={handlers.pause}
+                >
                     <Icon.PauseCircleFill size="1.5rem" color="var(--mantine-color-blue-6)" />
                 </ToolbarButton>
                 <ToolbarButton
                     title="Remove torrent (del)"
-                    onClick={handlers.remove}>
+                    onClick={handlers.remove}
+                >
                     <Icon.XCircleFill size="1.5rem" color="var(--mantine-color-red-6)" />
                 </ToolbarButton>
             </Button.Group>
@@ -272,12 +286,14 @@ function Toolbar(props: ToolbarProps) {
             <Button.Group mx="sm">
                 <ToolbarButton
                     title="Move up in queue"
-                    onClick={handlers.queueUp} >
+                    onClick={handlers.queueUp}
+                >
                     <Icon.ArrowUpCircleFill size="1.5rem" color="var(--mantine-color-green-8)" />
                 </ToolbarButton>
                 <ToolbarButton
                     title="Move down in queue"
-                    onClick={handlers.queueDown} >
+                    onClick={handlers.queueDown}
+                >
                     <Icon.ArrowDownCircleFill size="1.5rem" color="var(--mantine-color-green-8)" />
                 </ToolbarButton>
             </Button.Group>
@@ -285,36 +301,56 @@ function Toolbar(props: ToolbarProps) {
             <Button.Group mx="sm">
                 <ToolbarButton
                     title="Move torrent (F6)"
-                    onClick={handlers.move}>
+                    onClick={handlers.move}
+                >
                     <Icon.FolderFill size="1.5rem" color="var(--mantine-color-yellow-4)" stroke="var(--mantine-color-yellow-5)" />
                 </ToolbarButton>
                 <ToolbarButton
                     title="Set labels (F7)"
-                    onClick={handlers.setLabels} >
+                    onClick={handlers.setLabels}
+                >
                     <Icon.TagsFill size="1.5rem" color="var(--mantine-color-blue-6)" />
                 </ToolbarButton>
 
-                <Menu shadow="md" width="10rem" withinPortal returnFocus middlewares={{ shift: true, flip: false }}>
+                <Menu
+                    shadow="md"
+                    width="10rem"
+                    withinPortal
+                    returnFocus
+                    middlewares={{ shift: true, flip: false }}
+                >
                     <Menu.Target>
                         <ToolbarButton title="Set priority">
-                            <PriorityIcon width="1.5rem" height="1.5rem"
+                            <PriorityIcon
+                                width="1.5rem"
+                                height="1.5rem"
                                 fill={colorScheme === "light"
                                     ? "var(--mantine-color-yellow-6)"
-                                    : "var(--mantine-color-yellow-4)"} />
+                                    : "var(--mantine-color-yellow-4)"}
+                            />
                         </ToolbarButton>
                     </Menu.Target>
 
                     <Menu.Dropdown>
-                        <Menu.Item leftSection={<Icon.CircleFill color="var(--mantine-color-orange-7)" />}
-                            onClick={handlers.setPriorityHigh} rightSection={<Kbd>{`${modKeyString()} H`}</Kbd>}>
+                        <Menu.Item
+                            leftSection={<Icon.CircleFill color="var(--mantine-color-orange-7)" />}
+                            onClick={handlers.setPriorityHigh}
+                            rightSection={<Kbd>{`${modKeyString()} H`}</Kbd>}
+                        >
                             High
                         </Menu.Item>
-                        <Menu.Item leftSection={<Icon.CircleFill color="var(--mantine-color-teal-9)" />}
-                            onClick={handlers.setPriorityNormal} rightSection={<Kbd>{`${modKeyString()} N`}</Kbd>}>
+                        <Menu.Item
+                            leftSection={<Icon.CircleFill color="var(--mantine-color-teal-9)" />}
+                            onClick={handlers.setPriorityNormal}
+                            rightSection={<Kbd>{`${modKeyString()} N`}</Kbd>}
+                        >
                             Normal
                         </Menu.Item>
-                        <Menu.Item leftSection={<Icon.CircleFill color="var(--mantine-color-yellow-6)" />}
-                            onClick={handlers.setPriorityLow} rightSection={<Kbd>{`${modKeyString()} L`}</Kbd>}>
+                        <Menu.Item
+                            leftSection={<Icon.CircleFill color="var(--mantine-color-yellow-6)" />}
+                            onClick={handlers.setPriorityLow}
+                            rightSection={<Kbd>{`${modKeyString()} L`}</Kbd>}
+                        >
                             Low
                         </Menu.Item>
                     </Menu.Dropdown>
@@ -329,7 +365,9 @@ function Toolbar(props: ToolbarProps) {
                 <Icon.Speedometer2 size="1.5rem" />
             </ToolbarButton>
 
-            <TextInput mx="sm" ref={searchRef}
+            <TextInput
+                ref={searchRef}
+                mx="sm"
                 leftSection={<Icon.Search size="1rem" />}
                 placeholder={searchPlaceholder}
                 rightSection={<ActionIcon variant="subtle" onClick={onSearchClear} title="Clear">
@@ -339,10 +377,19 @@ function Toolbar(props: ToolbarProps) {
                 onFocus={() => setSearchPlaceholder("search by name or path:somepath or label:somelabel")}
                 onBlur={() => setSearchPlaceholder(`search (${modKeyString()} + f)`)}
                 styles={{ root: { flexGrow: 1 }, input: { height: "auto" } }}
-                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
             />
 
-            <Menu shadow="md" width="12rem" withinPortal returnFocus middlewares={{ shift: true, flip: true }}>
+            <Menu
+                shadow="md"
+                width="12rem"
+                withinPortal
+                returnFocus
+                middlewares={{ shift: true, flip: true }}
+            >
                 <Menu.Target>
                     <ToolbarButton title="Layout">
                         <Icon.Grid1x2Fill size="1.5rem" style={{ transform: "rotate(-90deg)" }} />
@@ -351,20 +398,28 @@ function Toolbar(props: ToolbarProps) {
 
                 <Menu.Dropdown>
                     <Menu.Item
-                        onClick={props.toggleMainSplit} rightSection={<Kbd>{`${modKeyString()} P`}</Kbd>}>
+                        onClick={props.toggleMainSplit}
+                        rightSection={<Kbd>{`${modKeyString()} P`}</Kbd>}
+                    >
                         Change layout
                     </Menu.Item>
                     <Menu.Item
-                        onClick={props.toggleFiltersPanel} rightSection={<Kbd>{`${modKeyString()} Y`}</Kbd>}>
+                        onClick={props.toggleFiltersPanel}
+                        rightSection={<Kbd>{`${modKeyString()} Y`}</Kbd>}
+                    >
                         Toggle filters
                     </Menu.Item>
                     <Menu.Item
-                        onClick={props.toggleDetailsPanel} rightSection={<Kbd>{`${modKeyString()} I`}</Kbd>}>
+                        onClick={props.toggleDetailsPanel}
+                        rightSection={<Kbd>{`${modKeyString()} I`}</Kbd>}
+                    >
                         Toggle details
                     </Menu.Item>
-                    {props.extra !== undefined &&
-                        <Menu.Item
-                            onClick={props.toggleTabStrip} rightSection={<Kbd>{`${modKeyString()} [`}</Kbd>}>
+                    {props.extra !== undefined
+                        && <Menu.Item
+                            onClick={props.toggleTabStrip}
+                            rightSection={<Kbd>{`${modKeyString()} [`}</Kbd>}
+                        >
                             Toggle tab strip
                         </Menu.Item>}
                     <Menu.Divider />
@@ -380,7 +435,8 @@ function Toolbar(props: ToolbarProps) {
 
             <ToolbarButton
                 title="Polling intervals and server settings (F9)"
-                onClick={handlers.daemonSettings}>
+                onClick={handlers.daemonSettings}
+            >
                 <Icon.Tools size="1.5rem" />
             </ToolbarButton>
 

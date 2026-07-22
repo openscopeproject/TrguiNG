@@ -8,10 +8,9 @@ import love from "eslint-config-love";
 import reactRecommended from "eslint-plugin-react/configs/recommended.js";
 import stylistic from "@stylistic/eslint-plugin";
 
-
 export default tseslint.config(
     eslint.configs.recommended,
-    // stylistic.configs.recommended,
+    stylistic.configs.recommended,
     tseslint.configs.recommended,
     {
         ...love,
@@ -46,11 +45,31 @@ export default tseslint.config(
             "react-hooks/rules-of-hooks": "error",
             "react-hooks/exhaustive-deps": "error",
             "@stylistic/indent": ["error", 4],
+            "@stylistic/indent-binary-ops": ["error", 4],
+            "@stylistic/jsx-indent-props": ["error", {
+                indentMode: 4,
+                ignoreTernaryOperator: true,
+            }],
             "@stylistic/semi": ["error", "always"],
             "@stylistic/no-extra-semi": "error",
             "@stylistic/quotes": ["error", "double"],
             "@stylistic/comma-dangle": ["error", "always-multiline"],
             "@stylistic/space-before-function-paren": "off",
+            "@stylistic/brace-style": ["error", "1tbs", { allowSingleLine: true }],
+            "@stylistic/arrow-parens": ["error", "always"],
+            "@stylistic/quote-props": ["error", "as-needed"],
+            "@stylistic/jsx-closing-bracket-location": ["error", "line-aligned"],
+            "@stylistic/jsx-closing-tag-location": ["error", "line-aligned"],
+            "@stylistic/jsx-wrap-multilines": "off",
+            "@stylistic/jsx-max-props-per-line": ["error", {
+                maximum: {
+                    single: 3,
+                    multi: 1,
+                },
+            }],
+            "@stylistic/operator-linebreak": ["error", "before", {
+                overrides: { "=": "after" },
+            }],
 
             "@stylistic/member-delimiter-style": ["error", {
                 multiline: {

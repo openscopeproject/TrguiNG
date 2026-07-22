@@ -155,71 +155,98 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                     </Grid.Col>
                     <Grid.Col span={6}>Progress bars</Grid.Col>
                     <Grid.Col span={3}>
-                        <Checkbox label="Colorful"
-                            {...props.form.getInputProps("interface.colorfulProgressbars", { type: "checkbox" })} />
+                        <Checkbox
+                            label="Colorful"
+                            {...props.form.getInputProps("interface.colorfulProgressbars", { type: "checkbox" })}
+                        />
                     </Grid.Col>
                     <Grid.Col span={3}>
-                        <Checkbox label="Animated"
-                            {...props.form.getInputProps("interface.animatedProgressbars", { type: "checkbox" })} />
+                        <Checkbox
+                            label="Animated"
+                            {...props.form.getInputProps("interface.animatedProgressbars", { type: "checkbox" })}
+                        />
                     </Grid.Col>
                     <Grid.Col>
-                        <Checkbox label="Custom date/time format" mt="lg"
-                            {...props.form.getInputProps("interface.useCustomDateTimeFormat", { type: "checkbox" })} />
+                        <Checkbox
+                            label="Custom date/time format"
+                            mt="lg"
+                            {...props.form.getInputProps("interface.useCustomDateTimeFormat", { type: "checkbox" })}
+                        />
                     </Grid.Col>
                     <Grid.Col span={6}>
-                        <NativeSelect data={[...DateFormatOptions]} disabled={!props.form.values.interface.useCustomDateTimeFormat}
+                        <NativeSelect
+                            data={[...DateFormatOptions]}
+                            disabled={!props.form.values.interface.useCustomDateTimeFormat}
                             value={props.form.values.interface.dateFormat}
-                            onChange={(e) => { setFieldValue("interface.dateFormat", e.target.value as DateFormatOption); }} />
+                            onChange={(e) => { setFieldValue("interface.dateFormat", e.target.value as DateFormatOption); }}
+                        />
                     </Grid.Col>
                     <Grid.Col span={6}>
-                        <NativeSelect data={[...TimeFormatOptions]} disabled={!props.form.values.interface.useCustomDateTimeFormat}
+                        <NativeSelect
+                            data={[...TimeFormatOptions]}
+                            disabled={!props.form.values.interface.useCustomDateTimeFormat}
                             value={props.form.values.interface.timeFormat}
-                            onChange={(e) => { setFieldValue("interface.timeFormat", e.target.value as TimeFormatOption); }} />
+                            onChange={(e) => { setFieldValue("interface.timeFormat", e.target.value as TimeFormatOption); }}
+                        />
                     </Grid.Col>
                 </Grid>
             </Tabs.Panel>
             <Tabs.Panel value="downloads" p="lg">
                 <Grid align="center">
                     <Grid.Col>
-                        <Checkbox label="Skip add torrent dialog"
-                            {...props.form.getInputProps("interface.skipAddDialog", { type: "checkbox" })} />
+                        <Checkbox
+                            label="Skip add torrent dialog"
+                            {...props.form.getInputProps("interface.skipAddDialog", { type: "checkbox" })}
+                        />
                     </Grid.Col>
                     <Grid.Col span={6}>
                         New torrent start
                     </Grid.Col>
                     <Grid.Col span={6}>
-                        <NativeSelect data={AddTorrentStartOptions}
+                        <NativeSelect
+                            data={AddTorrentStartOptions}
                             value={props.form.values.interface.addTorrentStart}
-                            onChange={(e) => { setFieldValue("interface.addTorrentStart", e.target.value as AddTorrentStartOption); }} />
+                            onChange={(e) => { setFieldValue("interface.addTorrentStart", e.target.value as AddTorrentStartOption); }}
+                        />
                     </Grid.Col>
                     <Grid.Col span={6}>
                         New torrent priority
                     </Grid.Col>
                     <Grid.Col span={6}>
-                        <NativeSelect data={AddTorrentPriorityOptions}
+                        <NativeSelect
+                            data={AddTorrentPriorityOptions}
                             value={props.form.values.interface.addTorrentPriority}
-                            onChange={(e) => { setFieldValue("interface.addTorrentPriority", e.target.value as AddTorrentPriorityOption); }} />
+                            onChange={(e) => { setFieldValue("interface.addTorrentPriority", e.target.value as AddTorrentPriorityOption); }}
+                        />
                     </Grid.Col>
                     <Grid.Col>
-                        <Checkbox label="Sort download directories history alphabetically" my="lg"
-                            {...props.form.getInputProps("interface.sortLastSaveDirs", { type: "checkbox" })} />
+                        <Checkbox
+                            label="Sort download directories history alphabetically"
+                            my="lg"
+                            {...props.form.getInputProps("interface.sortLastSaveDirs", { type: "checkbox" })}
+                        />
                     </Grid.Col>
                     <Grid.Col span={9}>Max number of saved download directories</Grid.Col>
                     <Grid.Col span={3}>
                         <NumberInput
                             min={1}
                             max={100}
-                            {...props.form.getInputProps("interface.numLastSaveDirs")} />
+                            {...props.form.getInputProps("interface.numLastSaveDirs")}
+                        />
                     </Grid.Col>
                     <Grid.Col>
-                        <Textarea minRows={6} maxRows={6} autosize
+                        <Textarea
+                            minRows={6}
+                            maxRows={6}
+                            autosize
                             label="Preconfigured directories (one per line)"
                             value={props.form.values.interface.preconfiguredDirs.join("\n")}
                             onChange={(e) => {
                                 props.form.setFieldValue(
                                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     "interface.preconfiguredDirs", e.currentTarget.value.split("\n") as any);
-                            }} />
+                            }}
+                        />
                     </Grid.Col>
                     <Grid.Col>
                         <TagsInput
@@ -250,9 +277,11 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                         Remove torrent dialog delete data option
                     </Grid.Col>
                     <Grid.Col span={4}>
-                        <NativeSelect data={DeleteTorrentDataOptions}
+                        <NativeSelect
+                            data={DeleteTorrentDataOptions}
                             value={props.form.values.interface.deleteTorrentData}
-                            onChange={(e) => { setFieldValue("interface.deleteTorrentData", e.target.value as DeleteTorrentDataOption); }} />
+                            onChange={(e) => { setFieldValue("interface.deleteTorrentData", e.target.value as DeleteTorrentDataOption); }}
+                        />
                     </Grid.Col>
                     <Grid.Col>
                         <TagsInput
@@ -279,17 +308,21 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                         />
                     </Grid.Col>
                     <Grid.Col>
-                        <Textarea minRows={10} maxRows={10} autosize
+                        <Textarea
+                            minRows={10}
+                            maxRows={10}
+                            autosize
                             label="Default tracker list"
                             value={props.form.values.interface.defaultTrackers.join("\n")}
                             onChange={(e) => {
                                 props.form.setFieldValue(
                                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     "interface.defaultTrackers", e.currentTarget.value.split("\n") as any);
-                            }} />
+                            }}
+                        />
                     </Grid.Col>
                 </Grid>
             </Tabs.Panel>
-        </Tabs >
+        </Tabs>
     );
 }

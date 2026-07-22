@@ -59,8 +59,8 @@ const statusFilters: StatusFilter[] = [
     {
         name: "Completed",
         filter: (t: Torrent) => {
-            return t.status === Status.seeding ||
-                (t.sizeWhenDone > 0 && Math.max(t.sizeWhenDone - t.haveValid, 0) === 0);
+            return t.status === Status.seeding
+                || (t.sizeWhenDone > 0 && Math.max(t.sizeWhenDone - t.haveValid, 0) === 0);
         },
         icon: StatusIcons.Completed,
     },
@@ -184,7 +184,11 @@ function filterOnKeyDown(event: React.KeyboardEvent<HTMLElement>) {
 }
 
 const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
-    return <Flex align="center" gap="sm" px="xs" tabIndex={-1}
+    return <Flex
+        align="center"
+        gap="sm"
+        px="xs"
+        tabIndex={-1}
         className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
         onClick={(event) => {
             props.setCurrentFilters({
@@ -192,7 +196,8 @@ const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
                 filter: { id: props.id, filter: props.filter.filter },
             });
         }}
-        onKeyDown={filterOnKeyDown}>
+        onKeyDown={filterOnKeyDown}
+    >
         <div className="icon-container"><props.filter.icon /></div>
         <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.filter.name}</div>
         <div style={{ flexShrink: 0 }}>{`(${props.stats.count})`}</div>
@@ -204,19 +209,27 @@ const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
 });
 
 const LabelFilterRow = React.memo(function LabelFilterRow(props: Omit<FilterRowProps, "filter" | "id"> & { label: string }) {
-    return <FilterRow {...props} id={`label-${props.label}`} filter={{
-        name: props.label,
-        filter: (t: Torrent) => t.labels.includes(props.label),
-        icon: StatusIcons.Label,
-    }} />;
+    return <FilterRow
+        {...props}
+        id={`label-${props.label}`}
+        filter={{
+            name: props.label,
+            filter: (t: Torrent) => t.labels.includes(props.label),
+            icon: StatusIcons.Label,
+        }}
+    />;
 });
 
 const TrackerFilterRow = React.memo(function TrackerFilterRow(props: Omit<FilterRowProps, "filter" | "id"> & { tracker: string }) {
-    return <FilterRow {...props} id={`tracker-${props.tracker}`} filter={{
-        name: props.tracker,
-        filter: (t: Torrent) => t.cachedMainTracker === props.tracker,
-        icon: StatusIcons.Tracker,
-    }} />;
+    return <FilterRow
+        {...props}
+        id={`tracker-${props.tracker}`}
+        filter={{
+            name: props.tracker,
+            filter: (t: Torrent) => t.cachedMainTracker === props.tracker,
+            icon: StatusIcons.Tracker,
+        }}
+    />;
 });
 
 interface DirFilterRowProps extends FiltersProps {
@@ -276,7 +289,10 @@ function DirFilterRow(props: DirFilterRowProps) {
     }, [config.values.interface.recursiveDirectories, props.dir]);
 
     return (
-        <Flex align="center" gap="sm" tabIndex={-1}
+        <Flex
+            align="center"
+            gap="sm"
+            tabIndex={-1}
             style={{ paddingLeft: `${props.dir.level * 1.4 + 0.25}em`, cursor: "default" }}
             className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
             onClick={(event) => {
@@ -285,14 +301,14 @@ function DirFilterRow(props: DirFilterRowProps) {
                     filter: { id: props.id, filter },
                 });
             }}
-            onKeyDown={onKeyDown}>
+            onKeyDown={onKeyDown}
+        >
             <div className="icon-container">
                 {expandable
                     ? props.dir.expanded
                         ? <Icon.DashSquare size="1.1rem" onClick={onCollapse} style={{ cursor: "pointer" }} />
                         : <Icon.PlusSquare size="1.1rem" onClick={onExpand} style={{ cursor: "pointer" }} />
-                    : <Icon.Folder size="1.1rem" />
-                }
+                    : <Icon.Folder size="1.1rem" />}
             </div>
             <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.dir.name}</div>
             <div style={{ flexShrink: 0 }}>{count}</div>
@@ -434,7 +450,9 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
     const [labels, trackers] = useMemo(() => {
         const labels: Record<string, { count: number, size: number }> = {};
         const trackers: Record<string, { count: number, size: number }> = {};
-        config.values.interface.preconfiguredLabels.forEach((label) => { labels[label] = { count: 0, size: 0 }; });
+        config.values.interface.preconfiguredLabels.forEach((label) => {
+            labels[label] = { count: 0, size: 0 };
+        });
 
         torrents.forEach((t) => t.labels?.forEach((l: string) => {
             if (!(l in labels)) labels[l] = { count: 0, size: 0 };
@@ -481,7 +499,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         const newStatusFiltersVisibility = { ...statusFiltersVisibility };
         newStatusFiltersVisibility[filterName] = !statusFiltersVisibility[filterName];
         setStatusFiltersVisibility(newStatusFiltersVisibility);
-        const selectedFilter = currentFilters.find(f => f.id === filterId);
+        const selectedFilter = currentFilters.find((f) => f.id === filterId);
         if (selectedFilter != null) {
             setCurrentFilters({ verb: "toggle", filter: selectedFilter });
         }
@@ -505,17 +523,22 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
     }, [showSizes, forceRender]);
 
     return (
-        <Flex direction="column" onContextMenu={handler}
+        <Flex
+            direction="column"
+            onContextMenu={handler}
             style={{
                 width: "100%",
                 minHeight: "100%",
                 whiteSpace: "nowrap",
                 cursor: "default",
                 userSelect: "none",
-            }}>
+            }}
+        >
             <MemoSectionsContextMenu
-                sections={sections} setSections={setSections}
-                contextMenuInfo={info} setContextMenuInfo={setInfo}
+                sections={sections}
+                setSections={setSections}
+                contextMenuInfo={info}
+                setContextMenuInfo={setInfo}
                 closeOnClickOutside
             >
                 <Menu.Divider />
@@ -533,8 +556,8 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
 
                     <Menu.Sub.Dropdown>
                         {statusFilters.map((f, index) =>
-                            f.required !== true &&
-                            <Menu.Item
+                            f.required !== true
+                            && <Menu.Item
                                 key={f.name}
                                 onClick={() => { onStatusFiltersSubmenuItemClick(index); }}
                                 leftSection={statusFiltersVisibility[f.name] ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
@@ -568,40 +591,74 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 <Divider mx="sm" label="Status" labelPosition="center" />
                 {statusFilters.map((f) =>
                     (f.required === true || statusFiltersVisibility[f.name])
-                    && <FilterRow key={`status-${f.name}`}
-                        id={`status-${f.name}`} filter={f}
+                    && <FilterRow
+                        key={`status-${f.name}`}
+                        id={`status-${f.name}`}
+                        filter={f}
                         stats={statCount(torrents.filter(f.filter))}
-                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters}
-                        showSizes={showSizes} />)}
+                        currentFilters={currentFilters}
+                        setCurrentFilters={setCurrentFilters}
+                        showSizes={showSizes}
+                    />)}
             </div>}
             {sections[sectionsMap.Directories].visible && <div style={{ order: sectionsMap.Directories }}>
-                <Divider mx="sm" mt="md" label="Directories" labelPosition="center" />
+                <Divider
+                    mx="sm"
+                    mt="md"
+                    label="Directories"
+                    labelPosition="center"
+                />
                 {dirs.map((d) =>
-                    <DirFilterRow key={`dir-${d.path}`} id={`dir-${d.path}`}
-                        dir={d} expandedReducer={expandedReducer}
+                    <DirFilterRow
+                        key={`dir-${d.path}`}
+                        id={`dir-${d.path}`}
+                        dir={d}
+                        expandedReducer={expandedReducer}
                         {...{ torrents, currentFilters, setCurrentFilters }}
-                        showSizes={showSizes} />)}
+                        showSizes={showSizes}
+                    />)}
             </div>}
             {sections[sectionsMap.Labels].visible && <div style={{ order: sectionsMap.Labels }}>
-                <Divider mx="sm" mt="md" label="Labels" labelPosition="center" />
+                <Divider
+                    mx="sm"
+                    mt="md"
+                    label="Labels"
+                    labelPosition="center"
+                />
                 <FilterRow
-                    id="nolabels" filter={noLabelsFilter}
+                    id="nolabels"
+                    filter={noLabelsFilter}
                     stats={statCount(torrents.filter(noLabelsFilter.filter))}
-                    currentFilters={currentFilters} setCurrentFilters={setCurrentFilters}
-                    showSizes={showSizes} />
+                    currentFilters={currentFilters}
+                    setCurrentFilters={setCurrentFilters}
+                    showSizes={showSizes}
+                />
                 {Object.keys(labels).sort().map((label) =>
-                    <LabelFilterRow key={`labels-${label}`} label={label}
+                    <LabelFilterRow
+                        key={`labels-${label}`}
+                        label={label}
                         stats={labels[label]}
-                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters}
-                        showSizes={showSizes} />)}
+                        currentFilters={currentFilters}
+                        setCurrentFilters={setCurrentFilters}
+                        showSizes={showSizes}
+                    />)}
             </div>}
             {sections[sectionsMap.Trackers].visible && <div style={{ order: sectionsMap.Trackers }}>
-                <Divider mx="sm" mt="md" label="Trackers" labelPosition="center" />
+                <Divider
+                    mx="sm"
+                    mt="md"
+                    label="Trackers"
+                    labelPosition="center"
+                />
                 {Object.keys(trackers).sort().map((tracker) =>
-                    <TrackerFilterRow key={`trackers-${tracker}-${renderKey}`} tracker={tracker}
+                    <TrackerFilterRow
+                        key={`trackers-${tracker}-${renderKey}`}
+                        tracker={tracker}
                         stats={trackers[tracker]}
-                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters}
-                        showSizes={showSizes} />)}
+                        currentFilters={currentFilters}
+                        setCurrentFilters={setCurrentFilters}
+                        showSizes={showSizes}
+                    />)}
             </div>}
         </Flex>
     );

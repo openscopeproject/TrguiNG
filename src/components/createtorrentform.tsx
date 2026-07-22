@@ -237,21 +237,35 @@ export default function CreateTorrentForm() {
     const browseDisabled = ["calculating", "generating"].includes(state.state);
 
     return (
-        <Flex direction="column" h="100%" w="100%" p="lg" gap="md">
+        <Flex
+            direction="column"
+            h="100%"
+            w="100%"
+            p="lg"
+            gap="md"
+        >
             <Group align="flex-end">
                 <TextInput
-                    label={"Select file or directory"}
+                    label="Select file or directory"
                     {...form.getInputProps("path")}
                     style={{ flexGrow: 1 }}
                     readOnly
-                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                />
                 <Button onClick={onBrowseFile} disabled={browseDisabled}>File</Button>
                 <Button onClick={onBrowseDirectory} disabled={browseDisabled}>Directory</Button>
             </Group>
             <TextInput
-                label={"Torrent name"}
+                label="Torrent name"
                 {...form.getInputProps("name")}
-                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+            />
             <Text fz="sm">Piece size</Text>
             <Slider
                 pt="2.5rem"
@@ -265,17 +279,24 @@ export default function CreateTorrentForm() {
                 labelAlwaysOn
                 label={byteLabel}
                 value={Math.log2(form.values.pieceLength)}
-                onChange={(value) => { form.setFieldValue("pieceLength", 2 ** value); }} />
+                onChange={(value) => { form.setFieldValue("pieceLength", 2 ** value); }}
+            />
             <TextInput
-                label={"Comment"}
-                {...form.getInputProps("comment")} />
+                label="Comment"
+                {...form.getInputProps("comment")}
+            />
             <TextInput
-                label={"Source (leave empty unless required by a private tracker)"}
+                label="Source (leave empty unless required by a private tracker)"
                 {...form.getInputProps("source")}
-                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+            />
             <Checkbox
                 label="Private torrent"
-                {...form.getInputProps("private", { type: "checkbox" })} />
+                {...form.getInputProps("private", { type: "checkbox" })}
+            />
             <Group align="flex-end">
                 <Box style={{ flexGrow: 1 }}>Tracker list, one per line, empty line between tiers</Box>
                 <Button onClick={addDefaultTrackers}>Add default list</Button>
@@ -283,39 +304,42 @@ export default function CreateTorrentForm() {
             <Textarea
                 classNames={textAreaClassNames}
                 value={form.values.announceList.join("\n")}
-                onChange={(e) => { form.setFieldValue("announceList", e.target.value.split("\n")); }} />
+                onChange={(e) => { form.setFieldValue("announceList", e.target.value.split("\n")); }}
+            />
             <Textarea
                 classNames={textAreaClassNames}
                 label="Web seed URLs, one per line"
                 value={form.values.urlList.join("\n")}
-                onChange={(e) => { form.setFieldValue("urlList", e.target.value.split("\n")); }} />
+                onChange={(e) => { form.setFieldValue("urlList", e.target.value.split("\n")); }}
+            />
             <Box h="1.5rem">
-                {state.state === "error" &&
-                    <Text c="red">{state.error}</Text>}
-                {state.state === "calculating" &&
-                    <Text>Calculating sizes...</Text>}
-                {state.state === "sizes" &&
-                    <Text>
+                {state.state === "error"
+                    && <Text c="red">{state.error}</Text>}
+                {state.state === "calculating"
+                    && <Text>Calculating sizes...</Text>}
+                {state.state === "sizes"
+                    && <Text>
                         {`${state.sizes?.files ?? 1} file${(state.sizes?.files ?? 1) > 1 ? "s" : ""}, `}
                         {`${bytesToHumanReadableStr(state.sizes?.size ?? 0)}, `}
                         {`${Math.ceil((state.sizes?.size ?? 0) / form.values.pieceLength)} pieces`}
                     </Text>}
-                {state.state === "generating" &&
-                    <ProgressBar
+                {state.state === "generating"
+                    && <ProgressBar
                         now={pieces.done}
                         max={Math.max(pieces.total, 1)}
                         label={`Hashing, done ${pieces.done} of ${pieces.total}`}
-                        animate />}
-                {state.state === "done" &&
-                    <Text>{`Torrent infohash: ${state.hash}`}</Text>}
+                        animate
+                    />}
+                {state.state === "done"
+                    && <Text>{`Torrent infohash: ${state.hash}`}</Text>}
             </Box>
             <Group justify="center">
-                {(["idle", "error", "calculating", "sizes"].includes(state.state)) &&
-                    <Button miw="10rem" onClick={onGenerate} disabled={state.state === "calculating"}>Generate</Button>}
-                {state.state === "generating" &&
-                    <Button miw="10rem" onClick={onCancel} color="red">Cancel</Button>}
-                {state.state === "done" &&
-                    <Button miw="10rem" onClick={onSave} color="green">Save</Button>}
+                {(["idle", "error", "calculating", "sizes"].includes(state.state))
+                    && <Button miw="10rem" onClick={onGenerate} disabled={state.state === "calculating"}>Generate</Button>}
+                {state.state === "generating"
+                    && <Button miw="10rem" onClick={onCancel} color="red">Cancel</Button>}
+                {state.state === "done"
+                    && <Button miw="10rem" onClick={onSave} color="green">Save</Button>}
             </Group>
         </Flex>
     );

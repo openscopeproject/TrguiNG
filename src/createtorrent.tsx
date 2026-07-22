@@ -35,7 +35,8 @@ async function run() {
                     <CreateTorrentForm />
                 </CustomMantineProvider>
             </Suspense>
-        </React.StrictMode>);
+        </React.StrictMode>,
+    );
 }
 
 window.onload = run;

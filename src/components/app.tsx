@@ -59,7 +59,11 @@ function CreateTorrentButton() {
                 });
             }
         });
-        return () => { void unlisten.then((u) => { u(); }); };
+        return () => {
+            void unlisten.then((u) => {
+                u();
+            });
+        };
     }, [colorScheme, config]);
 
     const onClick = useCallback(() => {
@@ -86,7 +90,7 @@ function CreateTorrentButton() {
 export function App(props: React.PropsWithChildren) {
     return (
         <QueryClientProvider client={queryClient}>
-            <Notifications limit={5}/>
+            <Notifications limit={5} />
             {props.children}
             <ReactQueryDevtools toggleButtonProps={{ style: { marginBottom: "2rem" } }} />
         </QueryClientProvider>
@@ -111,7 +115,7 @@ export default function TauriApp() {
 
     const [showServerConfig, serverConfigHandlers] = useDisclosure(false);
 
-    const [serverKey, incServerKey] = useReducer((x => x + 1), 0);
+    const [serverKey, incServerKey] = useReducer((x) => x + 1, 0);
 
     const onServerSave = useCallback((servers: ServerConfig[]) => {
         setServers(servers);
@@ -136,9 +140,12 @@ export default function TauriApp() {
         <App>
             <AppSettingsModal
                 onSave={onServerSave}
-                opened={showServerConfig} close={serverConfigHandlers.close} />
-            <Flex direction="column" h="100%" w="100%" >
-                <ServerTabs ref={tabsRef}
+                opened={showServerConfig}
+                close={serverConfigHandlers.close}
+            />
+            <Flex direction="column" h="100%" w="100%">
+                <ServerTabs
+                    ref={tabsRef}
                     clientManager={clientManager}
                     servers={servers}
                     setCurrentServer={setCurrentServer}
@@ -149,16 +156,20 @@ export default function TauriApp() {
                     <FontSizeToggle />
                     <CreateTorrentButton />
                     <ActionIcon
-                        size="lg" variant="default" my="auto"
+                        size="lg"
+                        variant="default"
+                        my="auto"
                         title="Configure servers"
-                        onClick={serverConfigHandlers.open}>
+                        onClick={serverConfigHandlers.open}
+                    >
                         <Icon.GearFill size="1.1rem" />
                     </ActionIcon>
                 </ServerTabs>
                 {currentServer !== undefined
                     ? <ServerConfigContext.Provider value={currentServer}>
                         <ClientContext.Provider value={clientManager.getClient(currentServer.name)}>
-                            <Server key={serverKey}
+                            <Server
+                                key={serverKey}
                                 hostname={clientManager.getHostname(currentServer.name)}
                                 tabsRef={tabsRef}
                                 toolbarExtra={!showTabStrip && <>
@@ -168,9 +179,14 @@ export default function TauriApp() {
                                     <ToolbarButton title="Configure servers" onClick={serverConfigHandlers.open}>
                                         <Icon.GearFill size="1.5rem" />
                                     </ToolbarButton>
-                                    {tabsRef.current?.getOpenTabs() !== undefined && tabsRef.current?.getOpenTabs()?.length > 1 &&
-                                        <Menu shadow="md" width="12rem" withinPortal returnFocus
-                                            middlewares={{ shift: true, flip: true }}>
+                                    {tabsRef.current?.getOpenTabs() !== undefined && tabsRef.current?.getOpenTabs()?.length > 1
+                                        && <Menu
+                                            shadow="md"
+                                            width="12rem"
+                                            withinPortal
+                                            returnFocus
+                                            middlewares={{ shift: true, flip: true }}
+                                        >
                                             <Menu.Target>
                                                 <ToolbarButton title="Switch server">
                                                     <Icon.Diagram2 size="1.5rem" />
@@ -185,14 +201,24 @@ export default function TauriApp() {
                                             </Menu.Dropdown>
                                         </Menu>}
                                 </>}
-                                toggleTabStrip={toggleTabStrip} />
+                                toggleTabStrip={toggleTabStrip}
+                            />
                         </ClientContext.Provider>
                     </ServerConfigContext.Provider>
-                    : <Flex justify="center" align="center" w="100%" h="100%">
+                    : <Flex
+                        justify="center"
+                        align="center"
+                        w="100%"
+                        h="100%"
+                    >
                         <Stack mih="20rem">
                             {servers.map((s, i) => {
-                                return <Button key={i} variant="subtle"
-                                    onClick={() => tabsRef.current?.openTab(s.name)}>{s.name}
+                                return <Button
+                                    key={i}
+                                    variant="subtle"
+                                    onClick={() => tabsRef.current?.openTab(s.name)}
+                                >
+                                    {s.name}
                                 </Button>;
                             })}
                             <Box style={{ flexGrow: 1 }} />
@@ -200,8 +226,7 @@ export default function TauriApp() {
                                 Configure servers
                             </Button>
                         </Stack>
-                    </Flex>
-                }
+                    </Flex>}
             </Flex>
         </App>
     );

@@ -114,7 +114,8 @@ function NameField(props: TableFieldProps) {
             currentName={props.entry.name}
             onArrowLeftRight={onArrowLeftRight}
             extensionLength={extensionLength}
-            onUpdate={(props.treeName === "filetree" && rpcVersion >= 15) ? updatePath : undefined}>
+            onUpdate={(props.treeName === "filetree" && rpcVersion >= 15) ? updatePath : undefined}
+        >
             <Box style={{ width: `${props.entry.level * 1.6}rem`, flexShrink: 0 }} />
             <Box w="1.4rem" mx="auto" style={{ flexShrink: 0 }}>
                 {props.entry.wantedUpdating
@@ -127,16 +128,15 @@ function NameField(props: TableFieldProps) {
                             refreshFileTree(props.treeName);
                         }}
                         onClick={(e) => { e.stopPropagation(); }}
-                        onDoubleClick={(e) => { e.stopPropagation(); }} />
-                }
+                        onDoubleClick={(e) => { e.stopPropagation(); }}
+                    />}
             </Box>
             <Box ml="xs" className="icon-container">
                 {isDir
                     ? props.row.getIsExpanded()
                         ? <Icon.DashSquare size="1.1rem" onClick={onToggleExpand} style={{ cursor: "pointer" }} />
                         : <Icon.PlusSquare size="1.1rem" onClick={onToggleExpand} style={{ cursor: "pointer" }} />
-                    : <FileIcon name={props.entry.name} />
-                }
+                    : <FileIcon name={props.entry.name} />}
             </Box>
         </EditableNameField>
     );
@@ -167,7 +167,8 @@ function PriorityField(props: TableFieldProps) {
     return <Badge
         radius="md"
         variant="filled"
-        bg={priority === undefined ? "gray" : PriorityColors.get(priority)}>
+        bg={priority === undefined ? "gray" : PriorityColors.get(priority)}
+    >
         {priority === undefined ? "mixed" : PriorityStrings.get(priority)}
     </Badge>;
 }
@@ -182,7 +183,7 @@ interface FileTreeTableProps {
 
 function entryMatchesSearchTerms(entry: FileDirEntryView, searchTerms: string[]) {
     const path = entry.fullpath.toLowerCase().substring(entry.fullpath.indexOf("/") + 1);
-    return searchTerms.every(term => path.includes(term));
+    return searchTerms.every((term) => path.includes(term));
 }
 
 export function useUnwantedFiles(ft: CachedFileTree, setUpdating: boolean): EntryWantedChangeHandler {
@@ -209,8 +210,8 @@ function useSelected(data: FileDirEntryView[], fileTree: CachedFileTree, searchT
         const result: string[] = [];
         const recurse = (entry: FileDirEntryView) => {
             if (
-                (selectAll || fileTree.findEntry(entry.fullpath)?.isSelected === true) &&
-                (entry.subrows.length === 0 || entryMatchesSearchTerms(entry, searchTerms))
+                (selectAll || fileTree.findEntry(entry.fullpath)?.isSelected === true)
+                && (entry.subrows.length === 0 || entryMatchesSearchTerms(entry, searchTerms))
             ) {
                 result.push(entry.fullpath);
                 return;
@@ -237,14 +238,18 @@ function useSelected(data: FileDirEntryView[], fileTree: CachedFileTree, searchT
     }, [fileTree]);
 
     useEffect(() => {
-        return () => { hk.handlers.selectAll = () => { }; };
+        return () => {
+            hk.handlers.selectAll = () => { };
+        };
     }, [hk]);
 
     const selectedReducer = useCallback((action: { verb: "add" | "set" | "toggle", ids: string[], isReset?: boolean }) => {
         fileTree.selectAction(action);
         setSelected(fileTree.getSelected());
         if (action.isReset !== true) {
-            hk.handlers.selectAll = () => { selectAll.current?.(); };
+            hk.handlers.selectAll = () => {
+                selectAll.current?.();
+            };
         }
     }, [fileTree, hk]);
 
@@ -275,7 +280,8 @@ function SearchBox({ setSearchTerms }: {
 
     return (
         <Box>
-            <TextInput ref={searchRef}
+            <TextInput
+                ref={searchRef}
                 leftSection={<Icon.Search size="1rem" />}
                 rightSection={<ActionIcon variant="subtle" onClick={onSearchClear} title="Clear">
                     <Icon.XLg size="1rem" color="var(--mantine-color-red-6)" />
@@ -286,7 +292,11 @@ function SearchBox({ setSearchTerms }: {
                     root: classes.searchRoot,
                     input: classes.searchInput,
                 }}
-                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+            />
         </Box>
     );
 }
@@ -312,7 +322,8 @@ export function FileTreeTable(props: FileTreeTableProps) {
                     entry={cellProps.row.original}
                     row={cellProps.row}
                     treeName={props.brief === true ? "filetreebrief" : "filetree"}
-                    onCheckboxChange={onCheckboxChange} />;
+                    onCheckboxChange={onCheckboxChange}
+                />;
             };
             const column: ColumnDef<FileDirEntryView> = {
                 header: field.label,
@@ -399,7 +410,12 @@ export function FileTreeTable(props: FileTreeTableProps) {
     }, config.values.interface.showFilesSearchBox);
 
     return (
-        <Flex w="100%" h="100%" onContextMenu={handler} direction="column">
+        <Flex
+            w="100%"
+            h="100%"
+            onContextMenu={handler}
+            direction="column"
+        >
             {props.brief === true
                 ? <></>
                 : <FiletreeContextMenu
@@ -410,7 +426,8 @@ export function FileTreeTable(props: FileTreeTableProps) {
                     currentRow={current}
                     onEntryOpen={onEntryOpen}
                     setExpanded={tableRef.current?.setExpanded}
-                    toggleFileSearchBox={toggleFileSearchBox} />}
+                    toggleFileSearchBox={toggleFileSearchBox}
+                />}
             {showFileSearchBox && <SearchBox setSearchTerms={setSearchTerms} />}
             <div style={{ flexGrow: 1 }}>
                 <TrguiTable<FileDirEntryView> {...{
@@ -424,7 +441,8 @@ export function FileTreeTable(props: FileTreeTableProps) {
                     selectedReducer,
                     setCurrent,
                     onRowDoubleClick,
-                }} />
+                }}
+                />
             </div>
         </Flex>
     );
@@ -517,13 +535,15 @@ function FiletreeContextMenu(props: {
                 <Menu.Item
                     onClick={() => { onOpen(false); }}
                     leftSection={<Icon.BoxArrowUpRight size="1.1rem" />}
-                    disabled={props.currentRow === ""}>
+                    disabled={props.currentRow === ""}
+                >
                     <Text fw="bold">Open</Text>
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => { onOpen(true); }}
                     leftSection={<Icon.Folder2Open size="1.1rem" />}
-                    disabled={props.currentRow === ""}>
+                    disabled={props.currentRow === ""}
+                >
                     <Text>Open folder</Text>
                 </Menu.Item>
                 <Menu.Divider />
@@ -531,56 +551,65 @@ function FiletreeContextMenu(props: {
             <Menu.Item
                 onClick={() => { setPriority("priority-high"); }}
                 leftSection={<Icon.CircleFill color="tomato" size="1.1rem" />}
-                disabled={props.selected.length === 0}>
+                disabled={props.selected.length === 0}
+            >
                 High priority
             </Menu.Item>
             <Menu.Item
                 onClick={() => { setPriority("priority-normal"); }}
                 leftSection={<Icon.CircleFill color="seagreen" size="1.1rem" />}
-                disabled={props.selected.length === 0}>
+                disabled={props.selected.length === 0}
+            >
                 Normal priority
             </Menu.Item>
             <Menu.Item
                 onClick={() => { setPriority("priority-low"); }}
                 leftSection={<Icon.CircleFill color="gold" size="1.1rem" />}
-                disabled={props.selected.length === 0}>
+                disabled={props.selected.length === 0}
+            >
                 Low priority
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item
                 onClick={() => { setWanted(true); }}
                 leftSection={<Checkbox checked readOnly />}
-                disabled={props.selected.length === 0}>
+                disabled={props.selected.length === 0}
+            >
                 Set wanted
             </Menu.Item>
             <Menu.Item
                 onClick={() => { setWanted(false); }}
                 leftSection={<Checkbox readOnly />}
-                disabled={props.selected.length === 0}>
+                disabled={props.selected.length === 0}
+            >
                 Set unwanted
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item
                 onClick={() => { props.setExpanded?.(true); }}
-                leftSection={<Icon.PlusSquare size="1.1rem" />}>
+                leftSection={<Icon.PlusSquare size="1.1rem" />}
+            >
                 Expand all
             </Menu.Item>
             <Menu.Item
                 onClick={() => { props.setExpanded?.(false); }}
-                leftSection={<Icon.DashSquare size="1.1rem" />}>
+                leftSection={<Icon.DashSquare size="1.1rem" />}
+            >
                 Collapse all
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item
                 onClick={props.toggleFileSearchBox}
-                leftSection={<Icon.Search size="1.1rem" />}>
+                leftSection={<Icon.Search size="1.1rem" />}
+            >
                 Toggle search
             </Menu.Item>
             <Menu.Item
                 onClick={toggleFlatFileTree}
-                leftSection={<Checkbox checked={!flatFileTree} readOnly />}>
+                leftSection={<Checkbox checked={!flatFileTree} readOnly />}
+            >
                 Show as tree
             </Menu.Item>
-        </ContextMenu >
+        </ContextMenu>
     );
 }

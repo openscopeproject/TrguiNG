@@ -60,7 +60,8 @@ export function ShowVersion(props: { sz?: string, btn?: MantineSize }) {
                 size={props.btn}
                 onClick={openVersionModal}
                 title="Show version information"
-                ml="auto" my="auto"
+                ml="auto"
+                my="auto"
             >
                 <Icon.InfoCircle size={props.sz} />
             </ActionIcon>

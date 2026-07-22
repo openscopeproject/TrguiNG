@@ -41,7 +41,9 @@ export function HkModal(props: ModalProps) {
     useEffect(() => {
         hk.active = !props.opened;
 
-        return () => { hk.active = true; };
+        return () => {
+            hk.active = true;
+        };
     }, [props.opened, hk]);
 
     return <Modal {...props}>{props.children}</Modal>;
@@ -74,7 +76,13 @@ export function LimitedNamesList({ names, limit }: { names: string[], limit?: nu
     const t = names.slice(0, limit);
 
     return <>
-        {t.map((s, i) => <Text key={i} mx="md" my="xs" px="sm" className={classes.limitedNamesText}>
+        {t.map((s, i) => <Text
+            key={i}
+            mx="md"
+            my="xs"
+            px="sm"
+            className={classes.limitedNamesText}
+        >
             {s}
         </Text>)}
         {names.length > limit && <Text mx="xl" mb="md">{`... and ${names.length - limit} more`}</Text>}
@@ -175,16 +183,21 @@ export function TorrentLocation(props: LocationData) {
                 style={{ flexGrow: 1 }}
                 data-autofocus={props.focusPath}
                 rightSection={
-                    <Menu position="left-start" withinPortal returnFocus
-                        middlewares={{ shift: true, flip: false }} offset={{ mainAxis: -20, crossAxis: 30 }}>
+                    <Menu
+                        position="left-start"
+                        withinPortal
+                        returnFocus
+                        middlewares={{ shift: true, flip: false }}
+                        offset={{ mainAxis: -20, crossAxis: 30 }}
+                    >
                         <Menu.Target>
                             <ActionIcon
                                 variant="subtle"
                                 py="md"
                                 disabled={
-                                    props.disabled === true ||
-                                    (props.lastPaths.length === 0 &&
-                                        config.values.interface.preconfiguredDirs.length === 0)
+                                    props.disabled === true
+                                    || (props.lastPaths.length === 0
+                                        && config.values.interface.preconfiguredDirs.length === 0)
                                 }
                             >
                                 <Icon.ClockHistory size="16" />
@@ -203,10 +216,11 @@ export function TorrentLocation(props: LocationData) {
                                         {path}
                                     </Menu.Item>
                                 ))}
-                                {config.values.interface.preconfiguredDirs.length > 0 && props.lastPaths.length > 0 &&
-                                    <Menu.Divider />}
+                                {config.values.interface.preconfiguredDirs.length > 0 && props.lastPaths.length > 0
+                                    && <Menu.Divider />}
                                 {props.lastPaths.map((path) => (
-                                    <Menu.Item key={path}
+                                    <Menu.Item
+                                        key={path}
                                         onClick={() => { props.setPath(path); }}
                                         rightSection={
                                             <ActionIcon
@@ -217,9 +231,11 @@ export function TorrentLocation(props: LocationData) {
                                                     e.stopPropagation();
                                                     props.removePath(path);
                                                 }}
-                                                className="list-delete-icon">
+                                                className="list-delete-icon"
+                                            >
                                                 <Icon.Trash size="12" />
-                                            </ActionIcon>}
+                                            </ActionIcon>
+                                        }
                                     >
                                         {path.length > 0 ? path : "<empty>"}
                                     </Menu.Item>
@@ -228,7 +244,11 @@ export function TorrentLocation(props: LocationData) {
                         </Menu.Dropdown>
                     </Menu>
                 }
-                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+            />
             {TAURI && <Button onClick={props.browseHandler} disabled={props.disabled}>Browse</Button>}
         </Group>
     );

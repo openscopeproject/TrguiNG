@@ -74,13 +74,17 @@ function useSelected() {
             }
         }
 
-        if (action.verb !== "filter") hk.handlers.selectAll = () => { selectAll.current?.(); };
+        if (action.verb !== "filter") hk.handlers.selectAll = () => {
+            selectAll.current?.();
+        };
 
         return result;
     }, new Set<number>());
 
     useEffect(() => {
-        return () => { hk.handlers.selectAll = () => { }; };
+        return () => {
+            hk.handlers.selectAll = () => { };
+        };
     }, [hk]);
 
     return { selectedTorrents, selectedReducer, selectAll };
@@ -120,9 +124,11 @@ export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: Serv
         const path = t.downloadDir.toLowerCase() as string;
         const labels = ((t.labels ?? []).map((l: string) => l.toLowerCase()) as string[]).join(" ");
         for (const term of searchTerms) {
-            if (term.startsWith("path:") || term.startsWith("path=")) { if (!path.includes(term.slice(5))) return false; }
-            else if (term.startsWith("label:") || term.startsWith("label=")) { if (!labels.includes(term.slice(6))) return false; }
-            else if (!name.includes(term)) return false;
+            if (term.startsWith("path:") || term.startsWith("path=")) {
+                if (!path.includes(term.slice(5))) return false;
+            } else if (term.startsWith("label:") || term.startsWith("label=")) {
+                if (!labels.includes(term.slice(6))) return false;
+            } else if (!name.includes(term)) return false;
         }
         return true;
     }, [searchTerms]);
@@ -202,12 +208,20 @@ export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: Serv
         <Flex direction="column" className={classes.serverContainer}>
             <MemoizedServerModals ref={modals} {...{ runUpdates, tabsRef }} serverName={serverConfig.name} />
             {overlayVisible && <Overlay blur={10}>
-                <Flex align="center" justify="center" h="100%" direction="column" gap="xl">
+                <Flex
+                    align="center"
+                    justify="center"
+                    h="100%"
+                    direction="column"
+                    gap="xl"
+                >
                     {sessionIsLoading
                         ? <Loader size="xl" />
                         : sessionIsError
-                            ? <><Title c="red" order={1}>Failed to load session</Title>
-                                <Title c="red" order={3}>{(sessionError as Error).message}</Title></>
+                            ? <>
+                                <Title c="red" order={1}>Failed to load session</Title>
+                                <Title c="red" order={3}>{(sessionError as Error).message}</Title>
+                            </>
                             : session?.["rpc-version"] === undefined
                                 ? <Title c="red" order={1}>Server does not appear to be transmission daemon</Title>
                                 : rpcVersion < 14
@@ -227,14 +241,16 @@ export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: Serv
                     toggleTabStrip={toggleTabStrip}
                 />
             </Box>
-            <SplitLayout key={`split-${showFiltersPanel ? "1" : "0"}-${showDetailsPanel ? "1" : "0"}-${mainSplit}`}
+            <SplitLayout
+                key={`split-${showFiltersPanel ? "1" : "0"}-${showDetailsPanel ? "1" : "0"}-${mainSplit}`}
                 mainSplit={mainSplit}
                 left={showFiltersPanel
                     ? <div className="scrollable">
                         <Filters
                             torrents={torrents ?? []}
                             currentFilters={currentFilters}
-                            setCurrentFilters={setCurrentFilters} />
+                            setCurrentFilters={setCurrentFilters}
+                        />
                     </div>
                     : undefined}
                 right={
@@ -245,7 +261,8 @@ export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: Serv
                         selectedTorrents={selectedTorrents}
                         selectedReducer={selectedReducer}
                         onColumnVisibilityChange={setTableRequiredFields}
-                        scrollToRow={scrollToRow} />
+                        scrollToRow={scrollToRow}
+                    />
                 }
                 bottom={showDetailsPanel
                     ? <MemoizedDetails torrentId={currentTorrent} updates={updates} />
@@ -259,7 +276,8 @@ export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: Serv
                     hostname,
                     torrents: torrents ?? [],
                     showMisc: Boolean(toolbarExtra),
-                }} />
+                }}
+                />
             </Box>
         </Flex>
     </ServerContext>;

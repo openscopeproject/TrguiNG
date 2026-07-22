@@ -64,19 +64,29 @@ export function useTorrentList(enabled: boolean, fields: TorrentFieldsType[]) {
 
     useEffect(() => {
         if (TAURI) {
-            const unlisten1 = appWindow.listen("window-hidden", () => { setMinimized(true); });
-            const unlisten2 = appWindow.listen("window-shown", () => { setMinimized(false); });
+            const unlisten1 = appWindow.listen(
+                "window-hidden", () => { setMinimized(true); });
+            const unlisten2 = appWindow.listen(
+                "window-shown", () => { setMinimized(false); });
 
             return () => {
-                unlisten1.then((unlisten) => { unlisten(); }).catch(() => { });
-                unlisten2.then((unlisten) => { unlisten(); }).catch(() => { });
+                unlisten1
+                    .then((unlisten) => { unlisten(); })
+                    .catch(() => { });
+                unlisten2
+                    .then((unlisten) => { unlisten(); })
+                    .catch(() => { });
             };
         } else {
-            const listener = () => { setMinimized(document.visibilityState === "hidden"); };
+            const listener = () => {
+                setMinimized(document.visibilityState === "hidden");
+            };
 
             document.addEventListener("visibilitychange", listener);
 
-            return () => { document.removeEventListener("visibilitychange", listener); };
+            return () => {
+                document.removeEventListener("visibilitychange", listener);
+            };
         }
     }, []);
 
@@ -131,10 +141,10 @@ function updateCachedTorrentFields(
         {
             predicate: (query) => {
                 const key = query.queryKey;
-                return key.length === 4 &&
-                    key[0] === serverName &&
-                    key[1] === "torrent" &&
-                    key[2] === "list";
+                return key.length === 4
+                    && key[0] === serverName
+                    && key[1] === "torrent"
+                    && key[2] === "list";
             },
         },
         (data: Torrent[] | undefined) => {
@@ -150,10 +160,10 @@ function updateCachedTorrentFields(
             type: "active",
             predicate: (query) => {
                 const key = query.queryKey;
-                return key.length === 3 &&
-                    key[0] === serverName &&
-                    key[1] === "torrent" &&
-                    torrentIds.includes((key[2] as { torrentId: number }).torrentId);
+                return key.length === 3
+                    && key[0] === serverName
+                    && key[1] === "torrent"
+                    && torrentIds.includes((key[2] as { torrentId: number }).torrentId);
             },
         },
         (t: Torrent | undefined) => t === undefined ? undefined : { ...t, ...fields },

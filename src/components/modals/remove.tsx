@@ -68,7 +68,13 @@ export function RemoveModal(props: ModalState) {
     }, [remove, serverSelected, deleteData, props]);
 
     return (
-        <HkModal opened={props.opened} onClose={props.close} title="Remove torrents" centered size="lg">
+        <HkModal
+            opened={props.opened}
+            onClose={props.close}
+            title="Remove torrents"
+            centered
+            size="lg"
+        >
             <Divider my="sm" />
             <Text mb="md">Are you sure you want to remove following torrents?</Text>
             <TorrentsNames />
@@ -76,10 +82,16 @@ export function RemoveModal(props: ModalState) {
                 label="Delete torrent data"
                 checked={deleteData}
                 onChange={onDeleteDataChanged}
-                my="xl" />
+                my="xl"
+            />
             <Divider my="sm" />
             <Group justify="center" gap="md">
-                <Button onClick={onDelete} variant="filled" color="red" data-autofocus>
+                <Button
+                    onClick={onDelete}
+                    variant="filled"
+                    color="red"
+                    data-autofocus
+                >
                     {deleteData ? "Delete" : "Remove"}
                 </Button>
                 <Button onClick={props.close} variant="light">Cancel</Button>

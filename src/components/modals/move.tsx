@@ -69,17 +69,24 @@ export function MoveModal(props: ModalState) {
     }, [props.opened, setPath, calculateInitialLocation]);
 
     return <>
-        {props.opened &&
-            <HkModal opened={props.opened} onClose={props.close} title="Move torrents" centered size="lg">
+        {props.opened
+            && <HkModal
+                opened={props.opened}
+                onClose={props.close}
+                title="Move torrents"
+                centered
+                size="lg"
+            >
                 <Divider my="sm" />
                 <Text mb="md">Enter new location for</Text>
                 <TorrentsNames />
-                <TorrentLocation {...location} focusPath/>
+                <TorrentLocation {...location} focusPath />
                 <Checkbox
                     label="Move torrent data to new location"
                     checked={moveData}
                     onChange={(e) => { setMoveData(e.currentTarget.checked); }}
-                    my="xl" />
+                    my="xl"
+                />
                 <Divider my="sm" />
                 <Group justify="center" gap="md">
                     <Button onClick={onMove} variant="filled">Move</Button>

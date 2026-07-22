@@ -82,8 +82,8 @@ export function EditLabelsModal(props: ModalState) {
     }, [rpcVersion, mutate, serverSelected, labels, close]);
 
     return <>
-        {props.opened &&
-            <SaveCancelModal
+        {props.opened
+            && <SaveCancelModal
                 opened={props.opened}
                 size="lg"
                 onClose={props.close}
@@ -98,7 +98,12 @@ export function EditLabelsModal(props: ModalState) {
                         <TorrentsNames />
                     </>}
                 <Box mih="17rem">
-                    <TorrentLabels labels={labels} setLabels={setLabels} disabled={rpcVersion < 16} initiallyOpened />
+                    <TorrentLabels
+                        labels={labels}
+                        setLabels={setLabels}
+                        disabled={rpcVersion < 16}
+                        initiallyOpened
+                    />
                 </Box>
             </SaveCancelModal>}
     </>;

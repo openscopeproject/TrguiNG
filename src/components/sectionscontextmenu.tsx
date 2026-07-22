@@ -63,7 +63,7 @@ function SectionsContextMenu<S extends string>(props: React.PropsWithChildren<{
         >
             <DragDropContext onDragEnd={onDragEnd}>
                 <StrictModeDroppable droppableId="filterscontextmenu">
-                    {provided => (
+                    {(provided) => (
                         <div ref={provided.innerRef} {...provided.droppableProps}>
                             {props.sections.map((section, index) => {
                                 return (

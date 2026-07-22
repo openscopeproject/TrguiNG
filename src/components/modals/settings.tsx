@@ -63,14 +63,21 @@ function ServerListPanel({ form, current, setCurrent }: ServerListPanelProps) {
                         form.values.servers.forEach((other, otherIndex) => {
                             if (otherIndex !== i && other.name === s.name) isDuplicate = true;
                         });
-                        return <Box key={i} px="sm" className={i === current ? "selected" : ""}
+                        return <Box
+                            key={i}
+                            px="sm"
+                            className={i === current ? "selected" : ""}
                             style={{ textDecoration: isDuplicate ? "red wavy underline" : undefined }}
-                            onClick={() => { setCurrent(i); }}>{s.name}</Box>;
+                            onClick={() => { setCurrent(i); }}
+                        >
+                            {s.name}
+                        </Box>;
                     })}
                 </div>
             </Box>
             <Group justify="space-between" wrap="nowrap">
-                <ActionIcon variant="light"
+                <ActionIcon
+                    variant="light"
                     onClick={() => {
                         form.insertListItem("servers", {
                             connection: { url: "", username: "", password: "", acceptInvalidCerts: false },
@@ -82,38 +89,45 @@ function ServerListPanel({ form, current, setCurrent }: ServerListPanelProps) {
                         });
                         form.validate();
                         setCurrent(form.values.servers.length);
-                    }}>
-                    <Icon.PlusSquare size={"1.6rem"} color="royalblue" />
+                    }}
+                >
+                    <Icon.PlusSquare size="1.6rem" color="royalblue" />
                 </ActionIcon>
-                <ActionIcon variant="light"
+                <ActionIcon
+                    variant="light"
                     onClick={() => {
                         if (current >= form.values.servers.length - 1) {
                             setCurrent(form.values.servers.length - 2);
                         }
                         form.removeListItem("servers", current);
-                    }}>
-                    <Icon.DashSquare size={"1.6rem"} color="royalblue" />
+                    }}
+                >
+                    <Icon.DashSquare size="1.6rem" color="royalblue" />
                 </ActionIcon>
-                <ActionIcon variant="light"
+                <ActionIcon
+                    variant="light"
                     onClick={() => {
                         if (current > 0) {
                             form.reorderListItem("servers", { from: current, to: current - 1 });
                             setCurrent(current - 1);
                         }
-                    }}>
-                    <Icon.ArrowUpSquare size={"1.6rem"} color="royalblue" />
+                    }}
+                >
+                    <Icon.ArrowUpSquare size="1.6rem" color="royalblue" />
                 </ActionIcon>
-                <ActionIcon variant="light"
+                <ActionIcon
+                    variant="light"
                     onClick={() => {
                         if (current < form.values.servers.length - 1) {
                             form.reorderListItem("servers", { from: current, to: current + 1 });
                             setCurrent(current + 1);
                         }
-                    }}>
-                    <Icon.ArrowDownSquare size={"1.6rem"} color="royalblue" />
+                    }}
+                >
+                    <Icon.ArrowDownSquare size="1.6rem" color="royalblue" />
                 </ActionIcon>
             </Group>
-        </Stack >
+        </Stack>
     );
 }
 
@@ -135,13 +149,19 @@ function ServerPanel(props: ServerPanelProps) {
             <TextInput
                 label="Name"
                 {...props.form.getInputProps(`servers.${props.current}.name`)}
-                autoCorrect="off" autoCapitalize="off" />
+                autoCorrect="off"
+                autoCapitalize="off"
+            />
 
             <TextInput
                 label="Server rpc url"
                 {...props.form.getInputProps(`servers.${props.current}.connection.url`)}
                 placeholder="http://1.2.3.4:9091/transmission/rpc"
-                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+            />
 
             <Checkbox
                 my="md"
@@ -154,12 +174,17 @@ function ServerPanel(props: ServerPanelProps) {
                     <TextInput
                         label="User name"
                         {...props.form.getInputProps(`servers.${props.current}.connection.username`)}
-                        autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck="false"
+                    />
                 </Grid.Col>
                 <Grid.Col span={6}>
                     <PasswordInput
                         label="Password"
-                        {...props.form.getInputProps(`servers.${props.current}.connection.password`)} />
+                        {...props.form.getInputProps(`servers.${props.current}.connection.password`)}
+                    />
                 </Grid.Col>
 
                 <Grid.Col span={12}>
@@ -221,25 +246,46 @@ function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
         <Grid align="center" gutter="md">
             <Grid.Col span={6}>Delete successfully added torrent files</Grid.Col>
             <Grid.Col span={2}>
-                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
-                    {...form.getInputProps("app.deleteAdded", { type: "checkbox" })} />
+                <Switch
+                    onLabel="ON"
+                    offLabel="OFF"
+                    size="xl"
+                    styles={bigSwitchStyles}
+                    {...form.getInputProps("app.deleteAdded", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={4}></Grid.Col>
             <Grid.Col span={6}>Show notifications for completed torrents</Grid.Col>
             <Grid.Col span={2}>
-                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
-                    {...form.getInputProps("app.toastNotifications", { type: "checkbox" })} />
+                <Switch
+                    onLabel="ON"
+                    offLabel="OFF"
+                    size="xl"
+                    styles={bigSwitchStyles}
+                    {...form.getInputProps("app.toastNotifications", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={2}>Play sound</Grid.Col>
             <Grid.Col span={2}>
-                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
-                    {...form.getInputProps("app.toastNotificationSound", { type: "checkbox" })} />
+                <Switch
+                    onLabel="ON"
+                    offLabel="OFF"
+                    size="xl"
+                    styles={bigSwitchStyles}
+                    {...form.getInputProps("app.toastNotificationSound", { type: "checkbox" })}
+                />
             </Grid.Col>
             {platform === "Windows" && <>
                 <Grid.Col span={6}>Launch on startup</Grid.Col>
                 <Grid.Col span={2}>
-                    <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
-                        checked={autostart} onChange={onChangeAutostart} />
+                    <Switch
+                        onLabel="ON"
+                        offLabel="OFF"
+                        size="xl"
+                        styles={bigSwitchStyles}
+                        checked={autostart}
+                        onChange={onChangeAutostart}
+                    />
                 </Grid.Col>
                 <Grid.Col span={4}></Grid.Col>
                 <Grid.Col span={6}>Associate application</Grid.Col>
@@ -248,7 +294,11 @@ function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
             </>}
             <Grid.Col span={6}>Show tray icon</Grid.Col>
             <Grid.Col span={2}>
-                <Switch onLabel="ON" offLabel="OFF" size="xl" styles={bigSwitchStyles}
+                <Switch
+                    onLabel="ON"
+                    offLabel="OFF"
+                    size="xl"
+                    styles={bigSwitchStyles}
                     checked={form.values.app.showTrayIcon}
                     onChange={(e) => {
                         form.setFieldValue("app.showTrayIcon", e.currentTarget.checked);
@@ -256,20 +306,25 @@ function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                             form.setFieldValue("app.onMinimize", "minimize");
                             form.setFieldValue("app.onClose", "quit");
                         }
-                    }} />
+                    }}
+                />
             </Grid.Col>
             <Grid.Col span={4}>(takes effect after restart)</Grid.Col>
             <Grid.Col span={6}>When minimized</Grid.Col>
             <Grid.Col span={6}>
-                <SegmentedControl data={WindowMinimizeOptions as unknown as string[]}
+                <SegmentedControl
+                    data={WindowMinimizeOptions as unknown as string[]}
                     disabled={!form.values.app.showTrayIcon}
-                    {...form.getInputProps("app.onMinimize")} />
+                    {...form.getInputProps("app.onMinimize")}
+                />
             </Grid.Col>
             <Grid.Col span={6}>When closed</Grid.Col>
             <Grid.Col span={6}>
-                <SegmentedControl data={WindowCloseOptions as unknown as string[]}
+                <SegmentedControl
+                    data={WindowCloseOptions as unknown as string[]}
                     disabled={!form.values.app.showTrayIcon}
-                    {...form.getInputProps("app.onClose")} />
+                    {...form.getInputProps("app.onClose")}
+                />
             </Grid.Col>
             <Grid.Col>
                 <Text fz="sm" fs="italic">

@@ -139,8 +139,8 @@ export function pathMapToServer(path: string, config: ServerConfig) {
 }
 
 export function eventHasModKey(event: React.MouseEvent<Element> | React.KeyboardEvent<Element>) {
-    return (navigator.platform.startsWith("Mac") && event.metaKey) ||
-        (!navigator.platform.startsWith("Mac") && event.ctrlKey);
+    return (navigator.platform.startsWith("Mac") && event.metaKey)
+        || (!navigator.platform.startsWith("Mac") && event.ctrlKey);
 }
 
 export function modKeyString() {
@@ -169,7 +169,9 @@ export function decodeMagnetLink(magnet: string) {
 
 export function mergeTrackerLists(currentTrackers: string[][], newTrackers: string[][]) {
     const uniqueTrackers = new Set<string>();
-    currentTrackers.forEach((tier) => { tier.forEach((tracker) => uniqueTrackers.add(tracker)); });
+    currentTrackers.forEach((tier) => {
+        tier.forEach((tracker) => uniqueTrackers.add(tracker));
+    });
 
     const mergedTrackers = [...currentTrackers];
 
@@ -202,8 +204,8 @@ export function fileSystemSafeName(name: string) {
     return name.replace(badChars, "_");
 }
 
-export function * chainedIterables<T>(...iterables: Array<Iterable<T>>) {
-    for (const iterable of iterables) yield * iterable;
+export function* chainedIterables<T>(...iterables: Array<Iterable<T>>) {
+    for (const iterable of iterables) yield* iterable;
 }
 
 export function torrentProgressbarStyle(torrent: Torrent, config: Config) {
@@ -223,9 +225,9 @@ export function torrentProgressbarStyle(torrent: Torrent, config: Config) {
                 }
             } else if (torrent.status === Status.seeding) {
                 variant = "green";
-            } else if (torrent.status === Status.queuedToVerify ||
-                torrent.status === Status.queuedToDownload ||
-                torrent.status === Status.queuedToSeed) {
+            } else if (torrent.status === Status.queuedToVerify
+                || torrent.status === Status.queuedToDownload
+                || torrent.status === Status.queuedToSeed) {
                 variant = "grey";
             }
         }

@@ -85,7 +85,7 @@ export function EditTorrent(props: ModalState) {
                 fields: {
                     ...form.values,
                     "peer-limit": form.values.peerLimit,
-                    "sequential_download": form.values.sequentialDownload,
+                    sequential_download: form.values.sequentialDownload,
                 },
             },
             {
@@ -101,103 +101,117 @@ export function EditTorrent(props: ModalState) {
         props.close();
     }, [torrentId, torrent, mutate, selected, form.values, props]);
 
-    return <>{props.opened &&
-        <SaveCancelModal
-            opened={props.opened}
-            size="lg"
-            onClose={props.close}
-            onSave={onSave}
-            centered
-            title="Edit torrent properties"
-            mih="25rem"
-        >
-            <LoadingOverlay visible={isLoading} />
-            <Grid align="center">
-                <Grid.Col>
-                    <TorrentsNames />
-                </Grid.Col>
-                <Grid.Col span={8}>
-                    <Checkbox my="sm"
-                        label="Honor session upload limit"
-                        {...form.getInputProps("honorsSessionLimits", { type: "checkbox" })} />
-                </Grid.Col>
-                <Grid.Col span={4}>
-                    {rpcVersion >= 18 &&
-                        <Checkbox my="sm"
-                            label="Sequential download"
-                            {...form.getInputProps("sequentialDownload", { type: "checkbox" })} />}
-                </Grid.Col>
-                <Grid.Col span={8}>
-                    <Checkbox
-                        label="Maximum download speed"
-                        {...form.getInputProps("downloadLimited", { type: "checkbox" })} />
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <NumberInput
-                        min={0}
-                        {...form.getInputProps("downloadLimit")}
-                        disabled={form.values.downloadLimited !== true} />
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    KB/s
-                </Grid.Col>
-                <Grid.Col span={8}>
-                    <Checkbox
-                        label="Maximum upload speed"
-                        {...form.getInputProps("uploadLimited", { type: "checkbox" })} />
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <NumberInput
-                        min={0}
-                        {...form.getInputProps("uploadLimit")}
-                        disabled={form.values.uploadLimited !== true} />
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    KB/s
-                </Grid.Col>
-                <Grid.Col span={8}>
-                    Peer limit
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <NumberInput
-                        min={0}
-                        {...form.getInputProps("peerLimit")} />
-                </Grid.Col>
-                <Grid.Col span={2} />
-                <Grid.Col span={8}>
-                    <Checkbox
-                        label="Seed ratio"
-                        checked={form.values.seedRatioMode < 2}
-                        indeterminate={form.values.seedRatioMode === 0}
-                        onChange={() => { form.setFieldValue("seedRatioMode", (form.values.seedRatioMode + 1) % 3); }} />
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <NumberInput
-                        min={0}
-                        step={0.05}
-                        decimalScale={2}
-                        fixedDecimalScale
-                        {...form.getInputProps("seedRatioLimit")}
-                        disabled={form.values.seedRatioMode !== 1} />
-                </Grid.Col>
-                <Grid.Col span={2} />
-                <Grid.Col span={8}>
-                    <Checkbox
-                        label="Stop seeding when inactive for"
-                        checked={form.values.seedIdleMode < 2}
-                        indeterminate={form.values.seedIdleMode === 0}
-                        onChange={() => { form.setFieldValue("seedIdleMode", (form.values.seedIdleMode + 1) % 3); }} />
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    <NumberInput
-                        min={0}
-                        {...form.getInputProps("seedIdleLimit")}
-                        disabled={form.values.seedIdleMode !== 1} />
-                </Grid.Col>
-                <Grid.Col span={2}>
-                    minutes
-                </Grid.Col>
-            </Grid>
-        </SaveCancelModal>}
+    return <>
+        {props.opened
+            && <SaveCancelModal
+                opened={props.opened}
+                size="lg"
+                onClose={props.close}
+                onSave={onSave}
+                centered
+                title="Edit torrent properties"
+                mih="25rem"
+            >
+                <LoadingOverlay visible={isLoading} />
+                <Grid align="center">
+                    <Grid.Col>
+                        <TorrentsNames />
+                    </Grid.Col>
+                    <Grid.Col span={8}>
+                        <Checkbox
+                            my="sm"
+                            label="Honor session upload limit"
+                            {...form.getInputProps("honorsSessionLimits", { type: "checkbox" })}
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={4}>
+                        {rpcVersion >= 18
+                            && <Checkbox
+                                my="sm"
+                                label="Sequential download"
+                                {...form.getInputProps("sequentialDownload", { type: "checkbox" })}
+                            />}
+                    </Grid.Col>
+                    <Grid.Col span={8}>
+                        <Checkbox
+                            label="Maximum download speed"
+                            {...form.getInputProps("downloadLimited", { type: "checkbox" })}
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        <NumberInput
+                            min={0}
+                            {...form.getInputProps("downloadLimit")}
+                            disabled={form.values.downloadLimited !== true}
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        KB/s
+                    </Grid.Col>
+                    <Grid.Col span={8}>
+                        <Checkbox
+                            label="Maximum upload speed"
+                            {...form.getInputProps("uploadLimited", { type: "checkbox" })}
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        <NumberInput
+                            min={0}
+                            {...form.getInputProps("uploadLimit")}
+                            disabled={form.values.uploadLimited !== true}
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        KB/s
+                    </Grid.Col>
+                    <Grid.Col span={8}>
+                        Peer limit
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        <NumberInput
+                            min={0}
+                            {...form.getInputProps("peerLimit")}
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2} />
+                    <Grid.Col span={8}>
+                        <Checkbox
+                            label="Seed ratio"
+                            checked={form.values.seedRatioMode < 2}
+                            indeterminate={form.values.seedRatioMode === 0}
+                            onChange={() => { form.setFieldValue("seedRatioMode", (form.values.seedRatioMode + 1) % 3); }}
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        <NumberInput
+                            min={0}
+                            step={0.05}
+                            decimalScale={2}
+                            fixedDecimalScale
+                            {...form.getInputProps("seedRatioLimit")}
+                            disabled={form.values.seedRatioMode !== 1}
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2} />
+                    <Grid.Col span={8}>
+                        <Checkbox
+                            label="Stop seeding when inactive for"
+                            checked={form.values.seedIdleMode < 2}
+                            indeterminate={form.values.seedIdleMode === 0}
+                            onChange={() => { form.setFieldValue("seedIdleMode", (form.values.seedIdleMode + 1) % 3); }}
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        <NumberInput
+                            min={0}
+                            {...form.getInputProps("seedIdleLimit")}
+                            disabled={form.values.seedIdleMode !== 1}
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                        minutes
+                    </Grid.Col>
+                </Grid>
+            </SaveCancelModal>}
     </>;
 }

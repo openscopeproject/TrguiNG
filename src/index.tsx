@@ -150,8 +150,8 @@ function Loader() {
             className="loader-container"
             style={{
                 backgroundColor:
-                    backgroundColorOverride?.computed ??
-                    (theme === "dark" ? "#1A1B1E" : "#fff"), // #1A1B1E comes from theme.colors.dark[7]
+                    backgroundColorOverride?.computed
+                    ?? (theme === "dark" ? "#1A1B1E" : "#fff"), // #1A1B1E comes from theme.colors.dark[7]
             }}
         >
             <div className="lds-ring">
@@ -190,7 +190,8 @@ async function run(config: Config) {
                     </CustomMantineProvider>
                 </Suspense>
             </ConfigContext.Provider>
-        </React.StrictMode>);
+        </React.StrictMode>,
+    );
 }
 
 window.onload = () => {

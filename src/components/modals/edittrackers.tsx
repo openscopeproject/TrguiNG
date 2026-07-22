@@ -113,32 +113,37 @@ export function EditTrackers(props: ModalState) {
         form.setFieldValue("trackerList", list);
     }, [config, form]);
 
-    return <>{props.opened &&
-        <SaveCancelModal
-            opened={props.opened}
-            size="lg"
-            onClose={props.close}
-            onSave={onSave}
-            centered
-            title="Edit torrent trackers"
-            mih="25rem"
-        >
-            <LoadingOverlay visible={isLoading} />
-            <Grid align="center">
-                <Grid.Col>
-                    <TorrentsNames />
-                </Grid.Col>
-                <Grid.Col span={8}>
-                    <Text>Tracker list, one per line, empty line between tiers</Text>
-                </Grid.Col>
-                <Grid.Col span={4}>
-                    <Button onClick={addDefaultTrackers}>Add default list</Button>
-                </Grid.Col>
-                <Grid.Col>
-                    <Textarea minRows={10} maxRows={10} autosize
-                        {...form.getInputProps("trackerList")} />
-                </Grid.Col>
-            </Grid>
-        </SaveCancelModal>}
+    return <>
+        {props.opened
+            && <SaveCancelModal
+                opened={props.opened}
+                size="lg"
+                onClose={props.close}
+                onSave={onSave}
+                centered
+                title="Edit torrent trackers"
+                mih="25rem"
+            >
+                <LoadingOverlay visible={isLoading} />
+                <Grid align="center">
+                    <Grid.Col>
+                        <TorrentsNames />
+                    </Grid.Col>
+                    <Grid.Col span={8}>
+                        <Text>Tracker list, one per line, empty line between tiers</Text>
+                    </Grid.Col>
+                    <Grid.Col span={4}>
+                        <Button onClick={addDefaultTrackers}>Add default list</Button>
+                    </Grid.Col>
+                    <Grid.Col>
+                        <Textarea
+                            minRows={10}
+                            maxRows={10}
+                            autosize
+                            {...form.getInputProps("trackerList")}
+                        />
+                    </Grid.Col>
+                </Grid>
+            </SaveCancelModal>}
     </>;
 }

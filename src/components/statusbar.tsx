@@ -103,11 +103,19 @@ export function Statusbar({ session, torrents, filteredTorrents, selectedTorrent
     const [info, setInfo, handler] = useContextMenu();
 
     return (
-        <Flex className="statusbar" wrap="nowrap" onContextMenu={handler} gap="md">
+        <Flex
+            className="statusbar"
+            wrap="nowrap"
+            onContextMenu={handler}
+            gap="md"
+        >
             <MemoSectionsContextMenu
-                sections={sections} setSections={setSections}
-                contextMenuInfo={info} setContextMenuInfo={setInfo}>
-                <Menu.Divider/>
+                sections={sections}
+                setSections={setSections}
+                contextMenuInfo={info}
+                setContextMenuInfo={setInfo}
+            >
+                <Menu.Divider />
                 <Menu.Item
                     leftSection={showGlobalSpeeds ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
                     onMouseDown={(e) => {
@@ -118,36 +126,42 @@ export function Statusbar({ session, torrents, filteredTorrents, selectedTorrent
                     Show global speeds
                 </Menu.Item>
             </MemoSectionsContextMenu>
-            {sections[sectionsMap.Connection].visible &&
-                <div style={{ flex: "1 1 23%", order: sectionsMap.Connection }}>
+            {sections[sectionsMap.Connection].visible
+                && <div style={{ flex: "1 1 23%", order: sectionsMap.Connection }}>
                     <Box component="span" my="auto" mr="xs"><Icon.Diagram2 /></Box>
                     <span>{`${session?.version as string ?? "<not connected>"} at ${hostname}`}</span>
                 </div>}
-            {sections[sectionsMap["Download speed "]].visible &&
-                <div style={{ flex: "1 1 15%", order: sectionsMap["Download speed "] }}>
-                    <Box component="span" my="auto" mr="xs">{showGlobalSpeeds && <Icon.Globe />}<Icon.ArrowDown /></Box>
+            {sections[sectionsMap["Download speed "]].visible
+                && <div style={{ flex: "1 1 15%", order: sectionsMap["Download speed "] }}>
+                    <Box component="span" my="auto" mr="xs">
+                        {showGlobalSpeeds && <Icon.Globe />}
+                        <Icon.ArrowDown />
+                    </Box>
                     <span>{`${downRate}/s (${byteRateToHumanReadableStr(serverFields.downRateLimit * 1024)})`}</span>
                 </div>}
-            {sections[sectionsMap["Upload speed"]].visible &&
-                <div style={{ flex: "1 1 15%", order: sectionsMap["Upload speed"] }}>
-                    <Box component="span" my="auto" mr="xs">{showGlobalSpeeds && <Icon.Globe />}<Icon.ArrowUp /></Box>
+            {sections[sectionsMap["Upload speed"]].visible
+                && <div style={{ flex: "1 1 15%", order: sectionsMap["Upload speed"] }}>
+                    <Box component="span" my="auto" mr="xs">
+                        {showGlobalSpeeds && <Icon.Globe />}
+                        <Icon.ArrowUp />
+                    </Box>
                     <span>{`${upRate}/s (${byteRateToHumanReadableStr(serverFields.upRateLimit * 1024)})`}</span>
                 </div>}
-            {sections[sectionsMap["Free space"]].visible &&
-                <div style={{ flex: "1 1 12%", order: sectionsMap["Free space"] }}>
+            {sections[sectionsMap["Free space"]].visible
+                && <div style={{ flex: "1 1 12%", order: sectionsMap["Free space"] }}>
                     <Box component="span" my="auto" mr="xs"><Icon.Hdd /></Box>
                     <span>{`Free: ${bytesToHumanReadableStr(serverFields.free)}`}</span>
                 </div>}
-            {sections[sectionsMap.Total].visible &&
-                <div style={{ flex: "1 1 12%", order: sectionsMap.Total }}>
+            {sections[sectionsMap.Total].visible
+                && <div style={{ flex: "1 1 12%", order: sectionsMap.Total }}>
                     {`Total: ${sizeTotal}`}
                 </div>}
-            {sections[sectionsMap.Selected].visible &&
-                <div style={{ flex: "1 1 23%", order: sectionsMap.Selected }}>
+            {sections[sectionsMap.Selected].visible
+                && <div style={{ flex: "1 1 23%", order: sectionsMap.Selected }}>
                     {`Selected: ${sizeSelected}, done ${sizeDone}, left ${sizeLeft}`}
                 </div>}
-            {(!TAURI || showMisc) &&
-                <div style={{ flexShrink: 0, display: "flex", order: 100 }}>
+            {(!TAURI || showMisc)
+                && <div style={{ flexShrink: 0, display: "flex", order: 100 }}>
                     <ShowVersion sz="0.9rem" btn="md" />
                     <ColorSchemeToggle sz="0.9rem" btn="md" />
                 </div>}

@@ -107,7 +107,9 @@ export class CachedFileTree {
 
     recalcTree(dir: DirEntry) {
         // recurse into the tree to recalculate sizes, percentages, priorities
-        dir.subdirs.forEach((d) => { this.recalcTree(d); });
+        dir.subdirs.forEach((d) => {
+            this.recalcTree(d);
+        });
 
         let size = 0;
         let done = 0;
@@ -154,8 +156,8 @@ export class CachedFileTree {
 
         const safeName = fileSystemSafeName(torrent.name);
 
-        if (this.files.length > 1 ||
-            (this.files.length > 0 && this.files[0].fullpath.startsWith(safeName + "/"))) {
+        if (this.files.length > 1
+            || (this.files.length > 0 && this.files[0].fullpath.startsWith(safeName + "/"))) {
             this.tree.fullpath = safeName;
         }
 
@@ -228,7 +230,9 @@ export class CachedFileTree {
         });
         const clearWantedUpdating = (node: DirEntry) => {
             node.wantedUpdating = false;
-            node.files.forEach((f) => { f.wantedUpdating = false; });
+            node.files.forEach((f) => {
+                f.wantedUpdating = false;
+            });
             node.subdirs.forEach(clearWantedUpdating);
         };
         clearWantedUpdating(this.tree);
@@ -323,8 +327,12 @@ export class CachedFileTree {
     }
 
     setSelection(dir: DirEntry, value: boolean) {
-        dir.subdirs.forEach((d) => { this.setSelection(d, value); });
-        dir.files.forEach((f) => { f.isSelected = value; });
+        dir.subdirs.forEach((d) => {
+            this.setSelection(d, value);
+        });
+        dir.files.forEach((f) => {
+            f.isSelected = value;
+        });
         dir.isSelected = value;
     }
 
@@ -377,7 +385,9 @@ export class CachedFileTree {
                 }
             }
         });
-        affectedParents.forEach(parent => { this.updateAncestorSelectionStates(parent); });
+        affectedParents.forEach((parent) => {
+            this.updateAncestorSelectionStates(parent);
+        });
     }
 
     getSelected(): string[] {

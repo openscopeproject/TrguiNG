@@ -87,5 +87,6 @@ export function TrackersTable(props: { torrent: Torrent }) {
         selected,
         getRowId,
         selectedReducer,
-    }} />;
+    }}
+    />;
 }

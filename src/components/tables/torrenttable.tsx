@@ -183,14 +183,14 @@ function NameField(props: TableFieldProps) {
     if (props.torrent.status === Status.downloading && props.torrent.pieceCount === 0) {
         StatusIcon = Magnetizing;
     }
-    if (props.torrent.status === Status.stopped &&
-        props.torrent.sizeWhenDone > 0 &&
-        props.torrent.leftUntilDone === 0) {
+    if (props.torrent.status === Status.stopped
+        && props.torrent.sizeWhenDone > 0
+        && props.torrent.leftUntilDone === 0) {
         StatusIcon = CompletedStopped;
     }
 
-    if ((props.torrent.error !== undefined && props.torrent.error > 0) ||
-        props.torrent.cachedError !== "") {
+    if ((props.torrent.error !== undefined && props.torrent.error > 0)
+        || props.torrent.cachedError !== "") {
         StatusIcon = StatusIconError;
     }
 
@@ -331,8 +331,12 @@ function PriorityField(props: TableFieldProps) {
 export function LabelsField(props: TableFieldProps) {
     const labels: string[] | undefined = props.torrent.labels;
     return <>
-        {labels?.map((label) => <Badge key={label}
-            radius="md" variant="filled" className="torrent-label white-outline">
+        {labels?.map((label) => <Badge
+            key={label}
+            radius="md"
+            variant="filled"
+            className="torrent-label white-outline"
+        >
             {label}
         </Badge>)}
     </>;
@@ -499,7 +503,8 @@ export function TorrentTable(props: {
                 contextMenuInfo={info}
                 setContextMenuInfo={setInfo}
                 modals={props.modals}
-                onRowDoubleClick={onRowDoubleClick} />
+                onRowDoubleClick={onRowDoubleClick}
+            />
             <TrguiTable<Torrent> {...{
                 tablename: "torrents",
                 columns: Columns,
@@ -511,7 +516,8 @@ export function TorrentTable(props: {
                 onVisibilityChange,
                 onRowDoubleClick,
                 scrollToRow: props.scrollToRow,
-            }} />
+            }}
+            />
         </Box>
     );
 }
@@ -571,7 +577,9 @@ function TorrentContextMenu(props: {
 
     useEffect(() => {
         hk.handlers.copyToClipboard = copyMagnetLinks;
-        return () => { hk.handlers.copyToClipboard = () => { }; };
+        return () => {
+            hk.handlers.copyToClipboard = () => { };
+        };
     }, [copyMagnetLinks, hk]);
 
     const theme = useMantineTheme();
@@ -583,13 +591,15 @@ function TorrentContextMenu(props: {
                     <Menu.Item
                         onClick={() => { onOpen(false); }}
                         leftSection={<Icon.BoxArrowUpRight size="1.1rem" />}
-                        disabled={serverData.current === undefined}>
+                        disabled={serverData.current === undefined}
+                    >
                         <Text fw="bold">Open</Text>
                     </Menu.Item>
                     <Menu.Item
                         onClick={() => { onOpen(true); }}
                         leftSection={<Icon.Folder2Open size="1.1rem" />}
-                        disabled={serverData.current === undefined}>
+                        disabled={serverData.current === undefined}
+                    >
                         <Text>Open folder</Text>
                     </Menu.Item>
                     <Menu.Divider />
@@ -597,48 +607,57 @@ function TorrentContextMenu(props: {
                 <Menu.Item
                     onClick={() => { torrentAction("torrent-start-now", "Torrents started"); }}
                     leftSection={<Icon.LightningFill size="1.1rem" />}
-                    disabled={serverSelected.size === 0}>
+                    disabled={serverSelected.size === 0}
+                >
                     Force start
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => { torrentAction("torrent-start", "Torrents started"); }}
                     leftSection={<Icon.PlayCircleFill size="1.1rem" />}
                     rightSection={<Kbd>F3</Kbd>}
-                    disabled={serverSelected.size === 0}>
+                    disabled={serverSelected.size === 0}
+                >
                     Start
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => { torrentAction("torrent-stop", "Torrents stopped"); }}
                     leftSection={<Icon.PauseCircleFill size="1.1rem" />}
                     rightSection={<Kbd>F4</Kbd>}
-                    disabled={serverSelected.size === 0}>
+                    disabled={serverSelected.size === 0}
+                >
                     Pause
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => { torrentAction("torrent-verify", "Torrents verification started"); }}
                     leftSection={<Icon.CheckAll size="1.1rem" />}
-                    disabled={serverSelected.size === 0}>
+                    disabled={serverSelected.size === 0}
+                >
                     Verify
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => { torrentAction("torrent-reannounce", "Torrents are reannounced"); }}
                     leftSection={<Icon.Wifi size="1.1rem" />}
-                    disabled={serverSelected.size === 0}>
+                    disabled={serverSelected.size === 0}
+                >
                     Reannounce
                 </Menu.Item>
                 <Menu.Item
                     onClick={copyMagnetLinks}
                     leftSection={<Icon.MagnetFill size="1.1rem" />}
                     disabled={serverSelected.size === 0}
-                    rightSection={<Kbd>{`${modKeyString()} C`}</Kbd>}>
-                    Copy magnet {serverSelected.size > 1 ? "links" : "link"}
+                    rightSection={<Kbd>{`${modKeyString()} C`}</Kbd>}
+                >
+                    Copy magnet
+                    {" "}
+                    {serverSelected.size > 1 ? "links" : "link"}
                 </Menu.Item>
                 <Menu.Sub openDelay={120} closeDelay={150}>
                     <Menu.Sub.Target>
                         <Menu.Sub.Item
                             leftSection={<Icon.ThreeDots size="1.1rem" />}
                             rightSection={<Icon.ChevronRight size="0.8rem" />}
-                            disabled={serverSelected.size === 0}>
+                            disabled={serverSelected.size === 0}
+                        >
                             Queue
                         </Menu.Sub.Item>
                     </Menu.Sub.Target>
@@ -646,22 +665,26 @@ function TorrentContextMenu(props: {
                     <Menu.Sub.Dropdown>
                         <Menu.Item
                             onClick={() => { torrentAction("queue-move-top", "Torrents queue updated"); }}
-                            leftSection={<Icon.ChevronDoubleUp size="1.1rem" />}>
+                            leftSection={<Icon.ChevronDoubleUp size="1.1rem" />}
+                        >
                             Move to top
                         </Menu.Item>
                         <Menu.Item
                             onClick={() => { torrentAction("queue-move-up", "Torrents queue updated"); }}
-                            leftSection={<Icon.ChevronUp size="1.1rem" />}>
+                            leftSection={<Icon.ChevronUp size="1.1rem" />}
+                        >
                             Move up
                         </Menu.Item>
                         <Menu.Item
                             onClick={() => { torrentAction("queue-move-down", "Torrents queue updated"); }}
-                            leftSection={<Icon.ChevronDown size="1.1rem" />}>
+                            leftSection={<Icon.ChevronDown size="1.1rem" />}
+                        >
                             Move down
                         </Menu.Item>
                         <Menu.Item
                             onClick={() => { torrentAction("queue-move-bottom", "Torrents queue updated"); }}
-                            leftSection={<Icon.ChevronDoubleDown size="1.1rem" />}>
+                            leftSection={<Icon.ChevronDoubleDown size="1.1rem" />}
+                        >
                             Move to bottom
                         </Menu.Item>
                     </Menu.Sub.Dropdown>
@@ -671,34 +694,39 @@ function TorrentContextMenu(props: {
                     onClick={() => props.modals.current?.move()}
                     leftSection={<Icon.FolderFill size="1.1rem" />}
                     disabled={serverSelected.size === 0}
-                    rightSection={<Kbd>F6</Kbd>}>
+                    rightSection={<Kbd>F6</Kbd>}
+                >
                     Move...
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => props.modals.current?.setLabels()}
                     leftSection={<Icon.TagsFill size="1.1rem" />}
                     disabled={serverSelected.size === 0}
-                    rightSection={<Kbd>F7</Kbd>}>
+                    rightSection={<Kbd>F7</Kbd>}
+                >
                     Set labels...
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => props.modals.current?.remove()}
                     leftSection={<Icon.XCircleFill size="1.1rem" color={theme.colors.red[6]} />}
                     disabled={serverSelected.size === 0}
-                    rightSection={<Kbd>del</Kbd>}>
+                    rightSection={<Kbd>del</Kbd>}
+                >
                     Remove...
                 </Menu.Item>
                 <Menu.Divider />
                 <Menu.Item
                     onClick={() => props.modals.current?.editTrackers()}
                     leftSection={<Icon.Wifi size="1.1rem" />}
-                    disabled={serverSelected.size === 0 || (serverSelected.size > 1 && rpcVersion < 17)}>
+                    disabled={serverSelected.size === 0 || (serverSelected.size > 1 && rpcVersion < 17)}
+                >
                     Trackers...
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => props.modals.current?.editTorrent()}
                     leftSection={<Icon.GearFill size="1.1rem" />}
-                    disabled={serverSelected.size === 0}>
+                    disabled={serverSelected.size === 0}
+                >
                     Properties...
                 </Menu.Item>
             </Box>

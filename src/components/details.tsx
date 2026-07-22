@@ -148,7 +148,12 @@ function TransferTable(props: { torrent: Torrent }) {
 
     return (
         <Container fluid>
-            <Grid ref={ref} my="sm" className={classes.grid} columns={rect.width > 850 ? 3 : 1}>
+            <Grid
+                ref={ref}
+                my="sm"
+                className={classes.grid}
+                columns={rect.width > 850 ? 3 : 1}
+            >
                 <DetailItem name="Status:"><StatusField {...props} fieldName="status" /></DetailItem>
                 <DetailItem name="Error:">{props.torrent.cachedError}</DetailItem>
                 <DetailItem name="Remaining:">{`${secondsToHumanReadableStr(props.torrent.eta)} (${bytesToHumanReadableStr(props.torrent.leftUntilDone)})`}</DetailItem>
@@ -198,10 +203,19 @@ const urlRe = /(https?:\/\/[^\s]+)/;
 function Urlize(props: { text: string }) {
     if (!httpRe.test(props.text)) return <>{props.text}</>;
     const matches = props.text.split(urlRe).filter((match) => match.length > 0);
-    return <>{matches.map((match, index) => {
-        if (!httpRe.test(match)) return <span key={index}>{match}</span>;
-        return <Anchor key={index} href={match} target="_blank" rel="noreferrer">{match}</Anchor>;
-    })}</>;
+    return <>
+        {matches.map((match, index) => {
+            if (!httpRe.test(match)) return <span key={index}>{match}</span>;
+            return <Anchor
+                key={index}
+                href={match}
+                target="_blank"
+                rel="noreferrer"
+            >
+                {match}
+            </Anchor>;
+        })}
+    </>;
 }
 
 const readonlyInputStyles = {
@@ -218,9 +232,19 @@ function TorrentDetails(props: { torrent: Torrent }) {
 
     return (
         <Container fluid>
-            <Grid ref={ref} my="sm" className={classes.grid} columns={rect.width > 850 ? 2 : 1}>
+            <Grid
+                ref={ref}
+                my="sm"
+                className={classes.grid}
+                columns={rect.width > 850 ? 2 : 1}
+            >
                 <DetailItem name="Full path:">
-                    <TextInput classNames={readonlyInputStyles} variant="unstyled" readOnly value={fullPath} />
+                    <TextInput
+                        classNames={readonlyInputStyles}
+                        variant="unstyled"
+                        readOnly
+                        value={fullPath}
+                    />
                 </DetailItem>
                 <DetailItem name="Created:">
                     <div>
@@ -239,13 +263,23 @@ function TorrentDetails(props: { torrent: Torrent }) {
                 <DetailItem name="Total size:"><TotalSize {...props} /></DetailItem>
                 <DetailItem name="Pieces:"><Pieces {...props} /></DetailItem>
                 <DetailItem name="Hash:">
-                    <TextInput classNames={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.hashString} />
+                    <TextInput
+                        classNames={readonlyInputStyles}
+                        variant="unstyled"
+                        readOnly
+                        value={props.torrent.hashString}
+                    />
                 </DetailItem>
                 <DetailItem name="Comment:"><Urlize text={props.torrent.comment} /></DetailItem>
                 <DetailItem name="Added on:"><DateField {...props} fieldName="addedDate" /></DetailItem>
                 <DetailItem name="Completed on:"><DateField {...props} fieldName="doneDate" /></DetailItem>
                 <DetailItem name="Magnet link:">
-                    <TextInput classNames={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.magnetLink} />
+                    <TextInput
+                        classNames={readonlyInputStyles}
+                        variant="unstyled"
+                        readOnly
+                        value={props.torrent.magnetLink}
+                    />
                 </DetailItem>
                 <DetailItem name="Labels:"><LabelsField {...props} fieldName="labels" /></DetailItem>
             </Grid>
@@ -310,13 +344,12 @@ function FileTreePane(props: { torrent: Torrent }) {
         });
     }, [fileTree, mutate, onCheckboxChange, props.torrent.id]);
 
-    return (
-        <FileTreeTable
-            fileTree={fileTree}
-            data={data}
-            downloadDir={props.torrent.downloadDir}
-            onCheckboxChange={updateUnwanted} />
-    );
+    return <FileTreeTable
+        fileTree={fileTree}
+        data={data}
+        downloadDir={props.torrent.downloadDir}
+        onCheckboxChange={updateUnwanted}
+    />;
 }
 
 function Stats(props: { stats: SessionStatEntry }) {
@@ -346,8 +379,11 @@ function Stats(props: { stats: SessionStatEntry }) {
                 <td>Active</td>
                 <td>{secondsToHumanReadableStr(props.stats.secondsActive)}</td>
             </tr>
-            {props.stats.sessionCount > 1 &&
-                <tr><td>Sesssion count</td><td>{props.stats.sessionCount}</td></tr>}
+            {props.stats.sessionCount > 1
+                && <tr>
+                    <td>Sesssion count</td>
+                    <td>{props.stats.sessionCount}</td>
+                </tr>}
         </tbody>
     </Table>;
 }
@@ -366,8 +402,7 @@ function ServerStats() {
                             <TableNameRow>Cumulative</TableNameRow>
                             <Stats stats={sessionStats["cumulative-stats"]} />
                         </Container>
-                        : <></>
-                    }
+                        : <></>}
                 </div>
             </div>
         </Flex>
@@ -437,56 +472,64 @@ function Details(props: DetailsProps) {
     const [info, setInfo, handler] = useContextMenu();
 
     return (
-        <Tabs variant="outline" defaultValue={defaultTab} keepMounted={false}
-            h="100%" w="100%"
+        <Tabs
+            variant="outline"
+            defaultValue={defaultTab}
+            keepMounted={false}
+            h="100%"
+            w="100%"
             classNames={{
                 root: classes.tabsRoot,
                 tab: classes.tabsTab,
                 list: classes.tabsList,
-            }}>
+            }}
+        >
             <Tabs.List px="sm" pt="xs" onContextMenu={handler}>
                 <MemoSectionsContextMenu
-                    sections={tabs} setSections={setTabs}
-                    contextMenuInfo={info} setContextMenuInfo={setInfo} />
-                {tabs[tabsMap.General].visible &&
-                    <Tabs.Tab value="General" disabled={torrent === undefined} style={{ order: tabsMap.General }}>
+                    sections={tabs}
+                    setSections={setTabs}
+                    contextMenuInfo={info}
+                    setContextMenuInfo={setInfo}
+                />
+                {tabs[tabsMap.General].visible
+                    && <Tabs.Tab value="General" disabled={torrent === undefined} style={{ order: tabsMap.General }}>
                         <Group>
                             <Icon.InfoCircle size="1.1rem" />
                             General
                         </Group>
                     </Tabs.Tab>}
-                {tabs[tabsMap.Files].visible &&
-                    <Tabs.Tab value="Files" disabled={torrent === undefined} style={{ order: tabsMap.Files }}>
+                {tabs[tabsMap.Files].visible
+                    && <Tabs.Tab value="Files" disabled={torrent === undefined} style={{ order: tabsMap.Files }}>
                         <Group>
                             <Icon.Files size="1.1rem" />
                             {`Files${torrent !== undefined ? ` (${torrent.files.length as number})` : ""}`}
                         </Group>
                     </Tabs.Tab>}
-                {tabs[tabsMap.Pieces].visible &&
-                    <Tabs.Tab value="Pieces" disabled={torrent === undefined} style={{ order: tabsMap.Pieces }}>
+                {tabs[tabsMap.Pieces].visible
+                    && <Tabs.Tab value="Pieces" disabled={torrent === undefined} style={{ order: tabsMap.Pieces }}>
                         <Group>
                             <Icon.Grid3x2 size="1.1rem" />
                             {`Pieces${torrent !== undefined ? ` (${torrent.pieceCount as number})` : ""}`}
                         </Group>
                     </Tabs.Tab>}
-                {tabs[tabsMap.Peers].visible &&
-                    <Tabs.Tab value="Peers" disabled={torrent === undefined} style={{ order: tabsMap.Peers }}>
+                {tabs[tabsMap.Peers].visible
+                    && <Tabs.Tab value="Peers" disabled={torrent === undefined} style={{ order: tabsMap.Peers }}>
                         <Group>
                             <Icon.People size="1.1rem" />
                             Peers
                         </Group>
                     </Tabs.Tab>}
-                {tabs[tabsMap.Trackers].visible &&
-                    <Tabs.Tab value="Trackers" disabled={torrent === undefined} style={{ order: tabsMap.Trackers }}>
+                {tabs[tabsMap.Trackers].visible
+                    && <Tabs.Tab value="Trackers" disabled={torrent === undefined} style={{ order: tabsMap.Trackers }}>
                         <Group>
                             <Icon.Wifi size="1.1rem" />
                             Trackers
                         </Group>
                     </Tabs.Tab>}
-                {tabs[tabsMap["<spacer>"]].visible &&
-                    <Box style={{ flexGrow: 1, order: tabsMap["<spacer>"] }} />}
-                {tabs[tabsMap["Server statistics"]].visible &&
-                    <Tabs.Tab value="Server statistics" style={{ order: tabsMap["Server statistics"] }}>
+                {tabs[tabsMap["<spacer>"]].visible
+                    && <Box style={{ flexGrow: 1, order: tabsMap["<spacer>"] }} />}
+                {tabs[tabsMap["Server statistics"]].visible
+                    && <Tabs.Tab value="Server statistics" style={{ order: tabsMap["Server statistics"] }}>
                         <Group>
                             <Icon.ArrowDownUp size="1.1rem" />
                             Server statistics
@@ -499,7 +542,8 @@ function Details(props: DetailsProps) {
                     zIndex={400}
                     transitionProps={{ duration: 500 }}
                     loaderProps={{ size: "xl" }}
-                    overlayProps={{ opacity: 0.35 }} />
+                    overlayProps={{ opacity: 0.35 }}
+                />
                 <DetailsPanels torrent={torrent} />
             </div>
         </Tabs>

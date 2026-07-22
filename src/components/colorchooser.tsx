@@ -32,27 +32,45 @@ export default function ColorChooser(props: ColorChooserProps) {
     const [opened, setOpened] = useState(false);
 
     return (
-        <Popover width="20rem" position="right-start" withArrow transitionProps={{ duration: 0 }} shadow="md" opened={opened} onChange={setOpened} >
+        <Popover
+            width="20rem"
+            position="right-start"
+            withArrow
+            transitionProps={{ duration: 0 }}
+            shadow="md"
+            opened={opened}
+            onChange={setOpened}
+        >
             <Popover.Target>
                 <ActionIcon variant="subtle" onClick={() => { setOpened((o) => !o); }}>
                     <ColorSwatch
-                        color={theme.colors[props.value.color][props.value.shade]} />
+                        color={theme.colors[props.value.color][props.value.shade]}
+                    />
                 </ActionIcon>
             </Popover.Target>
             <Popover.Dropdown>
-                <Button variant="subtle" p="lg" onClick={() => {
-                    props.onChange(undefined);
-                    setOpened(false);
-                }}>
+                <Button
+                    variant="subtle"
+                    p="lg"
+                    onClick={() => {
+                        props.onChange(undefined);
+                        setOpened(false);
+                    }}
+                >
                     Reset
                 </Button>
                 {Object.keys(theme.colors).map((color) =>
                     <Group key={color} wrap="nowrap" gap="0">
                         {shades.map((shade) =>
-                            <ActionIcon key={shade} m="0.1rem" variant="subtle" onClick={() => {
-                                props.onChange({ color, shade, computed: theme.colors[color][shade] });
-                                setOpened(false);
-                            }}>
+                            <ActionIcon
+                                key={shade}
+                                m="0.1rem"
+                                variant="subtle"
+                                onClick={() => {
+                                    props.onChange({ color, shade, computed: theme.colors[color][shade] });
+                                    setOpened(false);
+                                }}
+                            >
                                 <ColorSwatch color={theme.colors[color][shade]} />
                             </ActionIcon>)}
                     </Group>)}

@@ -92,10 +92,15 @@ function DownloadPanel({ form, session }: { form: UseFormReturnType<FormValues>,
                 <TextInput
                     label="Default download folder (server setting)"
                     {...form.getInputProps("session.download-dir")}
-                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                />
             </Grid.Col>
             <Grid.Col>
-                <Checkbox mt="lg"
+                <Checkbox
+                    mt="lg"
                     label={<Box>
                         <span>Start added torrents</span>
                         <HoverCard width={280} shadow="md">
@@ -112,35 +117,47 @@ function DownloadPanel({ form, session }: { form: UseFormReturnType<FormValues>,
                             </HoverCard.Dropdown>
                         </HoverCard>
                     </Box>}
-                    {...form.getInputProps("session.start-added-torrents", { type: "checkbox" })} />
+                    {...form.getInputProps("session.start-added-torrents", { type: "checkbox" })}
+                />
             </Grid.Col>
-            {session["rpc-version"] as number >= 18 &&
-                <Grid.Col>
-                    <Checkbox mt="lg"
+            {session["rpc-version"] as number >= 18
+                && <Grid.Col>
+                    <Checkbox
+                        mt="lg"
                         label="Download torrents sequentially"
-                        {...form.getInputProps("session.sequential_download", { type: "checkbox" })} />
+                        {...form.getInputProps("session.sequential_download", { type: "checkbox" })}
+                    />
                 </Grid.Col>}
             <Grid.Col>
-                <Checkbox mt="lg"
+                <Checkbox
+                    mt="lg"
                     label="Add .part extension to incomplete files"
-                    {...form.getInputProps("session.rename-partial-files", { type: "checkbox" })} />
+                    {...form.getInputProps("session.rename-partial-files", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col>
-                <Checkbox mt="lg"
+                <Checkbox
+                    mt="lg"
                     label="Use separate directory for incomplete files"
-                    {...form.getInputProps("session.incomplete-dir-enabled", { type: "checkbox" })} />
+                    {...form.getInputProps("session.incomplete-dir-enabled", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col>
                 <TextInput
                     label="Path for incomplete files"
                     {...form.getInputProps("session.incomplete-dir")}
                     disabled={session["incomplete-dir-enabled"] !== true}
-                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                />
             </Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
                     label="Use default seed ratio limit"
-                    {...form.getInputProps("session.seedRatioLimited", { type: "checkbox" })} />
+                    {...form.getInputProps("session.seedRatioLimited", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
@@ -156,7 +173,8 @@ function DownloadPanel({ form, session }: { form: UseFormReturnType<FormValues>,
             <Grid.Col span={6}>
                 <Checkbox
                     label="Stop idle torrents after"
-                    {...form.getInputProps("session.idle-seeding-limit-enabled", { type: "checkbox" })} />
+                    {...form.getInputProps("session.idle-seeding-limit-enabled", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
@@ -266,7 +284,8 @@ function NetworkPanel(
             <Grid.Col span={3}>
                 <Tooltip
                     withArrow
-                    label="Checks currently configured port. If you made changes save them before testing.">
+                    label="Checks currently configured port. If you made changes save them before testing."
+                >
                     <Button
                         w="100%"
                         onClick={onTestPort}
@@ -279,18 +298,21 @@ function NetworkPanel(
             <Grid.Col span={3}>
                 {fetchStatus === "fetching"
                     ? <Loader key="pt" size="1.5rem" />
-                    : <Text key="pt" color={testPortResult.color}>{testPortResult.label}</Text>
-                }
+                    : <Text key="pt" color={testPortResult.color}>{testPortResult.label}</Text>}
             </Grid.Col>
             <Grid.Col>
-                <Checkbox mt="lg"
+                <Checkbox
+                    mt="lg"
                     label="Let daemon pick a random port"
-                    {...form.getInputProps("session.peer-port-random-on-start", { type: "checkbox" })} />
+                    {...form.getInputProps("session.peer-port-random-on-start", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col>
-                <Checkbox mt="lg"
+                <Checkbox
+                    mt="lg"
                     label="Enable UPnP port forwarding"
-                    {...form.getInputProps("session.port-forwarding-enabled", { type: "checkbox" })} />
+                    {...form.getInputProps("session.port-forwarding-enabled", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={3}>
                 Encryption:
@@ -298,7 +320,8 @@ function NetworkPanel(
             <Grid.Col span={3}>
                 <NativeSelect
                     data={["tolerated", "preferred", "required"]}
-                    {...form.getInputProps("session.encryption")} />
+                    {...form.getInputProps("session.encryption")}
+                />
             </Grid.Col>
             <Grid.Col span={6}></Grid.Col>
             <Grid.Col span={3}>
@@ -320,43 +343,61 @@ function NetworkPanel(
                 />
             </Grid.Col>
             <Grid.Col span={6}>
-                <Checkbox mt="lg"
+                <Checkbox
+                    mt="lg"
                     label="Enable peer exchange"
-                    {...form.getInputProps("session.pex-enabled", { type: "checkbox" })} />
+                    {...form.getInputProps("session.pex-enabled", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={6}>
-                <Checkbox mt="lg"
+                <Checkbox
+                    mt="lg"
                     label="Enable DHT"
-                    {...form.getInputProps("session.dht-enabled", { type: "checkbox" })} />
+                    {...form.getInputProps("session.dht-enabled", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={6}>
-                <Checkbox my="lg"
+                <Checkbox
+                    my="lg"
                     label="Enable local discovery"
-                    {...form.getInputProps("session.lpd-enabled", { type: "checkbox" })} />
+                    {...form.getInputProps("session.lpd-enabled", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={6}>
-                <Checkbox my="lg"
+                <Checkbox
+                    my="lg"
                     label="Enable uTP"
-                    {...form.getInputProps("session.utp-enabled", { type: "checkbox" })} />
+                    {...form.getInputProps("session.utp-enabled", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
                     label="Enable blocklist:"
-                    {...form.getInputProps("session.blocklist-enabled", { type: "checkbox" })} />
+                    {...form.getInputProps("session.blocklist-enabled", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={6}>
                 <TextInput
                     {...form.getInputProps("session.blocklist-url")}
                     disabled={session["blocklist-enabled"] !== true}
-                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                />
             </Grid.Col>
             <Grid.Col span={6}>
-                <Text>Blocklist contains {session["blocklist-size"] as number} entries</Text>
+                <Text>
+                    Blocklist contains
+                    {session["blocklist-size"] as number}
+                    entries
+                </Text>
             </Grid.Col>
             <Grid.Col span={3}>
                 <Tooltip
                     withArrow
-                    label="Fetches currently configured blocklist. If you made changes save them before updating.">
+                    label="Fetches currently configured blocklist. If you made changes save them before updating."
+                >
                     <Button
                         w="100%"
                         onClick={onUpdateBlocklist}
@@ -413,7 +454,8 @@ function TimeInput({ value, onChange, ...rest }: NumberInputProps) {
 const DaysOfTheWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
 function DayOfWeekCheckbox({ form, day, session }: { form: UseFormReturnType<FormValues>, day: number, session: SessionInfo }) {
-    return <Checkbox my="lg"
+    return <Checkbox
+        my="lg"
         label={DaysOfTheWeek[day]}
         checked={((session["alt-speed-time-day"] as number) & (1 << day)) > 0}
         onChange={(event) => {
@@ -422,7 +464,8 @@ function DayOfWeekCheckbox({ form, day, session }: { form: UseFormReturnType<For
                 "session.alt-speed-time-day",
                 event.currentTarget.checked ? val | (1 << day) : val & ~(1 << day));
         }}
-        disabled={session["alt-speed-time-enabled"] !== true} />;
+        disabled={session["alt-speed-time-enabled"] !== true}
+    />;
 }
 
 function BandwidthPanel({ form, session }: { form: UseFormReturnType<FormValues>, session: SessionInfo }) {
@@ -434,63 +477,80 @@ function BandwidthPanel({ form, session }: { form: UseFormReturnType<FormValues>
             <Grid.Col span={6}>
                 <Checkbox
                     label="Maximum download speed (KB/s):"
-                    {...form.getInputProps("session.speed-limit-down-enabled", { type: "checkbox" })} />
+                    {...form.getInputProps("session.speed-limit-down-enabled", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={3}>
                 <NumberInput
                     min={0}
                     {...form.getInputProps("session.speed-limit-down")}
-                    disabled={session["speed-limit-down-enabled"] !== true} />
+                    disabled={session["speed-limit-down-enabled"] !== true}
+                />
             </Grid.Col>
             <Grid.Col span={3}>
                 <NumberInput
                     min={0}
-                    {...form.getInputProps("session.alt-speed-down")} />
+                    {...form.getInputProps("session.alt-speed-down")}
+                />
             </Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
                     label="Maximum upload speed (KB/s):"
-                    {...form.getInputProps("session.speed-limit-up-enabled", { type: "checkbox" })} />
+                    {...form.getInputProps("session.speed-limit-up-enabled", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={3}>
                 <NumberInput
                     min={0}
                     {...form.getInputProps("session.speed-limit-up")}
-                    disabled={session["speed-limit-up-enabled"] !== true} />
+                    disabled={session["speed-limit-up-enabled"] !== true}
+                />
             </Grid.Col>
             <Grid.Col span={3}>
                 <NumberInput
                     min={0}
-                    {...form.getInputProps("session.alt-speed-up")} />
+                    {...form.getInputProps("session.alt-speed-up")}
+                />
             </Grid.Col>
             <Grid.Col>
-                <Checkbox mt="lg"
+                <Checkbox
+                    mt="lg"
                     label="Use alternate bandwidth settings"
-                    {...form.getInputProps("session.alt-speed-enabled", { type: "checkbox" })} />
+                    {...form.getInputProps("session.alt-speed-enabled", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col>
-                <Checkbox my="lg"
+                <Checkbox
+                    my="lg"
                     label="Apply alternate bandwidth settings automatically"
-                    {...form.getInputProps("session.alt-speed-time-enabled", { type: "checkbox" })} />
+                    {...form.getInputProps("session.alt-speed-time-enabled", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={2}>From:</Grid.Col>
             <Grid.Col span={3}>
                 <TimeInput
                     {...form.getInputProps("session.alt-speed-time-begin")}
-                    disabled={session["alt-speed-time-enabled"] !== true} />
+                    disabled={session["alt-speed-time-enabled"] !== true}
+                />
             </Grid.Col>
             <Grid.Col span={1}>to:</Grid.Col>
             <Grid.Col span={3}>
                 <TimeInput
                     {...form.getInputProps("session.alt-speed-time-end")}
-                    disabled={session["alt-speed-time-enabled"] !== true} />
+                    disabled={session["alt-speed-time-enabled"] !== true}
+                />
             </Grid.Col>
             <Grid.Col span={3}></Grid.Col>
             <Grid.Col span={2}>Days:</Grid.Col>
             <Grid.Col span={10}>
                 <Group>
                     {DaysOfTheWeek.map((_, day) =>
-                        <DayOfWeekCheckbox key={day} form={form} day={day} session={session} />)}
+                        (<DayOfWeekCheckbox
+                            key={day}
+                            form={form}
+                            day={day}
+                            session={session}
+                        />))}
                 </Group>
             </Grid.Col>
         </Grid>
@@ -503,37 +563,43 @@ function QueuePanel({ form, session }: { form: UseFormReturnType<FormValues>, se
             <Grid.Col span={8}>
                 <Checkbox
                     label="Download queue size"
-                    {...form.getInputProps("session.download-queue-enabled", { type: "checkbox" })} />
+                    {...form.getInputProps("session.download-queue-enabled", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
                     min={0}
                     {...form.getInputProps("session.download-queue-size")}
-                    disabled={session["download-queue-enabled"] !== true} />
+                    disabled={session["download-queue-enabled"] !== true}
+                />
             </Grid.Col>
             <Grid.Col span={2}></Grid.Col>
             <Grid.Col span={8}>
                 <Checkbox
                     label="Seed queue size"
-                    {...form.getInputProps("session.seed-queue-enabled", { type: "checkbox" })} />
+                    {...form.getInputProps("session.seed-queue-enabled", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
                     min={0}
                     {...form.getInputProps("session.seed-queue-size")}
-                    disabled={session["seed-queue-enabled"] !== true} />
+                    disabled={session["seed-queue-enabled"] !== true}
+                />
             </Grid.Col>
             <Grid.Col span={2}></Grid.Col>
             <Grid.Col span={8}>
                 <Checkbox
                     label="Consider torrents as stalled when idle for"
-                    {...form.getInputProps("session.queue-stalled-enabled", { type: "checkbox" })} />
+                    {...form.getInputProps("session.queue-stalled-enabled", { type: "checkbox" })}
+                />
             </Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
                     min={0}
                     {...form.getInputProps("session.queue-stalled-minutes")}
-                    disabled={session["queue-stalled-enabled"] !== true} />
+                    disabled={session["queue-stalled-enabled"] !== true}
+                />
             </Grid.Col>
             <Grid.Col span={2}>minutes</Grid.Col>
         </Grid>
@@ -569,8 +635,9 @@ function MagnetHandlerPanel() {
                             <Button onClick={registerHandler}>Register</Button>
                             {
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                typeof (navigator as any).unregisterProtocolHandler === "function" &&
-                                <Button onClick={unregisterHandler}>Unregister</Button>}
+                                typeof (navigator as any).unregisterProtocolHandler === "function"
+                                && <Button onClick={unregisterHandler}>Unregister</Button>
+                            }
                         </Flex>
                     </Grid.Col>
                 </>
@@ -604,7 +671,9 @@ export function DaemonSettingsModal(props: ModalState) {
     });
 
     const { setFieldValue } = form;
-    useEffect(() => { setFieldValue("session", session); }, [session, setFieldValue]);
+    useEffect(() => {
+        setFieldValue("session", session);
+    }, [session, setFieldValue]);
 
     useEffect(() => {
         if (props.opened) {

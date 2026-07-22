@@ -135,7 +135,7 @@ function useTable<TData>(
             if (rowSelection[row.id]) return true;
 
             let hasSelectedDescendant = false;
-            row.subRows.forEach(subrow => {
+            row.subRows.forEach((subrow) => {
                 if (recurse(subrow)) {
                     hasSelectedDescendant = true;
                 }
@@ -225,7 +225,9 @@ function useTableVirtualizer(count: number): [React.MutableRefObject<HTMLElement
 
     const { measure } = rowVirtualizer;
 
-    useEffect(() => { measure(); }, [rowHeight, measure]);
+    useEffect(() => {
+        measure();
+    }, [rowHeight, measure]);
 
     return [parentRef, rowHeight, rowVirtualizer];
 }
@@ -284,11 +286,11 @@ function InnerRow<TData>(props: {
     columnOrder: ColumnOrderState,
 }) {
     return <>
-        {props.row.getVisibleCells().map(cell => {
+        {props.row.getVisibleCells().map((cell) => {
             return (
                 <div key={cell.id} className="td" style={{ width: cell.column.getSize() }}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </div >
+                </div>
             );
         })}
     </>;
@@ -296,11 +298,11 @@ function InnerRow<TData>(props: {
 
 const MemoizedInnerRow = memo(InnerRow, (prev, next) => {
     return (
-        prev.row.original === next.row.original &&
-        prev.expanded === next.expanded &&
-        prev.columnSizing === next.columnSizing &&
-        prev.columnVisibility === next.columnVisibility &&
-        prev.columnOrder === next.columnOrder
+        prev.row.original === next.row.original
+        && prev.expanded === next.expanded
+        && prev.columnSizing === next.columnSizing
+        && prev.columnVisibility === next.columnVisibility
+        && prev.columnOrder === next.columnOrder
     );
 }) as typeof InnerRow;
 
@@ -377,7 +379,8 @@ function TableRow<TData>(props: {
     }, [index, lastIndex, onRowClick]);
 
     return (
-        <div ref={ref}
+        <div
+            ref={ref}
             className={`tr${props.selected ? " selected" : props.descendantSelected ? " descendant-selected" : ""}`}
             style={{ height: `${props.height}px`, transform: `translateY(${props.start}px)` }}
             onClick={onMouseEvent}
@@ -439,7 +442,7 @@ function HeaderRow<TData>(
             >
                 <DragDropContext onDragEnd={onDragEnd}>
                     <StrictModeDroppable droppableId="tableheadercontextmenu">
-                        {provided => (
+                        {(provided) => (
                             <div ref={provided.innerRef} {...provided.droppableProps}>
                                 {columns.map((column, index) => {
                                     const visible = !(column.id in columnVisibility) || columnVisibility[column.id];
@@ -472,8 +475,8 @@ function HeaderRow<TData>(
                         )}
                     </StrictModeDroppable>
                 </DragDropContext>
-            </ContextMenu >
-            {headerGroup.headers.map(header => (
+            </ContextMenu>
+            {headerGroup.headers.map((header) => (
                 <HeaderCell key={header.id} header={header} resizerOffset={resizerOffset} />))}
         </Box>
     );
@@ -483,9 +486,10 @@ const MemoizedHeaderRow = memo(HeaderRow) as typeof HeaderRow;
 
 function HeaderCell<TData>({ header, resizerOffset }: { header: Header<TData, unknown>, resizerOffset: number | null }) {
     return (
-        <div className="th" style={{
-            width: header.getSize(),
-        }}>
+        <div
+            className="th"
+            style={{ width: header.getSize() }}
+        >
             <div onClick={header.column.getToggleSortingHandler()} style={{ flexGrow: 1 }}>
                 <span>
                     {header.column.getIsSorted() !== false
@@ -502,7 +506,8 @@ function HeaderCell<TData>({ header, resizerOffset }: { header: Header<TData, un
                 onMouseDown: header.getResizeHandler(),
                 onTouchStart: header.getResizeHandler(),
                 className: `resizer ${header.column.getIsResizing() ? "isResizing" : ""}`,
-            }} >
+            }}
+            >
                 {resizerOffset != null && <div className="resizer-guide" />}
             </div>
         </div>
@@ -565,45 +570,59 @@ export function TrguiTable<TData>(props: {
                 style={{
                     height: `${rowHeight}px`,
                     width: `${width}px`,
-                }}>
-                {table.getHeaderGroups().map(headerGroup => (
-                    <MemoizedHeaderRow key={headerGroup.id} {...{
-                        headerGroup,
-                        height: rowHeight,
-                        resizerOffset: table.getState().columnSizingInfo.deltaOffset,
-                        columnVisibility,
-                        setColumnVisibility,
-                        columnOrder,
-                        setColumnOrder,
-                        sorting,
-                        columns: table.getAllLeafColumns(),
-                    }} />
+                }}
+            >
+                {table.getHeaderGroups().map((headerGroup) => (
+                    <MemoizedHeaderRow
+                        key={headerGroup.id}
+                        {...{
+                            headerGroup,
+                            height: rowHeight,
+                            resizerOffset: table.getState().columnSizingInfo.deltaOffset,
+                            columnVisibility,
+                            setColumnVisibility,
+                            columnOrder,
+                            setColumnOrder,
+                            sorting,
+                            columns: table.getAllLeafColumns(),
+                        }}
+                    />
                 ))}
             </Box>
-            <div ref={parentRefProxy} className="torrent-table-rows" onScroll={syncHeaderScroll} tabIndex={-1}>
-                <div className="torrent-table"
-                    style={{ height: `${virtualizer.getTotalSize()}px`, width: `${width}px` }}>
+            <div
+                ref={parentRefProxy}
+                className="torrent-table-rows"
+                onScroll={syncHeaderScroll}
+                tabIndex={-1}
+            >
+                <div
+                    className="torrent-table"
+                    style={{ height: `${virtualizer.getTotalSize()}px`, width: `${width}px` }}
+                >
                     {virtualizer.getVirtualItems()
                         // drop first row if it is odd one to keep nth-child(odd) selector
                         // stable this prevents flickering row background on scroll
                         .filter((virtualRow, virtualIndex) => (virtualIndex !== 0 || virtualRow.index % 2 === 0))
                         .map((virtualRow) => {
                             const row = table.getRowModel().rows[virtualRow.index];
-                            return <MemoizedTableRow<TData> key={props.getRowId(row.original)} {...{
-                                row,
-                                selected: row.getIsSelected(),
-                                descendantSelected: rowsWithSelectedDescendants.has(row.id),
-                                expanded: row.getIsExpanded(),
-                                index: virtualRow.index,
-                                lastIndex,
-                                start: virtualRow.start,
-                                onRowClick,
-                                onRowDoubleClick: props.onRowDoubleClick,
-                                height: rowHeight,
-                                columnSizing,
-                                columnVisibility,
-                                columnOrder,
-                            }} />;
+                            return <MemoizedTableRow<TData>
+                                key={props.getRowId(row.original)}
+                                {...{
+                                    row,
+                                    selected: row.getIsSelected(),
+                                    descendantSelected: rowsWithSelectedDescendants.has(row.id),
+                                    expanded: row.getIsExpanded(),
+                                    index: virtualRow.index,
+                                    lastIndex,
+                                    start: virtualRow.start,
+                                    onRowClick,
+                                    onRowDoubleClick: props.onRowDoubleClick,
+                                    height: rowHeight,
+                                    columnSizing,
+                                    columnVisibility,
+                                    columnOrder,
+                                }}
+                            />;
                         })}
                 </div>
             </div>
@@ -669,7 +688,9 @@ export function EditableNameField(props: EditableNameFieldProps) {
             row.onfocus = () => {
                 ref.current?.focus({ preventScroll: true });
             };
-            return () => { row.onfocus = null; };
+            return () => {
+                row.onfocus = null;
+            };
         }
     }, []);
 
@@ -684,12 +705,19 @@ export function EditableNameField(props: EditableNameFieldProps) {
     }, [isRenaming, onArrowLeftRight, renameHandler]);
 
     return (
-        <Box ref={ref} onKeyDown={onKeyDown} tabIndex={-1}
-            onMouseEnter={() => { setHover(true); }} onMouseLeave={() => { setHover(false); }}
-            className={classes.editableNameContainer}>
+        <Box
+            ref={ref}
+            onKeyDown={onKeyDown}
+            tabIndex={-1}
+            onMouseEnter={() => { setHover(true); }}
+            onMouseLeave={() => { setHover(false); }}
+            className={classes.editableNameContainer}
+        >
             {props.children}
             {isRenaming
-                ? <TextInput ref={textRef} value={newName}
+                ? <TextInput
+                    ref={textRef}
+                    value={newName}
                     classNames={{
                         root: classes.editableNameRoot,
                         input: classes.editableNameInput,
@@ -699,15 +727,25 @@ export function EditableNameField(props: EditableNameFieldProps) {
                     onKeyDown={onTextKeyDown}
                     onClick={(e) => { e.stopPropagation(); }}
                     onDoubleClick={(e) => { e.stopPropagation(); }}
-                    autoCorrect="off" autoCapitalize="off" spellCheck="false" />
-                : <Box ref={innerRef}
-                    pl="xs" style={{ flexGrow: 1, textOverflow: "ellipsis", overflow: "hidden" }}
-                    title={showNameTooltip ? props.currentName : undefined}>
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                />
+                : <Box
+                    ref={innerRef}
+                    pl="xs"
+                    style={{ flexGrow: 1, textOverflow: "ellipsis", overflow: "hidden" }}
+                    title={showNameTooltip ? props.currentName : undefined}
+                >
                     {props.currentName}
                 </Box>}
             {isHover && !isRenaming && props.onUpdate !== undefined
-                ? <ActionIcon variant="subtle" onClick={renameHandler} title="Rename (F2)"
-                    className={classes.actionIcon} >
+                ? <ActionIcon
+                    variant="subtle"
+                    onClick={renameHandler}
+                    title="Rename (F2)"
+                    className={classes.actionIcon}
+                >
                     <Icon.InputCursorText size="1rem" />
                 </ActionIcon>
                 : <></>}

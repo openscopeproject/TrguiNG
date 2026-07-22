@@ -111,9 +111,15 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
                     if (files.length > 0) enqueue(files);
                 }
             });
-            return () => { void dropResult.then((unlisten) => { unlisten(); }); };
+            return () => {
+                void dropResult.then((unlisten) => {
+                    unlisten();
+                });
+            };
         } else {
-            document.ondragover = (e) => { e.preventDefault(); };
+            document.ondragover = (e) => {
+                e.preventDefault();
+            };
             document.ondrop = (event) => {
                 event.preventDefault();
 
@@ -143,7 +149,9 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
         });
 
         return () => {
-            void listenResult.then((unlisten) => { unlisten(); });
+            void listenResult.then((unlisten) => {
+                unlisten();
+            });
         };
     }, [enqueue]);
 
@@ -183,28 +191,26 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
     }, [closeAddTorrentModal, addQueue, torrent]);
 
     return <>
-        <EditLabelsModal
-            opened={showLabelsModal} close={closeLabelsModal} />
-        <RemoveModal
-            opened={showRemoveModal} close={closeRemoveModal} />
-        <MoveModal
-            opened={showMoveModal} close={closeMoveModal} />
+        <EditLabelsModal opened={showLabelsModal} close={closeLabelsModal} />
+        <RemoveModal opened={showRemoveModal} close={closeRemoveModal} />
+        <MoveModal opened={showMoveModal} close={closeMoveModal} />
         <AddMagnet
             serverName={props.serverName}
             uri={magnetLink}
             tabsRef={props.tabsRef}
-            opened={showAddMagnetModal} close={closeAddMagnetModalAndPop} />
+            opened={showAddMagnetModal}
+            close={closeAddMagnetModalAndPop}
+        />
         <AddTorrent
             serverName={props.serverName}
             uri={torrent}
             tabsRef={props.tabsRef}
-            opened={showAddTorrentModal} close={closeAddTorrentModalAndPop} />
-        <DaemonSettingsModal
-            opened={showDaemonSettingsModal} close={closeDaemonSettingsModal} />
-        <EditTrackers
-            opened={showEditTrackersModal} close={closeEditTrackersModal} />
-        <EditTorrent
-            opened={showEditTorrentModal} close={closeEditTorrentModal} />
+            opened={showAddTorrentModal}
+            close={closeAddTorrentModalAndPop}
+        />
+        <DaemonSettingsModal opened={showDaemonSettingsModal} close={closeDaemonSettingsModal} />
+        <EditTrackers opened={showEditTrackersModal} close={closeEditTrackersModal} />
+        <EditTorrent opened={showEditTorrentModal} close={closeEditTorrentModal} />
     </>;
 });
 

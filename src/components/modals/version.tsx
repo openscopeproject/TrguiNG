@@ -50,9 +50,15 @@ export function VersionModal({ opened, close }: ModalState) {
     }, [opened, frontend]);
 
     return (
-        <HkModal opened={opened} onClose={close} size="lg" centered p="lg"
+        <HkModal
+            opened={opened}
+            onClose={close}
+            size="lg"
+            centered
+            p="lg"
             styles={{ header: { padding: "1em", alignItems: "start" } }}
-            title={<Text size="2em" fw="bold">TrguiNG</Text>}>
+            title={<Text size="2em" fw="bold">TrguiNG</Text>}
+        >
             <Text>
                 Remote interface for&nbsp;
                 <Anchor href="https://transmissionbt.com/" target="_blank" rel="noreferrer">Transmission</Anchor>
@@ -69,7 +75,10 @@ export function VersionModal({ opened, close }: ModalState) {
                     <Grid.Col span={4}>Build date</Grid.Col>
                     <Grid.Col span={8}>{new Date(appVersion.buildDate).toLocaleString()}</Grid.Col>
                     <Grid.Col span={4}>Source code</Grid.Col>
-                    <Grid.Col span={8}><Box component="span" mr="sm"><Github /></Box><Anchor href="https://github.com/openscopeproject/trguing/" target="_blank" rel="noreferrer">github</Anchor></Grid.Col>
+                    <Grid.Col span={8}>
+                        <Box component="span" mr="sm"><Github /></Box>
+                        <Anchor href="https://github.com/openscopeproject/trguing/" target="_blank" rel="noreferrer">github</Anchor>
+                    </Grid.Col>
                     <Grid.Col mt="xl">{TAURI && <Anchor href="https://db-ip.com" target="_blank" rel="noreferrer">IP Geolocation by DB-IP</Anchor>}</Grid.Col>
                 </Grid>
             </Flex>

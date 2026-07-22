@@ -153,8 +153,18 @@ export function PiecesCanvas(props: { torrent: Torrent }) {
     };
     return (
         <div ref={ref} style={{ width: "100%", height: "100%", position: "relative", overflow: "hidden" }}>
-            <canvas ref={piecesRef} width={canvasWidth} height={canvasHeight} style={style} />
-            <canvas ref={gridRef} width={canvasWidth} height={canvasHeight} style={style} />
+            <canvas
+                ref={piecesRef}
+                width={canvasWidth}
+                height={canvasHeight}
+                style={style}
+            />
+            <canvas
+                ref={gridRef}
+                width={canvasWidth}
+                height={canvasHeight}
+                style={style}
+            />
         </div>
     );
 }
