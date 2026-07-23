@@ -173,6 +173,8 @@ fn client_builder() -> reqwest::ClientBuilder {
         .connect_timeout(Duration::from_secs(10))
         .read_timeout(Duration::from_secs(40))
         .timeout(Duration::from_secs(60))
+        .http1_only()
+        .http1_title_case_headers()
 }
 
 fn http_clients() -> HttpClients {
