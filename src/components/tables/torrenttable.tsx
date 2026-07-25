@@ -170,7 +170,7 @@ const AllFields: readonly TableField[] = [
     { name: "id", label: "ID", component: PositiveNumberField },
     { name: "queuePosition", label: "Queue position", component: PositiveNumberField },
     { name: "secondsSeeding", label: "Seeding time", component: TimeField },
-    { name: "isPrivate", label: "Private", component: StringField },
+    { name: "isPrivate", label: "Private", component: BoolField },
     { name: "labels", label: "Labels", component: LabelsField },
     { name: "group", label: "Bandwidth group", component: StringField },
     { name: "file-count", label: "File count", component: PositiveNumberField },
@@ -222,6 +222,14 @@ function NameField(props: TableFieldProps) {
                 <StatusIcon />
             </Box>
         </EditableNameField>
+    );
+}
+
+function BoolField(props: TableFieldProps) {
+    return (
+        <div>
+            {props.torrent[props.fieldName] ? "\u2713" : "\u2717"}
+        </div>
     );
 }
 
