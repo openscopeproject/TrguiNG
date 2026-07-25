@@ -228,7 +228,7 @@ function NameField(props: TableFieldProps) {
 function BoolField(props: TableFieldProps) {
     return (
         <div>
-            {props.torrent[props.fieldName] ? "\u2713" : "\u2717"}
+            {props.torrent[props.fieldName] ? "Yes" : "No"}
         </div>
     );
 }
