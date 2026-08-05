@@ -35,6 +35,7 @@ import { bytesToHumanReadableStr, decodeMagnetLink, fileSystemSafeName } from "t
 import { useToggle } from "@mantine/hooks";
 import * as Icon from "react-bootstrap-icons";
 import classes from "./add.module.css";
+import { useTransmissionClient } from "rpc/client";
 
 const { TAURI, dialogOpen, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -258,6 +259,10 @@ export function AddMagnet(props: AddCommonModalProps) {
     );
     const mutateAddTrackers = useTorrentAddTrackers();
 
+    // capturing client here instead of the mutation hook to maintain it
+    // throughout the batch regardless of server switches or closed tabs
+    const client = useTransmissionClient();
+
     const onAdd = useCallback(() => {
         if (magnet === "") return;
 
@@ -324,6 +329,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                 // New torrent - add
                 addMutation.mutate(
                     {
+                        client,
                         url: current.link,
                         downloadDir: common.props.location.path,
                         labels: common.props.labels,
@@ -332,12 +338,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                         bandwidthPriority: common.props.priority,
                     },
                     {
-                        onSuccess: () => {
-                            common.props.location.addPath(common.props.location.path);
-                            currentIndex++;
-                            processNextLink();
-                        },
-                        onError: () => {
+                        onSettled: () => {
                             currentIndex++;
                             processNextLink();
                         },
@@ -371,9 +372,11 @@ export function AddMagnet(props: AddCommonModalProps) {
             }
         };
 
+        common.props.location.addPath(common.props.location.path);
+
         close();
         processNextLink();
-    }, [serverData, common, addMutation, mutateAddTrackers, close, magnet]);
+    }, [client, serverData, common, addMutation, mutateAddTrackers, close, magnet]);
 
     const config = useContext(ConfigContext);
     const shouldOpen = !config.values.interface.skipAddDialog || typeof props.uri !== "string";
@@ -417,6 +420,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                     spellCheck="false"
                     autosize
                     minRows={6}
+                    maxRows={25}
                 />
                 <AddCommon {...common.props} disabled={existingTorrent !== undefined} />
                 <Divider my="sm" />
@@ -672,6 +676,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 if (TAURI && added.name != safeName) {
                     pathMutation.mutate(
                         {
+                            client: vars.client,
                             torrentId: added.id,
                             path: added.name,
                             name: safeName,
@@ -702,6 +707,8 @@ export function AddTorrent(props: AddCommonModalProps) {
     );
     const mutateAddTrackers = useTorrentAddTrackers();
 
+    const client = useTransmissionClient();
+
     const onAdd = useCallback(() => {
         if (torrentData === undefined) return;
 
@@ -711,6 +718,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             void Promise.all(torrentData.map(async (td) => {
                 return await addMutation.mutateAsync(
                     {
+                        client,
                         metainfo: td.metadata,
                         downloadDir: common.props.location.path,
                         labels: common.props.labels,
@@ -745,7 +753,7 @@ export function AddTorrent(props: AddCommonModalProps) {
         }
         setTorrentData(undefined);
         close();
-    }, [torrentData, torrentName, existingTorrent, close, common, addMutation, fileTree, mutateAddTrackers, config]);
+    }, [client, torrentData, torrentName, existingTorrent, close, common, addMutation, fileTree, mutateAddTrackers, config]);
 
     const shouldOpen = !config.values.interface.skipAddDialog && torrentData !== undefined;
     useEffect(() => {

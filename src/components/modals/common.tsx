@@ -129,14 +129,15 @@ export function useTorrentLocation(): LocationData {
         setLastPaths(paths);
     }, [config, serverConfig]);
 
-    useEffect(() => {
-        updateLastPaths();
-    }, [updateLastPaths]);
-
     const [path, setPath] = useState<string>("");
 
     const pathRef = useRef(path);
     pathRef.current = path;
+
+    useEffect(() => {
+        updateLastPaths();
+        setPath("");
+    }, [updateLastPaths]);
 
     useEffect(() => {
         if (!lastPaths.includes(pathRef.current) && lastPaths.length > 0) {

@@ -20,7 +20,7 @@ import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import type { CachedFileTree } from "cachedfiletree";
 import { ConfigContext, ServerConfigContext } from "config";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import type { SessionInfo, TorrentActionMethodsType, TorrentAddParams } from "rpc/client";
+import type { SessionInfo, TorrentActionMethodsType, TorrentAddParams, TransmissionClient } from "rpc/client";
 import { useTransmissionClient } from "rpc/client";
 import type { Torrent, TorrentBase } from "rpc/torrent";
 import { processTorrent } from "rpc/torrent";
@@ -188,6 +188,7 @@ export function useMutateTorrent() {
 }
 
 export interface TorrentPathMutationVariables {
+    client?: TransmissionClient,
     torrentId: number,
     path: string,
     name: string,
@@ -198,8 +199,8 @@ export function useMutateTorrentPath() {
     const client = useTransmissionClient();
 
     return useMutation({
-        mutationFn: async ({ torrentId, path, name }: TorrentPathMutationVariables) => {
-            await client.torrentRenamePath(torrentId, path, name);
+        mutationFn: async ({ client: queryClient, torrentId, path, name }: TorrentPathMutationVariables) => {
+            await (queryClient ?? client).torrentRenamePath(torrentId, path, name);
         },
         onSuccess: (_, { torrentId, path, name }: TorrentPathMutationVariables) => {
             if (path.includes("/")) {
@@ -224,17 +225,17 @@ function useInvalidatingTorrentAction<ActionParams>(mutationFn: (params: ActionP
 }
 
 export interface TorrentAddQueryParams extends TorrentAddParams {
+    client: TransmissionClient,
     name?: string,
     filePath?: string,
 }
 
 export function useAddTorrent(onSuccess: (response: unknown, vars: TorrentAddQueryParams) => void, onError: (e: Error) => void) {
     const serverConfig = useContext(ServerConfigContext);
-    const client = useTransmissionClient();
 
     return useMutation({
         mutationFn: async (params: TorrentAddQueryParams) => {
-            return await client.torrentAdd(params);
+            return await params.client.torrentAdd(params);
         },
         onSuccess: (response: unknown, vars: TorrentAddQueryParams) => {
             onSuccess(response, vars);
