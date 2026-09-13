@@ -673,7 +673,7 @@ export function AddTorrent(props: AddCommonModalProps) {
 
                 const safeName = fileSystemSafeName(vars.name ?? "_");
 
-                if (TAURI && added.name != safeName) {
+                if (TAURI && torrentData?.length == 1 && added.name != safeName) {
                     pathMutation.mutate(
                         {
                             client: vars.client,
@@ -695,7 +695,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             if (TAURI && config.values.app.deleteAdded && vars.filePath !== undefined) {
                 void invoke("remove_file", { path: vars.filePath });
             }
-        }, [config.values.app.deleteAdded, pathMutation]),
+        }, [config.values.app.deleteAdded, pathMutation, torrentData]),
         useCallback((e) => {
             console.error("Failed to add torrent:", e);
             notifications.show({
@@ -811,7 +811,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 {torrentExists
                     ? <Text c="red" fw="bold" fz="lg">Torrent already exists</Text>
                     : <TextInput
-                        disabled={!TAURI}
+                        disabled={!TAURI || torrentData.length > 1}
                         value={torrentName}
                         onChange={(e) => setTorrentName(e.target.value)}
                     />}
