@@ -660,6 +660,7 @@ Section Install
     WriteRegStr SHCTX "Software\Classes\\{{protocol}}\shell\open\command" "" "$\"$INSTDIR\${MAINBINARYNAME}.exe$\" $\"%1$\""
   {{/each}}
 
+  ; ============ TrguiNG edit begin ===============
   ; Register Windows Capabilities
   WriteRegStr SHCTX "Software\${PRODUCTNAME}\Capabilities" "ApplicationName" "${PRODUCTNAME}"
   WriteRegStr SHCTX "Software\${PRODUCTNAME}\Capabilities" "ApplicationDescription" "Remote GUI for Transmission torrent daemon"
@@ -688,6 +689,7 @@ Section Install
 
   ; Inform windows explorer that the file associations changed, without requiring a reboot
   System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0x0000, p 0, p 0)'
+  ; ============ TrguiNG edit end =================
 
   ; Create uninstaller
   WriteUninstaller "$INSTDIR\uninstall.exe"
@@ -824,6 +826,7 @@ Section Uninstall
     ${EndIf}
   {{/each}}
 
+  ; ============ TrguiNG edit begin ===============
   ; Delete Capabilities/RegisteredApplications and ProgIDs
   DeleteRegKey SHCTX "Software\Classes\${PRODUCTNAME}.File.Torrent"
   DeleteRegKey SHCTX "Software\Classes\${PRODUCTNAME}.Url.Magnet"
@@ -837,6 +840,7 @@ Section Uninstall
   ${If} $R7 == "${PRODUCTNAME}"
     WriteRegStr SHCTX "Software\Classes\.torrent" "" ""
   ${EndIf}
+  ; ============ TrguiNG edit end =================
 
 
   ; Delete uninstaller
