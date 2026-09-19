@@ -660,6 +660,35 @@ Section Install
     WriteRegStr SHCTX "Software\Classes\\{{protocol}}\shell\open\command" "" "$\"$INSTDIR\${MAINBINARYNAME}.exe$\" $\"%1$\""
   {{/each}}
 
+  ; Register Windows Capabilities
+  WriteRegStr SHCTX "Software\${PRODUCTNAME}\Capabilities" "ApplicationName" "${PRODUCTNAME}"
+  WriteRegStr SHCTX "Software\${PRODUCTNAME}\Capabilities" "ApplicationDescription" "Remote GUI for Transmission torrent daemon"
+  WriteRegStr SHCTX "Software\${PRODUCTNAME}\Capabilities\FileAssociations" ".torrent" "${PRODUCTNAME}.File.Torrent"
+  WriteRegStr SHCTX "Software\${PRODUCTNAME}\Capabilities\UrlAssociations" "magnet" "${PRODUCTNAME}.Url.Magnet"
+  WriteRegStr SHCTX "Software\RegisteredApplications" "${PRODUCTNAME}" "Software\${PRODUCTNAME}\Capabilities"
+
+  ; Register TrguiNG as an application
+  WriteRegStr SHCTX "Software\Classes\${PRODUCTNAME}\DefaultIcon" "" "$\"$INSTDIR\${MAINBINARYNAME}.exe$\",0"
+  WriteRegStr SHCTX "Software\Classes\${PRODUCTNAME}\shell\open\command" "" "$\"$INSTDIR\${MAINBINARYNAME}.exe$\" $\"%1$\""
+
+  ; Register RegisteredApplications so TrguiNG shows up as a selectable default app for .torrent files and MAGNET links
+  WriteRegStr SHCTX "Software\Classes\${PRODUCTNAME}.File.Torrent" "" "Torrent File"
+  WriteRegStr SHCTX "Software\Classes\${PRODUCTNAME}.File.Torrent\DefaultIcon" "" "$\"$INSTDIR\${MAINBINARYNAME}.exe$\",0"
+  WriteRegStr SHCTX "Software\Classes\${PRODUCTNAME}.File.Torrent\shell\open\command" "" "$\"$INSTDIR\${MAINBINARYNAME}.exe$\" $\"%1$\""
+
+  WriteRegStr SHCTX "Software\Classes\${PRODUCTNAME}.Url.Magnet" "" "Magnet URI"
+  WriteRegStr SHCTX "Software\Classes\${PRODUCTNAME}.Url.Magnet\DefaultIcon" "" "$\"$INSTDIR\${MAINBINARYNAME}.exe$\",0"
+  WriteRegStr SHCTX "Software\Classes\${PRODUCTNAME}.Url.Magnet\shell\open\command" "" "$\"$INSTDIR\${MAINBINARYNAME}.exe$\" $\"%1$\""
+
+  ; Register .torrent and magenet
+  WriteRegStr SHCTX "Software\Classes\.torrent" "Content Type" "application/x-bittorrent"
+  WriteRegStr SHCTX "Software\Classes\magnet" "" "URL:Magnet URI"
+  WriteRegStr SHCTX "Software\Classes\magnet" "Content Type" "application/x-magnet"
+  WriteRegStr SHCTX "Software\Classes\magnet" "URL Protocol" ""
+
+  ; Inform windows explorer that the file associations changed, without requiring a reboot
+  System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0x0000, p 0, p 0)'
+
   ; Create uninstaller
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
@@ -794,6 +823,20 @@ Section Uninstall
       DeleteRegKey SHCTX "Software\Classes\\{{protocol}}"
     ${EndIf}
   {{/each}}
+
+  ; Delete Capabilities/RegisteredApplications and ProgIDs
+  DeleteRegKey SHCTX "Software\Classes\${PRODUCTNAME}.File.Torrent"
+  DeleteRegKey SHCTX "Software\Classes\${PRODUCTNAME}.Url.Magnet"
+  ; Delete TrguiNG itself and its Capabilities
+  DeleteRegKey SHCTX "Software\Classes\${PRODUCTNAME}"
+  DeleteRegKey SHCTX "Software\${PRODUCTNAME}\Capabilities"
+  DeleteRegKey /ifempty SHCTX "Software\${PRODUCTNAME}"
+  DeleteRegValue SHCTX "Software\RegisteredApplications" "${PRODUCTNAME}"
+  ; Also delete the default applications registration, if it's set as TrguiNG
+  ReadRegStr $R7 SHCTX "Software\Classes\.torrent" ""
+  ${If} $R7 == "${PRODUCTNAME}"
+    WriteRegStr SHCTX "Software\Classes\.torrent" "" ""
+  ${EndIf}
 
 
   ; Delete uninstaller

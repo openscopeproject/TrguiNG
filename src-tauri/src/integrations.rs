@@ -58,7 +58,7 @@ fn register_magnet_class() -> std::io::Result<()> {
             let exe = exe.to_str().unwrap_or_default();
             let hkcu = RegKey::predef(winreg::enums::HKEY_CURRENT_USER);
             let (key, _) = hkcu.create_subkey("SOFTWARE\\Classes\\Magnet")?;
-            key.set_value("", &"Magnet URI")?;
+            key.set_value("", &"URL:Magnet URI")?;
             key.set_value("Content Type", &"application/x-magnet")?;
             key.set_value("URL Protocol", &"")?;
 
