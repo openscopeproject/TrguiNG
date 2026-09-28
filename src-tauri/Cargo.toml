@@ -26,7 +26,7 @@ http-body-util = "*"
 hyper-util = { version = "^0.1", features = ["server-auto", "server-graceful"] }
 tokio = { version = "^1.28", features = ["net", "macros"] }
 serde = { version = "^1.0", features = ["derive"] }
-tauri = { version = "2.9.1", features = [ "devtools", "tray-icon"] }
+tauri = { version = "2.12.0", features = [ "devtools", "tray-icon"] }
 tauri-utils = "2.8.0"
 opener = { version = "0.7", features = ["reveal"], default-features = false }
 rodio = { version = "^0.20", features = ["mp3"], default-features = false }
