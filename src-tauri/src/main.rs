@@ -45,10 +45,20 @@ struct ListenerHandle(Arc<RwLock<ipc::Ipc>>);
 
 #[cfg(target_os = "macos")]
 fn handle_uris(app: &AppHandle, uris: Vec<String>) {
+    if uris.is_empty() {
+        return;
+    }
     let listener_state: State<ListenerHandle> = app.state();
     let listener_lock = listener_state.0.clone();
     let app_handle = app.clone();
     async_runtime::spawn(async move {
+        {
+            let mut listener = listener_lock.write().await;
+            if !listener.listening {
+                listener.push_pending(uris);
+                return;
+            }
+        }
         let listener = listener_lock.read().await;
         if let Err(e) = listener.send(&uris, app_handle).await {
             println!("Unable to send args to listener: {:?}", e);
@@ -57,16 +67,6 @@ fn handle_uris(app: &AppHandle, uris: Vec<String>) {
 }
 
 fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
-    #[cfg(target_os = "macos")]
-    {
-        let app_handle = app.handle().clone();
-        macos::set_handler(move |uris| {
-            handle_uris(&app_handle, uris);
-        })
-        .expect("Unable to set apple event handler");
-        macos::listen_url();
-    }
-
     let mut torrents: Vec<String> = vec![];
     match app.cli().matches() {
         Ok(matches) => {
@@ -75,7 +75,6 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
                 app.handle().exit(0);
                 return Ok(());
             }
-
             if matches.args["torrent"].value.is_array() {
                 torrents = matches.args["torrent"]
                     .value
@@ -129,15 +128,10 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 
         let app_clone = app.clone();
         async_runtime::spawn(async move {
-            let listener = listener_lock.read().await;
+            let mut listener = listener_lock.write().await;
+            torrents.extend(listener.take_pending());
             if let Err(e) = listener.send(&torrents, app_clone).await {
                 println!("Unable to send args to listener: {e}");
-            }
-
-            #[cfg(target_os = "macos")]
-            {
-                macos::listen_open_documents();
-                macos::listen_reopen_app();
             }
         });
 
@@ -192,6 +186,7 @@ fn http_clients() -> HttpClients {
 
 fn main() {
     let context = tauri::generate_context!();
+    let ipc = ipc::Ipc::new();
 
     let app_builder = tauri::Builder::default()
         .plugin(tauri_plugin_cli::init())
@@ -217,7 +212,7 @@ fn main() {
             commands::save_text_file,
             commands::load_text_file,
         ])
-        .manage(ListenerHandle(Arc::new(RwLock::new(ipc::Ipc::new()))))
+        .manage(ListenerHandle(Arc::new(RwLock::new(ipc))))
         .manage(TorrentCacheHandle::default())
         .manage(PollerHandle::default())
         .manage(MmdbReaderHandle::default())
@@ -228,11 +223,8 @@ fn main() {
     #[cfg(target_os = "macos")]
     let app_builder = app_builder
         .menu(macos::make_menu)
-        .on_menu_event(|app, event| match event.id().as_ref() {
-            "appquit" => {
-                tray::exit(app.clone());
-            }
-            _ => {}
+        .on_menu_event(|app, event| if event.id().as_ref() == "appquit" {
+            tray::exit(app.clone());
         });
 
     let app = app_builder
@@ -240,7 +232,17 @@ fn main() {
         .expect("error while running tauri application");
 
     #[allow(clippy::single_match)]
-    app.run(|app_handle, event| match event {
+    app.run(move |app_handle, event| match event {
+        #[cfg(target_os = "macos")]
+        tauri::RunEvent::Opened { urls } => {
+            let urls: Vec<String> = urls.into_iter().map(|url| url.to_string()).collect();
+            handle_uris(app_handle, urls);
+        }
+        #[cfg(target_os = "macos")]
+        tauri::RunEvent::Reopen { has_visible_windows, .. }
+        if !has_visible_windows => {
+            tray::toggle_main_window(app_handle, app_handle.get_webview_window("main"));
+        }
         tauri::RunEvent::ExitRequested { api, .. } => {
             api.prevent_exit();
             tray::set_tray_showhide_text(app_handle, "Show");
