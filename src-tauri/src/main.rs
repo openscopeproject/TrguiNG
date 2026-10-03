@@ -45,10 +45,20 @@ struct ListenerHandle(Arc<RwLock<ipc::Ipc>>);
 
 #[cfg(target_os = "macos")]
 fn handle_uris(app: &AppHandle, uris: Vec<String>) {
+    if uris.is_empty() {
+        return;
+    }
     let listener_state: State<ListenerHandle> = app.state();
     let listener_lock = listener_state.0.clone();
     let app_handle = app.clone();
     async_runtime::spawn(async move {
+        {
+            let mut listener = listener_lock.write().await;
+            if !listener.listening {
+                listener.push_pending(uris);
+                return;
+            }
+        }
         let listener = listener_lock.read().await;
         if let Err(e) = listener.send(&uris, app_handle).await {
             println!("Unable to send args to listener: {:?}", e);
@@ -65,6 +75,8 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         })
         .expect("Unable to set apple event handler");
         macos::listen_url();
+        macos::listen_open_documents();
+        macos::listen_reopen_app();
     }
 
     let mut torrents: Vec<String> = vec![];
@@ -129,15 +141,10 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 
         let app_clone = app.clone();
         async_runtime::spawn(async move {
-            let listener = listener_lock.read().await;
+            let mut listener = listener_lock.write().await;
+            torrents.extend(listener.take_pending());
             if let Err(e) = listener.send(&torrents, app_clone).await {
                 println!("Unable to send args to listener: {e}");
-            }
-
-            #[cfg(target_os = "macos")]
-            {
-                macos::listen_open_documents();
-                macos::listen_reopen_app();
             }
         });
 

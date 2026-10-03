@@ -157,12 +157,12 @@ pub fn listen_url() {
     listen_apple_event(GURL_EVENT_CLASS, EVENT_GET_URL);
 }
 
-// Call this after app is initialised
+// Call this in app setup hook
 pub fn listen_open_documents() {
     listen_apple_event(CORE_EVENT_CLASS, EVENT_OPEN_DOCUMENTS);
 }
 
-// Call this after app is initialised
+// Call this in app setup hook
 pub fn listen_reopen_app() {
     listen_apple_event(CORE_EVENT_CLASS, EVENT_REOPEN_APP);
 }

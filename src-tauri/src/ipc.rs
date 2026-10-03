@@ -382,6 +382,7 @@ pub struct Ipc {
     stop_signal: Option<oneshot::Sender<()>>,
     args_sem: Arc<Semaphore>,
     args_lock: Option<OwnedSemaphorePermit>,
+    pending: Vec<String>,
 }
 
 impl Ipc {
@@ -392,7 +393,17 @@ impl Ipc {
             stop_signal: Default::default(),
             args_sem: Semaphore::new(1).into(),
             args_lock: None,
+            pending: Vec::new(),
         }
+    }
+
+    #[cfg(target_os = "macos")]
+    pub fn push_pending(&mut self, uris: Vec<String>) {
+        self.pending.extend(uris);
+    }
+
+    pub fn take_pending(&mut self) -> Vec<String> {
+        std::mem::take(&mut self.pending)
     }
 
     pub async fn init(&mut self) {
