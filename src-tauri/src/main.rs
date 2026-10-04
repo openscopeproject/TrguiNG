@@ -19,8 +19,6 @@
     windows_subsystem = "windows"
 )]
 
-#[cfg(target_os = "macos")]
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::{sync::Arc, time::Duration};
 
 use createtorrent::CreationRequestsHandle;
@@ -55,7 +53,7 @@ fn handle_uris(app: &AppHandle, uris: Vec<String>) {
     let app_handle = app.clone();
     async_runtime::spawn(async move {
         {
-            let listener = listener_lock.write().await;
+            let mut listener = listener_lock.write().await;
             if !listener.listening {
                 listener.push_pending(uris);
                 return;
@@ -68,15 +66,7 @@ fn handle_uris(app: &AppHandle, uris: Vec<String>) {
     });
 }
 
-fn setup(
-    app: &mut App,
-    #[cfg(target_os = "macos")] opened_events_ready: &Arc<AtomicBool>,
-) -> Result<(), Box<dyn std::error::Error>> {
-    #[cfg(target_os = "macos")]
-    {
-        opened_events_ready.store(true, Ordering::Release);
-    }
-
+fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let mut torrents: Vec<String> = vec![];
     match app.cli().matches() {
         Ok(matches) => {
@@ -197,11 +187,6 @@ fn http_clients() -> HttpClients {
 fn main() {
     let context = tauri::generate_context!();
     let ipc = ipc::Ipc::new();
-    #[cfg(target_os = "macos")]
-    let pending = ipc.pending_queue();
-
-    #[cfg(target_os = "macos")]
-    let opened_events_ready = Arc::new(AtomicBool::new(false));
 
     let app_builder = tauri::Builder::default()
         .plugin(tauri_plugin_cli::init())
@@ -232,15 +217,8 @@ fn main() {
         .manage(PollerHandle::default())
         .manage(MmdbReaderHandle::default())
         .manage(CreationRequestsHandle::default())
-        .manage(http_clients());
-
-    #[cfg(target_os = "macos")]
-    let app_builder = app_builder.setup({
-        let opened_events_ready = opened_events_ready.clone();
-        move |app| setup(app, &opened_events_ready)
-    });
-    #[cfg(not(target_os = "macos"))]
-    let app_builder = app_builder.setup(setup);
+        .manage(http_clients())
+        .setup(setup);
 
     #[cfg(target_os = "macos")]
     let app_builder = app_builder
@@ -256,22 +234,13 @@ fn main() {
         .build(context)
         .expect("error while running tauri application");
 
-    #[cfg(target_os = "macos")]
-    let run_events_ready = opened_events_ready.clone();
-    #[cfg(target_os = "macos")]
-    let run_pending = pending.clone();
-
     #[allow(clippy::single_match)]
     app.run(move |app_handle, event| match event {
         #[cfg(target_os = "macos")]
         tauri::RunEvent::Opened { urls } => {
             let urls: Vec<String> = urls.into_iter().map(|url| url.to_string()).collect();
             macos::log_opened_urls(&urls);
-            if run_events_ready.load(Ordering::Acquire) {
-                handle_uris(app_handle, urls);
-            } else {
-                run_pending.lock().unwrap().extend(urls);
-            }
+            handle_uris(app_handle, urls);
         }
         #[cfg(target_os = "macos")]
         tauri::RunEvent::Reopen { has_visible_windows, .. }
