@@ -336,6 +336,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                         paused: !common.props.start,
                         sequential_download: common.props.sequential,
                         bandwidthPriority: common.props.priority,
+                        canRename: false,
                     },
                     {
                         onSettled: () => {
@@ -673,7 +674,7 @@ export function AddTorrent(props: AddCommonModalProps) {
 
                 const safeName = fileSystemSafeName(vars.name ?? "_");
 
-                if (TAURI && torrentData?.length == 1 && added.name != safeName) {
+                if (TAURI && vars.canRename && added.name != safeName) {
                     pathMutation.mutate(
                         {
                             client: vars.client,
@@ -695,7 +696,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             if (TAURI && config.values.app.deleteAdded && vars.filePath !== undefined) {
                 void invoke("remove_file", { path: vars.filePath });
             }
-        }, [config.values.app.deleteAdded, pathMutation, torrentData]),
+        }, [config.values.app.deleteAdded, pathMutation]),
         useCallback((e) => {
             console.error("Failed to add torrent:", e);
             notifications.show({
@@ -726,6 +727,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                         sequential_download: common.props.sequential,
                         bandwidthPriority: common.props.priority,
                         unwanted: (td.files == null || torrentData.length > 1) ? undefined : fileTree.getUnwanted(),
+                        canRename: torrentData.length == 1,
                         name: torrentName,
                         filePath: td.torrentPath,
                     },
