@@ -96,12 +96,12 @@ const ServerModals = React.forwardRef<ModalCallbacks, ServerModalsProps>(functio
     const [addQueue, setAddQueue] = useState<Array<string | File>>(urlAddParam != null ? [urlAddParam] : []);
 
     const enqueue = useCallback((paths: string[] | File[]) => {
-        setAddQueue([...addQueue, ...paths]);
+        setAddQueue((queue) => [...queue, ...paths]);
         void appWindow.show();
         void appWindow.unminimize();
         void appWindow.setFocus();
         void appWindow.emit("window-shown");
-    }, [addQueue]);
+    }, []);
 
     useEffect(() => {
         if (TAURI) {
