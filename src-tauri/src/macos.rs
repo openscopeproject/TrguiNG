@@ -18,92 +18,15 @@
 
 use std::{
     fs::OpenOptions,
-    io::{ErrorKind, Result, Write},
-    sync::Mutex,
+    io::Write,
 };
 
-use objc2::{
-    class, define_class,
-    ffi::NSInteger,
-    msg_send,
-    rc::Retained,
-    runtime::{AnyObject, NSObject},
-    sel, ClassType,
-};
-use once_cell::sync::OnceCell;
 use tauri::{menu::{Menu, MenuItem, PredefinedMenuItem, Submenu}, AppHandle};
 
-type THandler = OnceCell<Mutex<Box<dyn FnMut(Vec<String>) + Send + 'static>>>;
-
-// If the Mutex turns out to be a problem, or FnMut turns out to be useless, we can remove the Mutex and turn FnMut into Fn
-static HANDLER: THandler = OnceCell::new();
-
-// keyDirectObject
-const KEY_DIRECT_OBJECT: u32 = 0x2d2d2d2d;
-
-// kInternetEventClass
-const GURL_EVENT_CLASS: u32 = 0x4755524c;
-// kAEGetURL
-const EVENT_GET_URL: u32 = 0x4755524c;
-
-// kCoreEventClass
-const CORE_EVENT_CLASS: u32 = 0x61657674;
 // kAEOpenDocuments
 const EVENT_OPEN_DOCUMENTS: u32 = 0x6F646F63;
-// kAEReopenApplication
-const EVENT_REOPEN_APP: u32 = 0x72617070;
-
-// Adapted from https://github.com/mrmekon/fruitbasket/blob/aad14e400d710d1d46317c0d8c55ff742bfeaadd/src/osx.rs#L848
-fn parse_event(event: *mut AnyObject) -> (u32, Vec<String>) {
-    if event as u64 == 0u64 {
-        return (0, vec![]);
-    }
-    unsafe {
-        let class: u32 = msg_send![event, eventClass];
-        let id: u32 = msg_send![event, eventID];
-
-        let payload = match (class, id) {
-            (GURL_EVENT_CLASS, EVENT_GET_URL) => {
-                let url: *mut AnyObject =
-                    msg_send![event, paramDescriptorForKeyword: KEY_DIRECT_OBJECT];
-                let nsstring: *mut AnyObject = msg_send![url, stringValue];
-                let cstr: *const i8 = msg_send![nsstring, UTF8String];
-
-                if !cstr.is_null() {
-                    vec![std::ffi::CStr::from_ptr(cstr).to_string_lossy().to_string()]
-                } else {
-                    vec![]
-                }
-            }
-            (CORE_EVENT_CLASS, EVENT_OPEN_DOCUMENTS) => {
-                let documents: *mut AnyObject =
-                    msg_send![event, paramDescriptorForKeyword: KEY_DIRECT_OBJECT];
-                let count: NSInteger = msg_send![documents, numberOfItems];
-
-                let mut paths = Vec::<String>::new();
-
-                for i in 1..count + 1 {
-                    let path: *mut AnyObject = msg_send![documents, descriptorAtIndex: i];
-                    let nsstring: *mut AnyObject = msg_send![path, stringValue];
-                    let cstr: *const i8 = msg_send![nsstring, UTF8String];
-
-                    if !cstr.is_null() {
-                        let path_str = std::ffi::CStr::from_ptr(cstr).to_string_lossy().to_string();
-                        paths.push(path_str);
-                    }
-                }
-
-                paths
-            }
-            // reopen app event has no useful payload
-            (_, _) => {
-                vec![]
-            }
-        };
-
-        (id, payload)
-    }
-}
+// kAEGetURL
+const EVENT_GET_URL: u32 = 0x4755524c;
 
 fn log_event(event_id: u32, payload: &[String]) {
     let Some(path) = dirs::home_dir().map(|home| home.join("trgui.log")) else {
@@ -116,73 +39,12 @@ fn log_event(event_id: u32, payload: &[String]) {
 }
 
 pub fn log_opened_urls(urls: &[String]) {
-    log_event(EVENT_OPEN_DOCUMENTS, urls);
-}
-
-define_class!(
-    #[unsafe(super(NSObject))]
-    #[name = "TauriPluginDeepLinkHandler"]
-    struct Handler;
-
-    impl Handler {
-        #[unsafe(method(handleEvent:withReplyEvent:))]
-        fn handle_event(&self, event: *mut AnyObject, _replace: *const AnyObject) {
-            let (event_id, payload) = parse_event(event);
-            log_event(event_id, &payload);
-            let mut cb = HANDLER.get().unwrap().lock().unwrap();
-            cb(payload);
-        }
-    }
-);
-
-impl Handler {
-    pub fn new() -> Retained<Self> {
-        let cls = Self::class();
-        unsafe { msg_send![msg_send![cls, alloc], init] }
-    }
-}
-
-// Call this once early in app main() or setup hook
-pub fn set_handler<F: FnMut(Vec<String>) + Send + 'static>(handler: F) -> Result<()> {
-    if HANDLER.set(Mutex::new(Box::new(handler))).is_err() {
-        return Err(std::io::Error::new(
-            ErrorKind::AlreadyExists,
-            "Handler was already set",
-        ));
-    }
-
-    Ok(())
-}
-
-fn listen_apple_event(event_class: u32, event_id: u32) {
-    unsafe {
-        let event_manager: Retained<AnyObject> =
-            msg_send![class!(NSAppleEventManager), sharedAppleEventManager];
-
-        let handler = Handler::new();
-        let handler_boxed = Box::into_raw(Box::new(handler));
-
-        let _: () = msg_send![&event_manager,
-            setEventHandler: &**handler_boxed,
-            andSelector: sel!(handleEvent:withReplyEvent:),
-            forEventClass: event_class,
-            andEventID: event_id];
-    }
-}
-
-// Call this in app setup hook
-pub fn listen_url() {
-    listen_apple_event(GURL_EVENT_CLASS, EVENT_GET_URL);
-}
-
-// Call this in app setup hook
-pub fn listen_open_documents() {
-    listen_apple_event(CORE_EVENT_CLASS, EVENT_OPEN_DOCUMENTS);
-}
-
-// Call this in app setup hook
-pub fn listen_reopen_app() {
-    listen_apple_event(CORE_EVENT_CLASS, EVENT_REOPEN_APP);
+    let event_id = if urls.first().is_some_and(|url| url.starts_with("file:")) {
+        EVENT_OPEN_DOCUMENTS
+    } else {
+        EVENT_GET_URL
+    };
+    log_event(event_id, urls);
 }
 
 pub fn make_menu<R>(app: &AppHandle<R>) -> tauri::Result<Menu<R>>

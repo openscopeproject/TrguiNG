@@ -5639,8 +5639,6 @@ dependencies = [
  "hyper-util",
  "lava_torrent",
  "maxminddb",
- "objc2",
- "once_cell",
  "opener",
  "reqwest",
  "rodio",
