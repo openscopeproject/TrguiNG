@@ -19,6 +19,8 @@
     windows_subsystem = "windows"
 )]
 
+#[cfg(target_os = "macos")]
+use std::sync::Mutex;
 use std::{sync::Arc, time::Duration};
 
 use createtorrent::CreationRequestsHandle;
@@ -44,6 +46,12 @@ mod tray;
 struct ListenerHandle(Arc<RwLock<ipc::Ipc>>);
 
 #[cfg(target_os = "macos")]
+#[derive(Default)]
+struct MacosEventState {
+    app_handle: Option<AppHandle>,
+}
+
+#[cfg(target_os = "macos")]
 fn handle_uris(app: &AppHandle, uris: Vec<String>) {
     if uris.is_empty() {
         return;
@@ -53,7 +61,7 @@ fn handle_uris(app: &AppHandle, uris: Vec<String>) {
     let app_handle = app.clone();
     async_runtime::spawn(async move {
         {
-            let mut listener = listener_lock.write().await;
+            let listener = listener_lock.write().await;
             if !listener.listening {
                 listener.push_pending(uris);
                 return;
@@ -66,17 +74,16 @@ fn handle_uris(app: &AppHandle, uris: Vec<String>) {
     });
 }
 
-fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
+fn setup(
+    app: &mut App,
+    #[cfg(target_os = "macos")] macos_events: &Arc<Mutex<MacosEventState>>,
+) -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(target_os = "macos")]
     {
-        let app_handle = app.handle().clone();
-        macos::set_handler(move |uris| {
-            handle_uris(&app_handle, uris);
-        })
-        .expect("Unable to set apple event handler");
         macos::listen_url();
         macos::listen_open_documents();
         macos::listen_reopen_app();
+        macos_events.lock().unwrap().app_handle = Some(app.handle().clone());
     }
 
     let mut torrents: Vec<String> = vec![];
@@ -87,7 +94,6 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
                 app.handle().exit(0);
                 return Ok(());
             }
-
             if matches.args["torrent"].value.is_array() {
                 torrents = matches.args["torrent"]
                     .value
@@ -199,6 +205,12 @@ fn http_clients() -> HttpClients {
 
 fn main() {
     let context = tauri::generate_context!();
+    let ipc = ipc::Ipc::new();
+    #[cfg(target_os = "macos")]
+    let pending = ipc.pending_queue();
+
+    #[cfg(target_os = "macos")]
+    let macos_events = Arc::new(Mutex::new(MacosEventState::default()));
 
     let app_builder = tauri::Builder::default()
         .plugin(tauri_plugin_cli::init())
@@ -224,13 +236,20 @@ fn main() {
             commands::save_text_file,
             commands::load_text_file,
         ])
-        .manage(ListenerHandle(Arc::new(RwLock::new(ipc::Ipc::new()))))
+        .manage(ListenerHandle(Arc::new(RwLock::new(ipc))))
         .manage(TorrentCacheHandle::default())
         .manage(PollerHandle::default())
         .manage(MmdbReaderHandle::default())
         .manage(CreationRequestsHandle::default())
-        .manage(http_clients())
-        .setup(setup);
+        .manage(http_clients());
+
+    #[cfg(target_os = "macos")]
+    let app_builder = app_builder.setup({
+        let macos_events = macos_events.clone();
+        move |app| setup(app, &macos_events)
+    });
+    #[cfg(not(target_os = "macos"))]
+    let app_builder = app_builder.setup(setup);
 
     #[cfg(target_os = "macos")]
     let app_builder = app_builder
@@ -246,8 +265,43 @@ fn main() {
         .build(context)
         .expect("error while running tauri application");
 
+    #[cfg(target_os = "macos")]
+    {
+        let event_state = macos_events.clone();
+        let event_pending = pending.clone();
+        macos::set_handler(move |uris| {
+            let events = event_state.lock().unwrap();
+            if let Some(app_handle) = events.app_handle.clone() {
+                drop(events);
+                handle_uris(&app_handle, uris);
+            } else {
+                event_pending.lock().unwrap().extend(uris);
+            }
+        })
+        .expect("Unable to set apple event handler");
+        macos::listen_url();
+        macos::listen_open_documents();
+        macos::listen_reopen_app();
+    }
+
+    #[cfg(target_os = "macos")]
+    let run_events = macos_events.clone();
+    #[cfg(target_os = "macos")]
+    let run_pending = pending.clone();
+
     #[allow(clippy::single_match)]
-    app.run(|app_handle, event| match event {
+    app.run(move |app_handle, event| match event {
+        #[cfg(target_os = "macos")]
+        tauri::RunEvent::Opened { urls } => {
+            let urls: Vec<String> = urls.into_iter().map(|url| url.to_string()).collect();
+            macos::log_opened_urls(&urls);
+            let app_handle = run_events.lock().unwrap().app_handle.clone();
+            if let Some(app_handle) = app_handle {
+                handle_uris(&app_handle, urls);
+            } else {
+                run_pending.lock().unwrap().extend(urls);
+            }
+        }
         tauri::RunEvent::ExitRequested { api, .. } => {
             api.prevent_exit();
             tray::set_tray_showhide_text(app_handle, "Show");

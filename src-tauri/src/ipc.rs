@@ -17,7 +17,7 @@
 use std::error::Error;
 use std::io;
 use std::net::IpAddr;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use http_body_util::combinators::BoxBody;
@@ -382,7 +382,7 @@ pub struct Ipc {
     stop_signal: Option<oneshot::Sender<()>>,
     args_sem: Arc<Semaphore>,
     args_lock: Option<OwnedSemaphorePermit>,
-    pending: Vec<String>,
+    pending: Arc<Mutex<Vec<String>>>,
 }
 
 impl Ipc {
@@ -393,17 +393,21 @@ impl Ipc {
             stop_signal: Default::default(),
             args_sem: Semaphore::new(1).into(),
             args_lock: None,
-            pending: Vec::new(),
+            pending: Arc::new(Mutex::new(Vec::new())),
         }
     }
 
+    pub fn pending_queue(&self) -> Arc<Mutex<Vec<String>>> {
+        self.pending.clone()
+    }
+
     #[cfg(target_os = "macos")]
-    pub fn push_pending(&mut self, uris: Vec<String>) {
-        self.pending.extend(uris);
+    pub fn push_pending(&self, uris: Vec<String>) {
+        self.pending.lock().unwrap().extend(uris);
     }
 
     pub fn take_pending(&mut self) -> Vec<String> {
-        std::mem::take(&mut self.pending)
+        std::mem::take(&mut *self.pending.lock().unwrap())
     }
 
     pub async fn init(&mut self) {

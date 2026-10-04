@@ -17,7 +17,8 @@
 // Based on https://github.com/FabianLars/tauri-plugin-deep-link
 
 use std::{
-    io::{ErrorKind, Result},
+    fs::OpenOptions,
+    io::{ErrorKind, Result, Write},
     sync::Mutex,
 };
 
@@ -53,15 +54,15 @@ const EVENT_OPEN_DOCUMENTS: u32 = 0x6F646F63;
 const EVENT_REOPEN_APP: u32 = 0x72617070;
 
 // Adapted from https://github.com/mrmekon/fruitbasket/blob/aad14e400d710d1d46317c0d8c55ff742bfeaadd/src/osx.rs#L848
-fn parse_event(event: *mut AnyObject) -> Vec<String> {
+fn parse_event(event: *mut AnyObject) -> (u32, Vec<String>) {
     if event as u64 == 0u64 {
-        return vec![];
+        return (0, vec![]);
     }
     unsafe {
         let class: u32 = msg_send![event, eventClass];
         let id: u32 = msg_send![event, eventID];
 
-        match (class, id) {
+        let payload = match (class, id) {
             (GURL_EVENT_CLASS, EVENT_GET_URL) => {
                 let url: *mut AnyObject =
                     msg_send![event, paramDescriptorForKeyword: KEY_DIRECT_OBJECT];
@@ -98,8 +99,24 @@ fn parse_event(event: *mut AnyObject) -> Vec<String> {
             (_, _) => {
                 vec![]
             }
-        }
+        };
+
+        (id, payload)
     }
+}
+
+fn log_event(event_id: u32, payload: &[String]) {
+    let Some(path) = dirs::home_dir().map(|home| home.join("trgui.log")) else {
+        return;
+    };
+
+    if let Ok(mut log) = OpenOptions::new().create(true).append(true).open(path) {
+        let _ = writeln!(log, "event_id={event_id:#010x} payload={payload:?}");
+    }
+}
+
+pub fn log_opened_urls(urls: &[String]) {
+    log_event(EVENT_OPEN_DOCUMENTS, urls);
 }
 
 define_class!(
@@ -110,9 +127,10 @@ define_class!(
     impl Handler {
         #[unsafe(method(handleEvent:withReplyEvent:))]
         fn handle_event(&self, event: *mut AnyObject, _replace: *const AnyObject) {
-            let s = parse_event(event);
+            let (event_id, payload) = parse_event(event);
+            log_event(event_id, &payload);
             let mut cb = HANDLER.get().unwrap().lock().unwrap();
-            cb(s);
+            cb(payload);
         }
     }
 );
