@@ -34,6 +34,7 @@ mod createtorrent;
 mod geoip;
 mod integrations;
 mod ipc;
+mod i18n;
 #[cfg(target_os = "macos")]
 mod macos;
 mod poller;
@@ -147,7 +148,7 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 
         let app_clone = app.clone();
         app.listen("window-hidden", move |_| {
-            tray::set_tray_showhide_text(&app_clone, "Show");
+            tray::set_tray_window_visible(&app_clone, false);
         })
     });
 
@@ -196,6 +197,7 @@ fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .invoke_handler(tauri::generate_handler![
+            commands::set_language,
             commands::read_file,
             commands::remove_file,
             commands::shell_open,
@@ -215,6 +217,7 @@ fn main() {
         .manage(ListenerHandle(Arc::new(RwLock::new(ipc))))
         .manage(TorrentCacheHandle::default())
         .manage(PollerHandle::default())
+        .manage(i18n::Language::default())
         .manage(MmdbReaderHandle::default())
         .manage(CreationRequestsHandle::default())
         .manage(http_clients())
@@ -245,7 +248,7 @@ fn main() {
         }
         tauri::RunEvent::ExitRequested { api, .. } => {
             api.prevent_exit();
-            tray::set_tray_showhide_text(app_handle, "Show");
+            tray::set_tray_window_visible(app_handle, false);
         }
         _ => {}
     });

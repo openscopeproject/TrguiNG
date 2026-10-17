@@ -16,8 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { useTranslation } from "react-i18next";
 import type { AccessorFn, CellContext, ColumnDef } from "@tanstack/react-table";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import type { Torrent, TrackerStats } from "rpc/torrent";
 import { getTrackerAnnounceState } from "rpc/torrent";
 import type { TrackerStatsFieldsType } from "rpc/transmission";
@@ -31,41 +32,57 @@ interface TableFieldProps {
 
 interface TableField {
     name: TrackerStatsFieldsType,
-    label: string,
+    labelKey: string,
     columnId?: string,
     accessorFn?: AccessorFn<TrackerStats>,
     component?: React.FunctionComponent<TableFieldProps>,
 }
 
 const AllFields: readonly TableField[] = [
-    { name: "announce", label: "Announce URL" },
-    { name: "announceState", label: "Status", columnId: "status", accessorFn: getTrackerAnnounceState },
-    { name: "nextAnnounceTime", label: "Next update", component: NextUpdateField },
-    { name: "seederCount", label: "Seeds", component: NumberField },
-    { name: "leecherCount", label: "Peers", component: NumberField },
-    { name: "downloadCount", label: "Downloads", component: NumberField },
+    { name: "announce", labelKey: "tables.trackers.announce_url" },
+    { name: "announceState", labelKey: "tables.trackers.status", columnId: "status", accessorFn: getTrackerAnnounceState, component: AnnounceStateField },
+    { name: "nextAnnounceTime", labelKey: "tables.trackers.next_update", component: NextUpdateField },
+    { name: "seederCount", labelKey: "tables.trackers.seeds", component: NumberField },
+    { name: "leecherCount", labelKey: "tables.trackers.peers", component: NumberField },
+    { name: "downloadCount", labelKey: "tables.trackers.downloads", component: NumberField },
 ] as const;
 
-const Columns = AllFields.map((field): ColumnDef<TrackerStats> => {
-    const cell = (props: CellContext<TrackerStats, unknown>) => {
-        if (field.component !== undefined) {
-            return <field.component entry={props.row.original} fieldName={field.name} />;
-        } else {
-            return <div>{props.getValue() as string}</div>;
+function buildColumns(t: (key: string) => string) {
+    return AllFields.map((field): ColumnDef<TrackerStats> => {
+        const cell = (props: CellContext<TrackerStats, unknown>) => {
+            if (field.component !== undefined) {
+                return <field.component entry={props.row.original} fieldName={field.name} />;
+            } else {
+                return <div>{props.getValue() as string}</div>;
+            }
+        };
+        return {
+            header: t(field.labelKey),
+            accessorKey: field.name,
+            accessorFn: field.accessorFn,
+            cell,
+        };
+    });
+}
+
+function AnnounceStateField(props: TableFieldProps) {
+    const { t } = useTranslation();
+    const tracker = props.entry;
+    if (tracker.announceState === 3) return <div>{t("tables.trackers.states.updating")}</div>;
+    if (tracker.hasAnnounced as boolean) {
+        if (tracker.lastAnnounceSucceeded as boolean || tracker.lastAnnounceResult === "Success") {
+            return <div>{t("tables.trackers.states.working")}</div>;
         }
-    };
-    return {
-        header: field.label,
-        accessorKey: field.name,
-        accessorFn: field.accessorFn,
-        cell,
-    };
-});
+        return <div>{tracker.lastAnnounceResult}</div>;
+    }
+    return <div />;
+}
 
 function NextUpdateField(props: TableFieldProps) {
+    const { t } = useTranslation();
     if (props.entry.announceState !== 1) return <div>-</div>;
     const seconds = props.entry[props.fieldName] - Math.floor(Date.now() / 1000);
-    if (seconds > 0) return <div>{secondsToHumanReadableStr(seconds)}</div>;
+    if (seconds > 0) return <div>{secondsToHumanReadableStr(seconds, t)}</div>;
     return <div>-</div>;
 }
 
@@ -76,13 +93,15 @@ function NumberField(props: TableFieldProps) {
 }
 
 export function TrackersTable(props: { torrent: Torrent }) {
+    const { t } = useTranslation();
+    const columns = useMemo(() => buildColumns(t), [t]);
     const getRowId = useCallback((t: TrackerStats) => String(t.id), []);
 
     const [selected, selectedReducer] = useStandardSelect();
 
     return <TrguiTable<TrackerStats> {...{
         tablename: "trackers",
-        columns: Columns,
+        columns,
         data: props.torrent.trackerStats,
         selected,
         getRowId,

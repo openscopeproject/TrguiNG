@@ -17,26 +17,11 @@
  */
 
 import React, { lazy, Suspense } from "react";
-import "@mantine/core/styles.css";
 import { createRoot } from "react-dom/client";
 
-const CreateTorrentForm = lazy(async () => await import(/* webpackChunkName: "createtorrentform" */ "components/createtorrentform"));
-const CustomMantineProvider = lazy(
-    async () => await import("components/mantinetheme"));
+const CreateTorrentApp = lazy(async () => await import(/* webpackChunkName: "createtorrentapp" */ "components/createtorrentapp"));
 
-async function run() {
-    const appnode = document.getElementById("app") as HTMLElement;
-    const app = createRoot(appnode);
-
-    app.render(
-        <React.StrictMode>
-            <Suspense fallback={<div />}>
-                <CustomMantineProvider>
-                    <CreateTorrentForm />
-                </CustomMantineProvider>
-            </Suspense>
-        </React.StrictMode>,
-    );
-}
-
-window.onload = run;
+window.onload = () => {
+    const app = createRoot(document.getElementById("app") as HTMLElement);
+    app.render(<React.StrictMode><Suspense fallback={<div />}><CreateTorrentApp /></Suspense></React.StrictMode>);
+};

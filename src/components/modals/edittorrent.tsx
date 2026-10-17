@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { useTranslation } from "react-i18next";
 import React, { useCallback, useEffect, useMemo } from "react";
 import type { ModalState } from "./common";
 import { SaveCancelModal, TorrentsNames } from "./common";
@@ -40,6 +41,7 @@ interface FormValues {
 }
 
 export function EditTorrent(props: ModalState) {
+    const { t } = useTranslation();
     const rpcVersion = useServerRpcVersion();
     const serverData = useServerTorrentData();
     const selected = useServerSelectedTorrents();
@@ -92,14 +94,14 @@ export function EditTorrent(props: ModalState) {
                 onError: (e) => {
                     console.error("Failed to update torrent properties", e);
                     notifications.show({
-                        message: "Error updating torrent",
+                        message: t("editTorrent.errorUpdatingTorrent"),
                         color: "red",
                     });
                 },
             },
         );
         props.close();
-    }, [torrentId, torrent, mutate, selected, form.values, props]);
+    }, [torrentId, torrent, mutate, selected, form.values, props, t]);
 
     return <>
         {props.opened
@@ -109,7 +111,7 @@ export function EditTorrent(props: ModalState) {
                 onClose={props.close}
                 onSave={onSave}
                 centered
-                title="Edit torrent properties"
+                title={t("editTorrent.editTorrentProperties")}
                 mih="25rem"
             >
                 <LoadingOverlay visible={isLoading} />
@@ -120,7 +122,7 @@ export function EditTorrent(props: ModalState) {
                     <Grid.Col span={8}>
                         <Checkbox
                             my="sm"
-                            label="Honor session upload limit"
+                            label={t("editTorrent.honorSessionUploadLimit")}
                             {...form.getInputProps("honorsSessionLimits", { type: "checkbox" })}
                         />
                     </Grid.Col>
@@ -128,13 +130,13 @@ export function EditTorrent(props: ModalState) {
                         {rpcVersion >= 18
                             && <Checkbox
                                 my="sm"
-                                label="Sequential download"
+                                label={t("editTorrent.sequentialDownload")}
                                 {...form.getInputProps("sequentialDownload", { type: "checkbox" })}
                             />}
                     </Grid.Col>
                     <Grid.Col span={8}>
                         <Checkbox
-                            label="Maximum download speed"
+                            label={t("editTorrent.maxDownloadSpeed")}
                             {...form.getInputProps("downloadLimited", { type: "checkbox" })}
                         />
                     </Grid.Col>
@@ -145,12 +147,10 @@ export function EditTorrent(props: ModalState) {
                             disabled={form.values.downloadLimited !== true}
                         />
                     </Grid.Col>
-                    <Grid.Col span={2}>
-                        KB/s
-                    </Grid.Col>
+                    <Grid.Col span={2}>{t("editTorrent.kbs")}</Grid.Col>
                     <Grid.Col span={8}>
                         <Checkbox
-                            label="Maximum upload speed"
+                            label={t("editTorrent.maxUploadSpeed")}
                             {...form.getInputProps("uploadLimited", { type: "checkbox" })}
                         />
                     </Grid.Col>
@@ -161,12 +161,8 @@ export function EditTorrent(props: ModalState) {
                             disabled={form.values.uploadLimited !== true}
                         />
                     </Grid.Col>
-                    <Grid.Col span={2}>
-                        KB/s
-                    </Grid.Col>
-                    <Grid.Col span={8}>
-                        Peer limit
-                    </Grid.Col>
+                    <Grid.Col span={2}>{t("editTorrent.kbs")}</Grid.Col>
+                    <Grid.Col span={8}>{t("editTorrent.peerLimit")}</Grid.Col>
                     <Grid.Col span={2}>
                         <NumberInput
                             min={0}
@@ -176,7 +172,7 @@ export function EditTorrent(props: ModalState) {
                     <Grid.Col span={2} />
                     <Grid.Col span={8}>
                         <Checkbox
-                            label="Seed ratio"
+                            label={t("editTorrent.seedRatio")}
                             checked={form.values.seedRatioMode < 2}
                             indeterminate={form.values.seedRatioMode === 0}
                             onChange={() => { form.setFieldValue("seedRatioMode", (form.values.seedRatioMode + 1) % 3); }}
@@ -195,7 +191,7 @@ export function EditTorrent(props: ModalState) {
                     <Grid.Col span={2} />
                     <Grid.Col span={8}>
                         <Checkbox
-                            label="Stop seeding when inactive for"
+                            label={t("editTorrent.stopSeedingWhenInactiveFor")}
                             checked={form.values.seedIdleMode < 2}
                             indeterminate={form.values.seedIdleMode === 0}
                             onChange={() => { form.setFieldValue("seedIdleMode", (form.values.seedIdleMode + 1) % 3); }}
@@ -208,9 +204,7 @@ export function EditTorrent(props: ModalState) {
                             disabled={form.values.seedIdleMode !== 1}
                         />
                     </Grid.Col>
-                    <Grid.Col span={2}>
-                        minutes
-                    </Grid.Col>
+                    <Grid.Col span={2}>{t("editTorrent.minutes")}</Grid.Col>
                 </Grid>
             </SaveCancelModal>}
     </>;

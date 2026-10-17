@@ -38,6 +38,7 @@ import { DragDropContext, Draggable } from "react-beautiful-dnd";
 import { StrictModeDroppable } from "components/strictmodedroppable";
 import { eventHasModKey, hasEllipsis, reorderElements } from "trutil";
 import { useFontSize } from "themehooks";
+import { useTranslation } from "react-i18next";
 
 const defaultColumn = {
     minSize: 30,
@@ -639,6 +640,7 @@ interface EditableNameFieldProps extends React.PropsWithChildren {
 
 export function EditableNameField(props: EditableNameFieldProps) {
     const textRef = useRef<HTMLInputElement>(null);
+    const { t } = useTranslation();
 
     const [newName, setNewName] = useState("");
     const [isHover, setHover] = useState(false);
@@ -743,7 +745,7 @@ export function EditableNameField(props: EditableNameFieldProps) {
                 ? <ActionIcon
                     variant="subtle"
                     onClick={renameHandler}
-                    title="Rename (F2)"
+                    title={t("tables.rename")}
                     className={classes.actionIcon}
                 >
                     <Icon.InputCursorText size="1rem" />

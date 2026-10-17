@@ -26,6 +26,7 @@ import React, { useContext } from "react";
 import type { Batcher } from "@yornaath/batshit";
 import { create, keyResolver } from "@yornaath/batshit";
 import { mergeTrackerLists } from "trutil";
+import { translate } from "../translate";
 
 const RUST_BACKEND = "http://127.0.0.1:44321";
 
@@ -137,7 +138,7 @@ export class TransmissionClient {
         if (response.status === 409) {
             const sid = response.headers.get("X-Transmission-Session-Id");
             if (sid == null) {
-                throw new ApiError("Got 409 response without session id header");
+                throw new ApiError(translate("rpc.missingSessionId"));
             }
             this.headers["X-Transmission-Session-Id"] = sid;
 
@@ -155,12 +156,12 @@ export class TransmissionClient {
 
             return responseJson;
         } else if (response.type === "opaqueredirect") {
-            throw new Error("Server makes a redirect");
+            throw new Error(translate("rpc.redirect"));
         } else if (response.type === "error") {
-            throw new Error("Network error");
+            throw new Error(translate("rpc.networkError"));
         } else {
             console.log(response);
-            throw new Error(`Server returned error: ${response.status} (${response.statusText})`);
+            throw new Error(translate("rpc.httpError", { status: response.status, statusText: response.statusText }));
         }
     }
 
@@ -173,7 +174,7 @@ export class TransmissionClient {
         const response = await this._sendRpc(request);
 
         if (!isApiResponse(response)) {
-            throw new ApiError("torrent-get response is not torrents");
+            throw new ApiError(translate("rpc.invalidTorrents"));
         }
 
         return response.arguments.torrents as TorrentBase[];
@@ -191,13 +192,13 @@ export class TransmissionClient {
         const response = await this._sendRpc(request);
 
         if (!isApiResponse(response)) {
-            throw new ApiError("torrent-get response is not torrents");
+            throw new ApiError(translate("rpc.invalidTorrents"));
         }
 
         const torrent = response.arguments.torrents.find((torrent: TorrentBase) => torrent.id === id);
 
         if (torrent === undefined) {
-            throw new ApiError(`Torrent with id ${id} was not found`);
+            throw new ApiError(translate("rpc.torrentNotFound", { id }));
         }
 
         return torrent;
@@ -212,7 +213,7 @@ export class TransmissionClient {
         const response = await this._sendRpc(request);
 
         if (!isApiResponse(response)) {
-            throw new ApiError("session-get response is not a session");
+            throw new ApiError(translate("rpc.invalidSession"));
         }
 
         return response.arguments;
@@ -372,13 +373,13 @@ export class TransmissionClient {
 
         const response = await this._sendRpc(getRequest);
         if (!isApiResponse(response)) {
-            throw new ApiError("torrent-get response is not torrents");
+            throw new ApiError(translate("rpc.invalidTorrents"));
         }
 
         const torrents = response.arguments.torrents;
 
         if (!Array.isArray(torrents) || torrents.length < 1) {
-            throw new ApiError("Torrent not found");
+            throw new ApiError(translate("rpc.noTorrent"));
         }
 
         const currentTrackers = (torrents[0].trackerList as string)

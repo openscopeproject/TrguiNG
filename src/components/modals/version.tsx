@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { useTranslation } from "react-i18next";
 import { Anchor, Box, Divider, Flex, Grid, Text } from "@mantine/core";
 import type { ModalState } from "./common";
 import { HkModal } from "./common";
@@ -37,15 +38,12 @@ interface AppVersion {
 export const appVersion: AppVersion = appVersionJson;
 
 export function VersionModal({ opened, close }: ModalState) {
-    const [frontend, setFrontend] = useState<string>();
+    const { t, i18n } = useTranslation();
+    const [frontend, setFrontend] = useState<ReturnType<typeof UAParser>>();
 
     useEffect(() => {
         if (opened && frontend === undefined) {
-            const { browser, engine, os } = UAParser();
-            let frontend = `${browser.name ?? "unknown"} ${browser.version ?? ""} `;
-            frontend += `(${engine.name ?? "unknown"} ${engine.version ?? ""}) `;
-            frontend += `on ${os.name ?? "unknown"} ${os.version ?? ""}`;
-            setFrontend(frontend);
+            setFrontend(UAParser());
         }
     }, [opened, frontend]);
 
@@ -60,32 +58,40 @@ export function VersionModal({ opened, close }: ModalState) {
             title={<Text size="2em" fw="bold">TrguiNG</Text>}
         >
             <Text>
-                Remote interface for&nbsp;
+                {t("version.remoteInterfaceFor")}
+                {" "}
                 <Anchor href="https://transmissionbt.com/" target="_blank" rel="noreferrer">Transmission</Anchor>
-                &nbsp;torrent daemon
+                {" "}
+                {t("version.torrentDaemon")}
             </Text>
             <Divider px="sm" my="xl" />
             <Flex gap="md" align="center">
                 <AppLogo style={{ flexShrink: 0 }} />
                 <Grid>
-                    <Grid.Col span={4}>Version</Grid.Col>
+                    <Grid.Col span={4}>{t("version.version")}</Grid.Col>
                     <Grid.Col span={8}>{appVersion.gitVersion}</Grid.Col>
-                    <Grid.Col span={4}>Frontend</Grid.Col>
-                    <Grid.Col span={8}>{frontend}</Grid.Col>
-                    <Grid.Col span={4}>Build date</Grid.Col>
-                    <Grid.Col span={8}>{new Date(appVersion.buildDate).toLocaleString()}</Grid.Col>
-                    <Grid.Col span={4}>Source code</Grid.Col>
+                    <Grid.Col span={4}>{t("version.frontend")}</Grid.Col>
+                    <Grid.Col span={8}>
+                        {frontend === undefined
+                            ? ""
+                            : t("version.frontendDescription", {
+                                browser: `${frontend.browser.name ?? t("version.unknown")} ${frontend.browser.version ?? ""}`.trim(),
+                                engine: `${frontend.engine.name ?? t("version.unknown")} ${frontend.engine.version ?? ""}`.trim(),
+                                os: `${frontend.os.name ?? t("version.unknown")} ${frontend.os.version ?? ""}`.trim(),
+                            })}
+                    </Grid.Col>
+                    <Grid.Col span={4}>{t("version.buildDate")}</Grid.Col>
+                    <Grid.Col span={8}>{new Date(appVersion.buildDate).toLocaleString(i18n.resolvedLanguage)}</Grid.Col>
+                    <Grid.Col span={4}>{t("version.sourceCode")}</Grid.Col>
                     <Grid.Col span={8}>
                         <Box component="span" mr="sm"><Github /></Box>
                         <Anchor href="https://github.com/openscopeproject/trguing/" target="_blank" rel="noreferrer">github</Anchor>
                     </Grid.Col>
-                    <Grid.Col mt="xl">{TAURI && <Anchor href="https://db-ip.com" target="_blank" rel="noreferrer">IP Geolocation by DB-IP</Anchor>}</Grid.Col>
+                    <Grid.Col mt="xl">{TAURI && <Anchor href="https://db-ip.com" target="_blank" rel="noreferrer">{t("version.ipGeolocation")}</Anchor>}</Grid.Col>
                 </Grid>
             </Flex>
             <Divider px="sm" my="xl" />
-            <Text ta="center">
-                powered by
-            </Text>
+            <Text ta="center">{t("version.poweredBy")}</Text>
             <Flex justify="center">
                 <Anchor href="https://react.dev/" target="_blank" rel="noreferrer"><ReactLogo /></Anchor>
                 <Anchor href="https://tauri.app/" target="_blank" rel="noreferrer"><TauriLogo /></Anchor>

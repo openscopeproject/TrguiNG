@@ -38,8 +38,11 @@ import { ToolbarButton } from "./toolbar";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "css/custom.css";
+import { I18nextProvider, useTranslation } from "react-i18next";
+import i18n, { initializeI18n, synchronizeNativeLanguage } from "i18n";
+import { Loader } from "@mantine/core";
 
-const { appWindow, invoke, makeCreateTorrentView } = await import(/* webpackChunkName: "taurishim" */"taurishim");
+const { TAURI, appWindow, invoke, makeCreateTorrentView } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface PassEventData {
     from: string,
@@ -47,6 +50,7 @@ interface PassEventData {
 }
 
 function CreateTorrentButton() {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
     const colorScheme = useComputedColorScheme();
 
@@ -55,7 +59,7 @@ function CreateTorrentButton() {
             if (data.payload === "ready") {
                 void invoke("pass_to_window", {
                     to: data.from,
-                    payload: JSON.stringify({ colorScheme, defaultTrackers: config.values.interface.defaultTrackers }),
+                    payload: JSON.stringify({ colorScheme, defaultTrackers: config.values.interface.defaultTrackers, language: config.values.app.language }),
                 });
             }
         });
@@ -79,7 +83,7 @@ function CreateTorrentButton() {
             variant="default"
             size="lg"
             onClick={onClick}
-            title={`Create new torrent file (${modKeyString()} + T)`}
+            title={t("toolbar.createTorrentWithHotkey", { hotkey: modKeyString() })}
             my="auto"
         >
             <Icon.Stars size="1.1rem" />
@@ -88,16 +92,46 @@ function CreateTorrentButton() {
 }
 
 export function App(props: React.PropsWithChildren) {
+    const config = useContext(ConfigContext);
+    const [ready, setReady] = useState(false);
+
+    useEffect(() => {
+        let active = true;
+        let stopNativeSync: (() => void) | undefined;
+        const initialize = async () => {
+            await initializeI18n(config.values.app.language);
+            if (!active) return;
+            if (TAURI) {
+                const nativeSync = synchronizeNativeLanguage(async (language) => await invoke("set_language", { language }));
+                stopNativeSync = nativeSync.stop;
+                await nativeSync.ready;
+                if (!active) return;
+                if (config.values.app.showTrayIcon) void invoke("create_tray").catch(console.error);
+            }
+            if (active) setReady(true);
+        };
+        void initialize().catch(console.error);
+        return () => {
+            active = false;
+            stopNativeSync?.();
+        };
+    }, [config]);
+
+    if (!ready) return <Flex align="center" justify="center" h="100%"><Loader /></Flex>;
+
     return (
-        <QueryClientProvider client={queryClient}>
-            <Notifications limit={5} />
-            {props.children}
-            <ReactQueryDevtools toggleButtonProps={{ style: { marginBottom: "2rem" } }} />
-        </QueryClientProvider>
+        <I18nextProvider i18n={i18n}>
+            <QueryClientProvider client={queryClient}>
+                <Notifications limit={5} />
+                {props.children}
+                <ReactQueryDevtools toggleButtonProps={{ style: { marginBottom: "2rem" } }} />
+            </QueryClientProvider>
+        </I18nextProvider>
     );
 }
 
-export default function TauriApp() {
+function TauriAppContent() {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
     const clientManager = useMemo(() => {
         const cm = new ClientManager(config);
@@ -137,7 +171,7 @@ export default function TauriApp() {
     }, []);
 
     return (
-        <App>
+        <>
             <AppSettingsModal
                 onSave={onServerSave}
                 opened={showServerConfig}
@@ -159,7 +193,7 @@ export default function TauriApp() {
                         size="lg"
                         variant="default"
                         my="auto"
-                        title="Configure servers"
+                        title={t("settings.configureServers")}
                         onClick={serverConfigHandlers.open}
                     >
                         <Icon.GearFill size="1.1rem" />
@@ -173,10 +207,10 @@ export default function TauriApp() {
                                 hostname={clientManager.getHostname(currentServer.name)}
                                 tabsRef={tabsRef}
                                 toolbarExtra={!showTabStrip && <>
-                                    <ToolbarButton title={`Create torrent (${modKeyString()} + T)`} onClick={onCreateTorrent}>
+                                    <ToolbarButton title={t("toolbar.createTorrentWithHotkey", { hotkey: modKeyString() })} onClick={onCreateTorrent}>
                                         <Icon.Stars size="1.5rem" />
                                     </ToolbarButton>
-                                    <ToolbarButton title="Configure servers" onClick={serverConfigHandlers.open}>
+                                    <ToolbarButton title={t("settings.configureServers")} onClick={serverConfigHandlers.open}>
                                         <Icon.GearFill size="1.5rem" />
                                     </ToolbarButton>
                                     {tabsRef.current?.getOpenTabs() !== undefined && tabsRef.current?.getOpenTabs()?.length > 1
@@ -188,7 +222,7 @@ export default function TauriApp() {
                                             middlewares={{ shift: true, flip: true }}
                                         >
                                             <Menu.Target>
-                                                <ToolbarButton title="Switch server">
+                                                <ToolbarButton title={t("modals.add.switchServer")}>
                                                     <Icon.Diagram2 size="1.5rem" />
                                                 </ToolbarButton>
                                             </Menu.Target>
@@ -223,11 +257,15 @@ export default function TauriApp() {
                             })}
                             <Box style={{ flexGrow: 1 }} />
                             <Button onClick={serverConfigHandlers.open}>
-                                Configure servers
+                                {t("settings.configureServers")}
                             </Button>
                         </Stack>
                     </Flex>}
             </Flex>
-        </App>
+        </>
     );
+}
+
+export default function TauriApp() {
+    return <App><TauriAppContent /></App>;
 }
