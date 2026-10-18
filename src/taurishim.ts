@@ -19,7 +19,7 @@
 import type { EventCallback } from "@tauri-apps/api/event";
 import type { CloseRequestedEvent, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
 import type { DragDropEvent } from "@tauri-apps/api/webview";
-import { translate } from "./translate";
+import { translate } from "./i18n/translate";
 
 export const TAURI = Object.prototype.hasOwnProperty.call(window, "__TAURI__");
 const realAppWindow = TAURI ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/window")).getCurrentWindow() : undefined;

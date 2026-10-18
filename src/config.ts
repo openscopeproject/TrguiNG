@@ -17,9 +17,9 @@
  */
 
 import React from "react";
-import type { AvailableLanguage } from "./language";
-import { isAvailableLanguage } from "./language";
-import { translate } from "./translate";
+import type { AvailableLanguage } from "./i18n/language";
+import { isAvailableLanguage } from "./i18n/language";
+import { translate } from "./i18n/translate";
 import type {
     SortingState, ColumnSizingState, VisibilityState, ColumnOrderState,
 } from "@tanstack/react-table";

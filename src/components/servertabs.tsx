@@ -52,7 +52,7 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
 
     useEffect(() => {
         config.setOpenTabs(tabs.openTabs, tabs.currentTab);
-        if (tabs.currentTab < 0) {
+        if (tabs.openTabs[tabs.currentTab] === undefined) {
             void appWindow.setTitle(t("native.windowTitle"));
         }
     }, [config, tabs, t]);

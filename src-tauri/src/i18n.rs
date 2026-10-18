@@ -14,49 +14,91 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::str::FromStr;
 use std::sync::{OnceLock, RwLock};
 
 use serde_json::Value;
 use tauri::{AppHandle, Manager, Runtime};
 
-pub struct Language(pub RwLock<&'static str>);
+// Keep each language's code, embedded resource and cache in one declaration.
+macro_rules! define_languages {
+    ($($(#[$attribute:meta])* $variant:ident => $code:literal),+ $(,)?) => {
+        #[derive(Clone, Copy, Default)]
+        pub enum SupportedLanguage {
+            $($(#[$attribute])* $variant,)+
+        }
+
+        impl SupportedLanguage {
+            const ALL: &[Self] = &[$(Self::$variant,)+];
+
+            fn code(self) -> &'static str {
+                match self {
+                    $(Self::$variant => $code,)+
+                }
+            }
+
+            fn resources(self) -> &'static Value {
+                match self {
+                    $(Self::$variant => {
+                        static RESOURCES: OnceLock<Value> = OnceLock::new();
+                        RESOURCES.get_or_init(|| {
+                            serde_json::from_str(include_str!(concat!(
+                                "../../src/i18n/locales/", $code, ".json"
+                            )))
+                            .expect(concat!("Invalid locale: ", $code))
+                        })
+                    },)+
+                }
+            }
+        }
+    };
+}
+
+define_languages! {
+    #[default] English => "en",
+    SimplifiedChinese => "zh-CN",
+    Russian => "ru",
+}
+
+impl FromStr for SupportedLanguage {
+    type Err = ();
+
+    fn from_str(language: &str) -> Result<Self, Self::Err> {
+        Self::ALL
+            .iter()
+            .copied()
+            .find(|candidate| candidate.code().eq_ignore_ascii_case(language))
+            .or_else(|| {
+                let base = language.split('-').next().unwrap_or(language);
+                Self::ALL.iter().copied().find(|candidate| {
+                    candidate
+                        .code()
+                        .split('-')
+                        .next()
+                        .unwrap()
+                        .eq_ignore_ascii_case(base)
+                })
+            })
+            .ok_or(())
+    }
+}
+
+pub struct Language(pub RwLock<SupportedLanguage>);
 
 impl Default for Language {
     fn default() -> Self {
-        Self(RwLock::new("en"))
+        Self(RwLock::new(SupportedLanguage::default()))
     }
 }
 
-pub fn resolve(language: &str) -> &'static str {
-    if language.to_ascii_lowercase().starts_with("zh") {
-        "zh-CN"
-    } else {
-        "en"
-    }
-}
-
-pub fn translate(language: &str, key: &str) -> String {
-    static ENGLISH: OnceLock<Value> = OnceLock::new();
-    static CHINESE: OnceLock<Value> = OnceLock::new();
-    let english = ENGLISH.get_or_init(|| {
-        serde_json::from_str(include_str!("../../src/locales/en.json"))
-            .expect("Invalid English locale")
-    });
-    let resources = if resolve(language) == "zh-CN" {
-        CHINESE.get_or_init(|| {
-            serde_json::from_str(include_str!("../../src/locales/zh-CN.json"))
-                .expect("Invalid Chinese locale")
-        })
-    } else {
-        english
-    };
+pub fn translate(language: SupportedLanguage, key: &str) -> String {
     let lookup = |resources: &'static Value| {
         key.split('.')
             .try_fold(resources, |value, part| value.get(part))
             .and_then(Value::as_str)
     };
-    lookup(resources)
-        .or_else(|| lookup(english))
+    lookup(language.resources())
+        .or_else(|| lookup(SupportedLanguage::default().resources()))
         .unwrap_or(key)
         .to_string()
 }

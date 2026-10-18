@@ -317,7 +317,9 @@ fn localize_creation_error(app: &tauri::AppHandle, error: String) -> String {
 
 #[tauri::command]
 pub fn set_language(app: tauri::AppHandle, language: String) -> Result<(), String> {
-    *app.state::<i18n::Language>().0.write().unwrap() = i18n::resolve(&language);
+    *app.state::<i18n::Language>().0.write().unwrap() = language
+        .parse::<i18n::SupportedLanguage>()
+        .unwrap_or_default();
     tray::refresh_menu(&app);
     #[cfg(target_os = "macos")]
     app.set_menu(crate::macos::make_menu(&app).map_err(|e| e.to_string())?)

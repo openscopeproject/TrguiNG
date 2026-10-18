@@ -22,8 +22,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { appVersion } from "./modals/version";
 import { ProgressBar } from "./progressbar";
-import { initializeI18n } from "i18n";
-import { isAvailableLanguage } from "language";
 import { bytesToHumanReadableStr } from "trutil";
 import classes from "./createtorrentform.module.css";
 const { appWindow, invoke, dialogOpen, dialogSave } = await import(/* webpackChunkName: "taurishim" */"taurishim");
@@ -52,9 +50,9 @@ const byteLabel = (b: number) => {
     return `${b} B`;
 };
 
-interface PassEventData {
-    from: string,
-    payload: string,
+export interface CreateTorrentFormProps {
+    colorScheme: "dark" | "light",
+    defaultTrackers: string[],
 }
 
 interface CreateCheckResult {
@@ -79,10 +77,9 @@ interface InfobarState {
     hash: string,
 }
 
-export default function CreateTorrentForm() {
+export default function CreateTorrentForm({ colorScheme, defaultTrackers }: CreateTorrentFormProps) {
     const { t } = useTranslation();
     const { setColorScheme } = useMantineColorScheme();
-    const [defaultTrackers, setDefaultTrackers] = useState<string[]>([]);
     const [pieces, setPieces] = useState({
         done: 0,
         total: 0,
@@ -114,14 +111,8 @@ export default function CreateTorrentForm() {
     });
 
     useEffect(() => {
-        void appWindow.once<PassEventData>("pass-from-window", ({ payload: data }) => {
-            const { colorScheme, defaultTrackers, language } = JSON.parse(data.payload);
-            void initializeI18n(isAvailableLanguage(language) ? language : undefined).catch(console.error);
-            setColorScheme(colorScheme);
-            setDefaultTrackers(defaultTrackers);
-        });
-        void invoke("pass_to_window", { to: "main", payload: "ready" });
-    }, [setColorScheme]);
+        setColorScheme(colorScheme);
+    }, [colorScheme, setColorScheme]);
 
     const { setFieldValue } = form;
 

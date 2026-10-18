@@ -26,7 +26,7 @@ import React, { useContext } from "react";
 import type { Batcher } from "@yornaath/batshit";
 import { create, keyResolver } from "@yornaath/batshit";
 import { mergeTrackerLists } from "trutil";
-import { translate } from "../translate";
+import { translate } from "../i18n/translate";
 
 const RUST_BACKEND = "http://127.0.0.1:44321";
 

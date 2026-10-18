@@ -28,8 +28,8 @@ import { ColorSchemeToggle } from "components/miscbuttons";
 import * as Icon from "react-bootstrap-icons";
 import { useTranslation } from "react-i18next";
 import { getAutomaticLanguage, setLanguagePreference } from "i18n";
-import { availableLanguages, isAvailableLanguage, languageNames } from "language";
-import type { LanguagePreference } from "language";
+import { availableLanguages, isAvailableLanguage, languageNames } from "i18n/language";
+import type { LanguagePreference } from "i18n/language";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface InterfaceFormValues {

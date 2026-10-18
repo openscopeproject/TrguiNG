@@ -17,14 +17,16 @@
  */
 
 // Keep language metadata independent of i18next and translation resources.
-export const availableLanguages = ["en", "zh-CN"] as const;
-export type AvailableLanguage = typeof availableLanguages[number];
-export type LanguagePreference = AvailableLanguage | undefined;
-
-export const languageNames: Record<AvailableLanguage, string> = {
+// Register each language once; its code also names the JSON file in locales/.
+export const languageNames = {
     en: "English",
     "zh-CN": "简体中文",
-};
+    ru: "Русский",
+} as const;
+
+export type AvailableLanguage = keyof typeof languageNames;
+export type LanguagePreference = AvailableLanguage | undefined;
+export const availableLanguages = Object.keys(languageNames) as AvailableLanguage[];
 
 export function isAvailableLanguage(value: unknown): value is AvailableLanguage {
     return typeof value === "string" && (availableLanguages as readonly string[]).includes(value);
@@ -34,8 +36,11 @@ export function resolveLanguage(preference: LanguagePreference, languages: reado
     if (isAvailableLanguage(preference)) return preference;
     for (const language of languages) {
         const code = language.toLowerCase();
-        if (code === "zh" || code.startsWith("zh-")) return "zh-CN";
-        if (code === "en" || code.startsWith("en-")) return "en";
+        const exact = availableLanguages.find((candidate) => candidate.toLowerCase() === code);
+        if (exact !== undefined) return exact;
+        const base = code.split("-")[0];
+        const related = availableLanguages.find((candidate) => candidate.toLowerCase().split("-")[0] === base);
+        if (related !== undefined) return related;
     }
     return "en";
 }

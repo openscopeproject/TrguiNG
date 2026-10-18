@@ -16,14 +16,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import type { ResourceLanguage } from "i18next";
 import { createInstance } from "i18next";
 import { initReactI18next } from "react-i18next";
-import type { Config } from "./config";
+import type { Config } from "../config";
 import type { LanguagePreference } from "./language";
 import { availableLanguages, resolveLanguage } from "./language";
 import { setTranslator } from "./translate";
-import en from "./locales/en.json";
-import zhCN from "./locales/zh-CN.json";
+declare const require: {
+    context: (directory: string, recursive: boolean, pattern: RegExp) => (key: string) => ResourceLanguage,
+};
+
+const locales = require.context("./locales", false, /\.json$/);
+const resources = Object.fromEntries(availableLanguages.map((language) => [
+    language,
+    { translation: locales(`./${language}.json`) },
+]));
 
 const i18n = createInstance().use(initReactI18next);
 let initialization: Promise<unknown> | undefined;
@@ -45,7 +53,7 @@ i18n.on("languageChanged", syncDocumentLanguage);
 export async function initializeI18n(preference: LanguagePreference) {
     const language = resolveLanguage(preference, browserLanguages());
     initialization ??= i18n.init({
-        resources: { en: { translation: en }, "zh-CN": { translation: zhCN } },
+        resources,
         lng: language,
         fallbackLng: "en",
         supportedLngs: [...availableLanguages],

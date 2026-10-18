@@ -59,7 +59,7 @@ function CreateTorrentButton() {
             if (data.payload === "ready") {
                 void invoke("pass_to_window", {
                     to: data.from,
-                    payload: JSON.stringify({ colorScheme, defaultTrackers: config.values.interface.defaultTrackers, language: config.values.app.language }),
+                    payload: JSON.stringify({ colorScheme, defaultTrackers: config.values.interface.defaultTrackers, language: i18n.resolvedLanguage }),
                 });
             }
         });

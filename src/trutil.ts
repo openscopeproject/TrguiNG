@@ -22,7 +22,7 @@ import type { ProgressBarVariant } from "./components/progressbar";
 import { Status } from "rpc/transmission";
 import type { Torrent } from "rpc/torrent";
 import { formatDate } from "date-fns";
-import { translate } from "./translate";
+import { translate } from "./i18n/translate";
 
 const SIUnits = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"];
 
