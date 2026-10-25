@@ -38,6 +38,7 @@ mod ipc;
 mod macos;
 mod poller;
 mod sound;
+mod storage;
 mod torrentcache;
 mod tray;
 
@@ -185,6 +186,19 @@ fn http_clients() -> HttpClients {
 }
 
 fn main() {
+    // Resolve portable paths before Tauri/WebView2 can start background threads.
+    let storage = (|| -> std::io::Result<storage::StoragePaths> {
+        let paths = storage::StoragePaths::discover(
+            &std::env::current_exe()?, dirs::config_dir().as_deref(),
+        )?;
+        paths.prepare()?;
+        Ok(paths)
+    })().expect("Unable to initialize TrguiNG data directory");
+    #[cfg(target_os = "windows")]
+    if let Some(path) = &storage.webview {
+        std::env::set_var("WEBVIEW2_USER_DATA_FOLDER", path);
+    }
+
     let context = tauri::generate_context!();
     let ipc = ipc::Ipc::new();
 
@@ -211,6 +225,8 @@ fn main() {
             commands::create_tray,
             commands::save_text_file,
             commands::load_text_file,
+            commands::read_config,
+            commands::write_config,
         ])
         .manage(ListenerHandle(Arc::new(RwLock::new(ipc))))
         .manage(TorrentCacheHandle::default())
@@ -218,6 +234,7 @@ fn main() {
         .manage(MmdbReaderHandle::default())
         .manage(CreationRequestsHandle::default())
         .manage(http_clients())
+        .manage(storage)
         .setup(setup);
 
     #[cfg(target_os = "macos")]
