@@ -284,6 +284,30 @@ pub async fn list_system_fonts() -> Vec<String> {
 }
 
 #[tauri::command]
+pub fn finish_startup(
+    app: tauri::AppHandle,
+    window: tauri::WebviewWindow,
+    startup: State<'_, crate::StartupState>,
+    hide_on_startup: bool,
+) -> Result<(), String> {
+    if window.label() != "main" {
+        return Err("Startup visibility is only available for the main window".into());
+    }
+    let first_window = startup.0.swap(false, std::sync::atomic::Ordering::SeqCst);
+    let hidden = first_window && hide_on_startup && app.tray_by_id(tray::TRAY_ID).is_some();
+    if hidden {
+        window.hide().map_err(|e| e.to_string())?;
+        tray::set_tray_showhide_text(&app, "Show");
+    } else {
+        window.show().map_err(|e| e.to_string())?;
+        window.set_focus().ok();
+        tray::set_tray_showhide_text(&app, "Hide");
+    }
+    println!("Main window startup: {}", if hidden { "hidden" } else { "visible" });
+    Ok(())
+}
+
+#[tauri::command]
 pub fn create_tray(app_handle: tauri::AppHandle) {
     if app_handle.tray_by_id(tray::TRAY_ID).is_none() {
         tray::create_tray(app_handle);

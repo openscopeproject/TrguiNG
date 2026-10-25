@@ -42,6 +42,7 @@ interface FormValues extends InterfaceFormValues {
         toastNotifications: boolean,
         toastNotificationSound: boolean,
         showTrayIcon: boolean,
+        hideOnStartup: boolean,
         onMinimize: WindowMinimizeOption,
         onClose: WindowCloseOption,
     },
@@ -303,6 +304,7 @@ function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                     onChange={(e) => {
                         form.setFieldValue("app.showTrayIcon", e.currentTarget.checked);
                         if (!e.currentTarget.checked) {
+                            form.setFieldValue("app.hideOnStartup", false);
                             form.setFieldValue("app.onMinimize", "minimize");
                             form.setFieldValue("app.onClose", "quit");
                         }
@@ -310,6 +312,18 @@ function IntegrationsPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                 />
             </Grid.Col>
             <Grid.Col span={4}>(takes effect after restart)</Grid.Col>
+            <Grid.Col span={6}>Hide on startup</Grid.Col>
+            <Grid.Col span={2}>
+                <Switch
+                    onLabel="ON"
+                    offLabel="OFF"
+                    size="xl"
+                    styles={bigSwitchStyles}
+                    disabled={!form.values.app.showTrayIcon}
+                    {...form.getInputProps("app.hideOnStartup", { type: "checkbox" })}
+                />
+            </Grid.Col>
+            <Grid.Col span={4}>Start in the system tray (after restart)</Grid.Col>
             <Grid.Col span={6}>When minimized</Grid.Col>
             <Grid.Col span={6}>
                 <SegmentedControl

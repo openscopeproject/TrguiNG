@@ -19,7 +19,7 @@
     windows_subsystem = "windows"
 )]
 
-use std::{sync::Arc, time::Duration};
+use std::{sync::{Arc, atomic::AtomicBool}, time::Duration};
 
 use createtorrent::CreationRequestsHandle;
 use geoip::MmdbReaderHandle;
@@ -42,6 +42,7 @@ mod torrentcache;
 mod tray;
 
 struct ListenerHandle(Arc<RwLock<ipc::Ipc>>);
+struct StartupState(AtomicBool);
 
 #[cfg(target_os = "macos")]
 fn handle_uris(app: &AppHandle, uris: Vec<String>) {
@@ -208,10 +209,12 @@ fn main() {
             commands::save_create_torrent,
             commands::pass_to_window,
             commands::list_system_fonts,
+            commands::finish_startup,
             commands::create_tray,
             commands::save_text_file,
             commands::load_text_file,
         ])
+        .manage(StartupState(AtomicBool::new(true)))
         .manage(ListenerHandle(Arc::new(RwLock::new(ipc))))
         .manage(TorrentCacheHandle::default())
         .manage(PollerHandle::default())

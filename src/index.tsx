@@ -172,10 +172,11 @@ async function run(config: Config) {
         setupTauriEvents(config, app);
 
         if (config.values.app.showTrayIcon) {
-            void invoke("create_tray");
+            await invoke("create_tray");
         }
 
         await restoreWindow(config);
+        await invoke("finish_startup", { hideOnStartup: config.values.app.hideOnStartup });
     } else {
         setupWebEvents(config);
     }

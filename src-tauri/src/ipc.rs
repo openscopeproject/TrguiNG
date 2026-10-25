@@ -137,6 +137,19 @@ async fn http_response(
                 toggle_main_window(&app, None);
             }
 
+            // Opening another instance without files must also work when no
+            // server tab is open (the frontend argument listener is not mounted).
+            if serde_json::from_slice::<Vec<String>>(&payload).is_ok_and(|args| args.is_empty()) {
+                if let Some(window) = app.get_webview_window("main") {
+                    window.show().ok();
+                    window.unminimize().ok();
+                    window.set_focus().ok();
+                    window.emit("window-shown", "").ok();
+                    crate::tray::set_tray_showhide_text(&app, "Hide");
+                }
+                return Ok(Response::builder().body(make_body("TrguiNG OK")).unwrap());
+            }
+
             let lock = args_lock.acquire().await.unwrap();
             send_payload(&app, payload).await;
             drop(lock);
@@ -453,6 +466,11 @@ impl Ipc {
     }
 
     pub async fn send(&self, args: &Vec<String>, app: AppHandle) -> Result<(), String> {
+        // Only a second instance or real launch arguments should reveal the UI.
+        // The primary instance already creates its window during setup.
+        if self.listening && args.is_empty() {
+            return Ok(());
+        }
         let client = reqwest::Client::builder()
             .connect_timeout(Duration::from_secs(3))
             .read_timeout(Duration::from_secs(10))

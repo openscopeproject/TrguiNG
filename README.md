@@ -34,6 +34,14 @@ Planned:
 
 Transmission v2.40 or later is required.
 
+## Startup visibility
+
+In **Application Settings > Integrations**, enable **Show tray icon** and
+**Hide on startup** to launch with only a tray icon. The option is off by default
+and takes effect after restarting the application. If a tray icon cannot be
+created, the window opens normally. Use the tray icon or launch the application
+again to show the existing window, including when no server tab is open.
+
 ## Downloads
 
 You can get the latest release from the
