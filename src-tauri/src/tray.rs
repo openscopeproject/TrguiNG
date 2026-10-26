@@ -110,14 +110,13 @@ pub fn toggle_main_window(app: &AppHandle, window: Option<WebviewWindow>) {
             });
         }
         None => {
-            let window =
-                WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
+            WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
                     .title("Transmission GUI")
                     .inner_size(1024., 800.)
+                    .visible(false)
                     .build()
                     .unwrap();
             set_tray_showhide_text(app, "Hide");
-            window.set_focus().ok();
         }
     }
 }
