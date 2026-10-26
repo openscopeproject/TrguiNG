@@ -23,6 +23,7 @@ import * as Icon from "react-bootstrap-icons";
 import type { ClientManager } from "../clientmanager";
 import { ActionIcon, Menu, Tabs } from "@mantine/core";
 import { useHotkeys } from "@mantine/hooks";
+import { useTranslation } from "react-i18next";
 import classes from "./servertabs.module.css";
 
 const { appWindow, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
@@ -42,6 +43,7 @@ export interface ServerTabsRef {
 
 export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(function ServerTabs(props, ref) {
     const config = useContext(ConfigContext);
+    const { t } = useTranslation();
 
     const [tabs, setTabs] = useState({
         openTabs: config.getOpenTabs(),
@@ -50,10 +52,10 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
 
     useEffect(() => {
         config.setOpenTabs(tabs.openTabs, tabs.currentTab);
-        if (tabs.currentTab < 0) {
-            void appWindow.setTitle("Transmission GUI");
+        if (tabs.openTabs[tabs.currentTab] === undefined) {
+            void appWindow.setTitle(t("native.windowTitle"));
         }
-    }, [config, tabs]);
+    }, [config, tabs, t]);
 
     useEffect(() => {
         const pollerConfigs = tabs.openTabs.filter((_, i) => i !== tabs.currentTab).map((t) => {
@@ -189,7 +191,7 @@ export const ServerTabs = React.forwardRef<ServerTabsRef, ServerTabsProps>(funct
                         </Menu.Target>
 
                         <Menu.Dropdown>
-                            <Menu.Label>Connect</Menu.Label>
+                            <Menu.Label>{t("servertabs.connect")}</Menu.Label>
                             {unopenedTabs.map((tab) =>
                                 <Menu.Item key={tab} onClick={() => { openTab(tab); }}>{tab}</Menu.Item>)}
                         </Menu.Dropdown>

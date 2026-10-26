@@ -19,10 +19,11 @@ use std::fs;
 use base64::{engine::general_purpose::STANDARD as b64engine, Engine as _};
 use font_loader::system_fonts;
 use lava_torrent::torrent::v1::Torrent;
-use tauri::{Emitter, EventTarget, State};
+use tauri::{Emitter, EventTarget, Manager, State};
 
 use crate::{
     createtorrent::{CreateCheckResult, CreationRequestsHandle, TorrentCreateInfo},
+    i18n,
     poller::PollerConfig,
     tray, PollerHandle,
 };
@@ -52,26 +53,26 @@ pub struct TorrentReadResult {
 }
 
 #[tauri::command]
-pub async fn read_file(path: String) -> Result<TorrentReadResult, String> {
+pub async fn read_file(app: tauri::AppHandle, path: String) -> Result<TorrentReadResult, String> {
     let metadata = std::fs::metadata(path.clone());
     match metadata {
-        Err(_) => return Err(format!("Failed to read file {path:?}")),
+        Err(_) => return Err(i18n::text(&app, "native.errors.readFile").replace("{{path}}", &path)),
         Ok(metadata) => {
             if metadata.len() > 10 * 1024 * 1024 {
-                return Err("File is too large".to_string());
+                return Err(i18n::text(&app, "native.errors.fileTooLarge"));
             }
         }
     }
 
     let read_result = tokio::fs::read(path.clone()).await;
     if read_result.is_err() {
-        return Err(format!("Failed to read file {path:?}"));
+        return Err(i18n::text(&app, "native.errors.readFile").replace("{{path}}", &path));
     }
 
     match Torrent::read_from_bytes(&read_result.as_ref().unwrap()[..]) {
         Err(e) => {
             println!("Failed to parse torrent {:?}", e.to_string());
-            Err(format!("Failed to parse torrent {path:?}"))
+            Err(i18n::text(&app, "native.errors.parseTorrent").replace("{{path}}", &path))
         }
         Ok(torrent) => {
             let b64 = b64engine.encode(read_result.unwrap());
@@ -181,12 +182,12 @@ pub async fn create_torrent(
     let label_split: Vec<&str> = window.label().split('-').collect();
 
     if label_split.len() != 2 {
-        return Err("Incorrect window label".to_string());
+        return Err(i18n::text(window.app_handle(), "native.errors.invalidWindow"));
     }
 
     let id = label_split[1]
         .parse::<i32>()
-        .map_err(|_| "Incorrect window label".to_string())?;
+        .map_err(|_| i18n::text(window.app_handle(), "native.errors.invalidWindow"))?;
 
     let mut requests = creation_requests_handle.0.lock().await;
     requests.add(id, info).map_err(|e| e.to_string())?;
@@ -202,12 +203,12 @@ pub async fn check_create_torrent(
     let label_split: Vec<&str> = window.label().split('-').collect();
 
     if label_split.len() != 2 {
-        return Err("Incorrect window label".to_string());
+        return Err(i18n::text(window.app_handle(), "native.errors.invalidWindow"));
     }
 
     let id = label_split[1]
         .parse::<i32>()
-        .map_err(|_| "Incorrect window label".to_string())?;
+        .map_err(|_| i18n::text(window.app_handle(), "native.errors.invalidWindow"))?;
 
     let mut requests = creation_requests_handle.0.lock().await;
 
@@ -222,16 +223,17 @@ pub async fn cancel_create_torrent(
     let label_split: Vec<&str> = window.label().split('-').collect();
 
     if label_split.len() != 2 {
-        return Err("Incorrect window label".to_string());
+        return Err(i18n::text(window.app_handle(), "native.errors.invalidWindow"));
     }
 
     let id = label_split[1]
         .parse::<i32>()
-        .map_err(|_| "Incorrect window label".to_string())?;
+        .map_err(|_| i18n::text(window.app_handle(), "native.errors.invalidWindow"))?;
 
     let mut requests = creation_requests_handle.0.lock().await;
 
     requests.cancel(id)
+        .map_err(|error| localize_creation_error(window.app_handle(), error))
 }
 
 #[tauri::command]
@@ -243,16 +245,17 @@ pub async fn save_create_torrent(
     let label_split: Vec<&str> = window.label().split('-').collect();
 
     if label_split.len() != 2 {
-        return Err("Incorrect window label".to_string());
+        return Err(i18n::text(window.app_handle(), "native.errors.invalidWindow"));
     }
 
     let id = label_split[1]
         .parse::<i32>()
-        .map_err(|_| "Incorrect window label".to_string())?;
+        .map_err(|_| i18n::text(window.app_handle(), "native.errors.invalidWindow"))?;
 
     let mut requests = creation_requests_handle.0.lock().await;
 
     requests.save(id, &path)
+        .map_err(|error| localize_creation_error(window.app_handle(), error))
 }
 
 #[derive(serde::Serialize, Clone)]
@@ -291,11 +294,35 @@ pub fn create_tray(app_handle: tauri::AppHandle) {
 }
 
 #[tauri::command]
-pub async fn save_text_file(contents: String, path: String) -> Result<(), String> {
-    fs::write(path, contents).map_err(|e| format!("Unable to write file: {e}"))
+pub async fn save_text_file(app: tauri::AppHandle, contents: String, path: String) -> Result<(), String> {
+    fs::write(path, contents).map_err(|e| {
+        i18n::text(&app, "native.errors.writeFile").replace("{{error}}", &e.to_string())
+    })
 }
 
 #[tauri::command]
-pub async fn load_text_file(path: String) -> Result<String, String> {
-    fs::read_to_string(path).map_err(|e| format!("Unable to read file: {e}"))
+pub async fn load_text_file(app: tauri::AppHandle, path: String) -> Result<String, String> {
+    fs::read_to_string(path).map_err(|e| {
+        i18n::text(&app, "native.errors.loadFile").replace("{{error}}", &e.to_string())
+    })
+}
+
+fn localize_creation_error(app: &tauri::AppHandle, error: String) -> String {
+    if error == "Torrent build request not found" {
+        i18n::text(app, "createTorrent.errors.notFound")
+    } else {
+        error
+    }
+}
+
+#[tauri::command]
+pub fn set_language(app: tauri::AppHandle, language: String) -> Result<(), String> {
+    *app.state::<i18n::Language>().0.write().unwrap() = language
+        .parse::<i18n::SupportedLanguage>()
+        .unwrap_or_default();
+    tray::refresh_menu(&app);
+    #[cfg(target_os = "macos")]
+    app.set_menu(crate::macos::make_menu(&app).map_err(|e| e.to_string())?)
+        .map_err(|e| e.to_string())?;
+    Ok(())
 }

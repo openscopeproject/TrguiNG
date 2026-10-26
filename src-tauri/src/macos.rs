@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::i18n;
+
 use tauri::{menu::{Menu, MenuItem, PredefinedMenuItem, Submenu}, AppHandle};
 
 pub fn make_menu<R>(app: &AppHandle<R>) -> tauri::Result<Menu<R>>
@@ -24,23 +26,23 @@ where
 
     Menu::with_items(app, &[
         &Submenu::with_items(app, app_name.as_str(), true, &[
-            &PredefinedMenuItem::close_window(app, "Close".into())?,
-            &MenuItem::with_id(app, "appquit", "Quit", true, "Cmd+q".into())?,
+            &PredefinedMenuItem::close_window(app, Some(i18n::text(app, "modals.common.close").as_str()))?,
+            &MenuItem::with_id(app, "appquit", i18n::text(app, "native.quit"), true, "Cmd+q".into())?,
         ])?,
-        &Submenu::with_items(app, "Edit", true, &[
-            &PredefinedMenuItem::select_all(app, "Select All".into())?,
-            &PredefinedMenuItem::cut(app, "Cut".into())?,
-            &PredefinedMenuItem::copy(app, "Copy".into())?,
-            &PredefinedMenuItem::paste(app, "Paste".into())?,
+        &Submenu::with_items(app, i18n::text(app, "native.edit"), true, &[
+            &PredefinedMenuItem::select_all(app, Some(i18n::text(app, "native.selectAll").as_str()))?,
+            &PredefinedMenuItem::cut(app, Some(i18n::text(app, "native.cut").as_str()))?,
+            &PredefinedMenuItem::copy(app, Some(i18n::text(app, "native.copy").as_str()))?,
+            &PredefinedMenuItem::paste(app, Some(i18n::text(app, "native.paste").as_str()))?,
         ])?,
-        &Submenu::with_items(app, "View", true, &[
-            &PredefinedMenuItem::fullscreen(app, "Full Screen".into())?
+        &Submenu::with_items(app, i18n::text(app, "native.view"), true, &[
+            &PredefinedMenuItem::fullscreen(app, Some(i18n::text(app, "native.fullScreen").as_str()))?
         ])?,
-        &Submenu::with_items(app, "Window", true, &[
-            &PredefinedMenuItem::minimize(app, "Minimize".into())?,
+        &Submenu::with_items(app, i18n::text(app, "native.window"), true, &[
+            &PredefinedMenuItem::minimize(app, Some(i18n::text(app, "native.minimize").as_str()))?,
             // zoom missing ??
             &PredefinedMenuItem::separator(app)?,
-            &PredefinedMenuItem::close_window(app, "Close".into())?,
+            &PredefinedMenuItem::close_window(app, Some(i18n::text(app, "modals.common.close").as_str()))?,
         ])?,
     ])
 }

@@ -19,6 +19,7 @@
 import type { EventCallback } from "@tauri-apps/api/event";
 import type { CloseRequestedEvent, PhysicalPosition, PhysicalSize } from "@tauri-apps/api/window";
 import type { DragDropEvent } from "@tauri-apps/api/webview";
+import { translate } from "./i18n/translate";
 
 export const TAURI = Object.prototype.hasOwnProperty.call(window, "__TAURI__");
 const realAppWindow = TAURI ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/window")).getCurrentWindow() : undefined;
@@ -77,17 +78,17 @@ export const appWindow = {
 export const invoke = TAURI
     ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/api/core")).invoke
     : async <T>() =>
-        await Promise.reject<T>(new Error("Running outside of tauri app"));
+        await Promise.reject<T>(new Error(translate("native.errors.notAvailable")));
 
 export const dialogOpen = TAURI
     ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/plugin-dialog")).open
     : async () =>
-        await Promise.reject<string[] | string | null>(new Error("Running outside of tauri app"));
+        await Promise.reject<string[] | string | null>(new Error(translate("native.errors.notAvailable")));
 
 export const dialogSave = TAURI
     ? (await import(/* webpackMode: "lazy-once" */ "@tauri-apps/plugin-dialog")).save
     : async () =>
-        await Promise.reject<string | null>(new Error("Running outside of tauri app"));
+        await Promise.reject<string | null>(new Error(translate("native.errors.notAvailable")));
 
 export async function makeCreateTorrentView() {
     if (WebviewWindow !== undefined) {
@@ -98,7 +99,7 @@ export async function makeCreateTorrentView() {
             visible: true,
             center: true,
             maximizable: false,
-            title: "Create torrent",
+            title: translate("createTorrent.title"),
         });
         await webview.once("tauri://error", (e) => {
             console.log("Webview error", e);
@@ -147,7 +148,7 @@ export function copyToClipboard(text: string) {
 export async function saveJsonFile(contents: string, filename: string) {
     if (fs !== undefined) {
         dialogSave({
-            title: "Save interface settings",
+            title: translate("modals.common.saveInterfaceSettings"),
             defaultPath: filename,
             filters: [{
                 name: "JSON",
@@ -172,7 +173,7 @@ export async function loadJsonFile(): Promise<string> {
     if (fs !== undefined) {
         return await new Promise((resolve, reject) => {
             dialogOpen({
-                title: "Select interface settings file",
+                title: translate("modals.common.selectInterfaceSettingsFile"),
                 filters: [{
                     name: "JSON",
                     extensions: ["json"],
@@ -190,14 +191,14 @@ export async function loadJsonFile(): Promise<string> {
             input.accept = ".json";
             input.onchange = () => {
                 const files = input.files;
-                if (files == null) reject(new Error("file not chosen"));
+                if (files == null) reject(new Error(translate("modals.common.fileNotChosen")));
                 else {
                     const reader = new FileReader();
                     reader.onload = () => {
                         resolve(reader.result as string);
                     };
                     reader.onerror = () => {
-                        reject(new Error("Unable to read file"));
+                        reject(new Error(translate("modals.common.unableToReadFile")));
                     };
                     reader.readAsText(files[0], "UTF-8");
                 }

@@ -22,6 +22,7 @@ import type { ProgressBarVariant } from "./components/progressbar";
 import { Status } from "rpc/transmission";
 import type { Torrent } from "rpc/torrent";
 import { formatDate } from "date-fns";
+import { translate } from "./i18n/translate";
 
 const SIUnits = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"];
 
@@ -50,7 +51,7 @@ export function byteRateToHumanReadableStr(value: number): string {
     else return `${bytesToHumanReadableStr(value)}/s`;
 }
 
-export function secondsToHumanReadableStr(value: number): string {
+export function secondsToHumanReadableStr(value: number, t: (key: string) => string = translate): string {
     let duration = {
         days: Math.floor(value / 86400),
         hours: Math.floor(value / 3600) % 24,
@@ -62,10 +63,10 @@ export function secondsToHumanReadableStr(value: number): string {
     else if (duration.days > 0) duration = { ...duration, minutes: 0, seconds: 0 };
     else if (duration.days > 0 || duration.hours > 0) duration.seconds = 0;
     let s = "";
-    if (duration.days > 0) s = `${duration.days}d`;
-    if (duration.hours > 0) s = (s !== "" ? s + " " : "") + `${duration.hours}hr`;
-    if (duration.minutes > 0) s = (s !== "" ? s + " " : "") + `${duration.minutes}min`;
-    if (duration.seconds > 0) s = (s !== "" ? s + " " : "") + `${duration.seconds}s`;
+    if (duration.days > 0) s = `${duration.days}${t("units.days")}`;
+    if (duration.hours > 0) s = (s !== "" ? s + " " : "") + `${duration.hours}${t("units.hours")}`;
+    if (duration.minutes > 0) s = (s !== "" ? s + " " : "") + `${duration.minutes}${t("units.minutes")}`;
+    if (duration.seconds > 0) s = (s !== "" ? s + " " : "") + `${duration.seconds}${t("units.seconds")}`;
     return s;
 }
 

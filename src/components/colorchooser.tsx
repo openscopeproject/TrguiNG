@@ -19,6 +19,7 @@
 import { ActionIcon, ColorSwatch, Popover, useMantineTheme, Group, Button } from "@mantine/core";
 import type { ColorSetting } from "config";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface ColorChooserProps {
     value: ColorSetting,
@@ -28,6 +29,7 @@ interface ColorChooserProps {
 const shades = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export default function ColorChooser(props: ColorChooserProps) {
+    const { t } = useTranslation();
     const theme = useMantineTheme();
     const [opened, setOpened] = useState(false);
 
@@ -57,7 +59,7 @@ export default function ColorChooser(props: ColorChooserProps) {
                         setOpened(false);
                     }}
                 >
-                    Reset
+                    {t("interface.reset")}
                 </Button>
                 {Object.keys(theme.colors).map((color) =>
                     <Group key={color} wrap="nowrap" gap="0">

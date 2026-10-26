@@ -138,7 +138,7 @@ fn show_notification(app: &AppHandle, name: &str) {
     if let Err(e) = app
         .notification()
         .builder()
-        .title("Download complete")
+        .title(crate::i18n::text(app, "native.downloadComplete"))
         .body(name)
         .show()
     {
