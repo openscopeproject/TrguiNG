@@ -107,6 +107,11 @@ Example steps for debian:
 > /path/to/extracted/trguing/zip/ r,
 > /path/to/extracted/trguing/zip/** r,
 > ```
+>
+> Then reload the Transmission configuration:
+> ```
+> apparmor_parser -r /etc/apparmor.d/transmission
+> ```
 
 ## License
 Project is distributed under GNU Affero General Public License v3, see `LICENSE.txt` for details.
