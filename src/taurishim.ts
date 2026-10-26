@@ -106,19 +106,17 @@ export async function makeCreateTorrentView() {
     }
 }
 
-const configFile = "trguing.json";
-
 export async function readConfigText() {
-    if (fs !== undefined) {
-        return await fs.readTextFile(configFile, { baseDir: fs.BaseDirectory.Config });
+    if (TAURI) {
+        return await invoke<string>("read_config");
     } else {
         return localStorage.getItem("trguing-config") ?? "{}";
     }
 }
 
 export async function writeConfigText(contents: string) {
-    if (fs !== undefined) {
-        await fs.writeTextFile(configFile, contents, { baseDir: fs.BaseDirectory.Config });
+    if (TAURI) {
+        await invoke("write_config", { contents });
     } else {
         localStorage.setItem("trguing-config", contents);
     }
