@@ -97,5 +97,16 @@ Example steps for debian:
 4. Reload the unit file with `sudo systemctl daemon-reload`
    and restart the service `sudo systemctl restart transmission-daemon`
 
+> [!NOTE]
+> On systems that use software such as [AppArmor](https://en.wikipedia.org/wiki/AppArmor) or [SELinux](https://en.wikipedia.org/wiki/SELinux), you may need to extend the existing `transmission-daemon` security profile or add a new one so the Transmission daemon can read the TrguiNG asset files.
+>
+> An example with AppArmor on Ubuntu Server is below:
+> ```
+> # /etc/apparmor.d/local/transmission-daemon
+>
+> /path/to/extracted/trguing/zip/ r,
+> /path/to/extracted/trguing/zip/** r,
+> ```
+
 ## License
 Project is distributed under GNU Affero General Public License v3, see `LICENSE.txt` for details.
