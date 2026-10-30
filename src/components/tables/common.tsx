@@ -518,6 +518,20 @@ export interface TrguiTableRef {
     setExpanded: (state: boolean) => void,
 }
 
+// Display options shared by all tables. They are carried in a context instead
+// of being read straight from the config, because table rows are memoized:
+// a context change re-renders the consumers even when the memoized parent
+// bails out on unchanged props.
+export interface TableDisplaySettings {
+    colorizeUploadRatio: boolean,
+    showRowSeparators: boolean,
+}
+
+export const TableDisplayContext = React.createContext<TableDisplaySettings>({
+    colorizeUploadRatio: true,
+    showRowSeparators: true,
+});
+
 export function TrguiTable<TData>(props: {
     tablename: TableName,
     tableRef?: React.MutableRefObject<TrguiTableRef | undefined>,
@@ -544,6 +558,8 @@ export function TrguiTable<TData>(props: {
     const [lastIndex, onRowClick] = useSelectHandler(
         table, props.selectedReducer, props.getRowId, props.setCurrent);
 
+    const tableDisplay = useContext(TableDisplayContext);
+
     const [parentRef, rowHeight, virtualizer] = useTableVirtualizer(table.getRowModel().rows.length);
 
     const scrollToId = useMemo(() => {
@@ -563,7 +579,7 @@ export function TrguiTable<TData>(props: {
     const [parentRefProxy, headerRefProxy, syncHeaderScroll] = useSynchronizedScroll(parentRef, headerRef);
 
     return (
-        <div className="torrent-table-container">
+        <div className={`torrent-table-container${tableDisplay.showRowSeparators ? " with-row-separators" : ""}`}>
             <Box
                 ref={headerRefProxy}
                 className={classes.tableHeaderContainer}

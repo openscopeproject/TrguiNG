@@ -161,6 +161,8 @@ interface Settings {
         compactDirectories: boolean,
         recursiveDirectories: boolean,
         showSizesInFilters: boolean,
+        colorizeUploadRatio: boolean,
+        showTableRowSeparators: boolean,
         statusBarSections: SectionsVisibility<StatusbarSectionName>,
         statusBarGlobalSpeeds: boolean,
         showFiltersPanel: boolean,
@@ -291,6 +293,8 @@ const DefaultSettings: Settings = {
         compactDirectories: false,
         recursiveDirectories: true,
         showSizesInFilters: true,
+        colorizeUploadRatio: true,
+        showTableRowSeparators: true,
         statusBarSections: StatusbarSections.map((section) => ({
             section,
             visible: true,

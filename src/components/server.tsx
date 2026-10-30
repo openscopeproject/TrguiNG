@@ -28,6 +28,7 @@ import type { TorrentFilter } from "./filters";
 import { DefaultFilter, Filters } from "./filters";
 import { Statusbar } from "./statusbar";
 import { TorrentTable, useInitialTorrentRequiredFields } from "./tables/torrenttable";
+import { TableDisplayContext } from "./tables/common";
 import { MemoizedToolbar } from "./toolbar";
 import { useSession, useTorrentList } from "queries";
 import type { TorrentFieldsType } from "rpc/transmission";
@@ -194,91 +195,114 @@ export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: Serv
 
     const [showFiltersPanel, { toggle: toggleFiltersPanel }] = useDisclosure(config.values.interface.showFiltersPanel);
     const [showDetailsPanel, { toggle: toggleDetailsPanel }] = useDisclosure(config.values.interface.showDetailsPanel);
+    const [colorizeUploadRatio, setColorizeUploadRatio] = useState(config.values.interface.colorizeUploadRatio);
+    const [showTableRowSeparators, setShowTableRowSeparators] = useState(config.values.interface.showTableRowSeparators);
     const [mainSplit, toggleMainSplit] = useToggle<SplitType>([
         config.values.interface.mainSplit,
         config.values.interface.mainSplit === "vertical" ? "horizontal" : "vertical"]);
 
+    // The config object is mutable and does not trigger re-renders, so the new
+    // value is written before the state update. That way the tables pick it up
+    // on the very same render.
+    const toggleColorizeUploadRatio = useCallback(() => {
+        const next = !config.values.interface.colorizeUploadRatio;
+        config.values.interface.colorizeUploadRatio = next;
+        setColorizeUploadRatio(next);
+    }, [config]);
+
+    const toggleTableRowSeparators = useCallback(() => {
+        const next = !config.values.interface.showTableRowSeparators;
+        config.values.interface.showTableRowSeparators = next;
+        setShowTableRowSeparators(next);
+    }, [config]);
+
     useEffect(() => {
         config.values.interface.showFiltersPanel = showFiltersPanel;
         config.values.interface.showDetailsPanel = showDetailsPanel;
+        config.values.interface.colorizeUploadRatio = colorizeUploadRatio;
+        config.values.interface.showTableRowSeparators = showTableRowSeparators;
         config.values.interface.mainSplit = mainSplit;
-    }, [config, showFiltersPanel, showDetailsPanel, mainSplit]);
+    }, [config, showFiltersPanel, showDetailsPanel, colorizeUploadRatio, showTableRowSeparators, mainSplit]);
 
     return <ServerContext data={serverData} selected={selectedTorrents} rpc={rpcVersion}>
-        <Flex direction="column" className={classes.serverContainer}>
-            <MemoizedServerModals ref={modals} {...{ runUpdates, tabsRef }} serverName={serverConfig.name} />
-            {overlayVisible && <Overlay blur={10}>
-                <Flex
-                    align="center"
-                    justify="center"
-                    h="100%"
-                    direction="column"
-                    gap="xl"
-                >
-                    {sessionIsLoading
-                        ? <Loader size="xl" />
-                        : sessionIsError
-                            ? <>
-                                <Title c="red" order={1}>Failed to load session</Title>
-                                <Title c="red" order={3}>{(sessionError as Error).message}</Title>
-                            </>
-                            : session?.["rpc-version"] === undefined
-                                ? <Title c="red" order={1}>Server does not appear to be transmission daemon</Title>
-                                : rpcVersion < 14
-                                    ? <Title c="red" order={1}>Transmission version 2.40 or higher is required.</Title>
-                                    : <></>}
-                </Flex>
-            </Overlay>}
-            <Box p="sm" className={classes.toolbarContainer}>
-                <MemoizedToolbar
-                    setSearchTerms={setSearchTerms}
-                    modals={modals}
-                    altSpeedMode={session?.["alt-speed-enabled"] as boolean ?? false}
-                    extra={toolbarExtra}
-                    toggleFiltersPanel={toggleFiltersPanel}
-                    toggleDetailsPanel={toggleDetailsPanel}
-                    toggleMainSplit={toggleMainSplit}
-                    toggleTabStrip={toggleTabStrip}
-                />
-            </Box>
-            <SplitLayout
-                key={`split-${showFiltersPanel ? "1" : "0"}-${showDetailsPanel ? "1" : "0"}-${mainSplit}`}
-                mainSplit={mainSplit}
-                left={showFiltersPanel
-                    ? <div className="scrollable">
-                        <Filters
-                            torrents={torrents ?? []}
-                            currentFilters={currentFilters}
-                            setCurrentFilters={setCurrentFilters}
-                        />
-                    </div>
-                    : undefined}
-                right={
-                    <TorrentTable
+        <TableDisplayContext.Provider value={{ colorizeUploadRatio, showRowSeparators: showTableRowSeparators }}>
+            <Flex direction="column" className={classes.serverContainer}>
+                <MemoizedServerModals ref={modals} {...{ runUpdates, tabsRef }} serverName={serverConfig.name} />
+                {overlayVisible && <Overlay blur={10}>
+                    <Flex
+                        align="center"
+                        justify="center"
+                        h="100%"
+                        direction="column"
+                        gap="xl"
+                    >
+                        {sessionIsLoading
+                            ? <Loader size="xl" />
+                            : sessionIsError
+                                ? <>
+                                    <Title c="red" order={1}>Failed to load session</Title>
+                                    <Title c="red" order={3}>{(sessionError as Error).message}</Title>
+                                </>
+                                : session?.["rpc-version"] === undefined
+                                    ? <Title c="red" order={1}>Server does not appear to be transmission daemon</Title>
+                                    : rpcVersion < 14
+                                        ? <Title c="red" order={1}>Transmission version 2.40 or higher is required.</Title>
+                                        : <></>}
+                    </Flex>
+                </Overlay>}
+                <Box p="sm" className={classes.toolbarContainer}>
+                    <MemoizedToolbar
+                        setSearchTerms={setSearchTerms}
                         modals={modals}
-                        torrents={filteredTorrents}
-                        setCurrentTorrent={setCurrentTorrent}
-                        selectedTorrents={selectedTorrents}
-                        selectedReducer={selectedReducer}
-                        onColumnVisibilityChange={setTableRequiredFields}
-                        scrollToRow={scrollToRow}
+                        altSpeedMode={session?.["alt-speed-enabled"] as boolean ?? false}
+                        extra={toolbarExtra}
+                        toggleFiltersPanel={toggleFiltersPanel}
+                        toggleDetailsPanel={toggleDetailsPanel}
+                        toggleMainSplit={toggleMainSplit}
+                        toggleTabStrip={toggleTabStrip}
+                        toggleColorizeUploadRatio={toggleColorizeUploadRatio}
+                        toggleTableRowSeparators={toggleTableRowSeparators}
                     />
-                }
-                bottom={showDetailsPanel
-                    ? <MemoizedDetails torrentId={currentTorrent} updates={updates} />
-                    : undefined}
-            />
-            <Box px="xs" className={classes.statusbarContainer}>
-                <Statusbar {...{
-                    session,
-                    filteredTorrents,
-                    selectedTorrents,
-                    hostname,
-                    torrents: torrents ?? [],
-                    showMisc: Boolean(toolbarExtra),
-                }}
+                </Box>
+                <SplitLayout
+                    key={`split-${showFiltersPanel ? "1" : "0"}-${showDetailsPanel ? "1" : "0"}-${mainSplit}`}
+                    mainSplit={mainSplit}
+                    left={showFiltersPanel
+                        ? <div className="scrollable">
+                            <Filters
+                                torrents={torrents ?? []}
+                                currentFilters={currentFilters}
+                                setCurrentFilters={setCurrentFilters}
+                            />
+                        </div>
+                        : undefined}
+                    right={
+                        <TorrentTable
+                            modals={modals}
+                            torrents={filteredTorrents}
+                            setCurrentTorrent={setCurrentTorrent}
+                            selectedTorrents={selectedTorrents}
+                            selectedReducer={selectedReducer}
+                            onColumnVisibilityChange={setTableRequiredFields}
+                            scrollToRow={scrollToRow}
+                        />
+                    }
+                    bottom={showDetailsPanel
+                        ? <MemoizedDetails torrentId={currentTorrent} updates={updates} />
+                        : undefined}
                 />
-            </Box>
-        </Flex>
+                <Box px="xs" className={classes.statusbarContainer}>
+                    <Statusbar {...{
+                        session,
+                        filteredTorrents,
+                        selectedTorrents,
+                        hostname,
+                        torrents: torrents ?? [],
+                        showMisc: Boolean(toolbarExtra),
+                    }}
+                    />
+                </Box>
+            </Flex>
+        </TableDisplayContext.Provider>
     </ServerContext>;
 }

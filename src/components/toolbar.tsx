@@ -68,6 +68,8 @@ interface ToolbarProps {
     toggleDetailsPanel: () => void,
     toggleMainSplit: () => void,
     toggleTabStrip: () => void,
+    toggleColorizeUploadRatio: () => void,
+    toggleTableRowSeparators: () => void,
 }
 
 function useButtonHandlers(
@@ -422,6 +424,16 @@ function Toolbar(props: ToolbarProps) {
                         >
                             Toggle tab strip
                         </Menu.Item>}
+                    <Menu.Item
+                        onClick={props.toggleColorizeUploadRatio}
+                    >
+                        Toggle share ratio colouring
+                    </Menu.Item>
+                    <Menu.Item
+                        onClick={props.toggleTableRowSeparators}
+                    >
+                        Toggle table row separators
+                    </Menu.Item>
                     <Menu.Divider />
                     <Menu.Label>Interface settings</Menu.Label>
                     <Menu.Item onClick={onSettingsExport}>

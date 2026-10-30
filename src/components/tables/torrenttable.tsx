@@ -27,7 +27,7 @@ import { bytesToHumanReadableStr, fileSystemSafeName, modKeyString, pathMapFromS
 import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
 import type { TableSelectReducer } from "./common";
-import { EditableNameField, TrguiTable } from "./common";
+import { EditableNameField, TrguiTable, TableDisplayContext } from "./common";
 import { Badge, Box, Kbd, Menu, Text, useMantineTheme } from "@mantine/core";
 import { ConfigContext, ServerConfigContext } from "config";
 import { StatusIconMap, Error as StatusIconError, Magnetizing, CompletedStopped } from "components/statusicons";
@@ -251,10 +251,29 @@ function PositiveNumberField(props: TableFieldProps) {
 }
 
 function FixedDecimalField(props: TableFieldProps) {
+    const { data: session } = useSession(false);
+    const { colorizeUploadRatio } = useContext(TableDisplayContext);
     const num = props.torrent[props.fieldName];
+    if (num < 0) {
+        return <div style={{ width: "100%", textAlign: "right" }} />;
+    }
+    // The upper bound is the server side seed ratio limit, the ratio at which
+    // the daemon stops seeding. It defaults to 2 when the daemon does not
+    // report one.
+    const limit = Number(session?.seedRatioLimit ?? 2);
+    let color: string | undefined = undefined;
+    if (colorizeUploadRatio) {
+        if (num < 1) {
+            color = "light-dark(var(--mantine-color-red-7), var(--mantine-color-red-4))";
+        } else if (num < limit) {
+            color = "light-dark(var(--mantine-color-orange-7), var(--mantine-color-orange-4))";
+        } else {
+            color = "light-dark(var(--mantine-color-green-7), var(--mantine-color-green-4))";
+        }
+    }
     return (
-        <div style={{ width: "100%", textAlign: "right" }}>
-            {num < 0 ? "" : Number(num).toFixed(2)}
+        <div style={{ width: "100%", textAlign: "right", color: color }}>
+            {Number(num).toFixed(2)}
         </div>
     );
 }
