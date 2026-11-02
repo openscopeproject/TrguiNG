@@ -326,3 +326,15 @@ pub fn set_language(app: tauri::AppHandle, language: String) -> Result<(), Strin
         .map_err(|e| e.to_string())?;
     Ok(())
 }
+
+#[tauri::command]
+pub fn read_config(paths: State<'_, crate::storage::StoragePaths>) -> Result<String, String> {
+    paths.read().map_err(|e| format!("Unable to read configuration: {e}"))
+}
+
+#[tauri::command]
+pub fn write_config(paths: State<'_, crate::storage::StoragePaths>, contents: String) -> Result<(), String> {
+    serde_json::from_str::<serde_json::Value>(&contents)
+        .map_err(|e| format!("Invalid configuration JSON: {e}"))?;
+    paths.write(&contents).map_err(|e| format!("Unable to write configuration: {e}"))
+}

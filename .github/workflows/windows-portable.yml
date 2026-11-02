@@ -1,0 +1,91 @@
+name: Windows Portable
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/**'
+      - 'src-tauri/**'
+      - 'package*.json'
+      - 'portable/**'
+      - 'ci/*portable*.ps1'
+      - '.github/workflows/windows-portable.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'src-tauri/**'
+      - 'package*.json'
+      - 'portable/**'
+      - 'ci/*portable*.ps1'
+      - '.github/workflows/windows-portable.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portable-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install stable Rust
+        shell: pwsh
+        run: |
+          rustup toolchain install stable --profile minimal
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          rustup default stable
+      - uses: Swatinem/rust-cache@e9d7b9f1e587218970671bac74e5511ed9506e6a # v2
+        with:
+          workspaces: src-tauri
+          cache-on-failure: true
+      - name: Test portable storage
+        shell: pwsh
+        run: |
+          rustc --edition 2021 --test src-tauri/src/storage.rs -o "$env:RUNNER_TEMP/storage-tests.exe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & "$env:RUNNER_TEMP/storage-tests.exe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Fetch pinned GeoIP database
+        shell: pwsh
+        run: |
+          Invoke-WebRequest 'https://github.com/openscopeproject/TrguiNG/releases/download/v1.5.1/dbip.mmdb' -OutFile src-tauri/dbip.mmdb
+          if ((Get-FileHash src-tauri/dbip.mmdb -Algorithm SHA256).Hash -ne 'e4f183d26a79e7750abb24cce0dcc595a0cb009f2de4082c27b84cae6bbd7944') { throw 'GeoIP checksum mismatch' }
+      - name: Test settings import
+        shell: pwsh
+        run: ./ci/test_portable_import.ps1
+      - name: Install locked frontend dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check frontend
+        run: npx --no-install eslint src/
+      - name: Build executable
+        run: npm run tauri -- build --no-bundle --ci -- --locked
+      - name: Package portable ZIP
+        shell: pwsh
+        run: ./ci/package_windows_portable.ps1
+      - name: Test portable configuration and relocation
+        shell: pwsh
+        run: ./ci/smoke_windows_portable.ps1
+      - name: Preserve runtime diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: portable-smoke-diagnostics
+          path: portable-output/smoke-diagnostics/
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: TrguiNG-portable-windows-x64
+          path: |
+            portable-output/*.zip
+            portable-output/*.sha256
+          if-no-files-found: error

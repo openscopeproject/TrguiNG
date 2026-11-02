@@ -43,6 +43,14 @@ Weekly builds of current development version are available from github
 [build workflows](https://github.com/openscopeproject/TrguiNG/actions/workflows/build.yml).
 Pick the latest successful run and scroll down to the artifacts section.
 
+## Windows portable mode
+
+Place `portable.flag` next to the executable to keep configuration in
+`Data/trguing.json` and the WebView2 profile in `Data/WebView2`. The WebView2
+runtime remains a system dependency. Without the marker, the existing installed
+configuration path is preserved. See [portable/README.txt](portable/README.txt)
+for migration, packaging and update instructions.
+
 ## Compiling
 
 Prerequisites:

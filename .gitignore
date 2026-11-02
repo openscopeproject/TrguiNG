@@ -8,3 +8,4 @@ tests/manual.torrent
 src/build
 .DS_Store
 *.mmdb
+portable-output/
