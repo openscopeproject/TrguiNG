@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { byteRateToHumanReadableStr, bytesToHumanReadableStr } from "../trutil";
 import * as Icon from "react-bootstrap-icons";
 import { Box, Flex, Menu } from "@mantine/core";
@@ -26,6 +26,7 @@ import { ColorSchemeToggle, ShowVersion } from "components/miscbuttons";
 import { ConfigContext, ServerConfigContext } from "config";
 import { useContextMenu } from "./contextmenu";
 import { MemoSectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
+import { useTranslation } from "react-i18next";
 
 const { TAURI, appWindow } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -41,6 +42,8 @@ export interface StatusbarProps {
 export function Statusbar({ session, torrents, filteredTorrents, selectedTorrents, hostname, showMisc }: StatusbarProps) {
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
+    const { t } = useTranslation();
+    const getSectionLabel = useCallback((section: string) => t(`statusbar.sections.${section}`), [t]);
 
     const serverFields = useMemo(() => ({
         downRateLimit: session !== undefined
@@ -96,9 +99,9 @@ export function Statusbar({ session, torrents, filteredTorrents, selectedTorrent
         const speeds = `↓${downRate}/s ↑${upRate}/s`;
         document.title = `${speeds} - TrguiNG`;
         if (TAURI) {
-            void appWindow.setTitle(`Transmission GUI - ${serverConfig.name} (${speeds})`);
+            void appWindow.setTitle(t("native.serverWindowTitle", { title: t("native.windowTitle"), server: serverConfig.name, speeds }));
         }
-    }, [serverConfig, downRate, upRate]);
+    }, [serverConfig, downRate, upRate, t]);
 
     const [info, setInfo, handler] = useContextMenu();
 
@@ -114,6 +117,7 @@ export function Statusbar({ session, torrents, filteredTorrents, selectedTorrent
                 setSections={setSections}
                 contextMenuInfo={info}
                 setContextMenuInfo={setInfo}
+                getLabel={getSectionLabel}
             >
                 <Menu.Divider />
                 <Menu.Item
@@ -123,13 +127,18 @@ export function Statusbar({ session, torrents, filteredTorrents, selectedTorrent
                         setShowGlobalSpeeds(!showGlobalSpeeds);
                     }}
                 >
-                    Show global speeds
+                    {t("statusbar.showGlobalSpeeds")}
                 </Menu.Item>
             </MemoSectionsContextMenu>
             {sections[sectionsMap.Connection].visible
                 && <div style={{ flex: "1 1 23%", order: sectionsMap.Connection }}>
                     <Box component="span" my="auto" mr="xs"><Icon.Diagram2 /></Box>
-                    <span>{`${session?.version as string ?? "<not connected>"} at ${hostname}`}</span>
+                    <span>
+                        {t("statusbar.connection", {
+                            version: session?.version as string ?? t("statusbar.notConnected"),
+                            hostname: hostname === "unknown" ? t("version.unknown") : hostname,
+                        })}
+                    </span>
                 </div>}
             {sections[sectionsMap["Download speed "]].visible
                 && <div style={{ flex: "1 1 15%", order: sectionsMap["Download speed "] }}>
@@ -150,15 +159,15 @@ export function Statusbar({ session, torrents, filteredTorrents, selectedTorrent
             {sections[sectionsMap["Free space"]].visible
                 && <div style={{ flex: "1 1 12%", order: sectionsMap["Free space"] }}>
                     <Box component="span" my="auto" mr="xs"><Icon.Hdd /></Box>
-                    <span>{`Free: ${bytesToHumanReadableStr(serverFields.free)}`}</span>
+                    <span>{t("statusbar.free", { size: bytesToHumanReadableStr(serverFields.free) })}</span>
                 </div>}
             {sections[sectionsMap.Total].visible
                 && <div style={{ flex: "1 1 12%", order: sectionsMap.Total }}>
-                    {`Total: ${sizeTotal}`}
+                    {t("statusbar.total", { size: sizeTotal })}
                 </div>}
             {sections[sectionsMap.Selected].visible
                 && <div style={{ flex: "1 1 23%", order: sectionsMap.Selected }}>
-                    {`Selected: ${sizeSelected}, done ${sizeDone}, left ${sizeLeft}`}
+                    {t("statusbar.selected", { size: sizeSelected, done: sizeDone, left: sizeLeft })}
                 </div>}
             {(!TAURI || showMisc)
                 && <div style={{ flexShrink: 0, display: "flex", order: 100 }}>

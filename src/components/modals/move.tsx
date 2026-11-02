@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { useTranslation } from "react-i18next";
 import { Button, Checkbox, Divider, Group, Text } from "@mantine/core";
 import React, { useCallback, useEffect, useState } from "react";
 import type { ModalState } from "./common";
@@ -25,6 +26,7 @@ import { notifications } from "@mantine/notifications";
 import { useServerSelectedTorrents, useServerTorrentData } from "rpc/torrent";
 
 export function MoveModal(props: ModalState) {
+    const { t } = useTranslation();
     const serverData = useServerTorrentData();
     const serverSelected = useServerSelectedTorrents();
     const [moveData, setMoveData] = useState<boolean>(true);
@@ -48,7 +50,7 @@ export function MoveModal(props: ModalState) {
                 onError: (e) => {
                     console.error("Error moving torrents", e);
                     notifications.show({
-                        message: "Error moving torrents",
+                        message: t("move.errorMoving"),
                         color: "red",
                     });
                 },
@@ -56,7 +58,7 @@ export function MoveModal(props: ModalState) {
         );
 
         props.close();
-    }, [changeDirectory, serverSelected, location.path, moveData, props, addPath]);
+    }, [changeDirectory, serverSelected, location.path, moveData, props, addPath, t]);
 
     const calculateInitialLocation = useCallback(() => {
         const [id] = [...serverSelected];
@@ -73,24 +75,24 @@ export function MoveModal(props: ModalState) {
             && <HkModal
                 opened={props.opened}
                 onClose={props.close}
-                title="Move torrents"
+                title={t("move.title")}
                 centered
                 size="lg"
             >
                 <Divider my="sm" />
-                <Text mb="md">Enter new location for</Text>
+                <Text mb="md">{t("move.enterNewLocation")}</Text>
                 <TorrentsNames />
                 <TorrentLocation {...location} focusPath />
                 <Checkbox
-                    label="Move torrent data to new location"
+                    label={t("move.moveData")}
                     checked={moveData}
                     onChange={(e) => { setMoveData(e.currentTarget.checked); }}
                     my="xl"
                 />
                 <Divider my="sm" />
                 <Group justify="center" gap="md">
-                    <Button onClick={onMove} variant="filled">Move</Button>
-                    <Button onClick={props.close} variant="light">Cancel</Button>
+                    <Button onClick={onMove} variant="filled">{t("move.move")}</Button>
+                    <Button onClick={props.close} variant="light">{t("move.cancel")}</Button>
                 </Group>
             </HkModal>}
     </>;

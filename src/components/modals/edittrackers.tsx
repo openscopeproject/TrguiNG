@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { useTranslation } from "react-i18next";
 import React, { useCallback, useContext, useEffect, useMemo } from "react";
 import type { ModalState } from "./common";
 import { SaveCancelModal, TorrentsNames } from "./common";
@@ -32,6 +33,7 @@ interface FormValues {
 }
 
 export function EditTrackers(props: ModalState) {
+    const { t } = useTranslation();
     const rpcVersion = useServerRpcVersion();
     const config = useContext(ConfigContext);
     const serverData = useServerTorrentData();
@@ -97,14 +99,14 @@ export function EditTrackers(props: ModalState) {
                 onError: (e) => {
                     console.error("Failed to update torrent properties", e);
                     notifications.show({
-                        message: "Error updating torrent",
+                        message: t("editTrackers.errorUpdatingTorrent"),
                         color: "red",
                     });
                 },
             },
         );
         props.close();
-    }, [torrentId, torrent, rpcVersion, mutate, selected, form.values, props]);
+    }, [torrentId, torrent, rpcVersion, mutate, selected, form.values, props, t]);
 
     const addDefaultTrackers = useCallback(() => {
         let list = form.values.trackerList;
@@ -121,7 +123,7 @@ export function EditTrackers(props: ModalState) {
                 onClose={props.close}
                 onSave={onSave}
                 centered
-                title="Edit torrent trackers"
+                title={t("editTrackers.editTorrentTrackers")}
                 mih="25rem"
             >
                 <LoadingOverlay visible={isLoading} />
@@ -130,10 +132,10 @@ export function EditTrackers(props: ModalState) {
                         <TorrentsNames />
                     </Grid.Col>
                     <Grid.Col span={8}>
-                        <Text>Tracker list, one per line, empty line between tiers</Text>
+                        <Text>{t("editTrackers.trackerListHint")}</Text>
                     </Grid.Col>
                     <Grid.Col span={4}>
-                        <Button onClick={addDefaultTrackers}>Add default list</Button>
+                        <Button onClick={addDefaultTrackers}>{t("editTrackers.addDefaultList")}</Button>
                     </Grid.Col>
                     <Grid.Col>
                         <Textarea

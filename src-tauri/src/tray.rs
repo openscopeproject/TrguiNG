@@ -14,7 +14,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::sync::{Arc, Mutex};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc, Mutex,
+};
 
 use tauri::{
     async_runtime,
@@ -24,12 +27,13 @@ use tauri::{
 };
 use tokio::sync::oneshot;
 
-use crate::ListenerHandle;
+use crate::{i18n, ListenerHandle};
 
 pub const TRAY_ID: &str = "tray";
+static WINDOW_VISIBLE: AtomicBool = AtomicBool::new(true);
 
 pub fn create_tray(app: AppHandle) {
-    let menu = create_menu(&app, "Hide");
+    let menu = create_menu(&app);
 
     let builder = TrayIconBuilder::with_id(TRAY_ID)
         .icon(app.default_window_icon().unwrap().clone())
@@ -65,19 +69,33 @@ pub fn create_tray(app: AppHandle) {
     builder.build(&app).ok();
 }
 
-fn create_menu<R>(app: &AppHandle<R>, showhide_text: &str) -> tauri::menu::Menu<R>
+fn create_menu<R>(app: &AppHandle<R>) -> tauri::menu::Menu<R>
 where
     R: tauri::Runtime,
 {
-    let hide = MenuItem::with_id(app, "showhide", showhide_text, true, None::<&str>).unwrap();
-    let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>).unwrap();
+    let showhide = i18n::text(
+        app,
+        if WINDOW_VISIBLE.load(Ordering::Relaxed) {
+            "native.hide"
+        } else {
+            "native.show"
+        },
+    );
+    let hide = MenuItem::with_id(app, "showhide", showhide, true, None::<&str>).unwrap();
+    let quit = MenuItem::with_id(app, "quit", i18n::text(app, "native.quit"), true, None::<&str>)
+        .unwrap();
     let separator = PredefinedMenuItem::separator(app).unwrap();
     Menu::with_items(app, &[&hide, &separator, &quit]).unwrap()
 }
 
-pub fn set_tray_showhide_text(app: &AppHandle, text: &str) {
+pub fn set_tray_window_visible(app: &AppHandle, visible: bool) {
+    WINDOW_VISIBLE.store(visible, Ordering::Relaxed);
+    refresh_menu(app);
+}
+
+pub fn refresh_menu(app: &AppHandle) {
     if let Some(tray) = app.tray_by_id(TRAY_ID) {
-        tray.set_menu(Some(create_menu(app, text))).ok();
+        tray.set_menu(Some(create_menu(app))).ok();
     }
 }
 
@@ -101,10 +119,10 @@ pub fn toggle_main_window(app: &AppHandle, window: Option<WebviewWindow>) {
                 window.unminimize().ok();
                 window.set_focus().ok();
                 window.emit("window-shown", "").ok();
-                set_tray_showhide_text(app, "Hide");
+                set_tray_window_visible(app, true);
                 return;
             }
-            set_tray_showhide_text(app, "Show");
+            set_tray_window_visible(app, false);
             async_runtime::spawn(async move {
                 close_main(window).await;
             });
@@ -112,11 +130,11 @@ pub fn toggle_main_window(app: &AppHandle, window: Option<WebviewWindow>) {
         None => {
             let window =
                 WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
-                    .title("Transmission GUI")
+                    .title(i18n::text(app, "native.windowTitle"))
                     .inner_size(1024., 800.)
                     .build()
                     .unwrap();
-            set_tray_showhide_text(app, "Hide");
+            set_tray_window_visible(app, true);
             window.set_focus().ok();
         }
     }

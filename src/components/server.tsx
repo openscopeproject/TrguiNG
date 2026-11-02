@@ -37,6 +37,7 @@ import { useAppHotkeys, useHotkeysContext } from "hotkeys";
 import { SplitLayout } from "./splitlayout";
 import { useDisclosure, useToggle } from "@mantine/hooks";
 import type { ServerTabsRef } from "./servertabs";
+import { useTranslation } from "react-i18next";
 
 function currentFiltersReducer(
     oldFilters: TorrentFilter[],
@@ -114,6 +115,7 @@ interface ServerProps {
 }
 
 export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: ServerProps) {
+    const { t } = useTranslation();
     useAppHotkeys();
 
     const [currentFilters, setCurrentFilters] = useReducer(currentFiltersReducer, [{ id: "", filter: DefaultFilter }]);
@@ -219,13 +221,13 @@ export function Server({ hostname, tabsRef, toolbarExtra, toggleTabStrip }: Serv
                         ? <Loader size="xl" />
                         : sessionIsError
                             ? <>
-                                <Title c="red" order={1}>Failed to load session</Title>
+                                <Title c="red" order={1}>{t("server.error.loadSession")}</Title>
                                 <Title c="red" order={3}>{(sessionError as Error).message}</Title>
                             </>
                             : session?.["rpc-version"] === undefined
-                                ? <Title c="red" order={1}>Server does not appear to be transmission daemon</Title>
+                                ? <Title c="red" order={1}>{t("server.error.notDaemon")}</Title>
                                 : rpcVersion < 14
-                                    ? <Title c="red" order={1}>Transmission version 2.40 or higher is required.</Title>
+                                    ? <Title c="red" order={1}>{t("server.error.versionRequired")}</Title>
                                     : <></>}
                 </Flex>
             </Overlay>}

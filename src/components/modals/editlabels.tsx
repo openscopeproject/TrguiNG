@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { useTranslation } from "react-i18next";
 import { Box, Text } from "@mantine/core";
 import type { ModalState } from "./common";
 import { SaveCancelModal, TorrentLabels, TorrentsNames } from "./common";
@@ -25,6 +26,7 @@ import { notifications } from "@mantine/notifications";
 import { useServerRpcVersion, useServerSelectedTorrents, useServerTorrentData } from "rpc/torrent";
 
 export function EditLabelsModal(props: ModalState) {
+    const { t } = useTranslation();
     const { opened, close } = props;
     const serverData = useServerTorrentData();
     const serverSelected = useServerSelectedTorrents();
@@ -50,8 +52,8 @@ export function EditLabelsModal(props: ModalState) {
     const onSave = useCallback(() => {
         if (rpcVersion < 16) {
             notifications.show({
-                title: "Can not set labels",
-                message: "Labels feature requires transmission 3.0 or later",
+                title: t("editLabels.canNotSetLabels"),
+                message: t("editLabels.requiresTransmission3"),
                 color: "red",
             });
             close();
@@ -65,13 +67,13 @@ export function EditLabelsModal(props: ModalState) {
             {
                 onSuccess: () => {
                     notifications.show({
-                        message: "Labels are updated",
+                        message: t("editLabels.labelsUpdated"),
                         color: "green",
                     });
                 },
                 onError: (error) => {
                     notifications.show({
-                        title: "Failed to update labels",
+                        title: t("editLabels.failedToUpdateLabels"),
                         message: String(error),
                         color: "red",
                     });
@@ -79,7 +81,7 @@ export function EditLabelsModal(props: ModalState) {
             },
         );
         close();
-    }, [rpcVersion, mutate, serverSelected, labels, close]);
+    }, [rpcVersion, mutate, serverSelected, labels, close, t]);
 
     return <>
         {props.opened
@@ -89,12 +91,12 @@ export function EditLabelsModal(props: ModalState) {
                 onClose={props.close}
                 onSave={onSave}
                 centered
-                title="Edit torrent labels"
+                title={t("editLabels.editTorrentLabels")}
             >
                 {rpcVersion < 16
-                    ? <Text color="red" fz="lg">Labels feature requires transmission 3.0 or later</Text>
+                    ? <Text color="red" fz="lg">{t("editLabels.requiresTransmission3")}</Text>
                     : <>
-                        <Text mb="md">Enter new labels for</Text>
+                        <Text mb="md">{t("editLabels.enterNewLabelsFor")}</Text>
                         <TorrentsNames />
                     </>}
                 <Box mih="17rem">

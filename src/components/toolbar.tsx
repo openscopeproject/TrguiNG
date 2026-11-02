@@ -35,6 +35,7 @@ import { useHotkeys } from "@mantine/hooks";
 import { modKeyString } from "trutil";
 import { useServerSelectedTorrents } from "rpc/torrent";
 import { ConfigContext } from "config";
+import { useTranslation } from "react-i18next";
 
 const { saveJsonFile, loadJsonFile } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
@@ -75,6 +76,7 @@ function useButtonHandlers(
     altSpeedMode: boolean | undefined,
     setAltSpeedMode: React.Dispatch<boolean | undefined>,
 ) {
+    const { t } = useTranslation();
     const serverSelected = useServerSelectedTorrents();
     const actionMutate = useTorrentAction();
     const { mutate: mutateTorrent } = useMutateTorrent();
@@ -95,7 +97,7 @@ function useButtonHandlers(
                     onError: (e) => {
                         console.error("Error running torrent update method", method, e);
                         notifications.show({
-                            message: "Error updating torrent",
+                            message: t("toolbar.notifications.errorUpdatingTorrent"),
                             color: "red",
                         });
                     },
@@ -111,13 +113,13 @@ function useButtonHandlers(
                 {
                     onSuccess: () => {
                         notifications.show({
-                            message: "Priority is updated",
+                            message: t("toolbar.notifications.priorityUpdated"),
                             color: "green",
                         });
                     },
                     onError: (error) => {
                         notifications.show({
-                            title: "Failed to update priority",
+                            title: t("toolbar.notifications.failedToUpdatePriority"),
                             message: String(error),
                             color: "red",
                         });
@@ -139,7 +141,7 @@ function useButtonHandlers(
             setPriorityLow: checkSelected(priority(BandwidthPriority.low)),
             daemonSettings: () => { props.modals.current?.daemonSettings(); },
         };
-    }, [actionMutate, mutateTorrent, props.modals, serverSelected]);
+    }, [actionMutate, mutateTorrent, props.modals, serverSelected, t]);
 
     const sessionMutation = useMutateSession();
 
@@ -170,6 +172,7 @@ function useButtonHandlers(
 }
 
 function Toolbar(props: ToolbarProps) {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
 
     const debouncedSetSearchTerms = useMemo(
@@ -190,7 +193,10 @@ function Toolbar(props: ToolbarProps) {
                 .filter((s) => s !== ""));
     }, [debouncedSetSearchTerms]);
 
-    const [searchPlaceholder, setSearchPlaceholder] = useState<string>(`search (${modKeyString()} + f)`);
+    const [searchFocused, setSearchFocused] = useState(false);
+    const searchPlaceholder = searchFocused
+        ? t("toolbar.searchHint")
+        : t("toolbar.searchPlaceholder", { hotkey: modKeyString() });
 
     const searchRef = useRef<HTMLInputElement>(null);
 
@@ -236,12 +242,12 @@ function Toolbar(props: ToolbarProps) {
                 msg = e.message;
             }
             notifications.show({
-                title: "Error importing settings",
+                title: t("toolbar.notifications.errorImportingSettings"),
                 message: msg,
                 color: "red",
             });
         }
-    }, [config]);
+    }, [config, t]);
 
     const colorScheme = useComputedColorScheme();
 
@@ -249,13 +255,13 @@ function Toolbar(props: ToolbarProps) {
         <Flex w="100%" align="stretch">
             <Button.Group mx="sm">
                 <ToolbarButton
-                    title={`Add torrent file (${modKeyString()} O)`}
+                    title={t("toolbar.addTorrentFile", { hotkey: `${modKeyString()} O` })}
                     onClick={() => { props.modals.current?.addTorrent(); }}
                 >
                     <Icon.FileArrowDownFill size="1.5rem" color="var(--mantine-color-green-8)" />
                 </ToolbarButton>
                 <ToolbarButton
-                    title={`Add magnet link (${modKeyString()} M)`}
+                    title={t("toolbar.addMagnetLink", { hotkey: `${modKeyString()} M` })}
                     onClick={() => { props.modals.current?.addMagnet(); }}
                 >
                     <Icon.MagnetFill size="1.5rem" color="var(--mantine-color-green-8)" />
@@ -264,19 +270,19 @@ function Toolbar(props: ToolbarProps) {
 
             <Button.Group mx="sm">
                 <ToolbarButton
-                    title="Start torrent (F3)"
+                    title={t("toolbar.startTorrent")}
                     onClick={handlers.start}
                 >
                     <Icon.PlayCircleFill size="1.5rem" color="var(--mantine-color-blue-6)" />
                 </ToolbarButton>
                 <ToolbarButton
-                    title="Pause torrent (F4)"
+                    title={t("toolbar.pauseTorrent")}
                     onClick={handlers.pause}
                 >
                     <Icon.PauseCircleFill size="1.5rem" color="var(--mantine-color-blue-6)" />
                 </ToolbarButton>
                 <ToolbarButton
-                    title="Remove torrent (del)"
+                    title={t("toolbar.removeTorrent")}
                     onClick={handlers.remove}
                 >
                     <Icon.XCircleFill size="1.5rem" color="var(--mantine-color-red-6)" />
@@ -285,13 +291,13 @@ function Toolbar(props: ToolbarProps) {
 
             <Button.Group mx="sm">
                 <ToolbarButton
-                    title="Move up in queue"
+                    title={t("toolbar.moveUpQueue")}
                     onClick={handlers.queueUp}
                 >
                     <Icon.ArrowUpCircleFill size="1.5rem" color="var(--mantine-color-green-8)" />
                 </ToolbarButton>
                 <ToolbarButton
-                    title="Move down in queue"
+                    title={t("toolbar.moveDownQueue")}
                     onClick={handlers.queueDown}
                 >
                     <Icon.ArrowDownCircleFill size="1.5rem" color="var(--mantine-color-green-8)" />
@@ -300,13 +306,13 @@ function Toolbar(props: ToolbarProps) {
 
             <Button.Group mx="sm">
                 <ToolbarButton
-                    title="Move torrent (F6)"
+                    title={t("toolbar.moveTorrent")}
                     onClick={handlers.move}
                 >
                     <Icon.FolderFill size="1.5rem" color="var(--mantine-color-yellow-4)" stroke="var(--mantine-color-yellow-5)" />
                 </ToolbarButton>
                 <ToolbarButton
-                    title="Set labels (F7)"
+                    title={t("toolbar.setLabels")}
                     onClick={handlers.setLabels}
                 >
                     <Icon.TagsFill size="1.5rem" color="var(--mantine-color-blue-6)" />
@@ -320,7 +326,7 @@ function Toolbar(props: ToolbarProps) {
                     middlewares={{ shift: true, flip: false }}
                 >
                     <Menu.Target>
-                        <ToolbarButton title="Set priority">
+                        <ToolbarButton title={t("toolbar.setPriority")}>
                             <PriorityIcon
                                 width="1.5rem"
                                 height="1.5rem"
@@ -337,28 +343,28 @@ function Toolbar(props: ToolbarProps) {
                             onClick={handlers.setPriorityHigh}
                             rightSection={<Kbd>{`${modKeyString()} H`}</Kbd>}
                         >
-                            High
+                            {t("toolbar.priorityHigh")}
                         </Menu.Item>
                         <Menu.Item
                             leftSection={<Icon.CircleFill color="var(--mantine-color-teal-9)" />}
                             onClick={handlers.setPriorityNormal}
                             rightSection={<Kbd>{`${modKeyString()} N`}</Kbd>}
                         >
-                            Normal
+                            {t("toolbar.priorityNormal")}
                         </Menu.Item>
                         <Menu.Item
                             leftSection={<Icon.CircleFill color="var(--mantine-color-yellow-6)" />}
                             onClick={handlers.setPriorityLow}
                             rightSection={<Kbd>{`${modKeyString()} L`}</Kbd>}
                         >
-                            Low
+                            {t("toolbar.priorityLow")}
                         </Menu.Item>
                     </Menu.Dropdown>
                 </Menu>
             </Button.Group>
 
             <ToolbarButton
-                title={`Turn alternative bandwidth mode ${altSpeedMode === true ? "off" : "on"} (F8)`}
+                title={altSpeedMode === true ? t("toolbar.altSpeedOff") : t("toolbar.altSpeedOn")}
                 onClick={handlers.toggleAltSpeedMode}
                 depressed={altSpeedMode}
             >
@@ -370,12 +376,12 @@ function Toolbar(props: ToolbarProps) {
                 mx="sm"
                 leftSection={<Icon.Search size="1rem" />}
                 placeholder={searchPlaceholder}
-                rightSection={<ActionIcon variant="subtle" onClick={onSearchClear} title="Clear">
+                rightSection={<ActionIcon variant="subtle" onClick={onSearchClear} title={t("toolbar.clearSearch")}>
                     <Icon.XLg size="1rem" color="var(--mantine-color-red-6)" />
                 </ActionIcon>}
                 onInput={onSearchInput}
-                onFocus={() => setSearchPlaceholder("search by name or path:somepath or label:somelabel")}
-                onBlur={() => setSearchPlaceholder(`search (${modKeyString()} + f)`)}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
                 styles={{ root: { flexGrow: 1 }, input: { height: "auto" } }}
                 autoComplete="off"
                 autoCorrect="off"
@@ -391,7 +397,7 @@ function Toolbar(props: ToolbarProps) {
                 middlewares={{ shift: true, flip: true }}
             >
                 <Menu.Target>
-                    <ToolbarButton title="Layout">
+                    <ToolbarButton title={t("toolbar.layoutMenu")}>
                         <Icon.Grid1x2Fill size="1.5rem" style={{ transform: "rotate(-90deg)" }} />
                     </ToolbarButton>
                 </Menu.Target>
@@ -401,40 +407,40 @@ function Toolbar(props: ToolbarProps) {
                         onClick={props.toggleMainSplit}
                         rightSection={<Kbd>{`${modKeyString()} P`}</Kbd>}
                     >
-                        Change layout
+                        {t("toolbar.changeLayout")}
                     </Menu.Item>
                     <Menu.Item
                         onClick={props.toggleFiltersPanel}
                         rightSection={<Kbd>{`${modKeyString()} Y`}</Kbd>}
                     >
-                        Toggle filters
+                        {t("toolbar.toggleFilters")}
                     </Menu.Item>
                     <Menu.Item
                         onClick={props.toggleDetailsPanel}
                         rightSection={<Kbd>{`${modKeyString()} I`}</Kbd>}
                     >
-                        Toggle details
+                        {t("toolbar.toggleDetails")}
                     </Menu.Item>
                     {props.extra !== undefined
                         && <Menu.Item
                             onClick={props.toggleTabStrip}
                             rightSection={<Kbd>{`${modKeyString()} [`}</Kbd>}
                         >
-                            Toggle tab strip
+                            {t("toolbar.toggleTabStrip")}
                         </Menu.Item>}
                     <Menu.Divider />
-                    <Menu.Label>Interface settings</Menu.Label>
+                    <Menu.Label>{t("toolbar.interfaceSettings")}</Menu.Label>
                     <Menu.Item onClick={onSettingsExport}>
-                        Export
+                        {t("toolbar.exportSettings")}
                     </Menu.Item>
                     <Menu.Item onClick={() => { void onSettingsImport(); }}>
-                        Import
+                        {t("toolbar.importSettings")}
                     </Menu.Item>
                 </Menu.Dropdown>
             </Menu>
 
             <ToolbarButton
-                title="Polling intervals and server settings (F9)"
+                title={t("toolbar.daemonSettings")}
                 onClick={handlers.daemonSettings}
             >
                 <Icon.Tools size="1.5rem" />

@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { useTranslation } from "react-i18next";
 import type { AccessorFn, CellContext, ColumnDef } from "@tanstack/react-table";
 import React, { useMemo, useContext } from "react";
 import type { Torrent, PeerStats } from "rpc/torrent";
@@ -34,34 +35,64 @@ interface TableFieldProps {
 
 interface TableField {
     name: keyof PeerStats,
-    label: string,
+    labelKey: string,
     columnId?: string,
     accessorFn?: AccessorFn<PeerStats>,
     component?: React.FunctionComponent<TableFieldProps>,
 }
 
 const AllFields: TableField[] = [
-    { name: "address", label: "Address" },
-    { name: "port", label: "Port" },
-    { name: "clientName", label: "Client" },
-    { name: "flagStr", label: "Flags" },
-    { name: "progress", label: "Have", component: PercentField },
-    { name: "rateToPeer", label: "Up speed", component: ByteRateField },
-    { name: "rateToClient", label: "Down speed", component: ByteRateField },
-    { name: "cachedEncrypted", label: "Encrypted" },
-    { name: "cachedFrom", label: "From" },
-    { name: "cachedConnection", label: "Connection" },
-    { name: "cachedProtocol", label: "Protocol" },
-    { name: "cachedStatus", label: "Status" },
+    { name: "address", labelKey: "tables.peers.address" },
+    { name: "port", labelKey: "tables.peers.port" },
+    { name: "clientName", labelKey: "tables.peers.client" },
+    { name: "flagStr", labelKey: "tables.peers.flags" },
+    { name: "progress", labelKey: "tables.peers.have", component: PercentField },
+    { name: "rateToPeer", labelKey: "tables.peers.up_speed", component: ByteRateField },
+    { name: "rateToClient", labelKey: "tables.peers.down_speed", component: ByteRateField },
+    { name: "cachedEncrypted", labelKey: "tables.peers.encrypted", component: PeerValueField },
+    { name: "cachedFrom", labelKey: "tables.peers.from" },
+    { name: "cachedConnection", labelKey: "tables.peers.connection", component: PeerValueField },
+    { name: "cachedProtocol", labelKey: "tables.peers.protocol" },
+    { name: "cachedStatus", labelKey: "tables.peers.status", component: PeerValueField },
 ];
 
-if (TAURI) AllFields.splice(1, 0, { name: "cachedCountryName", label: "Country", columnId: "country", component: CountryField });
+if (TAURI) AllFields.splice(1, 0, { name: "cachedCountryName", labelKey: "tables.peers.country", columnId: "country", component: CountryField });
+
+const peerValueKeys: Record<string, string> = {
+    yes: "yes",
+    no: "no",
+    incoming: "incoming",
+    outgoing: "outgoing",
+    optimistic: "optimistic",
+    downloading: "downloading",
+    "can download from": "canDownload",
+    uploading: "uploading",
+    "can upload to": "canUpload",
+    "not interested": "notInterested",
+    "peer not interested": "peerNotInterested",
+};
+
+function PeerValueField(props: TableFieldProps) {
+    const { t } = useTranslation();
+    const value = props.entry[props.fieldName] as string;
+    const labels = value.split(", ").map((part) => {
+        const key = peerValueKeys[part];
+        return key === undefined ? part : t(`tables.peers.values.${key}`);
+    });
+    return <div>{labels.join(", ")}</div>;
+}
 
 function CountryField(props: TableFieldProps) {
+    const { i18n } = useTranslation();
     const iso = props.entry.cachedCountryIso;
+    const countryName = useMemo(() => {
+        if (iso === undefined || !/^[a-z]{2}$/i.test(iso)) return props.entry.cachedCountryName;
+        return new Intl.DisplayNames([i18n.resolvedLanguage ?? "en"], { type: "region" }).of(iso.toUpperCase())
+            ?? props.entry.cachedCountryName;
+    }, [iso, i18n.resolvedLanguage, props.entry.cachedCountryName]);
     return <Flex gap="sm" style={{ width: "100%" }}>
         {iso !== undefined && <span className={`fi fi-${iso.toLowerCase()}`} style={{ flexShrink: 0 }} />}
-        <span>{props.entry.cachedCountryName}</span>
+        <span>{countryName}</span>
     </Flex>;
 }
 
@@ -87,34 +118,38 @@ function PercentField(props: TableFieldProps) {
     />;
 }
 
-const Columns = AllFields.map((field): ColumnDef<PeerStats> => {
-    const cell = (props: CellContext<PeerStats, unknown>) => {
-        if (field.component !== undefined) {
-            return <field.component entry={props.row.original} fieldName={field.name} />;
-        } else {
-            return <div>{props.getValue() as string}</div>;
-        }
-    };
-    const column: ColumnDef<PeerStats> = {
-        header: field.label,
-        accessorKey: field.name,
-        id: field.columnId,
-        accessorFn: field.accessorFn,
-        cell,
-    };
-    return column;
-});
+function buildColumns(t: (key: string) => string) {
+    return AllFields.map((field): ColumnDef<PeerStats> => {
+        const cell = (props: CellContext<PeerStats, unknown>) => {
+            if (field.component !== undefined) {
+                return <field.component entry={props.row.original} fieldName={field.name} />;
+            } else {
+                return <div>{props.getValue() as string}</div>;
+            }
+        };
+        const column: ColumnDef<PeerStats> = {
+            header: t(field.labelKey),
+            accessorKey: field.name,
+            id: field.columnId,
+            accessorFn: field.accessorFn,
+            cell,
+        };
+        return column;
+    });
+}
 
 function getRowId(peer: PeerStats) {
     return peer.peer_id !== undefined ? peer.peer_id : `${peer.address as string}:${peer.port as number}`;
 }
 
 export function PeersTable(props: { torrent: Torrent }) {
+    const { t } = useTranslation();
+    const columns = useMemo(() => buildColumns(t), [t]);
     const [selected, selectedReducer] = useStandardSelect();
 
     return <TrguiTable<PeerStats> {...{
         tablename: "peers",
-        columns: Columns,
+        columns,
         data: props.torrent.peers,
         selected,
         getRowId,

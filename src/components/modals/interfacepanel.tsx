@@ -16,16 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import type { MantineColorScheme } from "@mantine/core";
 import { Box, Checkbox, Grid, HoverCard, NativeSelect, NumberInput, Tabs, TagsInput, Text, Textarea, useComputedColorScheme, useMantineTheme } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import ColorChooser from "components/colorchooser";
 import { useGlobalStyleOverrides } from "themehooks";
-import { AddTorrentPriorityOptions, AddTorrentStartOptions, DateFormatOptions, DeleteTorrentDataOptions, TimeFormatOptions } from "config";
+import { ConfigContext, AddTorrentPriorityOptions, AddTorrentStartOptions, DateFormatOptions, DeleteTorrentDataOptions, TimeFormatOptions } from "config";
 import type { AddTorrentPriorityOption, AddTorrentStartOption, ColorSetting, DateFormatOption, DeleteTorrentDataOption, StyleOverrides, TimeFormatOption } from "config";
 import { ColorSchemeToggle } from "components/miscbuttons";
 import * as Icon from "react-bootstrap-icons";
+import { useTranslation } from "react-i18next";
+import { getAutomaticLanguage, setLanguagePreference } from "i18n";
+import { availableLanguages, isAvailableLanguage, languageNames } from "i18n/language";
+import type { LanguagePreference } from "i18n/language";
 const { TAURI, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface InterfaceFormValues {
@@ -51,10 +55,28 @@ export interface InterfaceFormValues {
 }
 
 export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { form: UseFormReturnType<V> }) {
+    const config = useContext(ConfigContext);
     const theme = useMantineTheme();
     const colorScheme = useComputedColorScheme();
     const { style, setStyle } = useGlobalStyleOverrides();
     const [systemFonts, setSystemFonts] = useState<string[]>(["Default"]);
+    const { t } = useTranslation();
+    const [languagePref, setLanguagePref] = useState<LanguagePreference>(config.values.app.language);
+    const autoLabel = t("interface.autoLanguage", { language: languageNames[getAutomaticLanguage()] });
+
+    const languageOptions = [
+        { value: "auto", label: autoLabel },
+        ...availableLanguages.map((lng) => ({
+            value: lng,
+            label: languageNames[lng],
+        })),
+    ];
+
+    const onLanguageChange = useCallback((value: string) => {
+        const pref = isAvailableLanguage(value) ? value : undefined;
+        setLanguagePref(pref);
+        void setLanguagePreference(config, pref).catch(console.error);
+    }, [config]);
 
     useEffect(() => {
         if (TAURI) {
@@ -116,59 +138,73 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
             setFieldValue("interface.ignoredTrackerPrefixes", prefixes);
             clearFieldError("interface.ignoredTrackerPrefixes");
         } catch {
-            setFieldError("interface.ignoredTrackerPrefixes", "Invalid regex");
+            setFieldError("interface.ignoredTrackerPrefixes", "interface.invalidRegex");
         }
     }, [setFieldValue, setFieldError, clearFieldError]);
 
     return (
         <Tabs defaultValue="appearance" orientation="vertical" mih="29rem">
             <Tabs.List>
-                <Tabs.Tab value="appearance" p="lg">Appearance</Tabs.Tab>
-                <Tabs.Tab value="downloads" p="lg">Downloads</Tabs.Tab>
-                <Tabs.Tab value="miscellaneous" p="lg">Miscellaneous</Tabs.Tab>
+                <Tabs.Tab value="appearance" p="lg">{t("interface.tabs.appearance")}</Tabs.Tab>
+                <Tabs.Tab value="downloads" p="lg">{t("interface.tabs.downloads")}</Tabs.Tab>
+                <Tabs.Tab value="miscellaneous" p="lg">{t("interface.tabs.miscellaneous")}</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="appearance" p="lg">
                 <Grid align="center">
                     <Grid.Col span={6}>
-                        Theme
+                        {t("interface.theme")}
                     </Grid.Col>
                     <Grid.Col span={6}>
                         <ColorSchemeToggle />
                     </Grid.Col>
                     <Grid.Col span={6}>
-                        Font
+                        {t("settings.language")}
                     </Grid.Col>
                     <Grid.Col span={6}>
-                        <NativeSelect data={systemFonts} value={style.font} onChange={(e) => { setFont(e.currentTarget.value); }} />
+                        <NativeSelect
+                            data={languageOptions}
+                            value={languagePref ?? "auto"}
+                            onChange={(e) => { onLanguageChange(e.currentTarget.value); }}
+                        />
                     </Grid.Col>
                     <Grid.Col span={6}>
-                        Text color
+                        {t("interface.font")}
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                        <NativeSelect
+                            data={systemFonts.map((value) => ({ value, label: value === "Default" ? t("interface.defaultFont") : value }))}
+                            value={style.font ?? "Default"}
+                            onChange={(e) => { setFont(e.currentTarget.value); }}
+                        />
+                    </Grid.Col>
+                    <Grid.Col span={6}>
+                        {t("interface.textColor")}
                     </Grid.Col>
                     <Grid.Col span={6}>
                         <ColorChooser value={style[colorScheme].color ?? defaultColor} onChange={setTextColor} />
                     </Grid.Col>
                     <Grid.Col span={6}>
-                        Background
+                        {t("interface.background")}
                     </Grid.Col>
                     <Grid.Col span={6}>
                         <ColorChooser value={style[colorScheme].backgroundColor ?? defaultBg} onChange={setBgColor} />
                     </Grid.Col>
-                    <Grid.Col span={6}>Progress bars</Grid.Col>
+                    <Grid.Col span={6}>{t("interface.progressBars")}</Grid.Col>
                     <Grid.Col span={3}>
                         <Checkbox
-                            label="Colorful"
+                            label={t("interface.colorful")}
                             {...props.form.getInputProps("interface.colorfulProgressbars", { type: "checkbox" })}
                         />
                     </Grid.Col>
                     <Grid.Col span={3}>
                         <Checkbox
-                            label="Animated"
+                            label={t("interface.animated")}
                             {...props.form.getInputProps("interface.animatedProgressbars", { type: "checkbox" })}
                         />
                     </Grid.Col>
                     <Grid.Col>
                         <Checkbox
-                            label="Custom date/time format"
+                            label={t("interface.customDateTimeFormat")}
                             mt="lg"
                             {...props.form.getInputProps("interface.useCustomDateTimeFormat", { type: "checkbox" })}
                         />
@@ -183,7 +219,7 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                     </Grid.Col>
                     <Grid.Col span={6}>
                         <NativeSelect
-                            data={[...TimeFormatOptions]}
+                            data={TimeFormatOptions.map((value) => ({ value, label: t(`interface.timeFormats.${value}`) }))}
                             disabled={!props.form.values.interface.useCustomDateTimeFormat}
                             value={props.form.values.interface.timeFormat}
                             onChange={(e) => { setFieldValue("interface.timeFormat", e.target.value as TimeFormatOption); }}
@@ -195,38 +231,38 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                 <Grid align="center">
                     <Grid.Col>
                         <Checkbox
-                            label="Skip add torrent dialog"
+                            label={t("interface.skipAddTorrentDialog")}
                             {...props.form.getInputProps("interface.skipAddDialog", { type: "checkbox" })}
                         />
                     </Grid.Col>
                     <Grid.Col span={6}>
-                        New torrent start
+                        {t("interface.newTorrentStart")}
                     </Grid.Col>
                     <Grid.Col span={6}>
                         <NativeSelect
-                            data={AddTorrentStartOptions}
+                            data={AddTorrentStartOptions.map((value) => ({ value, label: t(`interface.options.${value}`) }))}
                             value={props.form.values.interface.addTorrentStart}
                             onChange={(e) => { setFieldValue("interface.addTorrentStart", e.target.value as AddTorrentStartOption); }}
                         />
                     </Grid.Col>
                     <Grid.Col span={6}>
-                        New torrent priority
+                        {t("interface.newTorrentPriority")}
                     </Grid.Col>
                     <Grid.Col span={6}>
                         <NativeSelect
-                            data={AddTorrentPriorityOptions}
+                            data={AddTorrentPriorityOptions.map((value) => ({ value, label: t(`interface.options.${value}`) }))}
                             value={props.form.values.interface.addTorrentPriority}
                             onChange={(e) => { setFieldValue("interface.addTorrentPriority", e.target.value as AddTorrentPriorityOption); }}
                         />
                     </Grid.Col>
                     <Grid.Col>
                         <Checkbox
-                            label="Sort download directories history alphabetically"
+                            label={t("interface.sortDownloadDirectories")}
                             my="lg"
                             {...props.form.getInputProps("interface.sortLastSaveDirs", { type: "checkbox" })}
                         />
                     </Grid.Col>
-                    <Grid.Col span={9}>Max number of saved download directories</Grid.Col>
+                    <Grid.Col span={9}>{t("interface.maxSavedDownloadDirectories")}</Grid.Col>
                     <Grid.Col span={3}>
                         <NumberInput
                             min={1}
@@ -239,7 +275,7 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                             minRows={6}
                             maxRows={6}
                             autosize
-                            label="Preconfigured directories (one per line)"
+                            label={t("interface.preconfiguredDirectories")}
                             value={props.form.values.interface.preconfiguredDirs.join("\n")}
                             onChange={(e) => {
                                 props.form.setFieldValue(
@@ -254,15 +290,14 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                             value={props.form.values.interface.preconfiguredLabels}
                             onChange={setPreconfiguredLabels}
                             label={<Box>
-                                <span>Preconfigured labels</span>
+                                <span>{t("interface.preconfiguredLabels")}</span>
                                 <HoverCard width={280} shadow="md">
                                     <HoverCard.Target>
                                         <Icon.Question />
                                     </HoverCard.Target>
                                     <HoverCard.Dropdown>
                                         <Text size="sm">
-                                            These labels will always be present in the suggestions list
-                                            and filters even if no existing torrents have them.
+                                            {t("interface.preconfiguredLabelsHint")}
                                         </Text>
                                     </HoverCard.Dropdown>
                                 </HoverCard>
@@ -274,11 +309,11 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
             <Tabs.Panel value="miscellaneous" p="lg">
                 <Grid align="center">
                     <Grid.Col span={8}>
-                        Remove torrent dialog delete data option
+                        {t("interface.removeTorrentDialogDeleteDataOption")}
                     </Grid.Col>
                     <Grid.Col span={4}>
                         <NativeSelect
-                            data={DeleteTorrentDataOptions}
+                            data={DeleteTorrentDataOptions.map((value) => ({ value, label: t(`interface.options.${value}`) }))}
                             value={props.form.values.interface.deleteTorrentData}
                             onChange={(e) => { setFieldValue("interface.deleteTorrentData", e.target.value as DeleteTorrentDataOption); }}
                         />
@@ -289,22 +324,21 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                             value={props.form.values.interface.ignoredTrackerPrefixes}
                             onChange={setIgnoredTrackerPrefixes}
                             label={<Box>
-                                <span>Ignored tracker prefixes</span>
+                                <span>{t("interface.ignoredTrackerPrefixes")}</span>
                                 <HoverCard width={380} shadow="md">
                                     <HoverCard.Target>
                                         <Icon.Question />
                                     </HoverCard.Target>
                                     <HoverCard.Dropdown>
                                         <Text size="sm">
-                                            When subdomain of the tracker looks like one of these strings + (optional) digits,
-                                            it will be omitted. This affects grouping in filters and display in table columns.
-                                            You can use regex here for more advanced filtering, the list will be combined
-                                            using &quot;|&quot;.
+                                            {t("interface.ignoredTrackerPrefixesHint")}
                                         </Text>
                                     </HoverCard.Dropdown>
                                 </HoverCard>
                             </Box>}
-                            error={props.form.errors["interface.ignoredTrackerPrefixes"]}
+                            error={typeof props.form.errors["interface.ignoredTrackerPrefixes"] === "string"
+                                ? t(props.form.errors["interface.ignoredTrackerPrefixes"] as string)
+                                : props.form.errors["interface.ignoredTrackerPrefixes"]}
                         />
                     </Grid.Col>
                     <Grid.Col>
@@ -312,7 +346,7 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                             minRows={10}
                             maxRows={10}
                             autosize
-                            label="Default tracker list"
+                            label={t("interface.defaultTrackerList")}
                             value={props.form.values.interface.defaultTrackers.join("\n")}
                             onChange={(e) => {
                                 props.form.setFieldValue(

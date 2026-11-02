@@ -27,6 +27,7 @@ import { Box, Divider, Flex, Menu } from "@mantine/core";
 import { bytesToHumanReadableStr, eventHasModKey } from "trutil";
 import { useContextMenu } from "./contextmenu";
 import { MemoSectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
+import { useTranslation } from "react-i18next";
 
 export interface TorrentFilter {
     id: string,
@@ -131,6 +132,7 @@ interface FiltersProps extends WithCurrentFilters {
 interface FilterRowProps extends WithCurrentFilters {
     id: string,
     filter: NamedFilter,
+    label?: string,
     stats: {
         count: number,
         size: number,
@@ -199,7 +201,7 @@ const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
         onKeyDown={filterOnKeyDown}
     >
         <div className="icon-container"><props.filter.icon /></div>
-        <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.filter.name}</div>
+        <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.label ?? props.filter.name}</div>
         <div style={{ flexShrink: 0 }}>{`(${props.stats.count})`}</div>
         {props.showSizes && <>
             <div style={{ flexGrow: 1 }}></div>
@@ -221,9 +223,11 @@ const LabelFilterRow = React.memo(function LabelFilterRow(props: Omit<FilterRowP
 });
 
 const TrackerFilterRow = React.memo(function TrackerFilterRow(props: Omit<FilterRowProps, "filter" | "id"> & { tracker: string }) {
+    const { t } = useTranslation();
     return <FilterRow
         {...props}
         id={`tracker-${props.tracker}`}
+        label={props.tracker === "<No trackers>" ? t("tables.trackers.noTrackers") : props.tracker}
         filter={{
             name: props.tracker,
             filter: (t: Torrent) => t.cachedMainTracker === props.tracker,
@@ -423,6 +427,9 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
     const [renderKey, forceRender] = useReducer((oldVal: number) => oldVal + 1, 0);
+    const { t } = useTranslation();
+    const getSectionLabel = useCallback((section: string) => t(`filters.sections.${section}`), [t]);
+    const statusLabel = useCallback((name: string) => t(`filters.status.${name}`), [t]);
 
     const expandedReducer = useCallback(
         ({ verb, value }: { verb: "add" | "remove" | "set", value: string | string[] }) => {
@@ -539,6 +546,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 setSections={setSections}
                 contextMenuInfo={info}
                 setContextMenuInfo={setInfo}
+                getLabel={getSectionLabel}
                 closeOnClickOutside
             >
                 <Menu.Divider />
@@ -550,7 +558,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                             rightSection={<Icon.ChevronRight size="12" style={{ marginRight: "-0.4rem" }} />}
                             onMouseDown={(e) => { e.stopPropagation(); }}
                         >
-                            Status filters
+                            {t("filters.statusFiltersSubmenu")}
                         </Menu.Sub.Item>
                     </Menu.Sub.Target>
 
@@ -562,7 +570,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                                 onClick={() => { onStatusFiltersSubmenuItemClick(index); }}
                                 leftSection={statusFiltersVisibility[f.name] ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
                             >
-                                {f.name}
+                                {statusLabel(f.name)}
                             </Menu.Item>)}
                     </Menu.Sub.Dropdown>
                 </Menu.Sub>
@@ -572,29 +580,30 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                     leftSection={compactDirectories ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
                     onClick={onCompactDirectoriesClick}
                 >
-                    Compact Directories
+                    {t("filters.compactDirectories")}
                 </Menu.Item>
                 <Menu.Item
                     leftSection={recursiveDirectories ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
                     onClick={onRecursiveDirectoriesClick}
                 >
-                    Recursive Directories
+                    {t("filters.recursiveDirectories")}
                 </Menu.Item>
                 <Menu.Item
                     leftSection={showSizes ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
                     onClick={onShowSizesClick}
                 >
-                    Show sizes
+                    {t("filters.showSizes")}
                 </Menu.Item>
             </MemoSectionsContextMenu>
             {sections[sectionsMap.Status].visible && <div style={{ order: sectionsMap.Status }}>
-                <Divider mx="sm" label="Status" labelPosition="center" />
+                <Divider mx="sm" label={t("filters.sections.Status")} labelPosition="center" />
                 {statusFilters.map((f) =>
                     (f.required === true || statusFiltersVisibility[f.name])
                     && <FilterRow
                         key={`status-${f.name}`}
                         id={`status-${f.name}`}
                         filter={f}
+                        label={statusLabel(f.name)}
                         stats={statCount(torrents.filter(f.filter))}
                         currentFilters={currentFilters}
                         setCurrentFilters={setCurrentFilters}
@@ -605,7 +614,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 <Divider
                     mx="sm"
                     mt="md"
-                    label="Directories"
+                    label={t("filters.sections.Directories")}
                     labelPosition="center"
                 />
                 {dirs.map((d) =>
@@ -622,12 +631,13 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 <Divider
                     mx="sm"
                     mt="md"
-                    label="Labels"
+                    label={t("filters.sections.Labels")}
                     labelPosition="center"
                 />
                 <FilterRow
                     id="nolabels"
                     filter={noLabelsFilter}
+                    label={t("filters.noLabels")}
                     stats={statCount(torrents.filter(noLabelsFilter.filter))}
                     currentFilters={currentFilters}
                     setCurrentFilters={setCurrentFilters}
@@ -647,7 +657,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 <Divider
                     mx="sm"
                     mt="md"
-                    label="Trackers"
+                    label={t("filters.sections.Trackers")}
                     labelPosition="center"
                 />
                 {Object.keys(trackers).sort().map((tracker) =>

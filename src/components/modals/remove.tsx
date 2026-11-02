@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { useTranslation } from "react-i18next";
 import { Button, Checkbox, Divider, Group, Text } from "@mantine/core";
 import type { ModalState } from "./common";
 import { HkModal, TorrentsNames } from "./common";
@@ -26,6 +27,7 @@ import { useServerSelectedTorrents } from "rpc/torrent";
 import { ConfigContext } from "config";
 
 export function RemoveModal(props: ModalState) {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
     const serverSelected = useServerSelectedTorrents();
     const [deleteData, setDeleteData] = useState<boolean>(false);
@@ -58,28 +60,28 @@ export function RemoveModal(props: ModalState) {
                 onError: (e) => {
                     console.error("Error removing torrents", e);
                     notifications.show({
-                        message: "Error removing torrents",
+                        message: t("remove.errorRemoving"),
                         color: "red",
                     });
                 },
             },
         );
         props.close();
-    }, [remove, serverSelected, deleteData, props]);
+    }, [remove, serverSelected, deleteData, props, t]);
 
     return (
         <HkModal
             opened={props.opened}
             onClose={props.close}
-            title="Remove torrents"
+            title={t("remove.title")}
             centered
             size="lg"
         >
             <Divider my="sm" />
-            <Text mb="md">Are you sure you want to remove following torrents?</Text>
+            <Text mb="md">{t("remove.confirmation")}</Text>
             <TorrentsNames />
             <Checkbox
-                label="Delete torrent data"
+                label={t("remove.deleteData")}
                 checked={deleteData}
                 onChange={onDeleteDataChanged}
                 my="xl"
@@ -92,9 +94,9 @@ export function RemoveModal(props: ModalState) {
                     color="red"
                     data-autofocus
                 >
-                    {deleteData ? "Delete" : "Remove"}
+                    {deleteData ? t("remove.delete") : t("remove.remove")}
                 </Button>
-                <Button onClick={props.close} variant="light">Cancel</Button>
+                <Button onClick={props.close} variant="light">{t("remove.cancel")}</Button>
             </Group>
         </HkModal>
     );

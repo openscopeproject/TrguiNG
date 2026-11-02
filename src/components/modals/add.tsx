@@ -34,6 +34,7 @@ import type { ServerTabsRef } from "components/servertabs";
 import { bytesToHumanReadableStr, decodeMagnetLink, fileSystemSafeName } from "trutil";
 import { useToggle } from "@mantine/hooks";
 import * as Icon from "react-bootstrap-icons";
+import { useTranslation } from "react-i18next";
 import classes from "./add.module.css";
 import { useTransmissionClient } from "rpc/client";
 
@@ -54,20 +55,21 @@ interface AddCommonProps extends React.PropsWithChildren {
 }
 
 function AddCommon(props: AddCommonProps) {
+    const { t } = useTranslation();
     const rpcVersion = useServerRpcVersion();
 
     return <>
-        <TorrentLocation {...props.location} inputLabel="Download directory" disabled={props.disabled} />
+        <TorrentLocation {...props.location} inputLabel={t("modals.add.downloadDirectory")} disabled={props.disabled} />
         {rpcVersion >= 17
             && <TorrentLabels
                 labels={props.labels}
                 setLabels={props.setLabels}
-                inputLabel="Labels"
+                inputLabel={t("modals.add.labels")}
                 disabled={props.disabled}
             />}
         <Group>
             <Checkbox
-                label="Start torrent"
+                label={t("modals.add.startTorrent")}
                 checked={props.start}
                 disabled={props.disabled}
                 onChange={(e) => { props.setStart(e.currentTarget.checked); }}
@@ -75,7 +77,7 @@ function AddCommon(props: AddCommonProps) {
             />
             {rpcVersion >= 18
                 && <Checkbox
-                    label="Sequential"
+                    label={t("modals.add.sequential")}
                     checked={props.sequential}
                     disabled={props.disabled}
                     onChange={(e) => { props.setSequential(e.currentTarget.checked); }}
@@ -90,7 +92,7 @@ function AddCommon(props: AddCommonProps) {
                 disabled={props.disabled}
                 data={Array.from(PriorityStrings.entries()).map(([k, v]) => ({
                     value: String(k),
-                    label: v,
+                    label: t(`torrents.priority.${v}`),
                 }))}
             />
         </Group>
@@ -152,6 +154,7 @@ function useCommonProps(opened: boolean) {
 }
 
 function TabSwitchDropdown({ tabsRef }: { tabsRef: React.RefObject<ServerTabsRef> }) {
+    const { t } = useTranslation();
     const serverConfig = useContext(ServerConfigContext);
 
     const [value, setValue] = useState(serverConfig.name);
@@ -171,7 +174,7 @@ function TabSwitchDropdown({ tabsRef }: { tabsRef: React.RefObject<ServerTabsRef
             ? <></>
             : <Menu shadow="md" width={200} position="bottom-start">
                 <Menu.Target>
-                    <Button variant="subtle" title="Switch server">
+                    <Button variant="subtle" title={t("modals.add.switchServer")}>
                         {value}
                     </Button>
                 </Menu.Target>
@@ -194,6 +197,7 @@ interface LinkData {
 }
 
 export function AddMagnet(props: AddCommonModalProps) {
+    const { t } = useTranslation();
     const serverData = useServerTorrentData();
     const [magnet, setMagnet] = useState<string>("");
 
@@ -234,7 +238,7 @@ export function AddMagnet(props: AddCommonModalProps) {
             const duplicate = response.arguments["torrent-duplicate"];
             if (duplicate !== undefined) {
                 notifications.show({
-                    title: "Torrent already exists",
+                    title: t("modals.add.notifications.torrentAlreadyExists"),
                     message: duplicate.name,
                     color: "green",
                 });
@@ -242,20 +246,20 @@ export function AddMagnet(props: AddCommonModalProps) {
             const added = response.arguments["torrent-added"];
             if (added !== undefined) {
                 notifications.show({
-                    title: "Torrent added",
+                    title: t("modals.add.notifications.torrentAdded"),
                     message: added.name,
                     color: "green",
                 });
             }
-        }, []),
+        }, [t]),
         useCallback((e) => {
             console.error("Failed to add torrent:", e);
             notifications.show({
-                title: "Error adding torrent",
+                title: t("modals.add.notifications.errorAddingTorrent"),
                 message: String(e),
                 color: "red",
             });
-        }, []),
+        }, [t]),
     );
     const mutateAddTrackers = useTorrentAddTrackers();
 
@@ -295,7 +299,7 @@ export function AddMagnet(props: AddCommonModalProps) {
         const updateNotification = queue.length <= 1
             ? ""
             : notifications.show({
-                message: `Processing magnet links (0/${queue.length})`,
+                message: t("modals.add.notifications.processingMagnetLinks", { current: 0, total: queue.length }),
                 color: "blue",
                 autoClose: false,
             });
@@ -307,7 +311,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                 if (updateNotification !== "") {
                     notifications.update({
                         id: updateNotification,
-                        message: `Processed ${queue.length} magnet links`,
+                        message: t("modals.add.notifications.processedMagnetLinks", { count: queue.length }),
                         color: "blue",
                         autoClose: true,
                     });
@@ -318,7 +322,7 @@ export function AddMagnet(props: AddCommonModalProps) {
             if (updateNotification !== "") {
                 notifications.update({
                     id: updateNotification,
-                    message: `Processing magnet links (${currentIndex + 1}/${queue.length})`,
+                    message: t("modals.add.notifications.processingMagnetLinks", { current: currentIndex + 1, total: queue.length }),
                     color: "blue",
                     autoClose: false,
                 });
@@ -352,7 +356,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                     {
                         onSuccess: () => {
                             notifications.show({
-                                message: "Trackers updated",
+                                message: t("modals.add.notifications.trackersUpdated"),
                                 color: "green",
                             });
                             currentIndex++;
@@ -361,7 +365,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                         onError: (error) => {
                             console.error("Failed to add trackers:", error);
                             notifications.show({
-                                title: "Error adding trackers",
+                                title: t("modals.add.notifications.errorAddingTrackers"),
                                 message: String(error),
                                 color: "red",
                             });
@@ -377,7 +381,7 @@ export function AddMagnet(props: AddCommonModalProps) {
 
         close();
         processNextLink();
-    }, [client, serverData, common, addMutation, mutateAddTrackers, close, magnet]);
+    }, [client, serverData, common, addMutation, mutateAddTrackers, close, magnet, t]);
 
     const config = useContext(ConfigContext);
     const shouldOpen = !config.values.interface.skipAddDialog || typeof props.uri !== "string";
@@ -398,13 +402,13 @@ export function AddMagnet(props: AddCommonModalProps) {
                 size="xl"
                 styles={{ title: { flexGrow: 1 } }}
                 title={<Flex w="100%" align="center" justify="space-between">
-                    <span>Add torrent by magnet link or URL</span>
+                    <span>{t("modals.add.titleMagnet")}</span>
                     {TAURI && <TabSwitchDropdown tabsRef={props.tabsRef} />}
                 </Flex>}
             >
                 <Divider my="sm" />
                 <Textarea
-                    label="Magnet links, one per line"
+                    label={t("modals.add.magnetLinks")}
                     w="100%"
                     value={magnet}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => { setMagnet(e.currentTarget.value); }}
@@ -413,7 +417,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                     }}
                     error={existingTorrent === undefined
                         ? undefined
-                        : "Torrent already exists"}
+                        : t("modals.add.torrentAlreadyExists")}
                     data-autofocus
                     autoComplete="off"
                     autoCorrect="off"
@@ -431,21 +435,21 @@ export function AddMagnet(props: AddCommonModalProps) {
                         variant="filled"
                         disabled={addDisabled}
                     >
-                        {existingTorrent === undefined ? "Add" : "Add trackers"}
+                        {existingTorrent === undefined ? t("modals.add.add") : t("modals.add.addTrackers")}
                     </Button>
-                    <Button onClick={props.close} variant="light">Cancel</Button>
+                    <Button onClick={props.close} variant="light">{t("modals.add.cancel")}</Button>
                 </Group>
             </HkModal>}
     </>;
 }
 
-async function readLocalTorrent(file: File): Promise<string> {
+async function readLocalTorrent(file: File, errorMessage: string): Promise<string> {
     return await new Promise((resolve) => {
         const reader = new FileReader();
         reader.onloadend = () => {
             const b64 = (reader.result as string).match(/data:[^/]*\/[^;]*;base64,(.*)/)?.[1];
             if (b64 === undefined) {
-                throw Error("Error reading file");
+                throw Error(errorMessage);
             }
             resolve(b64);
         };
@@ -458,6 +462,7 @@ function useTauriReadFile(
     torrentData: TorrentFileData[] | undefined,
     setTorrentData: React.Dispatch<React.SetStateAction<TorrentFileData[] | undefined>>,
 ) {
+    const { t } = useTranslation();
     useEffect(() => {
         if (TAURI && props.opened && torrentData === undefined) {
             const readFile = async (path: string | string[] | null) => {
@@ -479,9 +484,9 @@ function useTauriReadFile(
             const pathPromise = typeof uri === "string"
                 ? Promise.resolve(uri)
                 : dialogOpen({
-                    title: "Select torrent file",
+                    title: t("modals.add.selectTorrentFileDialog"),
                     filters: [{
-                        name: "Torrent",
+                        name: t("modals.common.torrentFile"),
                         extensions: ["torrent"],
                     }],
                     multiple: true,
@@ -495,14 +500,14 @@ function useTauriReadFile(
                     }
                 }).catch((e) => {
                     notifications.show({
-                        title: "Error reading torrent",
+                        title: t("modals.add.notifications.errorReadingTorrent"),
                         message: String(e),
                         color: "red",
                     });
                     props.close();
                 });
         }
-    }, [props, setTorrentData, torrentData]);
+    }, [props, setTorrentData, torrentData, t]);
 }
 
 function useWebappReadFile(
@@ -511,6 +516,7 @@ function useWebappReadFile(
     close: () => void,
     setTorrentData: React.Dispatch<React.SetStateAction<TorrentFileData[] | undefined>>,
 ) {
+    const { t } = useTranslation();
     useEffect(() => {
         if (!TAURI && props.opened) {
             if (props.uri === undefined) {
@@ -521,7 +527,7 @@ function useWebappReadFile(
                 close();
             } else {
                 const file = props.uri as File;
-                readLocalTorrent(file).then((b64) => {
+                readLocalTorrent(file, t("modals.add.notifications.errorReadingFile")).then((b64) => {
                     setTorrentData([{
                         torrentPath: "",
                         metadata: b64,
@@ -533,7 +539,7 @@ function useWebappReadFile(
                     }]);
                 }).catch(() => {
                     notifications.show({
-                        title: "Error reading file",
+                        title: t("modals.add.notifications.errorReadingFile"),
                         message: file.name,
                         color: "red",
                     });
@@ -541,7 +547,7 @@ function useWebappReadFile(
                 });
             }
         }
-    }, [props.opened, props.uri, close, filesInputRef, setTorrentData]);
+    }, [props.opened, props.uri, close, filesInputRef, setTorrentData, t]);
 }
 
 function useFilesInput(
@@ -549,6 +555,7 @@ function useFilesInput(
     close: () => void,
     setTorrentData: React.Dispatch<TorrentFileData[] | undefined>,
 ) {
+    const { t } = useTranslation();
     useEffect(() => {
         const input = filesInputRef.current;
         const fileInputListener = (e: Event) => {
@@ -557,7 +564,7 @@ function useFilesInput(
                 close();
             } else {
                 const files = [...element.files];
-                Promise.all(files.map(readLocalTorrent)).then((filesData) => {
+                Promise.all(files.map(async (file) => await readLocalTorrent(file, t("modals.add.notifications.errorReadingFile")))).then((filesData) => {
                     setTorrentData(filesData.map((b64, i) => ({
                         torrentPath: "",
                         metadata: b64,
@@ -569,7 +576,7 @@ function useFilesInput(
                     })));
                 }).catch((e) => {
                     notifications.show({
-                        title: "Error reading file",
+                        title: t("modals.add.notifications.errorReadingFile"),
                         message: e,
                         color: "red",
                     });
@@ -584,7 +591,7 @@ function useFilesInput(
         return () => {
             if (!TAURI) input?.removeEventListener("change", fileInputListener);
         };
-    }, [close, filesInputRef, setTorrentData]);
+    }, [close, filesInputRef, setTorrentData, t]);
 }
 
 interface TorrentFileData {
@@ -601,6 +608,7 @@ interface TorrentFileData {
 }
 
 export function AddTorrent(props: AddCommonModalProps) {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
     const serverData = useServerTorrentData();
     const common = useCommonProps(props.opened);
@@ -659,7 +667,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             const duplicate = response.arguments["torrent-duplicate"];
             if (duplicate !== undefined) {
                 notifications.show({
-                    title: "Torrent already exists",
+                    title: t("modals.add.notifications.torrentAlreadyExists"),
                     message: duplicate.name,
                     color: "green",
                 });
@@ -667,7 +675,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             const added = response.arguments["torrent-added"];
             if (added !== undefined) {
                 notifications.show({
-                    title: "Torrent added",
+                    title: t("modals.add.notifications.torrentAdded"),
                     message: added.name,
                     color: "green",
                 });
@@ -685,7 +693,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                         {
                             onError: (e) => {
                                 notifications.show({
-                                    title: "Error renaming torrent",
+                                    title: t("modals.add.notifications.errorRenamingTorrent"),
                                     message: String(e),
                                     color: "red",
                                 });
@@ -696,15 +704,15 @@ export function AddTorrent(props: AddCommonModalProps) {
             if (TAURI && config.values.app.deleteAdded && vars.filePath !== undefined) {
                 void invoke("remove_file", { path: vars.filePath });
             }
-        }, [config.values.app.deleteAdded, pathMutation]),
+        }, [config.values.app.deleteAdded, pathMutation, t]),
         useCallback((e) => {
             console.error("Failed to add torrent:", e);
             notifications.show({
-                title: "Error adding torrent",
+                title: t("modals.add.notifications.errorAddingTorrent"),
                 message: String(e),
                 color: "red",
             });
-        }, []),
+        }, [t]),
     );
     const mutateAddTrackers = useTorrentAddTrackers();
 
@@ -741,7 +749,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 {
                     onSuccess: () => {
                         notifications.show({
-                            message: "Trackers updated",
+                            message: t("modals.add.notifications.trackersUpdated"),
                             color: "green",
                         });
                     },
@@ -755,7 +763,7 @@ export function AddTorrent(props: AddCommonModalProps) {
         }
         setTorrentData(undefined);
         close();
-    }, [client, torrentData, torrentName, existingTorrent, close, common, addMutation, fileTree, mutateAddTrackers, config]);
+    }, [client, torrentData, torrentName, existingTorrent, close, common, addMutation, fileTree, mutateAddTrackers, config, t]);
 
     const shouldOpen = !config.values.interface.skipAddDialog && torrentData !== undefined;
     useEffect(() => {
@@ -799,11 +807,16 @@ export function AddTorrent(props: AddCommonModalProps) {
                     body: { display: fullScreen ? "flex" : "block", flexDirection: "column", flexGrow: 1 },
                 }}
                 title={<Flex w="100%" align="center">
-                    <span>Add torrent</span>
+                    <span>{t("modals.add.title")}</span>
                     <Box className={classes.flexGrow} />
                     {TAURI && <>
                         <TabSwitchDropdown tabsRef={props.tabsRef} />
-                        <ActionIcon variant="subtle" onClick={() => { toggleFullScreen(); }}>
+                        <ActionIcon
+                            variant="subtle"
+                            onClick={() => { toggleFullScreen(); }}
+                            title={t(fullScreen ? "modals.add.exitFullScreen" : "modals.add.fullScreen")}
+                            aria-label={t(fullScreen ? "modals.add.exitFullScreen" : "modals.add.fullScreen")}
+                        >
                             {fullScreen ? <Icon.FullscreenExit /> : <Icon.ArrowsFullscreen />}
                         </ActionIcon>
                     </>}
@@ -811,8 +824,9 @@ export function AddTorrent(props: AddCommonModalProps) {
             >
                 <Divider my="sm" />
                 {torrentExists
-                    ? <Text c="red" fw="bold" fz="lg">Torrent already exists</Text>
+                    ? <Text c="red" fw="bold" fz="lg">{t("modals.add.torrentAlreadyExists")}</Text>
                     : <TextInput
+                        aria-label={t("createTorrent.torrentName")}
                         disabled={!TAURI || torrentData.length > 1}
                         value={torrentName}
                         onChange={(e) => setTorrentName(e.target.value)}
@@ -827,17 +841,17 @@ export function AddTorrent(props: AddCommonModalProps) {
                                 variant="subtle"
                                 disabled={torrentExists}
                                 onClick={() => { setAllWanted(true); }}
-                                title="Mark all files wanted"
+                                title={t("modals.add.markAllWanted")}
                             >
-                                All
+                                {t("modals.add.allWanted")}
                             </Button>
                             <Button
                                 variant="subtle"
                                 disabled={torrentExists}
                                 onClick={() => { setAllWanted(false); }}
-                                title="Mark all files unwanted"
+                                title={t("modals.add.markAllUnwanted")}
                             >
-                                None
+                                {t("modals.add.noneWanted")}
                             </Button>
                         </>}
                 </AddCommon>
@@ -859,9 +873,9 @@ export function AddTorrent(props: AddCommonModalProps) {
                         data-autofocus
                         disabled={torrentExists && torrentData[0].trackers.length === 0}
                     >
-                        {!torrentExists ? "Add" : "Add trackers"}
+                        {!torrentExists ? t("modals.add.add") : t("modals.add.addTrackers")}
                     </Button>
-                    <Button onClick={modalClose} variant="light">Cancel</Button>
+                    <Button onClick={modalClose} variant="light">{t("modals.add.cancel")}</Button>
                 </Group>
             </HkModal>}
     </>);

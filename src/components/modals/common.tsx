@@ -28,6 +28,7 @@ import { pathMapFromServer, pathMapToServer } from "trutil";
 import * as Icon from "react-bootstrap-icons";
 import { useServerSelectedTorrents, useServerTorrentData } from "rpc/torrent";
 import { useHotkeysContext } from "hotkeys";
+import { useTranslation } from "react-i18next";
 const { TAURI, dialogOpen } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 export interface ModalState {
@@ -37,6 +38,7 @@ export interface ModalState {
 
 export function HkModal(props: ModalProps) {
     const hk = useHotkeysContext();
+    const { t } = useTranslation();
 
     useEffect(() => {
         hk.active = !props.opened;
@@ -46,7 +48,7 @@ export function HkModal(props: ModalProps) {
         };
     }, [props.opened, hk]);
 
-    return <Modal {...props}>{props.children}</Modal>;
+    return <Modal {...props} closeButtonProps={{ "aria-label": t("modals.common.close"), ...props.closeButtonProps }}>{props.children}</Modal>;
 }
 
 interface SaveCancelModalProps extends ModalProps {
@@ -56,6 +58,7 @@ interface SaveCancelModalProps extends ModalProps {
 }
 
 export function SaveCancelModal({ onSave, onClose, children, saveLoading, ...other }: SaveCancelModalProps) {
+    const { t } = useTranslation();
     return (
         <HkModal onClose={onClose} {...other}>
             <Divider my="sm" />
@@ -63,20 +66,21 @@ export function SaveCancelModal({ onSave, onClose, children, saveLoading, ...oth
             <Divider my="sm" />
             <Group justify="center" gap="md">
                 <Button onClick={onSave} variant="filled" data-autofocus>
-                    {saveLoading === true ? <Loader size="1rem" /> : "Save"}
+                    {saveLoading === true ? <Loader size="1rem" /> : t("modals.common.save")}
                 </Button>
-                <Button onClick={onClose} variant="light">Cancel</Button>
+                <Button onClick={onClose} variant="light">{t("modals.common.cancel")}</Button>
             </Group>
         </HkModal>
     );
 }
 
 export function LimitedNamesList({ names, limit }: { names: string[], limit?: number }) {
+    const { t } = useTranslation();
     limit = limit ?? 5;
-    const t = names.slice(0, limit);
+    const visibleNames = names.slice(0, limit);
 
     return <>
-        {t.map((s, i) => <Text
+        {visibleNames.map((s, i) => <Text
             key={i}
             mx="md"
             my="xs"
@@ -85,21 +89,22 @@ export function LimitedNamesList({ names, limit }: { names: string[], limit?: nu
         >
             {s}
         </Text>)}
-        {names.length > limit && <Text mx="xl" mb="md">{`... and ${names.length - limit} more`}</Text>}
+        {names.length > limit && <Text mx="xl" mb="md">{t("modals.common.moreNames", { count: names.length - limit })}</Text>}
     </>;
 }
 
 export function TorrentsNames() {
+    const { t } = useTranslation();
     const serverData = useServerTorrentData();
     const serverSelected = useServerSelectedTorrents();
 
     const allNames = useMemo<string[]>(() => {
         if (serverData.current == null || serverSelected.size === 0) {
-            return ["No torrent selected"];
+            return [t("modals.common.noTorrentSelected")];
         }
         return serverData.torrents.filter(
             (t) => serverSelected.has(t.id)).map((t) => t.name);
-    }, [serverData, serverSelected]);
+    }, [serverData, serverSelected, t]);
 
     return <LimitedNamesList names={allNames} />;
 }
@@ -117,6 +122,7 @@ export interface LocationData {
 }
 
 export function useTorrentLocation(): LocationData {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
     const [lastPaths, setLastPaths] = useState([] as string[]);
@@ -148,7 +154,7 @@ export function useTorrentLocation(): LocationData {
     const browseHandler = useCallback(() => {
         const mappedLocation = pathMapFromServer(path, serverConfig);
         dialogOpen({
-            title: "Select directory",
+            title: t("modals.common.selectDirectory"),
             defaultPath: mappedLocation === "" ? undefined : mappedLocation,
             directory: true,
         }).then((directory) => {
@@ -156,7 +162,7 @@ export function useTorrentLocation(): LocationData {
             const mappedPath = pathMapToServer((directory as string).replace(/\\/g, "/"), serverConfig);
             setPath(mappedPath.replace(/\\/g, "/"));
         }).catch(console.error);
-    }, [serverConfig, path, setPath]);
+    }, [serverConfig, path, setPath, t]);
 
     const addPath = useCallback((dir: string) => {
         config.addSaveDir(serverConfig.name, dir);
@@ -172,6 +178,7 @@ export function useTorrentLocation(): LocationData {
 }
 
 export function TorrentLocation(props: LocationData) {
+    const { t } = useTranslation();
     const config = useContext(ConfigContext);
 
     return (
@@ -194,6 +201,8 @@ export function TorrentLocation(props: LocationData) {
                         <Menu.Target>
                             <ActionIcon
                                 variant="subtle"
+                                title={t("modals.common.directoryHistory")}
+                                aria-label={t("modals.common.directoryHistory")}
                                 py="md"
                                 disabled={
                                     props.disabled === true
@@ -227,7 +236,8 @@ export function TorrentLocation(props: LocationData) {
                                             <ActionIcon
                                                 variant="subtle"
                                                 component="div"
-                                                title="Remove path"
+                                                title={t("modals.common.removePath")}
+                                                aria-label={t("modals.common.removePath")}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     props.removePath(path);
@@ -238,7 +248,7 @@ export function TorrentLocation(props: LocationData) {
                                             </ActionIcon>
                                         }
                                     >
-                                        {path.length > 0 ? path : "<empty>"}
+                                        {path.length > 0 ? path : t("modals.common.emptyPath")}
                                     </Menu.Item>
                                 ))}
                             </ScrollArea.Autosize>
@@ -250,7 +260,7 @@ export function TorrentLocation(props: LocationData) {
                 autoCapitalize="off"
                 spellCheck="false"
             />
-            {TAURI && <Button onClick={props.browseHandler} disabled={props.disabled}>Browse</Button>}
+            {TAURI && <Button onClick={props.browseHandler} disabled={props.disabled}>{t("modals.common.browse")}</Button>}
         </Group>
     );
 }
