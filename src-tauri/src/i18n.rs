@@ -58,6 +58,7 @@ define_languages! {
     #[default] English => "en",
     SimplifiedChinese => "zh-CN",
     Russian => "ru",
+    Spanish => "es",
 }
 
 impl FromStr for SupportedLanguage {
