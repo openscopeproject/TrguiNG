@@ -22,6 +22,7 @@ export const languageNames = {
     en: "English",
     "zh-CN": "简体中文",
     ru: "Русский",
+    es: "Español",
 } as const;
 
 export type AvailableLanguage = keyof typeof languageNames;
